@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>250</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>LabRAD Connect</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QFrame" name="background">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>500</width>
+      <height>250</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>500</width>
+      <height>250</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>500</width>
+      <height>250</height>
+     </size>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#background{
+background: black;
+}</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="label_Session">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>210</y>
+       <width>100</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_Session{
+color: rgb(168, 168, 168);
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+qproperty-alignment: 'AlignVCenter | AlignRight';
+qproperty-wordWrap: true;
+}</string>
+     </property>
+     <property name="text">
+      <string>Session Folder:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_Session">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>210</y>
+       <width>311</width>
+       <height>20</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_Session">
+     <property name="geometry">
+      <rect>
+       <x>430</x>
+       <y>202</y>
+       <width>36</width>
+       <height>36</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_Session{
+image:url(:/nSOTScanner/SessionSelect.png);
+background: black;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_LabRAD">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>50</y>
+       <width>80</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_LabRAD{
+color:rgb(168,168,168);
+qproperty-alignment: 'AlignVCenter | AlignRight';
+}</string>
+     </property>
+     <property name="text">
+      <string>LabRAD:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_DataVault">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>70</y>
+       <width>80</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_DataVault{
+color:rgb(168,168,168);
+qproperty-alignment: 'AlignVCenter | AlignRight';
+}</string>
+     </property>
+     <property name="text">
+      <string>Data Vault:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_SerialServer">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>90</y>
+       <width>80</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_SerialServer{
+color:rgb(168,168,168);
+qproperty-alignment: 'AlignVCenter | AlignRight';
+}</string>
+     </property>
+     <property name="text">
+      <string>Serial Server:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_DACADC">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>110</y>
+       <width>80</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_DACADC{
+color:rgb(168,168,168);
+qproperty-alignment: 'AlignVCenter | AlignRight';
+}</string>
+     </property>
+     <property name="text">
+      <string>DAC ADC:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_LabRAD_status">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>50</y>
+       <width>121</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_LabRAD_status{
+color:rgb(168,168,168);
+qproperty-alignment: 'AlignVCenter | AlignCenter';
+}</string>
+     </property>
+     <property name="text">
+      <string>Not connected</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_DataVault_status">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>70</y>
+       <width>121</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_DataVault_status{
+color:rgb(168,168,168);
+qproperty-alignment: 'AlignVCenter | AlignCenter';
+}</string>
+     </property>
+     <property name="text">
+      <string>Not connected</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_LabRAD">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>50</y>
+       <width>15</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_LabRAD{
+background:rgb(144, 140, 9);
+border-radius: 4px;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_SerialServer_status">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>90</y>
+       <width>121</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_SerialServer_status{
+color:rgb(168,168,168);
+qproperty-alignment: 'AlignVCenter | AlignCenter';
+}</string>
+     </property>
+     <property name="text">
+      <string>Not connected</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_DACADC_status">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>110</y>
+       <width>121</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_DACADC_status{
+color:rgb(168,168,168);
+qproperty-alignment: 'AlignVCenter | AlignCenter';
+}</string>
+     </property>
+     <property name="text">
+      <string>Not connected</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_DataVault">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>70</y>
+       <width>15</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_DataVault{
+background: rgb(144, 140, 9);
+ border-radius: 4px;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_SerialServer">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>90</y>
+       <width>15</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_SerialServer{
+background: rgb(144, 140, 9);
+ border-radius: 4px;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_DACADC">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>110</y>
+       <width>15</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_DACADC{
+background: rgb(144, 140, 9);
+ border-radius: 4px;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_ConnectAll">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>15</y>
+       <width>121</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_ConnectAll{
+color: rgb(168,168,168);
+background: rgb(60, 60, 60);
+border-radius: 4px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Connect All Servers</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_DisconnectAll">
+     <property name="geometry">
+      <rect>
+       <x>280</x>
+       <y>15</y>
+       <width>121</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_DisconnectAll{
+color: rgb(168,168,168);
+background: rgb(60, 60, 60);
+border-radius: 4px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Disconnect All Servers</string>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+ </widget>
+ <resources>
+  <include location="nSOTScannerResources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
