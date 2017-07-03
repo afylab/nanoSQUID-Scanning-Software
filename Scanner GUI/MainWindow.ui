@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>110</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>500</width>
+    <height>110</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>500</width>
+    <height>110</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>nSOT Scanner</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <widget class="QFrame" name="MainWindowBackground">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>500</width>
+      <height>150</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#MainWindowBackground{
+background: black
+}</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QPushButton" name="push_Layout5">
+     <property name="geometry">
+      <rect>
+       <x>460</x>
+       <y>30</y>
+       <width>23</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>5</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_Layout3">
+     <property name="geometry">
+      <rect>
+       <x>400</x>
+       <y>30</y>
+       <width>23</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>3</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_Layout2">
+     <property name="geometry">
+      <rect>
+       <x>370</x>
+       <y>30</y>
+       <width>23</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Test?&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string>2</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_Layout">
+     <property name="geometry">
+      <rect>
+       <x>280</x>
+       <y>30</y>
+       <width>47</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_Layout{
+color: rgb(168, 168, 168);
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+qproperty-alignment: 'AlignVCenter | AlignRight';
+qproperty-wordWrap: true;
+}</string>
+     </property>
+     <property name="text">
+      <string>Layout: </string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_Layout1">
+     <property name="geometry">
+      <rect>
+       <x>340</x>
+       <y>30</y>
+       <width>23</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="statusTip">
+      <string/>
+     </property>
+     <property name="whatsThis">
+      <string extracomment="Testing"/>
+     </property>
+     <property name="accessibleName">
+      <string/>
+     </property>
+     <property name="accessibleDescription">
+      <string/>
+     </property>
+     <property name="text">
+      <string>1</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_Layout4">
+     <property name="geometry">
+      <rect>
+       <x>430</x>
+       <y>30</y>
+       <width>23</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>4</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_Logo">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>-15</y>
+       <width>241</width>
+       <height>120</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_Logo{
+image:url(:/nSOTScanner/Pictures/SQUIDRotated2.png);
+background: black;
+}</string>
+     </property>
+     <property name="text">
+      <string>PushButton</string>
+     </property>
+    </widget>
+    <zorder>push_Logo</zorder>
+    <zorder>push_Layout5</zorder>
+    <zorder>push_Layout3</zorder>
+    <zorder>push_Layout2</zorder>
+    <zorder>label_Layout</zorder>
+    <zorder>push_Layout1</zorder>
+    <zorder>push_Layout4</zorder>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>500</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuSystem">
+    <property name="title">
+     <string>System</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuGraphs">
+    <property name="title">
+     <string>Graphs</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuModules">
+    <property name="title">
+     <string>Modules</string>
+    </property>
+    <addaction name="actionApproach_Control"/>
+    <addaction name="actionLabRAD_Connect"/>
+    <addaction name="actionScan_Control"/>
+    <addaction name="actionnSOT_Characterizer"/>
+    <addaction name="actionData_Plotter"/>
+   </widget>
+   <widget class="QMenu" name="menuUser_Channels">
+    <property name="title">
+     <string>User Channels</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuExeriments">
+    <property name="title">
+     <string>Exeriments</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuSystem"/>
+   <addaction name="menuGraphs"/>
+   <addaction name="menuModules"/>
+   <addaction name="menuUser_Channels"/>
+   <addaction name="menuExeriments"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <action name="actionScan_Control">
+   <property name="text">
+    <string>Scan Control</string>
+   </property>
+  </action>
+  <action name="actionLine_View">
+   <property name="text">
+    <string>Line View</string>
+   </property>
+  </action>
+  <action name="actionApproach_Control">
+   <property name="text">
+    <string>Approach Control</string>
+   </property>
+  </action>
+  <action name="actionTest_Draw_Square">
+   <property name="text">
+    <string>Test Draw Square</string>
+   </property>
+  </action>
+  <action name="actionLabRAD_Connect">
+   <property name="text">
+    <string>LabRAD Connect</string>
+   </property>
+  </action>
+  <action name="actionnSOT_Characterizer">
+   <property name="text">
+    <string>nSOT Characterizer</string>
+   </property>
+  </action>
+  <action name="actionData_Plotter">
+   <property name="text">
+    <string>Data Plotter</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="Resources/nSOTScannerResources.qrc"/>
+  <include location="nSOTCharacterizer/characterPics.qrc"/>
+ </resources>
+ <connections/>
+</ui>

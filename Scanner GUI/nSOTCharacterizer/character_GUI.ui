@@ -1,0 +1,1495 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>mainWindow</class>
+ <widget class="QMainWindow" name="mainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1309</width>
+    <height>966</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1309</width>
+    <height>966</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1309</width>
+    <height>966</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>nSOT Characterization</string>
+  </property>
+  <property name="toolTip">
+   <string/>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true">#centralwidget{background-color: rgb(0, 0, 0);}</string>
+   </property>
+   <widget class="QFrame" name="curbiasTracePlot">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>760</y>
+      <width>640</width>
+      <height>175</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(127, 127, 127);</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="MaxField">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>65</y>
+      <width>86</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Maximum Field&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="fieldPointsSetValue">
+    <property name="geometry">
+     <rect>
+      <x>779</x>
+      <y>90</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::StrongFocus</enum>
+    </property>
+    <property name="text">
+     <string>100</string>
+    </property>
+    <property name="frame">
+     <bool>true</bool>
+    </property>
+    <property name="cursorPosition">
+     <number>3</number>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="hCutTracePos">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>730</y>
+      <width>50</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::ClickFocus</enum>
+    </property>
+    <property name="buttonSymbols">
+     <enum>QAbstractSpinBox::NoButtons</enum>
+    </property>
+    <property name="minimum">
+     <double>-99.000000000000000</double>
+    </property>
+   </widget>
+   <widget class="QFrame" name="curfieldTracePlot">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>760</y>
+      <width>640</width>
+      <height>175</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(147, 147, 147);</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="fieldSpeedSetValue">
+    <property name="geometry">
+     <rect>
+      <x>779</x>
+      <y>115</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0.10</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="FieldSet">
+    <property name="geometry">
+     <rect>
+      <x>664</x>
+      <y>10</y>
+      <width>161</width>
+      <height>19</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#ffffff;&quot;&gt;Magnetic Field Settings&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_15">
+    <property name="geometry">
+     <rect>
+      <x>385</x>
+      <y>40</y>
+      <width>126</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Voltage Sweep Mode:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>415</x>
+      <y>70</y>
+      <width>48</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Blinking:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="biasSpeedSetValue">
+    <property name="geometry">
+     <rect>
+      <x>1020</x>
+      <y>115</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1.00</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="BiasInc">
+    <property name="geometry">
+     <rect>
+      <x>901</x>
+      <y>90</y>
+      <width>110</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Number of Steps&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="abortSweep">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>110</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: qlineargradient(spread:pad, x1:1, y1:0.648, x2:1, y2:0, stop:0 rgba(255, 0, 0, 255), stop:1 rgba(255, 255, 255, 255));</string>
+    </property>
+    <property name="text">
+     <string>Abort Sweep</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="startSweep">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>110</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: qlineargradient(spread:pad, x1:0.96, y1:0.960227, x2:1, y2:0, stop:0 rgba(0, 158, 0, 255), stop:1 rgba(255, 255, 255, 255));</string>
+    </property>
+    <property name="text">
+     <string>Start Sweep</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="biasSweepMode">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>40</y>
+      <width>105</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <item>
+     <property name="text">
+      <string>Min to Max</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Zero to Max/Min</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QLabel" name="SweepParam">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>10</y>
+      <width>156</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>71</width>
+      <height>16</height>
+     </size>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt; color:#ffffff;&quot;&gt;Sweep Parameters&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_14">
+    <property name="geometry">
+     <rect>
+      <x>834</x>
+      <y>115</y>
+      <width>44</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;(T/min)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="blink">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>70</y>
+      <width>64</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <item>
+     <property name="text">
+      <string>Enable</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Disable</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QTabWidget" name="tabsTrace">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>170</y>
+      <width>640</width>
+      <height>550</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="plotTrace">
+     <attribute name="title">
+      <string>Field, Bias, Current</string>
+     </attribute>
+     <widget class="QFrame" name="currentTracePlot">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>640</width>
+        <height>530</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(135, 135, 135);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="noiseTraceTab">
+     <attribute name="title">
+      <string>Field, Bias, Noise</string>
+     </attribute>
+     <widget class="QFrame" name="noiseTracePlot">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>640</width>
+        <height>530</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(135, 135, 135);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QComboBox" name="currentBiasTraceSelect">
+    <property name="geometry">
+     <rect>
+      <x>400</x>
+      <y>730</y>
+      <width>97</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <item>
+     <property name="text">
+      <string>Current v Bias</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Current v Field</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QLabel" name="label_27">
+    <property name="geometry">
+     <rect>
+      <x>15</x>
+      <y>730</y>
+      <width>83</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Field Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="VoltMin">
+    <property name="geometry">
+     <rect>
+      <x>901</x>
+      <y>40</y>
+      <width>99</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Minimum Voltage&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="VoltSet">
+    <property name="geometry">
+     <rect>
+      <x>905</x>
+      <y>10</y>
+      <width>155</width>
+      <height>19</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#ffffff;&quot;&gt;Bias Voltage Settings&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_12">
+    <property name="geometry">
+     <rect>
+      <x>834</x>
+      <y>40</y>
+      <width>18</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;(T)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="biasMaxSetValue">
+    <property name="geometry">
+     <rect>
+      <x>1020</x>
+      <y>65</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1.00</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="fieldMaxSetValue">
+    <property name="geometry">
+     <rect>
+      <x>779</x>
+      <y>65</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0.10</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="frameSQUID" native="true">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>330</width>
+      <height>130</height>
+     </rect>
+    </property>
+    <widget class="QPushButton" name="SQUID">
+     <property name="geometry">
+      <rect>
+       <x>-60</x>
+       <y>-20</y>
+       <width>431</width>
+       <height>171</height>
+      </rect>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
+     <property name="contextMenuPolicy">
+      <enum>Qt::ActionsContextMenu</enum>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">image: url(:/nSOTScanner/Pictures/SQUIDRotated2.png);
+background-color: rgb(3, 3, 3);</string>
+     </property>
+     <property name="text">
+      <string>PushButton</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QLabel" name="VoltMax">
+    <property name="geometry">
+     <rect>
+      <x>901</x>
+      <y>65</y>
+      <width>102</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Maximum Voltage&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="FieldInc">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>90</y>
+      <width>110</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Number of Steps&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_11">
+    <property name="geometry">
+     <rect>
+      <x>834</x>
+      <y>65</y>
+      <width>18</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;(T)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="biasMinSetValue">
+    <property name="geometry">
+     <rect>
+      <x>1020</x>
+      <y>40</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0.00</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_37">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>115</y>
+      <width>110</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Field Sweep Speed&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_38">
+    <property name="geometry">
+     <rect>
+      <x>901</x>
+      <y>115</y>
+      <width>61</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Step Delay&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_29">
+    <property name="geometry">
+     <rect>
+      <x>195</x>
+      <y>730</y>
+      <width>99</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Voltage Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="fieldMinSetValue">
+    <property name="geometry">
+     <rect>
+      <x>779</x>
+      <y>40</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0.00</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="MinField">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>40</y>
+      <width>83</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Minimum Field&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>1075</x>
+      <y>40</y>
+      <width>18</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;(V)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_6">
+    <property name="geometry">
+     <rect>
+      <x>1075</x>
+      <y>65</y>
+      <width>18</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;(V)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_9">
+    <property name="geometry">
+     <rect>
+      <x>1075</x>
+      <y>115</y>
+      <width>27</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;(ms)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="vCutTracePos">
+    <property name="geometry">
+     <rect>
+      <x>105</x>
+      <y>730</y>
+      <width>50</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::ClickFocus</enum>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="buttonSymbols">
+     <enum>QAbstractSpinBox::NoButtons</enum>
+    </property>
+    <property name="minimum">
+     <double>-99.000000000000000</double>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="biasPointsSetValue">
+    <property name="geometry">
+     <rect>
+      <x>1020</x>
+      <y>90</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>500</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="QTabWidget" name="tabsRetrace">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>170</y>
+      <width>640</width>
+      <height>550</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="plotRetraceMain">
+     <attribute name="title">
+      <string>Field, Bias, Current</string>
+     </attribute>
+     <widget class="QFrame" name="currentRetracePlot">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>640</width>
+        <height>530</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(135, 135, 135);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="noiseTab_2">
+     <attribute name="title">
+      <string>Field, Bias, Noise</string>
+     </attribute>
+     <widget class="QFrame" name="noiseRetracePlot">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>640</width>
+        <height>530</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(135, 135, 135);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QLabel" name="label_30">
+    <property name="geometry">
+     <rect>
+      <x>845</x>
+      <y>730</y>
+      <width>99</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Voltage Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="currentBiasRetraceSelect">
+    <property name="geometry">
+     <rect>
+      <x>1050</x>
+      <y>730</y>
+      <width>97</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <item>
+     <property name="text">
+      <string>Current v Bias</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Current v Field</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QFrame" name="curfieldRetracePlot">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>760</y>
+      <width>640</width>
+      <height>175</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(147, 147, 147);</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_28">
+    <property name="geometry">
+     <rect>
+      <x>665</x>
+      <y>730</y>
+      <width>83</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Field Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="vCutRetracePos">
+    <property name="geometry">
+     <rect>
+      <x>755</x>
+      <y>730</y>
+      <width>50</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::ClickFocus</enum>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="buttonSymbols">
+     <enum>QAbstractSpinBox::NoButtons</enum>
+    </property>
+    <property name="minimum">
+     <double>-99.000000000000000</double>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="hCutRetracePos">
+    <property name="geometry">
+     <rect>
+      <x>950</x>
+      <y>730</y>
+      <width>50</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::ClickFocus</enum>
+    </property>
+    <property name="buttonSymbols">
+     <enum>QAbstractSpinBox::NoButtons</enum>
+    </property>
+    <property name="minimum">
+     <double>-99.000000000000000</double>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>140</y>
+      <width>52</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt; font-weight:600; text-decoration: underline; color:#ffffff;&quot;&gt;Trace&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>140</y>
+      <width>73</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt; font-weight:600; text-decoration: underline; color:#ffffff;&quot;&gt;Retrace&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_18">
+    <property name="geometry">
+     <rect>
+      <x>1120</x>
+      <y>40</y>
+      <width>82</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;SSAA Resistor&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_17">
+    <property name="geometry">
+     <rect>
+      <x>1120</x>
+      <y>90</y>
+      <width>88</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Bias Resistance&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_16">
+    <property name="geometry">
+     <rect>
+      <x>1120</x>
+      <y>65</y>
+      <width>98</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Shunt Resistance&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_19">
+    <property name="geometry">
+     <rect>
+      <x>1270</x>
+      <y>65</y>
+      <width>19</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;(Ω)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="shuntResValue">
+    <property name="geometry">
+     <rect>
+      <x>1230</x>
+      <y>65</y>
+      <width>35</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="ssaaResValue">
+    <property name="geometry">
+     <rect>
+      <x>1230</x>
+      <y>40</y>
+      <width>35</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1.0</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_21">
+    <property name="geometry">
+     <rect>
+      <x>1270</x>
+      <y>40</y>
+      <width>25</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;(kΩ)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_20">
+    <property name="geometry">
+     <rect>
+      <x>1270</x>
+      <y>90</y>
+      <width>25</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;(kΩ)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="biasResValue">
+    <property name="geometry">
+     <rect>
+      <x>1230</x>
+      <y>90</y>
+      <width>35</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0.0</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>1140</x>
+      <y>10</y>
+      <width>107</width>
+      <height>19</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#ffffff;&quot;&gt;Resistor Values&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QFrame" name="curbiasRetracePlot">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>760</y>
+      <width>640</width>
+      <height>175</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(127, 127, 127);</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="liveTracePlot">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>730</y>
+      <width>85</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="text">
+     <string>Toggle Line Cut</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="liveRetracePlot">
+    <property name="geometry">
+     <rect>
+      <x>1180</x>
+      <y>730</y>
+      <width>82</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="text">
+     <string>Toggle Line Cut</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="analyzeData">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>110</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: qlineargradient(spread:pad, x1:0.972, y1:1, x2:1, y2:0, stop:0 rgba(255, 250, 0, 255), stop:1 rgba(255, 255, 255, 255));</string>
+    </property>
+    <property name="text">
+     <string>Analyze Data</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="dacSetOpen">
+    <property name="geometry">
+     <rect>
+      <x>1160</x>
+      <y>130</y>
+      <width>35</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="toolTip">
+     <string>Set DAC Channels</string>
+    </property>
+    <property name="text">
+     <string>DAC</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="acSetOpen">
+    <property name="geometry">
+     <rect>
+      <x>1200</x>
+      <y>130</y>
+      <width>35</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="toolTip">
+     <string>Set AC Excitation</string>
+    </property>
+    <property name="text">
+     <string>ᔐ</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_8">
+    <property name="geometry">
+     <rect>
+      <x>1250</x>
+      <y>130</y>
+      <width>15</width>
+      <height>19</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;ᔐ&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="hideTraceGrad">
+    <property name="geometry">
+     <rect>
+      <x>630</x>
+      <y>160</y>
+      <width>20</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="toolTip">
+     <string>Hide Gradient</string>
+    </property>
+    <property name="text">
+     <string>-</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="showTraceGrad">
+    <property name="geometry">
+     <rect>
+      <x>630</x>
+      <y>160</y>
+      <width>20</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="toolTip">
+     <string>Show Gradient</string>
+    </property>
+    <property name="text">
+     <string>+</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="hideRetraceGrad">
+    <property name="geometry">
+     <rect>
+      <x>1280</x>
+      <y>160</y>
+      <width>20</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="toolTip">
+     <string>Hide Gradient</string>
+    </property>
+    <property name="text">
+     <string>-</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="showRetraceGrad">
+    <property name="geometry">
+     <rect>
+      <x>1280</x>
+      <y>160</y>
+      <width>20</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="toolTip">
+     <string>Show Gradient</string>
+    </property>
+    <property name="text">
+     <string>+</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="fieldStepsInc">
+    <property name="geometry">
+     <rect>
+      <x>834</x>
+      <y>90</y>
+      <width>23</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="toolTip">
+     <string>Toggle Field Steps/Increment</string>
+    </property>
+    <property name="text">
+     <string>↺</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="biasStepsInc">
+    <property name="geometry">
+     <rect>
+      <x>1075</x>
+      <y>90</y>
+      <width>23</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="toolTip">
+     <string>Toggle Voltage Steps/Increment</string>
+    </property>
+    <property name="text">
+     <string>↺</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_Servers">
+    <property name="geometry">
+     <rect>
+      <x>5</x>
+      <y>5</y>
+      <width>15</width>
+      <height>15</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#push_Servers{
+background: rgb(144, 140, 9);
+ border-radius: 4px;
+}</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <zorder>showRetraceGrad</zorder>
+   <zorder>showTraceGrad</zorder>
+   <zorder>hideTraceGrad</zorder>
+   <zorder>dacSetOpen</zorder>
+   <zorder>curfieldTracePlot</zorder>
+   <zorder>curfieldRetracePlot</zorder>
+   <zorder>curbiasRetracePlot</zorder>
+   <zorder>curbiasTracePlot</zorder>
+   <zorder>MaxField</zorder>
+   <zorder>fieldPointsSetValue</zorder>
+   <zorder>hCutTracePos</zorder>
+   <zorder>fieldSpeedSetValue</zorder>
+   <zorder>FieldSet</zorder>
+   <zorder>label_15</zorder>
+   <zorder>label</zorder>
+   <zorder>biasSpeedSetValue</zorder>
+   <zorder>BiasInc</zorder>
+   <zorder>abortSweep</zorder>
+   <zorder>startSweep</zorder>
+   <zorder>biasSweepMode</zorder>
+   <zorder>SweepParam</zorder>
+   <zorder>label_14</zorder>
+   <zorder>blink</zorder>
+   <zorder>tabsTrace</zorder>
+   <zorder>currentBiasTraceSelect</zorder>
+   <zorder>label_27</zorder>
+   <zorder>VoltMin</zorder>
+   <zorder>VoltSet</zorder>
+   <zorder>label_12</zorder>
+   <zorder>biasMaxSetValue</zorder>
+   <zorder>fieldMaxSetValue</zorder>
+   <zorder>VoltMax</zorder>
+   <zorder>FieldInc</zorder>
+   <zorder>label_11</zorder>
+   <zorder>biasMinSetValue</zorder>
+   <zorder>label_37</zorder>
+   <zorder>label_38</zorder>
+   <zorder>label_29</zorder>
+   <zorder>fieldMinSetValue</zorder>
+   <zorder>MinField</zorder>
+   <zorder>label_4</zorder>
+   <zorder>label_6</zorder>
+   <zorder>label_9</zorder>
+   <zorder>vCutTracePos</zorder>
+   <zorder>biasPointsSetValue</zorder>
+   <zorder>frameSQUID</zorder>
+   <zorder>tabsRetrace</zorder>
+   <zorder>label_30</zorder>
+   <zorder>currentBiasRetraceSelect</zorder>
+   <zorder>label_28</zorder>
+   <zorder>vCutRetracePos</zorder>
+   <zorder>hCutRetracePos</zorder>
+   <zorder>label_2</zorder>
+   <zorder>label_3</zorder>
+   <zorder>label_18</zorder>
+   <zorder>label_17</zorder>
+   <zorder>label_16</zorder>
+   <zorder>label_19</zorder>
+   <zorder>shuntResValue</zorder>
+   <zorder>ssaaResValue</zorder>
+   <zorder>label_21</zorder>
+   <zorder>label_20</zorder>
+   <zorder>biasResValue</zorder>
+   <zorder>label_5</zorder>
+   <zorder>liveTracePlot</zorder>
+   <zorder>liveRetracePlot</zorder>
+   <zorder>analyzeData</zorder>
+   <zorder>acSetOpen</zorder>
+   <zorder>label_8</zorder>
+   <zorder>hideRetraceGrad</zorder>
+   <zorder>fieldStepsInc</zorder>
+   <zorder>biasStepsInc</zorder>
+   <zorder>push_Servers</zorder>
+  </widget>
+ </widget>
+ <tabstops>
+  <tabstop>fieldMinSetValue</tabstop>
+  <tabstop>fieldMaxSetValue</tabstop>
+  <tabstop>fieldPointsSetValue</tabstop>
+  <tabstop>fieldSpeedSetValue</tabstop>
+  <tabstop>biasMinSetValue</tabstop>
+  <tabstop>biasMaxSetValue</tabstop>
+  <tabstop>biasPointsSetValue</tabstop>
+  <tabstop>biasSpeedSetValue</tabstop>
+  <tabstop>ssaaResValue</tabstop>
+  <tabstop>shuntResValue</tabstop>
+  <tabstop>biasResValue</tabstop>
+  <tabstop>dacSetOpen</tabstop>
+  <tabstop>acSetOpen</tabstop>
+  <tabstop>startSweep</tabstop>
+  <tabstop>analyzeData</tabstop>
+ </tabstops>
+ <resources>
+  <include location="characterPics.qrc"/>
+  <include location="../Resources/nSOTScannerResources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="characterPics">
+    <file>schematic.png</file>
+    <file>SQUID.png</file>
+    <file>sunSQUID.png</file>
+  </qresource>
+</RCC>

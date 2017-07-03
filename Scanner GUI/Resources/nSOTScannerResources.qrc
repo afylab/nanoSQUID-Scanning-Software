@@ -1,0 +1,19 @@
+<RCC>
+  <qresource prefix="nSOTScanner">
+    <file>Pictures/21232342.bmp</file>
+    <file>Pictures/21232342inverted.bmp</file>
+    <file>Pictures/lock.jpg</file>
+    <file>Pictures/backIcon.png</file>
+    <file>Pictures/diameter.png</file>
+    <file>Pictures/homeIcon.png</file>
+    <file>Pictures/lock.png</file>
+    <file>Pictures/refreshIcon.png</file>
+    <file>Pictures/schematic.png</file>
+    <file>Pictures/SessionSelect.png</file>
+    <file>Pictures/SQUID.png</file>
+    <file>Pictures/SQUIDRotated.png</file>
+    <file>Pictures/SQUIDRotated2.png</file>
+    <file>Pictures/sunSQUID.png</file>
+    <file>Pictures/unlock.png</file>
+  </qresource>
+</RCC>
