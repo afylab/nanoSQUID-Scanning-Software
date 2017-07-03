@@ -296,7 +296,6 @@ background: black;
  </widget>
  <resources>
   <include location="Resources/nSOTScannerResources.qrc"/>
-  <include location="nSOTCharacterizer/characterPics.qrc"/>
  </resources>
  <connections/>
 </ui>

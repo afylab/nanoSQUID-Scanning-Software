@@ -1488,7 +1488,6 @@ background: rgb(144, 140, 9);
   <tabstop>analyzeData</tabstop>
  </tabstops>
  <resources>
-  <include location="characterPics.qrc"/>
   <include location="../Resources/nSOTScannerResources.qrc"/>
  </resources>
  <connections/>
