@@ -31,6 +31,7 @@ import time
 import numpy as np
 import zhinst
 import zhinst.utils
+import sys
 
 
 class HF2LIServer(LabradServer):
@@ -100,7 +101,7 @@ class HF2LIServer(LabradServer):
         yield self.daq.sync()
                
     @setting(105,returns = '')
-    def disable_outputs(self):
+    def disable_outputs(self,c):
         """Create a base instrument configuration: disable all outputs, demods and scopes."""
         general_setting = [['/%s/demods/*/enable' % self.dev_ID, 0],
                            ['/%s/demods/*/trigger' % self.dev_ID, 0],
@@ -233,88 +234,134 @@ class HF2LIServer(LabradServer):
         range = float(dic[setting])
         returnValue(range)
         
-    @setting(121,start = 'v[]', stop = 'v[]', samplecount  = 'i', sweep_param = 's', log = 'b', loopcount = 'i', settle_time = 'v[]', settle_inaccuracy = 'v[]', returns = 'v[]')
-    def sweep(self,c,start,stop, samplecount, sweep_param, log = False, loopcount = 1, settle_time = 0, settle_inaccuracy = 0.001, averaging_tc = 5, averaging_sample = 5):
+    @setting(121,start = 'v[]', stop = 'v[]', samplecount  = 'i', sweep_param = 's', demod = 'i', log = 'b', bandwidthcontrol = 'i', bandwidth = 'v[]', bandwidthoverlap = 'b', loopcount = 'i', settle_time = 'v[]', settle_inaccuracy = 'v[]', averaging_tc = 'v[]', averaging_sample = 'v[]', returns = '**v[]')
+    def create_sweep_object(self,c,start,stop, samplecount, sweep_param, demod = 1, log = False, bandwidthcontrol = 2, bandwidth = 1000, bandwidthoverlap = False, loopcount = 1, settle_time = 0, settle_inaccuracy = 0.001, averaging_tc = 5, averaging_sample = 5):
         """Sweeps the provided sweep parameter from the provided start value to the provided stop value with 
         the desired number of points. The sweep records all data at each point in the sweep. The sweeper will
         not turn on any outputs or configure anything else. It only sweeps the parameter and records data.
-        Available sweep_param inputs are (spaces included): 
-        oscillator 1
-        oscillator 2
-        output 1 amplitude
-        output 2 amplitude
-        output 1 offset
-        output 2 offset
-        Returns the items of a dictionary (because labrad cannot pass dictionaries). Suggested to immediately
-        reconstruct the dictionary using dict(output)."""
+        Available sweep_param inputs are (spaces included): \r\n
+        oscillator 1 \r\n
+        oscillator 2 \r\n
+        output 1 amplitude \r\n
+        output 2 amplitude \r\n
+        output 1 offset \r\n
+        output 2 offset \r\n
+        Returns the 4 by samplecount array with the first column corresponding to grid of the swept parameter, 
+        the second corresponds to the demodulator R, the third to the phase, and the fourth to the frequency.
+        Loop count greater than 1 not yet implemented. """
         
         #Initialize the sweeper object and specify the device
-        sweep  = self.daq.sweep()
-        sweeper.set('sweep/device', self.dev_ID)
-        
+        self.sweeper  = yield self.daq.sweep()
+        yield self.sweeper.set('sweep/device', self.dev_ID)
+        path = '/%s/demods/%d/sample' % (self.dev_ID, demod - 1)
         #Set the parameter to be swept
         sweep_param_set = False
         if sweep_param == "oscillator 1":
-            sweeper.set('sweep/gridnode', 'oscs/0/freq')
+            yield sweeper.set('sweep/gridnode', 'oscs/0/freq')
+            sweep_param_set = True
         elif sweep_param == "oscillator 2":
-            sweeper.set('sweep/gridnode', 'oscs/1/freq')
+            yield sweeper.set('sweep/gridnode', 'oscs/1/freq')
+            sweep_param_set = True
         elif sweep_param == "output 1 amplitude":
-            sweeper.set('sweep/gridnode', 'sigouts/0/amplitudes/6')
+            yield sweeper.set('sweep/gridnode', 'sigouts/0/amplitudes/6')
+            sweep_param_set = True
         elif sweep_param == "output 2 amplitude":
-            sweeper.set('sweep/gridnode', 'sigouts/1/amplitudes/7')
+            yield sweeper.set('sweep/gridnode', 'sigouts/1/amplitudes/7')
+            sweep_param_set = True
         elif sweep_param == "output 1 offset":
-            sweeper.set('sweep/gridnode', 'sigouts/0/offset')
+            yield sweeper.set('sweep/gridnode', 'sigouts/0/offset')
+            sweep_param_set = True
         elif sweep_param == "output 2 offset":
-            sweeper.set('sweep/gridnode', 'sigouts/1/offset')
+            yield sweeper.set('sweep/gridnode', 'sigouts/1/offset')
+            sweep_param_set = True
 
-            
         if sweep_param_set == True:
             #Set the start and stop points
-            sweeper.set('sweep/start', start)
-            sweeper.set('sweep/stop', stop)
-            sweeper.set('sweep/samplecount', samplecount)
+            yield self.sweeper.set('sweep/start', start)
+            yield self.sweeper.set('sweep/stop', stop)
+            yield self.sweeper.set('sweep/samplecount', samplecount)
             
             #Specify linear or logarithmic grid spacing. Off by default
-            sweeper.set('sweep/xmapping', log)
-            # Specify the number of sweeps to perform back-to-back.
-            sweeper.set('sweep/loopcount', loopcount)
-            #Specify the settling time between data points
-            sweeper.set('sweep/settling/time', settle_time)
-            sweeper.set('sweep/settling/inaccuracy', settle_inaccuracy)
+            yield self.sweeper.set('sweep/xmapping', log)
+            # Automatically control the demodulator bandwidth/time constants used.
+            # 0=manual, 1=fixed, 2=auto
+            # Note: to use manual and fixed, sweep/bandwidth has to be set to a value > 0.
+            yield self.sweeper.set('sweep/bandwidthcontrol', bandwidthcontrol)
+            if bandwidthcontrol == 0 or bandwidthcontrol == 1:
+                yield self.sweeper.set('sweep/bandwidth',1000)
+            # Sets the bandwidth overlap mode (default 0). If enabled, the bandwidth of
+            # a sweep point may overlap with the frequency of neighboring sweep
+            # points. The effective bandwidth is only limited by the maximal bandwidth
+            # setting and omega suppression. As a result, the bandwidth is independent
+            # of the number of sweep points. For frequency response analysis bandwidth
+            # overlap should be enabled to achieve maximal sweep speed (default: 0). 0 =
+            # Disable, 1 = Enable.
+            yield self.sweeper.set('sweep/bandwidthoverlap', bandwidthoverlap)
             
-            # Set the minimum time to record and average data to 10 demodulator
+            # Specify the number of sweeps to perform back-to-back.
+            yield self.sweeper.set('sweep/loopcount', loopcount)
+            
+            #Specify the settling time between data points. 
+            yield self.sweeper.set('sweep/settling/time', settle_time)
+            
+            # The sweep/settling/inaccuracy' parameter defines the settling time the
+            # sweeper should wait before changing a sweep parameter and recording the next
+            # sweep data point. The settling time is calculated from the specified
+            # proportion of a step response function that should remain. The value
+            # provided here, 0.001, is appropriate for fast and reasonably accurate
+            # amplitude measurements. For precise noise measurements it should be set to
+            # ~100n.
+            # Note: The actual time the sweeper waits before recording data is the maximum
+            # time specified by sweep/settling/time and defined by
+            # sweep/settling/inaccuracy.
+            yield self.sweeper.set('sweep/settling/inaccuracy', settle_inaccuracy)
+            
+            # Set the minimum time to record and average data. By default set to 10 demodulator
             # filter time constants.
-            sweeper.set('sweep/averaging/tc', averaging_tc)
-            # Minimal number of samples that we want to record and average is 100. Note,
+            yield self.sweeper.set('sweep/averaging/tc', averaging_tc)
+            
+            # Minimal number of samples that we want to record and average. Note,
             # the number of samples used for averaging will be the maximum number of
             # samples specified by either sweep/averaging/tc or sweep/averaging/sample.
-            sweeper.set('sweep/averaging/sample', averaging_sample)
+            # By default this is set to 5.
+            yield self.sweeper.set('sweep/averaging/sample', averaging_sample)
+            
             
             #Subscribe to path defined previously
-            sweeper.subscribe(path)
+            yield sweeper.subscribe(path)
             #execute sweep
-            sweeper.execute()
+            yield sweeper.execute()
             
             # start = time.time() Not implemented. Can be used to add a timeout function
             
-            print("Will perform", loopcount, "sweeps:")
+            print "Will perform", loopcount, "sweep."
             while not sweeper.finished():  # Wait until the sweep is complete, with timeout.
-                time.sleep(1)
-                progress = sweeper.progress()
-                print "Individual sweep progress: {:.2%}.".format(progress[0])
+                #replace this with proper sleeping later
+                progress = yield sweeper.progress()
+                print "Individual sweep progress: {:.2%}.".format(progress[0]) 
+                time.sleep(0.25)
                 
+            print 'Individual sweep progress: 100.00%.'
+            
             return_flat_dict = True
             data = sweeper.read(return_flat_dict)
             sweeper.unsubscribe(path)
-            
             # Stop the sweeper thread and clear the memory.
             sweeper.clear()
+            demod_data = data[path]
+
+            grid = demod_data[0][0]['grid']
+            R = np.abs(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'])
+            phi = np.angle(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'])
+            frequency  = demod_data[0][0]['frequency']
             
-            returnValue(data.items())
+            returnValue([grid,R,phi,frequency])
         else: 
             print 'Desired sweep parameter does not exist'
-            returnValue('')
-            
+            returnValue([0,0,0,0])
+        
+          
+
 __server__ = HF2LIServer()
 
 if __name__ == '__main__':
