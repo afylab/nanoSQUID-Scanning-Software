@@ -43,6 +43,7 @@ class HF2LIServer(LabradServer):
         self.dev_ID = None
         self.device_list = None
         self.props = None
+        self.sweeper = None
         print "Server initialization complete"
         
     @setting(100,returns = '')
@@ -234,7 +235,7 @@ class HF2LIServer(LabradServer):
         range = float(dic[setting])
         returnValue(range)
         
-    @setting(121,start = 'v[]', stop = 'v[]', samplecount  = 'i', sweep_param = 's', demod = 'i', log = 'b', bandwidthcontrol = 'i', bandwidth = 'v[]', bandwidthoverlap = 'b', loopcount = 'i', settle_time = 'v[]', settle_inaccuracy = 'v[]', averaging_tc = 'v[]', averaging_sample = 'v[]', returns = '**v[]')
+    @setting(121,start = 'v[]', stop = 'v[]', samplecount  = 'i', sweep_param = 's', demod = 'i', log = 'b', bandwidthcontrol = 'i', bandwidth = 'v[]', bandwidthoverlap = 'b', loopcount = 'i', settle_time = 'v[]', settle_inaccuracy = 'v[]', averaging_tc = 'v[]', averaging_sample = 'v[]', returns = 'b')
     def create_sweep_object(self,c,start,stop, samplecount, sweep_param, demod = 1, log = False, bandwidthcontrol = 2, bandwidth = 1000, bandwidthoverlap = False, loopcount = 1, settle_time = 0, settle_inaccuracy = 0.001, averaging_tc = 5, averaging_sample = 5):
         """Sweeps the provided sweep parameter from the provided start value to the provided stop value with 
         the desired number of points. The sweep records all data at each point in the sweep. The sweeper will
@@ -253,26 +254,26 @@ class HF2LIServer(LabradServer):
         #Initialize the sweeper object and specify the device
         self.sweeper  = yield self.daq.sweep()
         yield self.sweeper.set('sweep/device', self.dev_ID)
-        path = '/%s/demods/%d/sample' % (self.dev_ID, demod - 1)
+        self.sweeper_path = '/%s/demods/%d/sample' % (self.dev_ID, demod - 1)
         #Set the parameter to be swept
         sweep_param_set = False
         if sweep_param == "oscillator 1":
-            yield sweeper.set('sweep/gridnode', 'oscs/0/freq')
+            yield self.sweeper.set('sweep/gridnode', 'oscs/0/freq')
             sweep_param_set = True
         elif sweep_param == "oscillator 2":
-            yield sweeper.set('sweep/gridnode', 'oscs/1/freq')
+            yield self.sweeper.set('sweep/gridnode', 'oscs/1/freq')
             sweep_param_set = True
         elif sweep_param == "output 1 amplitude":
-            yield sweeper.set('sweep/gridnode', 'sigouts/0/amplitudes/6')
+            yield self.sweeper.set('sweep/gridnode', 'sigouts/0/amplitudes/6')
             sweep_param_set = True
         elif sweep_param == "output 2 amplitude":
-            yield sweeper.set('sweep/gridnode', 'sigouts/1/amplitudes/7')
+            yield self.sweeper.set('sweep/gridnode', 'sigouts/1/amplitudes/7')
             sweep_param_set = True
         elif sweep_param == "output 1 offset":
-            yield sweeper.set('sweep/gridnode', 'sigouts/0/offset')
+            yield self.sweeper.set('sweep/gridnode', 'sigouts/0/offset')
             sweep_param_set = True
         elif sweep_param == "output 2 offset":
-            yield sweeper.set('sweep/gridnode', 'sigouts/1/offset')
+            yield self.sweeper.set('sweep/gridnode', 'sigouts/1/offset')
             sweep_param_set = True
 
         if sweep_param_set == True:
@@ -328,42 +329,80 @@ class HF2LIServer(LabradServer):
             
             
             #Subscribe to path defined previously
-            yield sweeper.subscribe(path)
+            yield self.sweeper.subscribe(self.sweeper_path)
             #execute sweep
-            yield sweeper.execute()
+            
             
             # start = time.time() Not implemented. Can be used to add a timeout function
-            
+            '''
             print "Will perform", loopcount, "sweep."
-            while not sweeper.finished():  # Wait until the sweep is complete, with timeout.
+            while not self.sweeper.finished():  # Wait until the sweep is complete, with timeout.
                 #replace this with proper sleeping later
-                progress = yield sweeper.progress()
+                progress = yield self.sweeper.progress()
                 print "Individual sweep progress: {:.2%}.".format(progress[0]) 
                 time.sleep(0.25)
                 
             print 'Individual sweep progress: 100.00%.'
             
             return_flat_dict = True
-            data = sweeper.read(return_flat_dict)
-            sweeper.unsubscribe(path)
+            data = self.sweeper.read(return_flat_dict)
+            self.sweeper.unsubscribe(path)
             # Stop the sweeper thread and clear the memory.
-            sweeper.clear()
+            self.sweeper.clear()
             demod_data = data[path]
 
             grid = demod_data[0][0]['grid']
-            R = np.abs(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'])
+            R = np.abs(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y']) 
             phi = np.angle(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'])
             frequency  = demod_data[0][0]['frequency']
             
             returnValue([grid,R,phi,frequency])
+            '''
+            returnValue(True)
         else: 
             print 'Desired sweep parameter does not exist'
-            returnValue([0,0,0,0])
+            returnValue(False)
+
+    @setting(122, returns = 'b')
+    def start_sweep(self,c):
+        success = False
+        if self.sweeper is not None:
+            yield self.sweeper.execute()
+            success = True
         
-          
+        returnValue(success)
+        
+    @setting(123, returns = '?')
+    def read_latest_values(self,c):  
+        return_flat_dict = True
+        data = self.sweeper.read(return_flat_dict)
+        #self.sweeper.unsubscribe(path)
+        # Stop the sweeper thread and clear the memory.
+        #self.sweeper.clear()
+        demod_data = data[self.sweeper_path]
+        #print demod_data
+
+        grid = demod_data[0][0]['grid']
+        R = np.abs(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'])
+        phi = np.angle(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'])
+        frequency  = demod_data[0][0]['frequency']
+
+        formatted_data = [[],[],[],[]]
+        length = len(grid)
+        for i in range(0,length):
+            try:
+                formatted_data[0].append(float(grid[i]))
+                formatted_data[1].append(float(frequency[i]))
+                formatted_data[2].append(float(R[i]))
+                formatted_data[3].append(float(phi[i]))
+            except:
+                pass
+        print formatted_data
+
+        returnValue(formatted_data)
 
 __server__ = HF2LIServer()
-
+  
 if __name__ == '__main__':
     from labrad import util
     util.runServer(__server__)
