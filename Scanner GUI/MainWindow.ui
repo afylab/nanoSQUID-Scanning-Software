@@ -234,6 +234,7 @@ background: black;
     <addaction name="actionScan_Control"/>
     <addaction name="actionnSOT_Characterizer"/>
     <addaction name="actionData_Plotter"/>
+    <addaction name="actionTF_Characterizer"/>
    </widget>
    <widget class="QMenu" name="menuUser_Channels">
     <property name="title">
@@ -293,7 +294,20 @@ background: black;
     <string>Data Plotter</string>
    </property>
   </action>
+  <action name="actionTF_Characterizer">
+   <property name="text">
+    <string>TF Characterizer</string>
+   </property>
+  </action>
  </widget>
+ <tabstops>
+  <tabstop>push_Layout1</tabstop>
+  <tabstop>push_Layout2</tabstop>
+  <tabstop>push_Layout3</tabstop>
+  <tabstop>push_Layout4</tabstop>
+  <tabstop>push_Layout5</tabstop>
+  <tabstop>push_Logo</tabstop>
+ </tabstops>
  <resources>
   <include location="Resources/nSOTScannerResources.qrc"/>
  </resources>

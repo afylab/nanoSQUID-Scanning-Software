@@ -1,0 +1,7 @@
+        dc.buffer_ramp([int(var_ch1), int(var_ch2)], [int(read_ch1), int(read_ch2), 2],
+                                [vec_x[start], vec_y[start]],
+                                [vec_x[stop], vec_y[stop]],
+                                num_points, DELAY_MEAS, ADC_AVGSIZE)
+
+                d_read = dc.serial_poll.future(3, num_points)
+                d_tmp = d_read.result()

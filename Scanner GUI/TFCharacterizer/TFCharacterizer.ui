@@ -1,0 +1,1440 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1299</width>
+    <height>659</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1299</width>
+    <height>659</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1299</width>
+    <height>659</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Tuning Fork Characterizer</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#centralwidget{
+background-color: rgb(0, 0, 0);
+}</string>
+   </property>
+   <widget class="QPushButton" name="push_Servers">
+    <property name="geometry">
+     <rect>
+      <x>5</x>
+      <y>5</y>
+      <width>15</width>
+      <height>15</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#push_Servers{
+background: rgb(144, 140, 9);
+ border-radius: 4px;
+}</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QFrame" name="amplitudePlot">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>190</y>
+      <width>631</width>
+      <height>451</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(127, 127, 127);</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QFrame" name="phasePlot">
+    <property name="geometry">
+     <rect>
+      <x>650</x>
+      <y>190</y>
+      <width>631</width>
+      <height>451</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(127, 127, 127);</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_MinFreq">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>91</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>30.000</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_MaxFreq">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>121</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>34.000</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_Amplitude">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>91</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>100m</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_deltaF">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>151</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>50.000</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_MinFreq">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>91</y>
+      <width>81</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_MinFreq{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Start (kHz):</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_MaxFreq">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>121</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_MaxFreq{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Stop (kHz):</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_freqParams">
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>61</y>
+      <width>171</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_freqParams{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Frequency Parameters</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_5">
+    <property name="geometry">
+     <rect>
+      <x>11</x>
+      <y>61</y>
+      <width>20</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_5{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_6">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>70</y>
+      <width>3</width>
+      <height>110</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_6{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_7">
+    <property name="geometry">
+     <rect>
+      <x>173</x>
+      <y>62</y>
+      <width>15</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_7{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_8">
+    <property name="geometry">
+     <rect>
+      <x>186</x>
+      <y>70</y>
+      <width>3</width>
+      <height>110</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_8{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_9">
+    <property name="geometry">
+     <rect>
+      <x>11</x>
+      <y>171</y>
+      <width>176</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_9{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_deltaF">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>151</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_deltaF{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Step (Hz):</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_timeConst">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>122</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1m</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="Line" name="line_10">
+    <property name="geometry">
+     <rect>
+      <x>197</x>
+      <y>71</y>
+      <width>3</width>
+      <height>110</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_10{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_11">
+    <property name="geometry">
+     <rect>
+      <x>198</x>
+      <y>172</y>
+      <width>404</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_11{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_timeConst">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>122</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_timeConst{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Time constant (s) </string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_12">
+    <property name="geometry">
+     <rect>
+      <x>198</x>
+      <y>62</y>
+      <width>20</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_12{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_amplitude">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>92</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_amplitude{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Excitation Amplitude (V)</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_measParams">
+    <property name="geometry">
+     <rect>
+      <x>223</x>
+      <y>62</y>
+      <width>151</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_measParams{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Measurement Parameters</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_13">
+    <property name="geometry">
+     <rect>
+      <x>376</x>
+      <y>62</y>
+      <width>226</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_13{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_14">
+    <property name="geometry">
+     <rect>
+      <x>600</x>
+      <y>70</y>
+      <width>3</width>
+      <height>110</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_14{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_Start">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>20</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Start Sweep</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_Stop">
+    <property name="geometry">
+     <rect>
+      <x>330</x>
+      <y>20</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Stop Sweep</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_timeRemaining">
+    <property name="geometry">
+     <rect>
+      <x>520</x>
+      <y>20</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#lineEdit_elapsedTime{
+background: rgb(181, 181, 181);
+border: grey;
+}</string>
+    </property>
+    <property name="text">
+     <string>nan</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_elapsedTime">
+    <property name="geometry">
+     <rect>
+      <x>420</x>
+      <y>20</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_elapsedTime{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Time Remaining (s)</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_sensitivity">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>152</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_sensitivity{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Sensitivity (V)</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_sensitivity">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>152</y>
+      <width>71</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>100m</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_input">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>92</y>
+      <width>51</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_input{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Input</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_output">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>122</y>
+      <width>81</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_output{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Output</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radio_out2">
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>122</y>
+      <width>51</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#radio_out2{
+color: rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>CH 2</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radio_out1">
+    <property name="geometry">
+     <rect>
+      <x>485</x>
+      <y>122</y>
+      <width>41</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#radio_out1{
+color: rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>CH 1</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QFrame" name="inputButtons">
+    <property name="geometry">
+     <rect>
+      <x>475</x>
+      <y>82</y>
+      <width>110</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QRadioButton" name="radio_in2">
+     <property name="geometry">
+      <rect>
+       <x>65</x>
+       <y>10</y>
+       <width>51</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#radio_in2{
+color: rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>CH 2</string>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="radio_in1">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>41</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#radio_in1{
+color: rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>CH 1</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </widget>
+   <widget class="Line" name="line_15">
+    <property name="geometry">
+     <rect>
+      <x>611</x>
+      <y>71</y>
+      <width>3</width>
+      <height>110</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_15{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_16">
+    <property name="geometry">
+     <rect>
+      <x>612</x>
+      <y>172</y>
+      <width>498</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_16{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_phaseF">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>90</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_phaseF{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Phase f0 (kHz)</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_fitParams">
+    <property name="geometry">
+     <rect>
+      <x>640</x>
+      <y>60</y>
+      <width>91</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_fitParams{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Fit Parameters</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_19">
+    <property name="geometry">
+     <rect>
+      <x>1109</x>
+      <y>71</y>
+      <width>3</width>
+      <height>110</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_19{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_peakF">
+    <property name="geometry">
+     <rect>
+      <x>770</x>
+      <y>91</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="Line" name="line_17">
+    <property name="geometry">
+     <rect>
+      <x>612</x>
+      <y>62</y>
+      <width>20</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_17{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_peakF">
+    <property name="geometry">
+     <rect>
+      <x>630</x>
+      <y>91</y>
+      <width>101</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_peakF{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Amplitude f0 (kHz)</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_18">
+    <property name="geometry">
+     <rect>
+      <x>730</x>
+      <y>62</y>
+      <width>50</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_18{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_PhasePeakF">
+    <property name="geometry">
+     <rect>
+      <x>1010</x>
+      <y>91</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_fitData">
+    <property name="geometry">
+     <rect>
+      <x>790</x>
+      <y>61</y>
+      <width>61</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Fit Data</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_20">
+    <property name="geometry">
+     <rect>
+      <x>860</x>
+      <y>62</y>
+      <width>250</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_20{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_fileName">
+    <property name="geometry">
+     <rect>
+      <x>1070</x>
+      <y>20</y>
+      <width>211</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>unnamed</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_fileName">
+    <property name="geometry">
+     <rect>
+      <x>1000</x>
+      <y>20</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_fileName{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="text">
+     <string>File Name</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_PhaseQFactor">
+    <property name="geometry">
+     <rect>
+      <x>1010</x>
+      <y>152</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_qFactPhase">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>152</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_qFactPhase{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Phase Q Factor</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_25">
+    <property name="geometry">
+     <rect>
+      <x>1280</x>
+      <y>70</y>
+      <width>3</width>
+      <height>110</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_25{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_24">
+    <property name="geometry">
+     <rect>
+      <x>1120</x>
+      <y>70</y>
+      <width>3</width>
+      <height>110</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_24{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_23">
+    <property name="geometry">
+     <rect>
+      <x>1121</x>
+      <y>62</y>
+      <width>20</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_23{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_selectWorking">
+    <property name="geometry">
+     <rect>
+      <x>1145</x>
+      <y>62</y>
+      <width>171</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_selectWorking{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Select Working Point</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_21">
+    <property name="geometry">
+     <rect>
+      <x>1121</x>
+      <y>172</y>
+      <width>161</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_21{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_22">
+    <property name="geometry">
+     <rect>
+      <x>1267</x>
+      <y>62</y>
+      <width>15</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_22{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_qFact">
+    <property name="geometry">
+     <rect>
+      <x>630</x>
+      <y>152</y>
+      <width>111</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_qFact{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Amplitude Q Factor</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_QFactor">
+    <property name="geometry">
+     <rect>
+      <x>770</x>
+      <y>152</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_WorkingPoint">
+    <property name="geometry">
+     <rect>
+      <x>1130</x>
+      <y>152</y>
+      <width>141</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Commit Working Point</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_working">
+    <property name="geometry">
+     <rect>
+      <x>1130</x>
+      <y>122</y>
+      <width>81</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_working{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Freq (kHz)</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_freqSelect">
+    <property name="geometry">
+     <rect>
+      <x>1200</x>
+      <y>122</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>32.000</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_advancedSettings">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>152</y>
+      <width>111</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Advanced Settings</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_peakFSig">
+    <property name="geometry">
+     <rect>
+      <x>630</x>
+      <y>122</y>
+      <width>121</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_peakFSig{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Amplitude f0 Sigma (Hz)</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_peakFSig">
+    <property name="geometry">
+     <rect>
+      <x>770</x>
+      <y>122</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_PhasePeakFSig">
+    <property name="geometry">
+     <rect>
+      <x>1010</x>
+      <y>122</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_phaseFSig">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>122</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_phaseFSig{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Phase f0 Sigma (Hz)</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_SuggestWorkingPoint">
+    <property name="geometry">
+     <rect>
+      <x>1130</x>
+      <y>91</y>
+      <width>141</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Suggest Working Point</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <tabstops>
+  <tabstop>lineEdit_MinFreq</tabstop>
+  <tabstop>lineEdit_MaxFreq</tabstop>
+  <tabstop>lineEdit_deltaF</tabstop>
+  <tabstop>lineEdit_Amplitude</tabstop>
+  <tabstop>lineEdit_timeConst</tabstop>
+  <tabstop>lineEdit_sensitivity</tabstop>
+  <tabstop>lineEdit_peakF</tabstop>
+  <tabstop>lineEdit_PhasePeakF</tabstop>
+  <tabstop>lineEdit_QFactor</tabstop>
+  <tabstop>lineEdit_PhaseQFactor</tabstop>
+  <tabstop>lineEdit_fileName</tabstop>
+  <tabstop>radio_out1</tabstop>
+  <tabstop>radio_in2</tabstop>
+  <tabstop>radio_in1</tabstop>
+  <tabstop>push_Start</tabstop>
+  <tabstop>lineEdit_timeRemaining</tabstop>
+  <tabstop>push_Stop</tabstop>
+  <tabstop>push_fitData</tabstop>
+  <tabstop>radio_out2</tabstop>
+  <tabstop>push_Servers</tabstop>
+ </tabstops>
+ <resources>
+  <include location="../Resources/nSOTScannerResources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

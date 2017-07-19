@@ -1,49 +1,40 @@
 import sys
 from PyQt4 import QtGui, QtCore, uic
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, Deferred
 import twisted
 import numpy as np
 import pyqtgraph as pg
 import exceptions
 import time
 import threading
+from scipy.signal import detrend
 
 path = sys.path[0] + r"\ScanControl"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\ScanControlWindow.ui")
+Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 
 '''
 THINGS TO DO:
 Make sure no scan more than maximum area
 Fix linewidth to be constant number of pixels instead of bullshit variable stuff it does now
 '''
-
-class MultiLine(pg.QtGui.QGraphicsPathItem):
-    def __init__(self, x, y):
-        """x and y are 2D arrays of shape (Nplots, Nsamples)"""
-        connect = np.ones(x.shape, dtype=bool)
-        connect[:,-1] = 0 # don't draw the segment between each trace
-        self.path = pg.arrayToQPath(x.flatten(), y.flatten(), connect.flatten())
-        pg.QtGui.QGraphicsPathItem.__init__(self, self.path)
-        self.setPen(pg.mkPen('w'))
-    def shape(self): # override because QGraphicsPathItem.shape is too expensive.
-        return pg.QtGui.QGraphicsItem.shape(self)
-    def boundingRect(self):
-        return self.path.boundingRect()
-
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
     
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
-        self.reactor = reactor
-        self.setupUi(self)
-        self.setupAdditionalUi()
-        self.moveDefault()
         
-        self.setupScanningArea()
-        
+        self.aspectLocked = True
         self.FrameLocked = True
         self.LinearSpeedLocked = False
         self.DataLocked = True
+        self.scanCoordinates = False
+        self.dataProcessing = 'Raw'
+        
+        self.reactor = reactor
+        self.setupUi(self)
+        self.setupAdditionalUi()
+        self.setupScanningArea()
+        self.moveDefault()
         
         self.pixels = 256
         self.lines = 256
@@ -57,7 +48,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_FrameLock.clicked.connect(self.toggleFrameLock)
         self.push_SpeedLock.clicked.connect(self.toggleSpeedLock)
         self.push_DataLock.clicked.connect(self.toggleDataLock)
+        self.push_autoRange.clicked.connect(self.autoRange)
+        self.push_autoLevel.clicked.connect(self.autoLevel)
+        self.push_aspectLocked.clicked.connect(self.toggleAspect)
+        self.push_scanCoordinates.clicked.connect(self.toggleCoordinates)
         self.push_Test.clicked.connect(self.testUpdates)
+        
+        #Connect lineEdits
         self.lineEdit_Xc.editingFinished.connect(self.updateXc)
         self.lineEdit_Yc.editingFinished.connect(self.updateYc)
         self.lineEdit_H.editingFinished.connect(self.updateH)
@@ -67,47 +64,60 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_Lines.editingFinished.connect(self.updateLines)
         self.lineEdit_LineTime.editingFinished.connect(self.updateLineTime)
         self.lineEdit_Linear.editingFinished.connect(self.updateLinearSpeed)
+                
+        self.checkBox.toggled.connect(self.toggleROIVisibility)
+                
+        self.comboBox_Processing.activated[str].connect(self.selectProcessing)
         
-        #Connect click and drag of scan frame area for both the main and the miniplot
-        self.view.newCenterSig.connect(self.updateCenter)
-        self.view.newAngleSig.connect(self.updateAngle)
-        self.view.newSizeSig.connect(self.updateSize)
-        self.view.scanAdjustmentDone.connect(self.finishScanAdjustment)
-        self.view2.newCenterSig.connect(self.updateCenter)
-        self.view2.newAngleSig.connect(self.updateAngle)
-        self.view2.newSizeSig.connect(self.updateSize)
-        self.view2.scanAdjustmentDone.connect(self.finishScanAdjustment)
+        self.ROI.sigRegionChanged.connect(self.updateROI)
+        self.ROI2.sigRegionChanged.connect(self.updateROI2)
+        #Connect show servers list pop up
+        self.push_Servers.clicked.connect(self.showServersList)
+        
+        #Initialize all the labrad connections as none
+        self.cxn = None
+        self.dv = None
+        self.dac = None
+        self.hf = None
+        self.ips = None
         
     def moveDefault(self):    
         self.move(550,10)
-            
-    def testUpdates(self):
-        self.pxsize = (2000,2000)
-        self.extent = [-1e-5,1e-5,-1e-5,1e-5]
-        self.dy = np.random.rand(self.pxsize[0],self.pxsize[1])
-        self.dx = np.empty((2000,2000))
-        self.dx[:] = np.arange(2000)[np.newaxis,:]
-        self.DX = MultiLine(self.dx, self.dy)
-        timer = QtCore.QTimer(self)
-        timer.timeout.connect(self.update_gph)
-        timer.start(2000)
         
-    def update_gph(self):
-        now = pg.ptime.time()
-        print "Data creation time: %0.2f sec" % (pg.ptime.time()-now)
-        x0, x1 = (self.extent[0], self.extent[1])
-        y0, y1 = (self.extent[2], self.extent[3])
-        xscale, yscale = 1.0*(x1-x0) / self.dx.shape[0], 1.0 * (y1-y0) / self.dx.shape[1]
-        print "Scale time: %0.2f sec" % (pg.ptime.time()-now)
-        self.Plot2D.setImage(self.DX, autoRange = False, autoLevels = True, pos=[x0, y0],scale=[xscale, yscale])
-        print "Set image: %0.2f sec" % (pg.ptime.time()-now)
-        #self.Plot2DThreaded.updatePlot(self.dx,self.extent)
-        self.Plot2D.show()
-        print "Show: %0.2f sec" % (pg.ptime.time()-now)
+    def connectLabRAD(self, dict):
+        try:
+            self.cxn = dict['cxn']
+            self.dv = dict['dv']
+            
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(0, 170, 0);border-radius: 4px;}")
+            self.serversConnected = True
+        except:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")  
+        if self.dv is None:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+            
+    def disconnectLabRAD(self):
+        self.dv = None
+        self.cxn = None
+        self.ips = None
+        self.dac = None
+        self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+            
+    def showServersList(self):
+        serList = serversList(self.reactor, self)
+        serList.exec_()
         
     def setupAdditionalUi(self):
+        #Initial read only configuration of line edits
+        self.lineEdit_Linear.setReadOnly(False)
+        self.lineEdit_LineTime.setReadOnly(True)
+        
         #Set up main plot
-        self.view = plotEnvironment(name="Magnetic Field")
+        self.view = pg.PlotItem(title="Magnetic Field")
         self.view.setLabel('left',text='Y position',units = 'm')
         self.view.setLabel('right',text='Y position',units = 'm')
         self.view.setLabel('top',text='X position',units = 'm')
@@ -115,28 +125,20 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.Plot2D = pg.ImageView(parent = self.background, view = self.view)
         self.view.invertY(False)
         self.Plot2D.setGeometry(QtCore.QRect(240, 90, 750, 650))
+        self.view.setAspectLocked(self.aspectLocked)
         self.Plot2D.ui.roiBtn.hide()
         self.Plot2D.ui.menuBtn.hide()
         self.Plot2D.ui.histogram.item.gradient.loadPreset('bipolar')
         self.Plot2D.lower()
         self.PlotArea.lower()
         
-        self.pxsize = (256,256)
-        self.extent = [-1e-5,1e-5,-1e-5,1e-5]
-        self.dx = np.zeros(self.pxsize)
-        x0, x1 = (self.extent[0], self.extent[1])
-        y0, y1 = (self.extent[2], self.extent[3])
-        xscale, yscale = 1.0*(x1-x0) / self.dx.shape[0], 1.0 * (y1-y0) / self.dx.shape[1]
-        self.Plot2D.setImage(self.dx, pos=[x0, y0],scale=[xscale, yscale])
-        #self.Plot2DThreaded = PlotThread(self.Plot2D,self.dx,self.extent,self)
-        self.Plot2D.show()
-        
         #Set up mini plot for maximum scan range
-        self.view2 = plotEnvironment(name='Full Scan Range')
+        self.view2 = pg.PlotItem(title='Full Scan Range')
         self.view2.setLabel('left',text='Y position',units = 'm')
         self.view2.setLabel('right',text='Y position',units = 'm')
         self.view2.setLabel('top',text='X position',units = 'm')
         self.view2.setLabel('bottom',text='X position',units = 'm')
+        self.view2.enableAutoRange(self.view2.getViewBox().XYAxes, enable = False)
         self.MiniPlot2D = pg.ImageView(parent = self.background, view = self.view2)
         self.view2.invertY(False)
         self.MiniPlot2D.setGeometry(QtCore.QRect(5, 500, 228, 228))
@@ -147,69 +149,70 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.view2.setMouseEnabled(False,False)
         self.MiniPlot2D.lower()
         self.MiniPlotArea.lower()
-        
-        x0, x1 = (-15e-6, 15e-6)
-        y0, y1 = (-15e-6, 15e-6)
-        dx = np.zeros((100,100))
-        xscale, yscale = 1.0*(x1-x0) / dx.shape[0], 1.0 * (y1-y0) / dx.shape[1]
-        self.MiniPlot2D.setImage(dx, autoRange = False, pos=[x0, y0],scale=[xscale, yscale])
-        self.view2.setAspectLocked(False)
-        self.view2.setXRange(-15e-6,15e-6,0)
-        self.view2.setYRange(-15e-6,15e-6,0)
+        #15.2 to avoid pixel overlapping with axes, hiding them
+        self.view2.setXRange(-15.2e-6,15e-6,0)
+        self.view2.setYRange(-15e-6,15.2e-6,0)
         self.view2.hideButtons()
         self.view2.setMenuEnabled(False)
+        
+        #Create default dataset for initial plots
+        self.pxsize = (256,256)
+        extent = [-1e-5,1e-5,-1e-5,1e-5]
+        self.data = np.zeros(self.pxsize)
+        self.x0, x1 = (extent[0], extent[1])
+        self.y0, y1 = (extent[2], extent[3])
+        self.xscale, self.yscale = 1.0*(x1-self.x0) / self.data.shape[0], 1.0*(y1-self.y0) / self.data.shape[1]
+        
+        #Load default image
+        self.Plot2D.setImage(self.data, autoRange = False, autoLevels = False, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+        self.Plot2D.show()
+        self.MiniPlot2D.setImage(self.data, autoRange = False, autoLevels = False, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
         self.MiniPlot2D.show()
-
+        
+        #Connect large plot histogram changes to the mini plot
+        self.Plot2D.ui.histogram.sigLevelsChanged.connect(self.updateMiniHistogramLevels)
+        self.Plot2D.ui.histogram.sigLookupTableChanged.connect(self.updateMiniHistogramLookup)
+        
     def setupScanningArea(self):
+        self.x = -2.5e-6
+        self.y = -2.5e-6
         self.Xc = 0
         self.Yc = 0
         self.H = 5e-6
         self.W = 5e-6
-        self.Angle = 0
+        self.angle = 0
         
-        self.FrameAspectRatio = 1.0
-        #Because once data rotates, don't want to deal with plotting rotated data. 
+        # Keep track of plotted data location / angle so that we can also plot it in scan coordinates
         self.currAngle = 0
+        self.currXc = 0
+        self.currYc = 0
+        self.currH = 2e-5
+        self.currW = 2e-5
         
-        self.updatePoints()
-            
-        pen = QtGui.QPen(QtGui.QColor(200, 0, 0), 2.5e-7, QtCore.Qt.SolidLine) 
+        #Testing stuff
+        self.ROI = pg.RectROI((-2.5e-6,-2.5e-6),(5e-6,5e-6), movable = True)
+        self.ROI2 = pg.RectROI((-2.5e-6,-2.5e-6),(5e-6,5e-6), movable = True)
         
-        self.line1 = QtGui.QGraphicsLineItem(self.topLeft[0], self.topLeft[1], self.topRight[0], self.topRight[1])
-        self.line2 = QtGui.QGraphicsLineItem(self.topLeft[0], self.topLeft[1], self.bottomLeft[0], self.bottomLeft[1])
-        self.line3 = QtGui.QGraphicsLineItem(self.topRight[0], self.topRight[1], self.bottomRight[0], self.bottomRight[1])
-        self.line4 = QtGui.QGraphicsLineItem(self.bottomLeft[0], self.bottomRight[1], self.bottomRight[0], self.bottomRight[1])
+        self.view.addItem(self.ROI)
+        self.view2.addItem(self.ROI2)
         
-        self.line1.setPen(pen)
-        self.line2.setPen(pen)
-        self.line3.setPen(pen)
-        self.line4.setPen(pen)
+        #Remove default handles and add desired handles. 
+        self.ROI.removeHandle(self.ROI.indexOfHandle(self.ROI.getHandles()[0]))
+        self.ROI.addRotateHandle((0,0),(0.5,0.5), name = 'Rotate')
+        self.ROI.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = True)
         
-        self.view.addItem(self.line1)
-        self.view.addItem(self.line2)
-        self.view.addItem(self.line3)
-        self.view.addItem(self.line4)
+        self.ROI2.removeHandle(self.ROI2.indexOfHandle(self.ROI2.getHandles()[0]))
+        self.ROI2.addRotateHandle((0,0),(0.5,0.5), name = 'Rotate')
+        self.ROI2.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = True)
         
-        #Miniplot
-        self.miniLine1 = QtGui.QGraphicsLineItem(self.topLeft[0], self.topLeft[1], self.topRight[0], self.topRight[1])
-        self.miniLine2 = QtGui.QGraphicsLineItem(self.topLeft[0], self.topLeft[1], self.bottomLeft[0], self.bottomLeft[1])
-        self.miniLine3 = QtGui.QGraphicsLineItem(self.topRight[0], self.topRight[1], self.bottomRight[0], self.bottomRight[1])
-        self.miniLine4 = QtGui.QGraphicsLineItem(self.bottomLeft[0], self.bottomRight[1], self.bottomRight[0], self.bottomRight[1])
+    def updateMiniHistogramLevels(self, hist):
+        mn, mx = hist.getLevels()
+        self.MiniPlot2D.ui.histogram.setLevels(mn, mx)
         
-        pen = QtGui.QPen(QtGui.QColor(200, 0, 0), 5e-7, QtCore.Qt.SolidLine) 
+    def updateMiniHistogramLookup(self,hist):
+        self.MiniPlot2D.ui.histogram.imageItem().setLookupTable(hist.getLookupTable)
         
-        self.miniLine1.setPen(pen)
-        self.miniLine2.setPen(pen)
-        self.miniLine3.setPen(pen)
-        self.miniLine4.setPen(pen)
-        
-        self.view2.addItem(self.miniLine1)
-        self.view2.addItem(self.miniLine2)
-        self.view2.addItem(self.miniLine3)
-        self.view2.addItem(self.miniLine4)
-        
-    #----------------------------------------------------------------------------------------------#
-            
+#----------------------------------------------------------------------------------------------#         
     """ The following section connects actions related to buttons on the Scan Control window."""
         
     def toggleFrameLock(self):
@@ -217,18 +220,30 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_FrameLock.setStyleSheet("#push_FrameLock{"+
             "image:url(:/nSOTScanner/Pictures/unlock.png);background: black;}")
             self.FrameLocked = False
+            self.ROI.removeHandle(1)
+            self.ROI.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = False)
+            self.ROI2.removeHandle(1)
+            self.ROI2.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = False)
         else:
             self.push_FrameLock.setStyleSheet("#push_FrameLock{"+
             "image:url(:/nSOTScanner/Pictures/lock.png);background: black;}")
             self.FrameLocked = True
+            self.ROI.removeHandle(1)
+            self.ROI.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = True)
+            self.ROI2.removeHandle(1)
+            self.ROI2.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = True)
             
     def toggleSpeedLock(self):
         if self.LinearSpeedLocked == False:
             self.push_SpeedLock.move(170,279)
             self.LinearSpeedLocked = True
+            self.lineEdit_Linear.setReadOnly(True)
+            self.lineEdit_LineTime.setReadOnly(False)
         else:
             self.push_SpeedLock.move(170,309)
             self.LinearSpeedLocked = False
+            self.lineEdit_Linear.setReadOnly(False)
+            self.lineEdit_LineTime.setReadOnly(True)
             
     def toggleDataLock(self):
         if self.DataLocked == True:
@@ -239,39 +254,39 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_DataLock.setStyleSheet("#push_DataLock{"+
             "image:url(:/nSOTScanner/Pictures/lock.png);background: black;}")
             self.DataLocked = True
+            
+    def autoRange(self):
+        self.Plot2D.autoRange()
+        
+    def autoLevel(self):    
+        self.Plot2D.autoLevels()
+    
+    def toggleAspect(self):
+        if self.aspectLocked:
+            self.aspectLocked = False
+            self.view.setAspectLocked(False)
+        else:
+            self.aspectLocked = True
+            self.view.setAspectLocked(True, ratio = 1)
+            
+    def toggleCoordinates(self):
+        if self.scanCoordinates:
+            self.scanCoordinates = False
+            self.update_gph()
+            self.moveROI()
+            self.push_scanCoordinates.setText('Scan Coordinates')
+        else:
+            self.scanCoordinates = True
+            self.update_gph()
+            self.moveROI()
+            self.push_scanCoordinates.setText('Absolute Coordinates')
+            
+    def selectProcessing(self, str):
+        self.dataProcessing = str
+            
     #----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to drawing the scanning square."""
-    def updatePoints(self):
-        #needs to include angle calculation
-        dispAngle = self.Angle - self.currAngle
-        sin = np.sin(dispAngle * np.pi/180)
-        cos = np.cos(dispAngle * np.pi/180)
-        self.topLeft = (self.Xc - self.W * cos /2 + self.H * sin / 2, self.Yc + self.H* cos /2 + self.W * sin / 2)
-        self.topRight = (self.Xc + self.W * cos /2 + self.H * sin / 2, self.Yc + self.H* cos /2 - self.W * sin / 2)
-        self.bottomLeft = (self.Xc - self.W* cos /2 - self.H * sin / 2, self.Yc - self.H* cos /2 + self.W * sin / 2)
-        self.bottomRight = (self.Xc + self.W* cos /2 - self.H * sin / 2, self.Yc - self.H* cos /2 - self.W * sin / 2)
-        
-    def updateSquare(self): 
-        self.updatePen()
-        
-        self.line1.setLine(self.topLeft[0], self.topLeft[1], self.topRight[0], self.topRight[1])
-        self.line2.setLine(self.topLeft[0], self.topLeft[1], self.bottomLeft[0], self.bottomLeft[1])
-        self.line3.setLine(self.topRight[0], self.topRight[1], self.bottomRight[0], self.bottomRight[1])
-        self.line4.setLine(self.bottomLeft[0], self.bottomLeft[1], self.bottomRight[0], self.bottomRight[1])
-        
-        self.miniLine1.setLine(self.topLeft[0], self.topLeft[1], self.topRight[0], self.topRight[1])
-        self.miniLine2.setLine(self.topLeft[0], self.topLeft[1], self.bottomLeft[0], self.bottomLeft[1])
-        self.miniLine3.setLine(self.topRight[0], self.topRight[1], self.bottomRight[0], self.bottomRight[1])
-        self.miniLine4.setLine(self.bottomLeft[0], self.bottomLeft[1], self.bottomRight[0], self.bottomRight[1])
-        
-    def updatePen(self):
-        width = np.amin([np.abs(self.H),np.abs(self.W)])/25
-        pen = QtGui.QPen(QtGui.QColor(200, 0, 0), width, QtCore.Qt.SolidLine) 
-        self.line1.setPen(pen)
-        self.line2.setPen(pen)
-        self.line3.setPen(pen)
-        self.line4.setPen(pen)
         
     def formatNum(self,val):
         string = '%e'%val
@@ -309,7 +324,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             string = str(val)
         return string
         
-    
     def readNum(self,string):
         try:
             val = float(string)
@@ -326,104 +340,173 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             except: 
                 return 'Incorrect Format'
         return val
+                    
+    def updateROI(self,input):
+        #Use rules for updating GUI for when the first ROI is changed
+        self.updateScanArea(input)
+        self.updateGUI()
+        #Then move the second ROI to match
+        self.moveROI2()
+        
+    def updateROI2(self,input):
+        #Use rules for updating GUI for when the second ROI is changed
+        self.updateScanArea2(input)
+        self.updateGUI()
+        #Then move the first ROI to match
+        self.moveROI()  
+        
+    def updateScanArea(self, input):
+        size = input.size()
+        self.W = size.x()
+        self.H = size.y()
+        
+        if self.scanCoordinates:
+            inputAngle = input.angle()
+            self.angle = inputAngle + self.currAngle
+            pos = input.pos()
+            posx = -self.W*np.cos(inputAngle*np.pi/180)/2 + self.H*np.sin(inputAngle*np.pi/180)/2
+            posy = -self.H*np.cos(inputAngle*np.pi/180)/2 - self.W*np.sin(inputAngle*np.pi/180)/2
+            self.Xc = (pos.x() - posx) * np.cos(self.currAngle*np.pi/180) - (pos.y() - posy) * np.sin(self.currAngle*np.pi/180) + self.currXc
+            self.Yc = (pos.y() - posy) * np.cos(self.currAngle*np.pi/180) + (pos.x() - posx) * np.sin(self.currAngle*np.pi/180) + self.currYc
+            self.x = self.Xc - self.W*np.cos(self.angle*np.pi/180)/2 + self.H*np.sin(self.angle*np.pi/180)/2
+            self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
+        else: 
+            self.angle = input.angle()
+            pos = input.pos()
+            self.x = pos.x()
+            self.y = pos.y()
+            self.Xc = self.x - self.H*np.sin(self.angle*np.pi/180)/2 + self.W*np.cos(self.angle*np.pi/180)/2
+            self.Yc = self.y + self.H*np.cos(self.angle*np.pi/180)/2 + self.W*np.sin(self.angle*np.pi/180)/2
+        
+    def updateScanArea2(self, input):
+        size = input.size()
+        self.W = size.x()
+        self.H = size.y()
+        
+        self.angle = input.angle()
+        pos = input.pos()
+        self.x = pos.x()
+        self.y = pos.y()
+        self.Xc = self.x - self.H*np.sin(self.angle*np.pi/180)/2 + self.W*np.cos(self.angle*np.pi/180)/2
+        self.Yc = self.y + self.H*np.cos(self.angle*np.pi/180)/2 + self.W*np.sin(self.angle*np.pi/180)/2
+        
+    def updateGUI(self):
+        self.lineEdit_Xc.setText(self.formatNum(self.Xc))
+        self.lineEdit_Yc.setText(self.formatNum(self.Yc))
+        
+        self.lineEdit_Angle.setText(self.formatNum(self.angle))
+        
+        self.lineEdit_H.setText(self.formatNum(self.H))
+        self.lineEdit_W.setText(self.formatNum(self.W))
+        
+        self.updateSpeed()
+        
+    def moveROI(self):
+        self.ROI.setSize([self.W, self.H], update = False, finish = False)
+        if self.scanCoordinates:
+            angle = self.angle-self.currAngle
+            self.ROI.setAngle(angle, update = False, finish = False)
+            x = (self.Xc - self.currXc)*np.cos(self.currAngle*np.pi/180) + (self.Yc - self.currYc)*np.sin(self.currAngle*np.pi/180) + self.H*np.sin(angle*np.pi/180)/2 - self.W*np.cos(angle*np.pi/180)/2 
+            y = -(self.Xc - self.currXc)*np.sin(self.currAngle*np.pi/180) + (self.Yc - self.currYc)*np.cos(self.currAngle*np.pi/180) - self.H*np.cos(angle*np.pi/180)/2 - self.W*np.sin(angle*np.pi/180)/2 
+            self.ROI.setPos([x, y], update = False, finish = False)
+        else: 
+            self.ROI.setAngle(self.angle, update = False, finish = False)
+            self.ROI.setPos([self.x, self.y], update = False, finish = False)
+        self.updateHandles(self.ROI)
+    
+    def moveROI2(self):
+        self.ROI2.setPos([self.x, self.y], update = False, finish = False)
+        self.ROI2.setSize([self.W, self.H], update = False, finish = False)
+        self.ROI2.setAngle(self.angle, update = False, finish = False)
+        self.updateHandles(self.ROI2)
+        
+    def updateHandles(self, ROI):
+        for h in ROI.handles:
+            if h['item'] in ROI.childItems():
+                p = h['pos']
+                h['item'].setPos(h['pos'] * ROI.state['size'])     
+            ROI.update()
+            
+    def toggleROIVisibility(self):
+        if self.checkBox.isChecked():
+            self.view.addItem(self.ROI)
+        else:
+            self.view.removeItem(self.ROI)
+#----------------------------------------------------------------------------------------------#
+            
+    """ The following section connects actions related to updating scan parameters from
+        the line edits."""  
         
     def updateXc(self):
         new_Xc = str(self.lineEdit_Xc.text())
         val = self.readNum(new_Xc)
         if isinstance(val,float):
             self.Xc = val
-            self.updatePoints()
-            self.updateSquare()
+            self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
+            self.moveROI()
+            self.moveROI2()
         self.lineEdit_Xc.setText(self.formatNum(self.Xc))
-            
+        
     def updateYc(self):
         new_Yc = str(self.lineEdit_Yc.text())
         val = self.readNum(new_Yc)
         if isinstance(val,float):
             self.Yc = val
-            self.updatePoints()
-            self.updateSquare()
+            self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
+            self.moveROI()
+            self.moveROI2()
         self.lineEdit_Yc.setText(self.formatNum(self.Yc))
         
-    def updateCenter(self,center):
-        self.Xc = center.x()
-        self.Yc = center.y()
-        self.updatePoints()
-        self.updateSquare()
-        self.lineEdit_Xc.setText(self.formatNum(self.Xc))
-        self.lineEdit_Yc.setText(self.formatNum(self.Yc))
-    
-    def updateH(self, diff = None):
-        if diff is None:
-            new_H = str(self.lineEdit_H.text())
-            val = self.readNum(new_H)
-        else: 
-            val = self.H + diff
+    def updateAngle(self):
+        new_Angle = str(self.lineEdit_Angle.text())
+        val = self.readNum(new_Angle)
         if isinstance(val,float):
-            if val != 0:
-                self.H = val
-                if self.FrameLocked:
-                    self.W = val /self.FrameAspectRatio
-                    self.lineEdit_W.setText(self.formatNum(np.abs(self.W)))
-                    if self.LinearSpeedLocked:
-                        self.lineTime = np.abs(self.W) / self.linearSpeed
-                        self.lineEdit_LineTime.setText(self.formatNum(self.lineTime))
-                        self.FrameTime = self.lines * self.lineTime
-                        self.lineEdit_FrameTime.setText(self.formatNum(self.FrameTime))
-                    else: 
-                        self.linearSpeed = np.abs(self.W) / self.lineTime
-                        self.lineEdit_Linear.setText(self.formatNum(self.linearSpeed))
-                else:
-                    self.FrameAspectRatio = np.abs(self.H)/np.abs(self.W)
-                self.updatePoints()
-                self.updateSquare()
-        self.lineEdit_H.setText(self.formatNum(np.abs(self.H)))
+            self.angle = val
+            self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
+            self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
+            self.moveROI()
+            self.moveROI2()
+        self.lineEdit_Angle.setText(self.formatNum(self.angle))
         
-    def updateW(self, diff = None):
-        if diff is None:
-            new_W = str(self.lineEdit_W.text())
-            val = self.readNum(new_W)
-        else: 
-            val = self.W + diff
+    def updateH(self):
+        new_H = str(self.lineEdit_H.text())
+        val = self.readNum(new_H)
         if isinstance(val,float):
-            if val != 0:
-                self.W = val
-                if self.FrameLocked:
-                    self.H = val * self.FrameAspectRatio
-                    self.lineEdit_H.setText(self.formatNum(np.abs(self.H)))
-                else:
-                    self.FrameAspectRatio = np.abs(self.H) / np.abs(self.W)
-                if self.LinearSpeedLocked:
-                    self.lineTime = np.abs(self.W) / self.linearSpeed
-                    self.lineEdit_LineTime.setText(self.formatNum(self.lineTime))
-                    self.FrameTime = self.lines * self.lineTime
-                    self.lineEdit_FrameTime.setText(self.formatNum(self.FrameTime))
-                else: 
-                    self.linearSpeed = np.abs(self.W) / self.lineTime
-                    self.lineEdit_Linear.setText(self.formatNum(self.linearSpeed))
-                self.updatePoints()
-                self.updateSquare()
-        self.lineEdit_W.setText(self.formatNum(np.abs(self.W)))
-        
-    def updateSize(self,diff,direction):
-        dir_angle = (180*np.arctan2(direction.y(),direction.x())/np.pi)
-        diff_angle = (dir_angle + self.Angle)%360
-        if diff_angle <= 2 or diff_angle >= 358 or 178 <= diff_angle <= 182:
-            self.updateW(2*diff)
-        elif 88 <= diff_angle <= 92 or 268 <= diff_angle <= 272:
-            self.updateH(2*diff)
+            self.H = val
+            if self.FrameLocked:
+                self.W = self.H
+                self.lineEdit_W.setText(self.formatNum(self.W))
+                self.updateSpeed()
+            self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
+            self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
+            self.moveROI()
+            self.moveROI2()
+        self.lineEdit_H.setText(self.formatNum(self.H))
             
-    def updateAngle(self, angle = None):
-        if angle is None:
-            new_Angle = str(self.lineEdit_Angle.text())
-            val = self.readNum(new_Angle)
-        else:
-            val = self.Angle - angle
+    def updateW(self):
+        new_W = str(self.lineEdit_W.text())
+        val = self.readNum(new_W)
         if isinstance(val,float):
-            self.Angle = val%360
-            self.updatePoints()
-            self.updateSquare()
-        self.lineEdit_Angle.setText(self.formatNum(self.Angle))
+            self.W = val
+            if self.FrameLocked:
+                self.H = self.W
+                self.lineEdit_H.setText(self.formatNum(self.H))
+            self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
+            self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
+            self.moveROI()
+            self.moveROI2()
+            self.updateSpeed()
+        self.lineEdit_W.setText(self.formatNum(self.W))
+        
+    def updateSpeed(self):
+        if self.LinearSpeedLocked:
+            self.lineTime = self.W / self.linearSpeed
+            self.lineEdit_LineTime.setText(self.formatNum(self.lineTime))
+            self.FrameTime = self.lines * self.lineTime
+            self.lineEdit_FrameTime.setText(self.formatNum(self.FrameTime))
+        else: 
+            self.linearSpeed = self.W / self.lineTime
+            self.lineEdit_Linear.setText(self.formatNum(self.linearSpeed))
         
     def updatePixels(self):
         new_Pixels = str(self.lineEdit_Pixels.text())
@@ -475,144 +558,94 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.lineEdit_FrameTime.setText(self.formatNum(self.FrameTime))
         self.lineEdit_LineTime.setText(self.formatNum(self.lineTime))
         
-    def finishScanAdjustment(self):
-        self.W = np.abs(self.W)
-        self.H = np.abs(self.H)
+#----------------------------------------------------------------------------------------------#      
+    """ The following section has test functions."""  
         
-class plotEnvironment(pg.PlotItem):
-
-    newCenterSig = QtCore.pyqtSignal(QtCore.QPointF)
-    newAngleSig = QtCore.pyqtSignal(float)
-    newSizeSig = QtCore.pyqtSignal(float,QtCore.QPointF)
-    scanAdjustmentDone = QtCore.pyqtSignal()
-    
-    def __init__(self,name = None):
-        super(plotEnvironment,self).__init__(title = name) 
-        
-    def dot(self,p1,p2):
-        dot = p1.x()*p2.x() + p1.y()*p2.y()
-        return dot
-        
-    def mouseDragEvent(self, ev):
-        if ev.button() == QtCore.Qt.LeftButton or ev.button() == QtCore.Qt.RightButton:        
-            #item[1] is ImageView, this maps pos to graph coordinates
-            items = self.items
-            
-            if ev.isStart():
-                # If first event since drag was started, then check if the click was on a line
-                pos = ev.buttonDownPos()
-                scaledPos = items[1].mapFromScene(pos)
-                self.selectedLine = None
-                self.lines = []
-                
-                for item in items:
-                    # Items with type 6 are lines. 
-                    if item.type() == 6:
-                        self.lines.append(item)
-                
-                self.linePoints = []
-                
-                for line in self.lines:
-                    if line.contains(scaledPos):
-                        #If clicked on one of the lines, take note
-                        self.selectedLine = line
-                    self.linePoints.append(line.line())
-                
-                #If no lines were clicked, then ignore this event. 
-                if self.selectedLine is None:
-                    ev.ignore()
-                    return 
-                
-                #Find center of the square
-                self.center = QtCore.QPointF(0,0)
-                for points in self.linePoints:
-                    p1 = points.p1()
-                    p2 = points.p2()
-                    self.center = self.center + p1 + p2
-                self.center = self.center / 8
-                
-                #Find unit vector pointing from line to center of square
-                lineCoordinates = self.selectedLine.line()
-                p1 = lineCoordinates.p1()
-                p2 = lineCoordinates.p2()
-                p_mid = (p1+p2)/2
-                direction = p_mid - self.center
-                self.direction = direction / np.sqrt((direction.x()**2 + direction.y()**2))
-                
-                #Set reference point and angle
-                self.size_diff = 0
-                self.dragPoint = scaledPos
-                vector = scaledPos - self.center
-                self.ref_angle = np.arctan2(vector.y(), vector.x()) 
-                
-            elif ev.isFinish():
-                self.selectedLine = None
-                self.scanAdjustmentDone.emit()
-                return
-            else:
-                if self.selectedLine is None:
-                    ev.ignore()
-                    return
-            
-            pos = ev.pos()
-            scaledPos = items[1].mapFromScene(pos)  
-            
-            self.dragOffset = scaledPos - self.dragPoint
-            
-            modifiers = QtGui.QApplication.keyboardModifiers() 
-            if ev.button() == QtCore.Qt.LeftButton and modifiers != QtCore.Qt.ControlModifier: 
-                new_center = self.center + self.dragOffset
-                self.newCenterSig.emit(new_center)
-            elif ev.button() == QtCore.Qt.RightButton:
-                vector = scaledPos - self.center
-                angle = np.arctan2(vector.y(), vector.x())
-                new_angle = 180*(angle - self.ref_angle)/np.pi
-                self.ref_angle = angle
-                self.newAngleSig.emit(new_angle)
-            elif ev.button() == QtCore.Qt.LeftButton and modifiers == QtCore.Qt.ControlModifier:  
-                diff = self.dot(self.dragOffset,self.direction)
-                self.newSizeSig.emit(diff - self.size_diff,self.direction)
-                self.size_diff = diff
-            ev.accept()
-        else:
-            ev.ignore()
-            return
+    def testUpdates(self):
+        self.currAngle = self.angle
+        self.currXc = self.Xc
+        self.currYc = self.Yc
+        self.currW = self.W
+        self.currH = self.H
 
         
-class PlotThread(QtCore.QThread):
-    def __init__(self,ImageView, data, extent, parent = None):
-        super(PlotThread,self).__init__(parent = parent)
-        self.ImageView = ImageView
-        self.stopMutex = threading.Lock()
-        self.updateMutex = threading.Lock()
-        #initialize to true so that runs the first time
-        self.data = data
-        self.updatePlot(data,extent)
-        self._stop = False
+        if self.scanCoordinates:
+            self.moveROI()
+        self.update_data()
+
+        #timer = QtCore.QTimer(self)
+        #timer.timeout.connect(self.update_gph)
+        #timer.start(2000)
         
-    def run(self):
-        while True:
-            with self.updateMutex:
-                if self.update:
-                    self.ImageView.setImage(self.data, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-                    self.ImageView.show()
-                    self.update = False
-            with self.stopMutex:
-                if self._stop:
-                    break
-            time.sleep(0.05)
+    @inlineCallbacks
+    def update_data(self):
+        self.pxsize = (self.lines,self.pixels)
+        extent = [self.x,self.x+self.W,self.y,self.y+self.H]
+        self.data = np.zeros(self.pxsize)
+        self.x0, x1 = (extent[0], extent[1])
+        self.y0, y1 = (extent[2], extent[3])
+        self.xscale, self.yscale = self.W / self.lines, self.H / self.pixels
+        self.update_gph()
+        for i in range(0,self.lines):
+            yield self.sleep(self.lineTime)
+            newData = np.random.rand(self.pixels) + 3 + 2*np.linspace(0,1,self.pixels) + 5*np.linspace(0,1,self.pixels)**2
+            newProcessedData = self.processData(newData)
+            self.data[:,i] = newProcessedData
+            self.update_gph()
+                
+    def update_gph(self):
+        self.Plot2D.setImage(self.data, autoRange = False, autoLevels = False)
+        self.Plot2D.imageItem.resetTransform()
+        if self.scanCoordinates:
+            angle = 0
+            tr = QtGui.QTransform(self.xscale * np.cos(angle * np.pi/180),self.xscale * np.sin(angle * np.pi/180),0,-self.yscale * np.sin(angle * np.pi/180),self.yscale * np.cos(angle * np.pi/180),0,0,0,1)
+            #self.Plot2D.imageItem.setPos(-self.W/2+self.Xc,-self.H/2+self.Yc)
+            self.Plot2D.imageItem.setPos(-self.currW/2,-self.currH/2)
+            self.Plot2D.imageItem.setTransform(tr)
+        else: 
+            angle = self.currAngle
+            tr = QtGui.QTransform(self.xscale * np.cos(angle * np.pi/180),self.xscale * np.sin(angle * np.pi/180),0,-self.yscale * np.sin(angle * np.pi/180),self.yscale * np.cos(angle * np.pi/180),0,0,0,1)
+            self.Plot2D.imageItem.setPos(self.x0,self.y0)
+            self.Plot2D.imageItem.setTransform(tr)
+        
+        self.MiniPlot2D.setImage(self.data, autoRange = False, autoLevels = False)
+        self.MiniPlot2D.imageItem.resetTransform()
+        angle = self.currAngle
+        tr = QtGui.QTransform(self.xscale * np.cos(angle * np.pi/180),self.xscale * np.sin(angle * np.pi/180),0,-self.yscale * np.sin(angle * np.pi/180),self.yscale * np.cos(angle * np.pi/180),0,0,0,1)
+        self.MiniPlot2D.imageItem.setPos(self.x0,self.y0)
+        self.MiniPlot2D.imageItem.setTransform(tr)
+        
+    def processData(self, lineData):
+        if self.dataProcessing == 'Raw':
+            return lineData 
+        elif self.dataProcessing == 'Subtract Average':
+            x = np.linspace(0,self.pixels-1,self.pixels)
+            fit = np.polyfit(x, lineData, 0)
+            residuals  = lineData - fit[0]
+            return residuals
+        elif self.dataProcessing == 'Subtract Linear Fit':
+            x = np.linspace(0,self.pixels-1,self.pixels)
+            fit = np.polyfit(x, lineData, 1)
+            residuals  = lineData - fit[0]*x - fit[1]
+            return residuals
+        elif self.dataProcessing == 'Subtract Parabolic Fit':
+            x = np.linspace(0,self.pixels-1,self.pixels)
+            fit = np.polyfit(x, lineData, 2)
+            residuals  = lineData - fit[0]*x**2 - fit[1]*x - fit[2]
+            return residuals
             
-    def updatePlot(self,data,extent):
-        with self.updateMutex:
-            self.x0, x1 = (extent[0], extent[1])
-            self.y0, y1 = (extent[2], extent[3])
-            self.xscale, self.yscale = 1.0*(x1-self.x0) / self.data.shape[0], 1.0 * (y1-self.y0) / self.data.shape[1]
-            self.update = True
-            
-    def stop(self):
-        with self.stopMutex:
-            self._stop = True
+    def sleep(self,secs):
+        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
+        other operations to be done elsewhere while paused."""
+        d = Deferred()
+        self.reactor.callLater(secs,d.callback,'Sleeping')
+        return d
         
-        
+class serversList(QtGui.QDialog, Ui_ServerList):
+    def __init__(self, reactor, parent = None):
+        super(serversList, self).__init__(parent)
+        self.setupUi(self)
+        pos = parent.pos()
+        self.move(pos + QtCore.QPoint(5,5))
         
         

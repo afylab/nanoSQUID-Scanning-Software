@@ -84,6 +84,9 @@ background:grey
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
+     <zorder>push_autoRange</zorder>
+     <zorder>push_aspectLocked</zorder>
+     <zorder>push_autoLevel</zorder>
     </widget>
     <widget class="QLabel" name="label_Frame">
      <property name="geometry">
@@ -1105,22 +1108,12 @@ qproperty-alignment: 'AlignVCenter | AlignCenter';
      </item>
      <item>
       <property name="text">
-       <string>Subtract Slope</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
        <string>Subtract Linear Fit</string>
       </property>
      </item>
      <item>
       <property name="text">
        <string>Subtract Parabolic Fit</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Differentiate</string>
       </property>
      </item>
     </widget>
@@ -1148,7 +1141,7 @@ background:grey
     <widget class="QPushButton" name="push_Test">
      <property name="geometry">
       <rect>
-       <x>560</x>
+       <x>50</x>
        <y>40</y>
        <width>75</width>
        <height>23</height>
@@ -1156,6 +1149,98 @@ background:grey
      </property>
      <property name="text">
       <string>Test</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_Servers">
+     <property name="geometry">
+      <rect>
+       <x>5</x>
+       <y>5</y>
+       <width>15</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_Servers{
+background: rgb(144, 140, 9);
+ border-radius: 4px;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_autoLevel">
+     <property name="geometry">
+      <rect>
+       <x>820</x>
+       <y>100</y>
+       <width>41</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Level</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_aspectLocked">
+     <property name="geometry">
+      <rect>
+       <x>780</x>
+       <y>100</y>
+       <width>41</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Aspect</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_autoRange">
+     <property name="geometry">
+      <rect>
+       <x>860</x>
+       <y>100</y>
+       <width>41</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Range</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="checkBox">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>100</y>
+       <width>51</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#checkBox{
+color: rgb(168,168,168);
+}</string>
+     </property>
+     <property name="text">
+      <string>Visible</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_scanCoordinates">
+     <property name="geometry">
+      <rect>
+       <x>250</x>
+       <y>100</y>
+       <width>111</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Scan Coordinates</string>
      </property>
     </widget>
     <zorder>MiniPlotArea</zorder>
@@ -1212,9 +1297,36 @@ background:grey
     <zorder>comboBox_Channel</zorder>
     <zorder>comboBox_Processing</zorder>
     <zorder>push_Test</zorder>
+    <zorder>push_Servers</zorder>
+    <zorder>push_autoLevel</zorder>
+    <zorder>push_aspectLocked</zorder>
+    <zorder>push_autoRange</zorder>
+    <zorder>checkBox</zorder>
+    <zorder>push_scanCoordinates</zorder>
    </widget>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>lineEdit_Xc</tabstop>
+  <tabstop>lineEdit_Yc</tabstop>
+  <tabstop>lineEdit_H</tabstop>
+  <tabstop>lineEdit_W</tabstop>
+  <tabstop>lineEdit_Angle</tabstop>
+  <tabstop>lineEdit_Linear</tabstop>
+  <tabstop>lineEdit_LineTime</tabstop>
+  <tabstop>lineEdit_FrameTime</tabstop>
+  <tabstop>lineEdit_Pixels</tabstop>
+  <tabstop>lineEdit_Lines</tabstop>
+  <tabstop>lineEdit_Basename</tabstop>
+  <tabstop>lineEdit_ImageNum</tabstop>
+  <tabstop>comboBox_Channel</tabstop>
+  <tabstop>comboBox_Processing</tabstop>
+  <tabstop>push_FrameLock</tabstop>
+  <tabstop>push_SpeedLock</tabstop>
+  <tabstop>push_DataLock</tabstop>
+  <tabstop>push_Test</tabstop>
+  <tabstop>push_Servers</tabstop>
+ </tabstops>
  <resources>
   <include location="../Resources/nSOTScannerResources.qrc"/>
  </resources>

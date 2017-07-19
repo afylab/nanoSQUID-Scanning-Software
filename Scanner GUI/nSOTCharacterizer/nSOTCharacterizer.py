@@ -563,7 +563,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.curbiasRetracePlot.lower()
             self.curfieldRetracePlot.raise_()
 
-
     def updateBottomTracePlot(self):
         index = self.currentBiasTraceSelect.currentIndex()
         x0, x1 = (self.bMin, self.bMax)
@@ -589,8 +588,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 xVals = np.linspace(self.vMin, self.vMax, num = self.vPoints)
                 yVals = self.curTraceData[p]
                 self.IVTracePlot.plot(x = xVals, y = yVals, pen = 0.5)
-
-
                 
     def updateBottomRetracePlot(self):
         print 'updating bottom'
@@ -619,12 +616,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 xVals = np.linspace(self.vMin, self.vMax, num = self.vPoints)
                 yVals = self.curRetraceData[p]
                 self.IVRetracePlot.plot(x = xVals, y = yVals, pen = 0.5)
-
-
-
-        
-
-       
+                
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
         other operations to be done elsewhere while paused."""

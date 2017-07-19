@@ -134,6 +134,13 @@ class HF2LIServer(LabradServer):
         setting = ['/%s/sigins/%d/range' % (self.dev_ID, input_channel-1), amplitude],
         yield self.daq.set(setting)
         
+    @setting(1080,input_channel = 'i', returns = 'v[]')
+    def get_range(self, c, input_channel):
+        """Set the input voltage range of the provided input channel (1 indexed) to the provided amplitude in Volts."""
+        setting = '/%s/sigins/%d/range' % (self.dev_ID, input_channel-1)
+        range = yield self.daq.get(setting, True)
+        returnValue(float(range[setting]))
+        
     @setting(109,input_channel = 'i', on = 'b', returns = '')
     def set_diff(self, c, input_channel, on):
         """Set the input mode of the provided input channel (1 indexed) to differential, if on is True, 
@@ -179,6 +186,13 @@ class HF2LIServer(LabradServer):
         """Sets the provided demodulator time constant in seconds."""
         setting = ['/%s/demods/%d/timeconstant' % (self.dev_ID, demod_index-1), time_constant],
         yield self.daq.set(setting)
+        
+    @setting(1150,demod_index= 'i', returns = 'v[]')
+    def get_demod_time_constant(self,c, demod_index):
+        """Sets the provided demodulator time constant in seconds."""
+        setting = '/%s/demods/%d/timeconstant' % (self.dev_ID, demod_index-1)
+        tc = yield self.daq.get(setting, True)
+        returnValue(float(tc[setting]))
         
     @setting(116,demod_index = 'i', rec_time= 'v[]', timeout = 'i', returns = '**v[]')
     def poll_demod(self,c, demod_index, rec_time, timeout):
@@ -289,7 +303,7 @@ class HF2LIServer(LabradServer):
             # Note: to use manual and fixed, sweep/bandwidth has to be set to a value > 0.
             yield self.sweeper.set('sweep/bandwidthcontrol', bandwidthcontrol)
             if bandwidthcontrol == 0 or bandwidthcontrol == 1:
-                yield self.sweeper.set('sweep/bandwidth',1000)
+                yield self.sweeper.set('sweep/bandwidth',bandwidth)
             # Sets the bandwidth overlap mode (default 0). If enabled, the bandwidth of
             # a sweep point may overlap with the frequency of neighboring sweep
             # points. The effective bandwidth is only limited by the maximal bandwidth
@@ -330,34 +344,7 @@ class HF2LIServer(LabradServer):
             
             #Subscribe to path defined previously
             yield self.sweeper.subscribe(self.sweeper_path)
-            #execute sweep
-            
-            
-            # start = time.time() Not implemented. Can be used to add a timeout function
-            '''
-            print "Will perform", loopcount, "sweep."
-            while not self.sweeper.finished():  # Wait until the sweep is complete, with timeout.
-                #replace this with proper sleeping later
-                progress = yield self.sweeper.progress()
-                print "Individual sweep progress: {:.2%}.".format(progress[0]) 
-                time.sleep(0.25)
-                
-            print 'Individual sweep progress: 100.00%.'
-            
-            return_flat_dict = True
-            data = self.sweeper.read(return_flat_dict)
-            self.sweeper.unsubscribe(path)
-            # Stop the sweeper thread and clear the memory.
-            self.sweeper.clear()
-            demod_data = data[path]
 
-            grid = demod_data[0][0]['grid']
-            R = np.abs(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y']) 
-            phi = np.angle(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'])
-            frequency  = demod_data[0][0]['frequency']
-            
-            returnValue([grid,R,phi,frequency])
-            '''
             returnValue(True)
         else: 
             print 'Desired sweep parameter does not exist'
@@ -369,24 +356,20 @@ class HF2LIServer(LabradServer):
         if self.sweeper is not None:
             yield self.sweeper.execute()
             success = True
-        
         returnValue(success)
         
-    @setting(123, returns = '?')
+    @setting(123, returns = '**v[]')
     def read_latest_values(self,c):  
         return_flat_dict = True
-        data = self.sweeper.read(return_flat_dict)
-        #self.sweeper.unsubscribe(path)
-        # Stop the sweeper thread and clear the memory.
-        #self.sweeper.clear()
+        data = yield self.sweeper.read(return_flat_dict)
         demod_data = data[self.sweeper_path]
         #print demod_data
 
         grid = demod_data[0][0]['grid']
         R = np.abs(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'])
-        phi = np.angle(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'])
+        phi = np.angle(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'], True)
         frequency  = demod_data[0][0]['frequency']
-
+        
         formatted_data = [[],[],[],[]]
         length = len(grid)
         for i in range(0,length):
@@ -397,10 +380,45 @@ class HF2LIServer(LabradServer):
                 formatted_data[3].append(float(phi[i]))
             except:
                 pass
-        print formatted_data
 
         returnValue(formatted_data)
-
+        
+    @setting(124,returns = 'b')
+    def sweep_complete(self,c):
+        '''Checks to see if there's a sweep was completed. Returns True if the sweeper is not
+        currently sweeping. Returns False if the sweeper is mid sweep.'''
+        if self.sweeper is not None:
+            done = yield self.sweeper.finished()
+        else:
+            done = True
+        returnValue(done)
+        
+    @setting(125,returns = 'v[]')
+    def sweep_time_remaining(self,c):
+        if self.sweeper is not None:
+            time = yield self.sweeper.get('sweep/remainingtime')
+            time = time['remainingtime'][0]
+        else:
+            time = float('nan')
+        returnValue(time)
+    
+    @setting(126, returns = 'b')
+    def stop_sweep(self,c):
+        success = False
+        if self.sweeper is not None:
+            yield self.sweeper.finish()
+            success = True
+        returnValue(success)
+        
+    @setting(127,returns = '')
+    def clear_sweep(self,c):
+        try:
+            # Stop the sweeper thread and clear the memory.
+            self.sweeper.unsubscribe(path)
+            self.sweeper.clear()
+        except: 
+            pass
+        
 __server__ = HF2LIServer()
   
 if __name__ == '__main__':

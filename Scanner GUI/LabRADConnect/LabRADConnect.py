@@ -24,12 +24,14 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         
         #Initialize variables for all possible server connections in a dictionary
         #Makes multiple connections for browsing data vault in every desired context
-        self.connectionDictionary = {
+        self.emptyDictionary = {
         'cxn'       : None,
         'dv'        : None,
         'ser_server': None,
-        'dac_adc'   : None        
+        'dac_adc'   : None,       
+        'hf2li'     : None
         }
+        self.connectionDictionary = self.emptyDictionary
         
         self.lineEdit_Session.setReadOnly(True)
         self.session = ''
@@ -41,6 +43,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.push_DataVault.clicked.connect(self.connectDataVault)
         self.push_SerialServer.clicked.connect(self.connectSerialServer)
         self.push_DACADC.clicked.connect(self.connectDACADC)
+        self.push_HF2LI.clicked.connect(self.connectHF2LI)
         
         self.push_Session.clicked.connect(self.chooseSession)
     
@@ -56,18 +59,20 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         
         
         #First create connection to labrad and give time for connection to be made
-        self.connectLabRAD()
+        yield self.connectLabRAD()
         yield self.sleep(0.5)
 
         #Then create connection to Data Vault and Serial Server (and eventually GPIB server if needed)
-        self.connectDataVault()
-        self.connectSerialServer()
+        yield self.connectDataVault()
+        yield self.connectSerialServer()
 
         #Give time for serial server connection to be made, before connecting to serial devices
         yield self.sleep(0.5)
 
-        self.connectDACADC()
-
+        yield self.connectDACADC()
+        
+        yield self.connectHF2LI()
+        
         self.cxnSuccessful.emit(self.connectionDictionary) 
         
         #Unlock buttons once connection is done
@@ -80,12 +85,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         except:
             pass
 
-        self.connectionDictionary = {
-        'cxn'       : None,
-        'dv'        : None,
-        'ser_server': None,
-        'dac_adc'   : None        
-        }
+        self.connectionDictionary = self.emptyDictionary
         
         self.lineEdit_Session.setText('')
 
@@ -101,7 +101,11 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.push_DACADC.setStyleSheet("#push_DACADC{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.label_DACADC_status.setText('Not connected')
-
+        self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_HF2LI_status.setText('Not connected')
+        
+        
         self.cxnDisconnected.emit(self.connectionDictionary)   
 
     @inlineCallbacks
@@ -181,6 +185,35 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 self.push_DACADC.setStyleSheet("#push_DACADC{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_DACADC_status.setText('No device detected')
+           
+    @inlineCallbacks
+    def connectHF2LI(self, c = None):
+    
+        if self.connectionDictionary['cxn'] is None:
+            self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+            self.label_HF2LI_status.setText('Not connected')
+        else: 
+            cxn = self.connectionDictionary['cxn']
+            try:
+                hf = yield cxn.hf2li_server
+                try: 
+                    yield hf.detect_devices()
+                    yield hf.select_device()
+                    self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_HF2LI_status.setText('Connected')
+                    self.connectionDictionary['hf2li'] = hf
+                except:
+                    self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_HF2LI_status.setText('No device detected') 
+            except:
+                self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
+                "background: rgb(161,0,0);border-radius: 4px;}")
+                self.label_HF2LI_status.setText('Connection Failed')
+
+
            
     @inlineCallbacks
     def chooseSession(self, c = None):

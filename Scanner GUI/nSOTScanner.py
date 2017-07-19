@@ -12,6 +12,7 @@ sys.path.append(path+'\LabRADConnect')
 sys.path.append(path+r'\nSOTCharacterizer')    
 sys.path.append(path+'\DataVaultBrowser')
 sys.path.append(path+'\Plotter')
+sys.path.append(path+'\TFCharacterizer')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -21,10 +22,9 @@ import ScanControl
 import LabRADConnect
 import nSOTCharacterizer
 import plotter
+import TFCharacterizer
 
 import exceptions
-
-#import labrad.errors
 
 class MainWindow(QtGui.QMainWindow, MainWindowUI):
             
@@ -46,12 +46,14 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.LabRAD = LabRADConnect.Window(self.reactor, self)
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor,self)
         self.Plot = plotter.Plotter(self.reactor,self)
+        self.TFChar = TFCharacterizer.Window(self.reactor,self)
         
         #Connects all drop down menu button
         self.actionScan_Control.triggered.connect(self.openScanControlWindow)
         self.actionLabRAD_Connect.triggered.connect(self.openLabRADConnectWindow)
         self.actionnSOT_Characterizer.triggered.connect(self.opennSOTCharWindow)
         self.actionData_Plotter.triggered.connect(self.openDataPlotter)
+        self.actionTF_Characterizer.triggered.connect(self.openTFCharWindow)
         
         #Connectors all layout buttons
         self.push_Layout1.clicked.connect(self.setLayout1)
@@ -74,14 +76,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
     
     def moveDefault(self):
         self.move(10,10)
-        
-    def distributeLabRADConnections(self,dict):
-        self.Plot.connectLabRAD(dict)
-        self.nSOTChar.connectLabRAD(dict)
-        
-    def disconnectLabRADConnections(self,dict):
-        self.Plot.disconnectLabRAD()
-        self.nSOTChar.disconnectLabRAD()
     
     def openScanControlWindow(self):
         self.SC.moveDefault()
@@ -102,6 +96,27 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Plot.moveDefault()
         if self.Plot.isVisible() == False:
             self.Plot.show()
+            
+    def openTFCharWindow(self):
+        self.TFChar.moveDefault()
+        if self.TFChar.isVisible() == False:
+            self.TFChar.show()
+            
+#----------------------------------------------------------------------------------------------#
+            
+    """ The following section connects actions related to passing LabRAD connections."""
+    
+    def distributeLabRADConnections(self,dict):
+        self.Plot.connectLabRAD(dict)
+        self.nSOTChar.connectLabRAD(dict)
+        self.SC.connectLabRAD(dict)
+        self.TFChar.connectLabRAD(dict)
+        
+    def disconnectLabRADConnections(self,dict):
+        self.Plot.disconnectLabRAD()
+        self.nSOTChar.disconnectLabRAD()
+        self.SC.disconnectLabRAD()
+        self.TFChar.disconnectLabRAD()
     
     #----------------------------------------------------------------------------------------------#
             
@@ -128,25 +143,26 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.LabRAD.hide()
         self.nSOTChar.hide()
         self.Plot.hide()
+        self.TFChar.hide()
             
     def closeEvent(self, e):
         self.SC.close()
         self.nSOTChar.close()
         self.Plot.close()
+        self.TFChar.close()
         self.LabRAD.disconnectLabRAD()
         self.LabRAD.close()
-        self.reactor.stop()
-        print 'Reactor shut down.'
         
-#----------------------------------------------------------------------------------------------#
-            
+#----------------------------------------------------------------------------------------------#     
 """ The following runs the GUI"""
 
 if __name__=="__main__":
-    app = QtGui.QApplication([])
-    from qtreactor import pyqt4reactor
-    pyqt4reactor.install()
+    import qt4reactor
+    app = QtGui.QApplication(sys.argv)
+    qt4reactor.install()
     from twisted.internet import reactor
     window = MainWindow(reactor)
     window.show()
-    reactor.run()
+    reactor.runReturn()
+    sys.exit(app.exec_())
+

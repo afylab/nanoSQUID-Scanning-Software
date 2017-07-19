@@ -207,6 +207,20 @@ class DAC_ADCServer(DeviceServer):
         self.sigInputRead([str(port),str(ans)])
         returnValue(float(ans))
 
+    @setting(8089,port='i',returns='v[]')
+    def get_v(self,c,port):
+        """
+        GET_DAC returns the voltage read by an input channel. 
+        """
+        dev=self.selectedDevice(c)
+        if not (port in range(4)):
+            returnValue("Error: invalid port number.")
+            return
+        yield dev.write("GET_DAC,%i\r"%port)
+        ans = yield dev.read()
+        self.sigInputRead([str(port),str(ans)])
+        returnValue(float(ans))
+
     @setting(105,port='i',ivoltage='v',fvoltage='v',steps='i',delay='i',returns='s')
     def ramp1(self,c,port,ivoltage,fvoltage,steps,delay):
         """
@@ -274,17 +288,18 @@ class DAC_ADCServer(DeviceServer):
         data = yield dev.readByte(steps*nPorts*2)
         data = list(data)
 
+
         for x in xrange(nPorts):
             channels.append([])
 
-        for x in xrange(0,len(data),2):
+        for x in xrange(0, len(data), 2):
             b1=int(data[x].encode('hex'),16)
             b2=int(data[x+1].encode('hex'),16)
             decimal = twoByteToInt(b1,b2)
             voltage = map2(decimal,0,65536,-10.0,10.0)
             voltages.append(voltage)
 
-        for x in xrange(0,steps*nPorts,nPorts):
+        for x in xrange(0, steps*nPorts, nPorts):
             for y in xrange(nPorts):
                 channels[y].append(voltages[x+y])
 

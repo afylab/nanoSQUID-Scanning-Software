@@ -39,7 +39,9 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="styleSheet">
-    <string notr="true">#centralwidget{background-color: rgb(0, 0, 0);}</string>
+    <string notr="true">#centralwidget{
+background-color: rgb(0, 0, 0);
+}</string>
    </property>
    <widget class="QFrame" name="curbiasTracePlot">
     <property name="geometry">
@@ -164,7 +166,7 @@
    <widget class="QLabel" name="FieldSet">
     <property name="geometry">
      <rect>
-      <x>664</x>
+      <x>660</x>
       <y>10</y>
       <width>161</width>
       <height>19</height>
@@ -190,7 +192,7 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>415</x>
+      <x>460</x>
       <y>70</y>
       <width>48</width>
       <height>16</height>
@@ -479,7 +481,7 @@
    <widget class="QLabel" name="VoltSet">
     <property name="geometry">
      <rect>
-      <x>905</x>
+      <x>900</x>
       <y>10</y>
       <width>155</width>
       <height>19</height>
@@ -1125,7 +1127,7 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>1140</x>
+      <x>1120</x>
       <y>10</y>
       <width>107</width>
       <height>19</height>
