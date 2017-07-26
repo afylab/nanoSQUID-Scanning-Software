@@ -122,7 +122,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.view.setLabel('right',text='Y position',units = 'm')
         self.view.setLabel('top',text='X position',units = 'm')
         self.view.setLabel('bottom',text='X position',units = 'm')
-        self.Plot2D = pg.ImageView(parent = self.background, view = self.view)
+        self.Plot2D = pg.ImageView(parent = self.centralwidget, view = self.view)
         self.view.invertY(False)
         self.Plot2D.setGeometry(QtCore.QRect(240, 90, 750, 650))
         self.view.setAspectLocked(self.aspectLocked)
@@ -130,7 +130,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.Plot2D.ui.menuBtn.hide()
         self.Plot2D.ui.histogram.item.gradient.loadPreset('bipolar')
         self.Plot2D.lower()
-        self.PlotArea.lower()
+        self.PlotArea.close()
         
         #Set up mini plot for maximum scan range
         self.view2 = pg.PlotItem(title='Full Scan Range')
@@ -139,7 +139,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.view2.setLabel('top',text='X position',units = 'm')
         self.view2.setLabel('bottom',text='X position',units = 'm')
         self.view2.enableAutoRange(self.view2.getViewBox().XYAxes, enable = False)
-        self.MiniPlot2D = pg.ImageView(parent = self.background, view = self.view2)
+        self.MiniPlot2D = pg.ImageView(parent = self.centralwidget, view = self.view2)
         self.view2.invertY(False)
         self.MiniPlot2D.setGeometry(QtCore.QRect(5, 500, 228, 228))
         self.MiniPlot2D.ui.roiBtn.hide()
@@ -148,7 +148,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.MiniPlot2D.ui.histogram.hide()
         self.view2.setMouseEnabled(False,False)
         self.MiniPlot2D.lower()
-        self.MiniPlotArea.lower()
+        self.MiniPlotArea.close()
         #15.2 to avoid pixel overlapping with axes, hiding them
         self.view2.setXRange(-15.2e-6,15e-6,0)
         self.view2.setYRange(-15e-6,15.2e-6,0)

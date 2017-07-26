@@ -1,5 +1,6 @@
-This folder provides a template for creating new widgets that are compatible with the GUI. This is 
-not a guide on how to code in python, pyqt4, or how to use QtDesigner. 
+This folder provides a template for creating new widgets that are compatible with the GUI. 
+This is not a guide on how to code or 
+Follow the instructions for this 
 
 Step 1: Folder Creation
 Create a new folder in the Scanner Gui folder with a logical name. All of the python and GUi files
@@ -22,9 +23,6 @@ to be made for your module to integrate properly.
     3d: Additional UI initialization. Many UI elements, such as pyqtgraph plots, are not easily
 	initialized in QtDesigner. Anything not initialized in the ui file should be initialized
 	in the specified method. 
-    3e: It is also suggested to populate the lock and unlock interface methods. By default, these
-	are used to lock the interface until the appropriate LabRAD servers are connected for 
-	proper use of the module. 
 
 Step 4: Modify Server List
 Open the requiredServers.ui file in QtDesigner and edit it to include all the servers required by

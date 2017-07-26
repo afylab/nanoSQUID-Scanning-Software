@@ -13,6 +13,7 @@ sys.path.append(path+r'\nSOTCharacterizer')
 sys.path.append(path+'\DataVaultBrowser')
 sys.path.append(path+'\Plotter')
 sys.path.append(path+'\TFCharacterizer')
+sys.path.append(path+'\ApproachModule')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -23,6 +24,7 @@ import LabRADConnect
 import nSOTCharacterizer
 import plotter
 import TFCharacterizer
+import Approach
 
 import exceptions
 
@@ -47,6 +49,8 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor,self)
         self.Plot = plotter.Plotter(self.reactor,self)
         self.TFChar = TFCharacterizer.Window(self.reactor,self)
+        self.Approach = Approach.Window(self.reactor,self)
+        
         
         #Connects all drop down menu button
         self.actionScan_Control.triggered.connect(self.openScanControlWindow)
@@ -54,6 +58,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.actionnSOT_Characterizer.triggered.connect(self.opennSOTCharWindow)
         self.actionData_Plotter.triggered.connect(self.openDataPlotter)
         self.actionTF_Characterizer.triggered.connect(self.openTFCharWindow)
+        self.actionApproach_Control.triggered.connect(self.openApproachWindow)
         
         #Connectors all layout buttons
         self.push_Layout1.clicked.connect(self.setLayout1)
@@ -64,6 +69,9 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         #Connect 
         self.LabRAD.cxnSuccessful.connect(self.distributeLabRADConnections)
         self.LabRAD.cxnDisconnected.connect(self.disconnectLabRADConnections)
+        
+        #Open by default the LabRAD Connect Module
+        self.openLabRADConnectWindow()
         
     def setupAdditionalUi(self):
         """Some UI elements would not set properly from Qt Designer. These initializations are done here."""
@@ -101,6 +109,11 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.TFChar.moveDefault()
         if self.TFChar.isVisible() == False:
             self.TFChar.show()
+    
+    def openApproachWindow(self):
+        self.Approach.moveDefault()
+        if self.Approach.isVisible() == False:
+            self.Approach.show()
             
 #----------------------------------------------------------------------------------------------#
             
@@ -111,14 +124,16 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.nSOTChar.connectLabRAD(dict)
         self.SC.connectLabRAD(dict)
         self.TFChar.connectLabRAD(dict)
+        self.Approach.connectLabRAD(dict)
         
     def disconnectLabRADConnections(self,dict):
         self.Plot.disconnectLabRAD()
         self.nSOTChar.disconnectLabRAD()
         self.SC.disconnectLabRAD()
         self.TFChar.disconnectLabRAD()
+        self.Approach.disconnectLabRAD()
     
-    #----------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to setting the default layouts."""
         
@@ -126,7 +141,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.moveDefault()
         self.hideAllWindows()
         self.openScanControlWindow()
-        self.openLabRADConnectWindow()
+        self.openApproachWindow()
         
     def toggleLogo(self):
         if self.isRedEyes == False:
@@ -144,12 +159,14 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.nSOTChar.hide()
         self.Plot.hide()
         self.TFChar.hide()
+        self.Approach.hide()
             
     def closeEvent(self, e):
         self.SC.close()
         self.nSOTChar.close()
         self.Plot.close()
         self.TFChar.close()
+        self.Approach.close()
         self.LabRAD.disconnectLabRAD()
         self.LabRAD.close()
         

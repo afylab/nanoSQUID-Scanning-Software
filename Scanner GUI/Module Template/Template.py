@@ -24,6 +24,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.cxn = None
         self.dv = None
         
+        self.lockInterface()
+        
     def moveDefault(self):    
         self.move(550,10)
         
@@ -35,6 +37,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             self.serversConnected = True
+            self.unlockInterface()
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
@@ -64,6 +67,15 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         d = Deferred()
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
+        
+#----------------------------------------------------------------------------------------------#         
+    """ The following section has generally useful functions."""
+           
+    def lockInterface(self):
+        pass
+        
+    def unlockInterface(self):
+        pass
         
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
