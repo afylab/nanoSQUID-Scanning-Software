@@ -256,7 +256,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     """ The following section connects actions related to buttons on the TF window."""
     
     def updateFileName(self):
-        self.fileName = str(lineEdit_fileName.text())
+        self.fileName = str(self.lineEdit_fileName.text())
         
     def updateStartFreq(self):
         new_startFreq = str(self.lineEdit_MinFreq.text())
@@ -385,14 +385,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
             yield self.hf.set_output(self.output,False)
 
-            yield self.dv.new("Tuning Fork Voltage vs. Frequency: " + self.fileName,['Frequency'],['Amplitude R', 'Phase Phi'])
+            yield self.dv.new("Tuning Fork Voltage vs. Frequency " + self.fileName,['Frequency'],['Amplitude R', 'Phase Phi'])
             
             formated_data = []
             for j in range(0, self.points):
                 formated_data.append((data[0][j],data[1][j],data[2][j]))
         
-            yield dv.add(formated_data)
+            yield self.dv.add(formated_data)
 
+            yield self.hf.clear_sweep()
+            
         except Exception as inst:
             print inst
     
@@ -476,7 +478,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         max = np.amax(self.R)
         f0_guess = self.freq[np.argmax(self.R)]
         
-        popt, pcov = curve_fit(ampFunc, self.freq, self.R, p0 = [f0_guess, 10000, 0.01, max])
+        popt, pcov = curve_fit(ampFunc, self.freq, self.R, p0 = [f0_guess, 5000, 0.1, max])
         perr = np.sqrt(np.diag(pcov))
         self.prevAmpFit = self.ampPlot.plot(self.freq,ampFunc(self.freq, *popt))
         
