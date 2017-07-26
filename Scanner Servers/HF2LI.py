@@ -266,8 +266,10 @@ class HF2LIServer(LabradServer):
         Loop count greater than 1 not yet implemented. """
         
         #Initialize the sweeper object and specify the device
-        self.sweeper  = yield self.daq.sweep()
-        yield self.sweeper.set('sweep/device', self.dev_ID)
+        if self.sweeper is None:
+            self.sweeper  = yield self.daq.sweep()
+            yield self.sweeper.set('sweep/device', self.dev_ID)
+            
         self.sweeper_path = '/%s/demods/%d/sample' % (self.dev_ID, demod - 1)
         #Set the parameter to be swept
         sweep_param_set = False
