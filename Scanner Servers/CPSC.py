@@ -33,11 +33,15 @@ from labrad.types import Value
 import time
 import numpy as np
 
+import sys
+import os
+
 class CPSCServer(LabradServer):
     name = "CPSC Server"    # Will be labrad name of server
 
     @inlineCallbacks
     def initServer(self):  # Do initialization here
+        yield os.chdir(sys.path[0])
         self.device_detected = False
         
         #Distance between pivot point and top of sample given in mm. 
@@ -49,15 +53,14 @@ class CPSCServer(LabradServer):
         #Matrix T1 goes from xyz coordinates to channel 1, 2, 3 coordinates. 
         self.T1 = [[-self.R * np.sqrt(3) / (2*self.h), self.R / (2*self.h), 1],[0,-self.R/(self.h),1],[self.R * np.sqrt(3) / (2*self.h), self.R / (2*self.h), 1]]
         
-        #Matrix T2 goes from channel coordinates back to xyz coordinates. Apparently never implemented?
+        #Matrix T2 goes from channel coordinates back to xyz coordinates. Apparently never implemented
         
         yield self.detect_device()
-        print "Server initialization complete"
+        #print "Server initialization complete"
         
     @setting(100,returns = 'b')
     def detect_device(self, c = None):
         resp = yield subprocess.check_output("cacli modlist")
-        
         if resp.startswith("STATUS : INQUIRY OF INSTALLED MODULES"):
             print "CPSC detected. Communication active."
             self.device_detected = True

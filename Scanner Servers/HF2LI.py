@@ -36,14 +36,14 @@ import sys
 
 class HF2LIServer(LabradServer):
     name = "HF2LI Server"    # Will be labrad name of server
-
-    #@inlineCallbacks
+ 
     def initServer(self):  # Do initialization here
         self.daq = None
         self.dev_ID = None
         self.device_list = None
         self.props = None
         self.sweeper = None
+        self.pidAdivsor = None
         print "Server initialization complete"
         
     @setting(100,returns = '')
@@ -420,6 +420,26 @@ class HF2LIServer(LabradServer):
             self.sweeper.clear()
         except: 
             pass
+            
+    @setting(128, targetBW = 'v', pidMode = 'i', returns = 'v*')
+    def advisePID(self,c, targetBW):
+        if self.pidAdivsor is None:
+            self.pidAdivsor = yield zhinst.ziPython.ziDAQServer.ziPidAdvisor(self.daq)
+        
+        #P mode
+        if pidMode == 0:
+            self.pidAdivsor.set('pidAdivsor/pid/mode',float(0b0001)
+        #I mode
+        elif pidMode == 1:
+            self.pidAdivsor.set('pidAdivsor/pid/mode',float(0b0010)
+        #PI mode
+        elif pidMode == 2:
+            self.pidAdivsor.set('pidAdivsor/pid/mode',float(0b0011)
+        #PID mode
+        elif pidMode == 3:
+            self.pidAdivsor.set('pidAdivsor/pid/mode',float(0b0111)
+            
+        self.pidAdivsor.set('pidAdivsor/targetbw', targetBW)
         
 __server__ = HF2LIServer()
   
