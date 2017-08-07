@@ -25,6 +25,7 @@ Must be placed in the same directory as cacli.exe in order to work.
 
 from labrad.server import LabradServer, setting
 from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet import reactor, defer
 import labrad.units as units
 from labrad.types import Value
 import time
@@ -43,7 +44,7 @@ class HF2LIServer(LabradServer):
         self.device_list = None
         self.props = None
         self.sweeper = None
-        self.pidAdivsor = None
+        self.pidAdvisor = None
         print "Server initialization complete"
         
     @setting(100,returns = '')
@@ -420,27 +421,259 @@ class HF2LIServer(LabradServer):
             self.sweeper.clear()
         except: 
             pass
-            
-    @setting(128, targetBW = 'v', pidMode = 'i', returns = 'v*')
-    def advisePID(self,c, targetBW):
-        if self.pidAdivsor is None:
-            self.pidAdivsor = yield zhinst.ziPython.ziDAQServer.ziPidAdvisor(self.daq)
-        
-        #P mode
+
+    @setting(128, targetBW = 'v[]', pidMode = 'i', PID_index = 'i', returns = '*v[]')
+    def advisePID(self, c, targetBW, pidMode, PID_index):
+
+        if self.pidAdvisor is None:
+            self.pidAdvisor = yield self.daq.pidAdvisor()
+
+        yield self.pidAdvisor.set('pidAdvisor/auto', False)
+        yield self.pidAdvisor.set('pidAdvisor/pid/autobw', True)
+        yield self.pidAdvisor.set('pidAdvisor/device', self.dev_ID)
+
         if pidMode == 0:
-            self.pidAdivsor.set('pidAdivsor/pid/mode',float(0b0001)
-        #I mode
+            #P mode
+            yield self.pidAdvisor.set('pidAdvisor/pid/mode',1)
         elif pidMode == 1:
-            self.pidAdivsor.set('pidAdivsor/pid/mode',float(0b0010)
-        #PI mode
+            #I mode
+            yield self.pidAdvisor.set('pidAdvisor/pid/mode',2)
         elif pidMode == 2:
-            self.pidAdivsor.set('pidAdivsor/pid/mode',float(0b0011)
-        #PID mode
+            #PI mode
+            yield self.pidAdvisor.set('pidAdvisor/pid/mode',3)
         elif pidMode == 3:
-            self.pidAdivsor.set('pidAdivsor/pid/mode',float(0b0111)
-            
-        self.pidAdivsor.set('pidAdivsor/targetbw', targetBW)
+            #PID mode
+            yield self.pidAdvisor.set('pidAdvisor/pid/mode',7)
         
+        yield self.pidAdvisor.set('pidAdvisor/pid/targetbw', targetBW)
+
+        # PID index to use (first PID of device: 0)
+        yield self.pidAdvisor.set('pidAdvisor/index', PID_index)
+
+        # DUT model
+        # source = 4: Internal PLL
+        yield self.pidAdvisor.set('pidAdvisor/dut/source', 4)
+
+        # IO Delay of the feedback system describing the earliest response
+        # for a step change. This parameter does not affect the shape of
+        # the DUT transfer function
+        yield self.pidAdvisor.set('pidAdvisor/dut/delay', 0.0)
+
+        yield self.pidAdvisor.set('pidAdvisor/pid/p', 0)
+        yield self.pidAdvisor.set('pidAdvisor/pid/i', 0)
+        yield self.pidAdvisor.set('pidAdvisor/pid/d', 0)
+        yield self.pidAdvisor.set('pidAdvisor/calculate', 0)
+
+         # Start the module thread
+        yield self.pidAdvisor.execute()
+        yield self.sleep(2.0)
+        # Advise
+        yield self.pidAdvisor.set('pidAdvisor/calculate', 1)
+        print('Starting advising. Optimization process may run up to a minute...')
+        reply = yield self.pidAdvisor.get('pidAdvisor/calculate')
+
+        t_start = time.time()
+        t_timeout = t_start + 60
+        while reply['calculate'][0] == 1:
+            reply = yield self.pidAdvisor.get('pidAdvisor/calculate')
+            if time.time() > t_timeout:
+                yield self.pidAdvisor.finish()
+                raise Exception("PID advising failed due to timeout.")
+
+        print("Advice took {:0.1f} s.".format(time.time() - t_start))
+
+        # Get all calculated parameters.
+        result = yield self.pidAdvisor.get('pidAdvisor/*')
+        # Check that the dictionary returned by poll contains the data that are needed.
+        assert result, "pidAdvisor returned an empty data dictionary?"
+        assert 'pid' in result, "data dictionary has no key 'pid'"
+        assert 'step' in result, "data dictionary has no key 'step'"
+        assert 'bode' in result, "data dictionary has no key 'bode'"
+
+        if result is not None:
+            print result
+            # Now copy the values from the PID Advisor to the PID and enable the PID.
+            p_adv = result['pid']['p'][0]
+            i_adv = result['pid']['i'][0]
+            d_adv = result['pid']['d'][0]
+            dlimittimeconstant_adv = result['pid']['dlimittimeconstant'][0]
+            rate_adv = result['pid']['rate'][0]
+            bw_adv = result['bw'][0]
+
+            returnValue([p_adv, i_adv, d_adv, dlimittimeconstant_adv, rate_adv, bw_adv])
+        else:
+            returnValue([0, 0, 0, 0, 0, 0])
+
+    @setting(129,PLL = 'i', freq = 'v[]', returns = '')
+    def set_PLL_freqcenter(self, c, PLL, freq):
+        """Sets the center frequency of the specified PLL (either 1 or 2)"""
+        setting = ['/%s/plls/%d/freqcenter' % (self.dev_ID, PLL-1), freq],
+        yield self.daq.set(setting)
+
+    @setting(130, PLL = 'i', returns = 'v[]')
+    def get_PLL_freqcenter(self, c, PLL):
+        """Gets the PLL center frequency of the specified PLL (either 1 or 2)."""
+        setting = '/%s/plls/%d/freqcenter' % (self.dev_ID, PLL-1)
+        dic = yield self.daq.get(setting,True)
+        freq = float(dic[setting])
+        returnValue(freq)
+
+    @setting(131,PLL = 'i', freq = 'v[]', returns = '')
+    def set_PLL_freqrange(self, c, PLL, freq):
+        """Sets the frequency range of the specified PLL (either 1 or 2)"""
+        setting = ['/%s/plls/%d/freqrange' % (self.dev_ID, PLL-1), freq],
+        yield self.daq.set(setting)
+
+    @setting(132, PLL = 'i', returns = 'v[]')
+    def get_PLL_freqrange(self, c, PLL):
+        """Gets the PLL frequency range of the specified PLL (either 1 or 2)."""
+        setting = '/%s/plls/%d/freqrange' % (self.dev_ID, PLL-1)
+        dic = yield self.daq.get(setting,True)
+        freq = float(dic[setting])
+        returnValue(freq)
+
+    @setting(133,PLL = 'i', harm = 'i', returns = '')
+    def set_PLL_harmonic(self, c, PLL, harm):
+        """Sets the phase detector harmonic (1 or 2) of the specified PLL (either 1 or 2)"""
+        setting = ['/%s/plls/%d/harmonic' % (self.dev_ID, PLL-1), harm],
+        yield self.daq.set(setting)
+
+    @setting(134, PLL = 'i', returns = 'i')
+    def get_PLL_harmonic(self, c, PLL):
+        """Gets the phase detector harmonic of the specified PLL (either 1 or 2)."""
+        setting = '/%s/plls/%d/harmonic' % (self.dev_ID, PLL-1)
+        dic = yield self.daq.get(setting,True)
+        harm = int(dic[setting])
+        returnValue(harm)
+
+    @setting(135,PLL = 'i', tc = 'v[]', returns = '')
+    def set_PLL_TC(self, c, PLL, tc):
+        """Sets the time constant of the specified PLL (either 1 or 2)"""
+        setting = ['/%s/plls/%d/timeconstant' % (self.dev_ID, PLL-1), tc],
+        yield self.daq.set(setting)
+
+    @setting(136, PLL = 'i', returns = 'v[]')
+    def get_PLL_tc(self, c, PLL):
+        """Gets the PLL center frequency of the specified PLL (either 1 or 2)."""
+        setting = '/%s/plls/%d/timeconstant' % (self.dev_ID, PLL-1)
+        dic = yield self.daq.get(setting,True)
+        tc = float(dic[setting])
+        returnValue(tc)
+
+    @setting(137,PLL = 'i', order = 'i', returns = '')
+    def set_PLL_filterorder(self, c, PLL, order):
+        """Sets the filter order (1 through 8) of the specified PLL (either 1 or 2)"""
+        setting = ['/%s/plls/%d/order' % (self.dev_ID, PLL-1), order],
+        yield self.daq.set(setting)
+
+    @setting(138, PLL = 'i', returns = 'i')
+    def get_PLL_filterorder(self, c, PLL):
+        """Gets the filter order of the specified PLL (either 1 or 2)."""
+        setting = '/%s/plls/%d/order' % (self.dev_ID, PLL-1)
+        dic = yield self.daq.get(setting,True)
+        order = int(dic[setting])
+        returnValue(order)
+
+    @setting(139,PLL = 'i', setpoint = 'v[]', returns = '')
+    def set_PLL_setpoint(self, c, PLL, setpoint):
+        """Sets the phase setpoint in degrees of the specified PLL (either 1 or 2)"""
+        setting = ['/%s/plls/%d/setpoint' % (self.dev_ID, PLL-1), setpoint],
+        yield self.daq.set(setting)
+
+    @setting(140, PLL = 'i', returns = 'v[]')
+    def get_PLL_setpoint(self, c, PLL):
+        """Gets the phase setpoint of the specified PLL (either 1 or 2)."""
+        setting = '/%s/plls/%d/setpoint' % (self.dev_ID, PLL-1)
+        dic = yield self.daq.get(setting,True)
+        setpoint = float(dic[setting])
+        returnValue(setpoint)
+        
+    @setting(141,PLL = 'i', P = 'v[]', returns = '')
+    def set_PLL_P(self, c, PLL, P):
+        """Sets the proportional term of the specified PLL (either 1 or 2) PID loop"""
+        setting = ['/%s/plls/%d/p' % (self.dev_ID, PLL-1), P],
+        yield self.daq.set(setting)
+
+    @setting(142, PLL = 'i', returns = 'v[]')
+    def get_PLL_P(self, c, PLL):
+        """Gets the proportional term of the specified PLL (either 1 or 2) PID loop"""
+        setting = '/%s/plls/%d/p' % (self.dev_ID, PLL-1)
+        dic = yield self.daq.get(setting,True)
+        P = float(dic[setting])
+        returnValue(P)
+        
+    @setting(143,PLL = 'i', I = 'v[]', returns = '')
+    def set_PLL_I(self, c, PLL, I):
+        """Sets the intergral term of the specified PLL (either 1 or 2) PID loop"""
+        setting = ['/%s/plls/%d/i' % (self.dev_ID, PLL-1), I],
+        yield self.daq.set(setting)
+
+    @setting(144, PLL = 'i', returns = 'v[]')
+    def get_PLL_I(self, c, PLL):
+        """Gets the integral term of the specified PLL (either 1 or 2) PID loop"""
+        setting = '/%s/plls/%d/i' % (self.dev_ID, PLL-1)
+        dic = yield self.daq.get(setting,True)
+        I = float(dic[setting])
+        returnValue(I)
+
+    @setting(145,PLL = 'i', D = 'v[]', returns = '')
+    def set_PLL_D(self, c, PLL, D):
+        """Sets the derivative term of the specified PLL (either 1 or 2) PID loop"""
+        setting = ['/%s/plls/%d/d' % (self.dev_ID, PLL-1), D],
+        yield self.daq.set(setting)
+
+    @setting(146, PLL = 'i', returns = 'v[]')
+    def get_PLL_D(self, c, PLL):
+        """Gets the derivative term of the specified PLL (either 1 or 2) PID loop"""
+        setting = '/%s/plls/%d/d' % (self.dev_ID, PLL-1)
+        dic = yield self.daq.get(setting,True)
+        I = float(dic[setting])
+        returnValue(I)
+
+    @setting(147,PLL = 'i', returns = '')
+    def set_PLL_on(self, c, PLL):
+        """Enables the PID"""
+        setting = ['/%s/plls/%d/enable' % (self.dev_ID, PLL-1), 1],
+        yield self.daq.set(setting)
+
+    @setting(148,PLL = 'i', returns = '')
+    def set_PLL_off(self, c, PLL):
+        """Turns off the PID"""
+        setting = ['/%s/plls/%d/enable' % (self.dev_ID, PLL-1), 0],
+        yield self.daq.set(setting)
+
+    
+    @setting(149,PLL_index = 'i', rec_time= 'v[]', timeout = 'i', returns = '**v[]')
+    def poll_PLL(self,c, PLL_index, rec_time, timeout):
+        """This function returns subscribed data previously in the API's buffers or
+            obtained during the specified time. It returns a dict tree containing
+            the recorded data. This function blocks until the recording time is
+            elapsed. Recording time input is in seconds. Timeout time input is in 
+            milliseconds. Recommended timeout value is 500ms."""
+
+        path = '/%s/plls/%d/*' % (self.dev_ID, PLL_index-1)
+        path_freqdelta = '/%s/plls/%d/freqdelta' % (self.dev_ID, PLL_index-1)
+        path_error = '/%s/plls/%d/error' % (self.dev_ID, PLL_index-1)
+
+        yield self.daq.flush()
+        yield self.daq.subscribe(path)
+
+        ans = yield self.daq.poll(rec_time, timeout, 1, True)
+
+        #print ans[path_freqdelta]
+        #print ans[path_error]
+
+        yield self.daq.unsubscribe(path)
+        
+        returnValue([ans[path_freqdelta],ans[path_error]])
+   
+    def sleep(self,secs):
+        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
+        other operations to be done elsewhere while paused."""
+        d = defer.Deferred()
+        reactor.callLater(secs,d.callback,'Sleeping')
+        return d
+
 __server__ = HF2LIServer()
   
 if __name__ == '__main__':
