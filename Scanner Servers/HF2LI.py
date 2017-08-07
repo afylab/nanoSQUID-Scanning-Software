@@ -295,8 +295,15 @@ class HF2LIServer(LabradServer):
 
         if sweep_param_set == True:
             #Set the start and stop points
-            yield self.sweeper.set('sweep/start', start)
-            yield self.sweeper.set('sweep/stop', stop)
+            if start <= stop:
+                yield self.sweeper.set('sweep/start', start)
+                yield self.sweeper.set('sweep/stop', stop)
+                yield self.sweeper.set('sweep/scan', 0)
+            else:
+                yield self.sweeper.set('sweep/start', stop)
+                yield self.sweeper.set('sweep/stop', start)
+                yield self.sweeper.set('sweep/scan', 3)
+                
             yield self.sweeper.set('sweep/samplecount', samplecount)
             
             #Specify linear or logarithmic grid spacing. Off by default
