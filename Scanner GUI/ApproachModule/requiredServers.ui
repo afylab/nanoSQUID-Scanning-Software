@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>255</width>
-    <height>173</height>
+    <height>139</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>nSOT Charactizer Server List</string>
+   <string>Approach Module Server List</string>
   </property>
   <property name="styleSheet">
    <string notr="true">background: black</string>
@@ -32,24 +32,6 @@ color: rgb(168,168,168)
    </property>
    <property name="text">
     <string>Required servers list: </string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>70</y>
-     <width>111</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#label_2{
-color: rgb(168,168,168)
-}</string>
-   </property>
-   <property name="text">
-    <string>•  DataVault</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
@@ -77,7 +59,7 @@ color: rgb(168,168,168)
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>110</y>
+     <y>90</y>
      <width>131</width>
      <height>16</height>
     </rect>
@@ -88,14 +70,14 @@ color: rgb(168,168,168)
 }</string>
    </property>
    <property name="text">
-    <string>•  IPS 120 Power Supply</string>
+    <string>•  CPSC Coarse Piezos</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_6">
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>90</y>
+     <y>70</y>
      <width>111</width>
      <height>16</height>
     </rect>
@@ -113,7 +95,7 @@ color: rgb(168,168,168)
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>130</y>
+     <y>110</y>
      <width>131</width>
      <height>16</height>
     </rect>

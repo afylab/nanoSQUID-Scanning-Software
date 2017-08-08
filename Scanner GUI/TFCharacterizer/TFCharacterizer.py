@@ -16,6 +16,8 @@ Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 Ui_advancedSettings, QtBaseClass = uic.loadUiType(path + r"\advancedSettings.ui")
 
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
+    workingPointSelected = QtCore.pyqtSignal(float, float)
+
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
         
@@ -77,6 +79,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_fitData.clicked.connect(self.fitCurrData)
         self.push_Start.clicked.connect(self.startSweep)
         self.push_Stop.clicked.connect(self.stopSweep)
+        self.push_WorkingPoint.clicked.connect(self.selectWorkingPoint)
         
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
@@ -265,6 +268,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.startFreq = val*1000
             self.minFreqLine.setPos(self.startFreq)
             self.minFreqLine2.setPos(self.startFreq)
+            self.points = int(np.abs(self.startFreq-self.stopFreq)/self.freqStep)
             self.reinitSweep()
         self.lineEdit_MinFreq.setText(formatFreq(self.startFreq))
     
@@ -275,6 +279,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.stopFreq = val*1000
             self.maxFreqLine.setPos(self.stopFreq)
             self.maxFreqLine2.setPos(self.stopFreq)
+            self.points = int(np.abs(self.startFreq-self.stopFreq)/self.freqStep)
             self.reinitSweep()
         self.lineEdit_MaxFreq.setText(formatFreq(self.stopFreq))
     
@@ -361,6 +366,30 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.radio_in2.setChecked(True)
             self.reinitSweep()
             
+    def selectWorkingPoint(self):
+        index = np.argmin(np.abs(self.freq - self.selectFreq))
+        
+        if self.selectFreq - self.freq[index] > 0:
+            f1 = self.freq[index]
+            f2 = self.freq[index+1]
+            p1 = self.phi[index]
+            p2 = self.phi[index+1]
+            m = (p1 - p2)/(f1-f2)
+            c = -m*f1 + p1
+            phase = m*self.selectFreq + c
+        elif self.selectFreq - self.freq[index] <0:
+            f1 = self.freq[index-1]
+            f2 = self.freq[index]
+            p1 = self.phi[index-1]
+            p2 = self.phi[index]
+            m = (p1 - p2)/(f1-f2)
+            c = -m*f1 + p1
+            phase = m*self.selectFreq + c
+        else:
+            phase = self.phi[index]
+            
+        self.workingPointSelected.emit(self.selectFreq, phase)
+            
     @inlineCallbacks
     def startSweep(self, c = None):    
         try:
@@ -389,7 +418,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
             formated_data = []
             for j in range(0, self.points):
-                formated_data.append((data[0][j],data[1][j],data[2][j]))
+                formated_data.append((data[1][j],data[2][j],data[3][j]))
         
             yield self.dv.add(formated_data)
 
@@ -417,10 +446,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
    
     @inlineCallbacks
     def reinitSweep(self,c = None):
-        #Uses demodulater one by default. Manually specify bandwidth (done via time constant). 
-        #Loop count defaults to 1. Averaging_sample set to 0 so that time constant is determining
-        #factor. 
-        #To add, settling time option?
+        #Uses demodulater 1, might need to change depending on input/output selected
         try:
             yield self.hf.create_sweep_object(self.startFreq, self.stopFreq, self.points, self.sweep_param, 1, self.log, self.bandcontrol, self.bandwidth, self.overlap, self.loopcount, self.settle_time, self.settle_acc, self.average_TC, self.average_sample)
         except Exception as inst:
@@ -458,6 +484,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #param = [32838.1, 5000, 0.0067]
         self.R = ampFunc(self.freq, *params) + 5e-6*(np.random.rand(self.points)-0.5)
         self.phi = phaseFunc(self.freq, *param) + np.random.rand(self.points)-0.5
+        '''
         
         try:
             self.ampPlot.removeItem(self.prevAmpPlot)
@@ -467,7 +494,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
         self.prevAmpPlot = self.ampPlot.plot(self.freq,self.R)
         self.prevPhasePlot = self.phasePlot.plot(self.freq,self.phi)
-        '''
         
         try: 
             self.ampPlot.removeItem(self.prevAmpFit)
@@ -496,6 +522,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_PhasePeakFSig.setText(formatFreq(perr[0]*1000))
         self.lineEdit_PhaseQFactor.setText(formatVolt(popt[1]))
         #Maybe iterate fits/starting parameters? 
+        
 #----------------------------------------------------------------------------------------------#         
     """ The following section has generally useful functions."""
            
@@ -504,6 +531,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_Stop.setEnabled(False)
         self.push_fitData.setEnabled(False)
         self.push_WorkingPoint.setEnabled(False)
+        self.push_SuggestWorkingPoint.setEnabled(False)
+        self.push_advancedSettings.setEnabled(False)
         
         self.lineEdit_MinFreq.setDisabled(True)
         self.lineEdit_MaxFreq.setDisabled(True)
@@ -525,6 +554,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_Stop.setEnabled(True)
         self.push_fitData.setEnabled(True)
         self.push_WorkingPoint.setEnabled(True)
+        self.push_SuggestWorkingPoint.setEnabled(True)
+        self.push_advancedSettings.setEnabled(True)
         
         self.lineEdit_MinFreq.setDisabled(False)
         self.lineEdit_MaxFreq.setDisabled(False)

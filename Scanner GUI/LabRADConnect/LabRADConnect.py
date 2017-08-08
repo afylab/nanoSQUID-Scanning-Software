@@ -29,7 +29,8 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         'dv'        : None,
         'ser_server': None,
         'dac_adc'   : None,       
-        'hf2li'     : None
+        'hf2li'     : None,
+        'cpsc'      : None
         }
         self.connectionDictionary = self.emptyDictionary
         
@@ -55,8 +56,8 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         
     @inlineCallbacks
     def connectAllServers(self, c = None):
-        #Lock buttons so prevent clicking during automatic connection
-        
+        #TODO: Lock buttons so prevent clicking during automatic connection
+        #TODO: 
         
         #First create connection to labrad and give time for connection to be made
         yield self.connectLabRAD()
@@ -72,6 +73,8 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         yield self.connectDACADC()
         
         yield self.connectHF2LI()
+        
+        yield self.connectCPSC()
         
         self.cxnSuccessful.emit(self.connectionDictionary) 
         
@@ -188,7 +191,6 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
            
     @inlineCallbacks
     def connectHF2LI(self, c = None):
-    
         if self.connectionDictionary['cxn'] is None:
             self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -213,7 +215,30 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_HF2LI_status.setText('Connection Failed')
 
-
+    @inlineCallbacks
+    def connectCPSC(self, c = None):
+        if self.connectionDictionary['cxn'] is None:
+            self.push_CPSC.setStyleSheet("#push_CPSC{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+            self.label_CPSC_status.setText('Not connected')
+        else: 
+            cxn = self.connectionDictionary['cxn']
+            try:
+                cpsc = yield cxn.cpsc_server
+                dev_connected = yield cpsc.detect_device()
+                if dev_connected:
+                    self.push_CPSC.setStyleSheet("#push_CPSC{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_CPSC_status.setText('Connected')
+                    self.connectionDictionary['cpsc'] = cspc
+                else:
+                    self.push_CPSC.setStyleSheet("#push_CPSC{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_CPSC_status.setText('No device detected') 
+            except:
+                self.push_HF2LI.setStyleSheet("#push_CPSC{" + 
+                "background: rgb(161,0,0);border-radius: 4px;}")
+                self.label_HF2LI_status.setText('Connection Failed')
            
     @inlineCallbacks
     def chooseSession(self, c = None):
