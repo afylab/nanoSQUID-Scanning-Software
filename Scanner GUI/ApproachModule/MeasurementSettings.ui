@@ -677,7 +677,7 @@ color:rgb(168,168,168)
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <item>
     <property name="text">
@@ -687,6 +687,26 @@ color:rgb(168,168,168)
    <item>
     <property name="text">
      <string>Sig In 2</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Aux In 1 (&lt;20 kHz)</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Aux In 2 (&lt;20 kHz)</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>DIO D0 (&lt;2 MHz)</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>DIO D1 (&lt;2 MHz)</string>
     </property>
    </item>
   </widget>
@@ -793,11 +813,17 @@ color:rgb(168,168,168)
      <height>20</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
    <property name="text">
     <string/>
    </property>
    <property name="alignment">
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
+   <property name="readOnly">
+    <bool>false</bool>
    </property>
   </widget>
   <widget class="QLineEdit" name="lineEdit_FT_Freq">

@@ -44,12 +44,12 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.moveDefault()
         
         #Intialize all widgets. 
-        self.SC = ScanControl.Window(self.reactor, self)
-        self.LabRAD = LabRADConnect.Window(self.reactor, self)
-        self.nSOTChar = nSOTCharacterizer.Window(self.reactor,self)
-        self.Plot = plotter.Plotter(self.reactor,self)
-        self.TFChar = TFCharacterizer.Window(self.reactor,self)
-        self.Approach = Approach.Window(self.reactor,self)
+        self.SC = ScanControl.Window(self.reactor, None)
+        self.LabRAD = LabRADConnect.Window(self.reactor, None)
+        self.nSOTChar = nSOTCharacterizer.Window(self.reactor, None)
+        self.Plot = plotter.Plotter(self.reactor, None)
+        self.TFChar = TFCharacterizer.Window(self.reactor, None)
+        self.Approach = Approach.Window(self.reactor, None)
         
         
         #Connects all drop down menu button
@@ -70,6 +70,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.LabRAD.cxnSuccessful.connect(self.distributeLabRADConnections)
         self.LabRAD.cxnDisconnected.connect(self.disconnectLabRADConnections)
         
+        self.TFChar.workingPointSelected.connect(self.distributeWorkingPoint)
         #Open by default the LabRAD Connect Module
         self.openLabRADConnectWindow()
         
@@ -87,31 +88,37 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
     
     def openScanControlWindow(self):
         self.SC.moveDefault()
+        self.SC.raise_()
         if self.SC.isVisible() == False:
             self.SC.show()
             
     def openLabRADConnectWindow(self):
         self.LabRAD.moveDefault()
+        self.LabRAD.raise_()
         if self.LabRAD.isVisible() == False:
             self.LabRAD.show()
             
     def opennSOTCharWindow(self):
         self.nSOTChar.moveDefault()
+        self.nSOTChar.raise_()
         if self.nSOTChar.isVisible() == False:
             self.nSOTChar.show()
             
     def openDataPlotter(self):
         self.Plot.moveDefault()
+        self.Plot.raise_()
         if self.Plot.isVisible() == False:
             self.Plot.show()
             
     def openTFCharWindow(self):
         self.TFChar.moveDefault()
+        self.TFChar.raise_()
         if self.TFChar.isVisible() == False:
             self.TFChar.show()
     
     def openApproachWindow(self):
         self.Approach.moveDefault()
+        self.Approach.raise_()
         if self.Approach.isVisible() == False:
             self.Approach.show()
             
@@ -133,6 +140,10 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.TFChar.disconnectLabRAD()
         self.Approach.disconnectLabRAD()
     
+    def distributeWorkingPoint(self,freq, phase):
+        print freq
+        print phase
+        self.Approach.setWorkingPoint(freq, phase)
 #----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to setting the default layouts."""

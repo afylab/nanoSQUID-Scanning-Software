@@ -12,7 +12,6 @@ Ui_advancedFeedbackSettings, QtBaseClass = uic.loadUiType(path + r"\advancedFeed
 Ui_MeasurementSettings, QtBaseClass = uic.loadUiType(path + r"\MeasurementSettings.ui")
 
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
-    
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
         self.feedback = False
@@ -23,13 +22,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         self.moveDefault()        
 
-        #Initialize values
-        self.freqThreshold = 1.00
-        self.tempThreshold = 1e-4
-        self.fieldThreshold = 1e-4
-        
-        self.measuring = False
-        
+
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
         
@@ -59,11 +52,21 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.dv = None
         self.hf = None
         
+        #Initialize values
+        self.freqThreshold = 1.00
+        self.tempThreshold = 1e-4
+        self.fieldThreshold = 1e-4
+        
+        self.measuring = False
+        
         self.setFreqThresh()
         self.setTempThresh()
         self.setFieldThresh()
         
         self.PLL_TargetBW = 100
+        # 0 is just proportional term, 1 is just integral term, 2 is proportional
+        # and intergral, and 3 is proportional, integral, and derivative term
+        self.PLL_AdviseMode = 2
         
         self.PLL_Input  = 2
         self.PLL_CenterFreq = None
@@ -73,7 +76,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.PLL_Harmonic = 1
         self.PLL_TC = 138.4e-6
         self.PLL_FilterBW = 500.1
-        self.PLL_FilterOder = 4
+        self.PLL_FilterOrder = 4
         
         self.PLL_P = 2.537
         self.PLL_I = 3.282
@@ -106,7 +109,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.cxn = dict['cxn']
             self.hf = dict['hf2li']
             self.dac = dict['dac_adc']
-            
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             self.serversConnected = True
@@ -136,8 +138,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         advFeed.exec_()
         
     def showMeasurementSettings(self):
-        PLL_values = [self.PLL_TargetBW, self.PLL_Input, self.PLL_CenterFreq, self.PLL_CenterPhase, 
-                        self.PLL_Range, self.PLL_Harmonic, self.PLL_TC, self.PLL_FilterBW, self.PLL_FilterOder, 
+        PLL_values = [self.PLL_TargetBW, self.PLL_AdviseMode, self.PLL_Input, self.PLL_CenterFreq, self.PLL_CenterPhase, 
+                        self.PLL_Range, self.PLL_Harmonic, self.PLL_TC, self.PLL_FilterBW, self.PLL_FilterOrder, 
                         self.PLL_P, self.PLL_I, self.PLL_D, self.PLL_SimBW, self.PLL_PM, self.PLL_Rate]        
         FT_Values = [self.FT_Input, self.FT_Frequency, self.FT_Output, self.FT_Amplitude, self.F_Demod, 
                         self.F_Harmonic, self.F_TC, self.T_Demod, self.T_Harmonic, self.T_TC]
@@ -155,7 +157,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.PLL_Harmonic = PLL_Values[5]
             self.PLL_TC = PLL_Values[6]
             self.PLL_FilterBW = PLL_Values[7]
-            self.PLL_FilterOder = PLL_Values[8]
+            self.PLL_FilterOrder = PLL_Values[8]
             
             self.PLL_P = PLL_Values[9]
             self.PLL_I = PLL_Values[10]
@@ -332,9 +334,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             if self.checkBox_Field.isChecked():
                 print 'Starting field measurement'
             if self.checkBox_Freq.isChecked():
+                self.setHF2LI_PLL_Settings()
                 print 'Starting freq measurement'
             if self.checkBox_Temp.isChecked():
                 print 'Starting temp measurement'
+            
             self.push_StartControllers.setText("Stop Controllers")  
             style = """ QPushButton#push_StartControllers{
                     color: rgb(50,168,50);
@@ -352,6 +356,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_StartControllers.setStyleSheet(style)
             self.measuring = True
             self.push_MeasurementSettings.setEnabled(False)
+            if self.checkBox_Field.isChecked():
+                print 'Starting field measurement'
+            if self.checkBox_Freq.isChecked():
+                self.startFrequencyMonitoring()
+            if self.checkBox_Temp.isChecked():
+                print 'Starting temp measurement'
         else: 
             self.push_StartControllers.setText("Start Controllers")
             style = """ QPushButton#push_StartControllers{
@@ -379,6 +389,41 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                                             }""")
         self.PLL_CenterFreq = freq
         self.PLL_CenterPhase = phase
+        
+    @inlineCallbacks
+    def setHF2LI_PLL_Settings(self, c = None):
+        print 'Got here biatch'
+        #All settings are set for PLL 1
+        yield self.hf.set_PLL_input(1,self.PLL_Input)
+        yield self.hf.set_PLL_freqcenter(1, self.PLL_CenterFreq)
+        yield self.hf.set_PLL_setpoint(1,self.PLL_CenterPhase)
+        yield self.hf.set_PLL_freqrange(1,self.PLL_Range)
+        
+        yield self.hf.set_PLL_harmonic(1,self.PLL_Harmonic)
+        yield self.hf.set_PLL_TC(1,self.PLL_TC)
+        self.PLL_TC = self.hf.get_PLL_TC(1)
+        self.PLL_FilterBW = 0.0692291283 / self.PLL_TC
+        
+        yield self.hf.set_PLL_filterorder(1,self.PLL_FilterOrder)
+        
+        yield self.hf.set_PLL_P(1,self.PLL_P)
+        yield self.hf.set_PLL_I(1,self.PLL_I)
+        yield self.hf.set_PLL_D(1,self.PLL_D)
+        yield self.hf.set_PLL_rate(1,self.PLL_Rate)
+        self.PLL_Rate = yield self.hf.get_PLL_rate(1)
+        #pm?
+        
+    @inlineCallbacks
+    def startFrequencyMonitoring(self, c=None):
+        #All settings are set for PLL 1
+        yield self.hf.set_PLL_on(self,1)
+        while self.measuring:
+            data = yield self.hf.poll_PLL(1, 0.05, 100)
+            deltaf = data[0][0]
+            phaseError = data[1][0]
+            self.lineEdit_freqCurr.setText(formatNum(deltaf))
+            self.lineEdit_phaseError.setText(formatNum(phaseError))
+        yield self.hf.set_PLL_off(self,1)
         
     def toggleFeedback(self):
         if self.feedback:
@@ -492,23 +537,24 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         #    self.push_AdvisePID.setEnabled(True)
             
         self.PLL_TargetBW = PLL_Values[0]
+        self.PLL_AdviseMode = PLL_Values[1]
         
-        self.PLL_Input  = PLL_Values[1]
-        self.PLL_CenterFreq = PLL_Values[2]
-        self.PLL_CenterPhase = PLL_Values[3]
-        self.PLL_Range = PLL_Values[4]
+        self.PLL_Input  = PLL_Values[2]
+        self.PLL_CenterFreq = PLL_Values[3]
+        self.PLL_CenterPhase = PLL_Values[4]
+        self.PLL_Range = PLL_Values[5]
         
-        self.PLL_Harmonic = PLL_Values[5]
-        self.PLL_TC = PLL_Values[6]
-        self.PLL_FilterBW = PLL_Values[7]
-        self.PLL_FilterOder = PLL_Values[8]
+        self.PLL_Harmonic = PLL_Values[6]
+        self.PLL_TC = PLL_Values[7]
+        self.PLL_FilterBW = PLL_Values[8]
+        self.PLL_FilterOrder = PLL_Values[9]
         
-        self.PLL_P = PLL_Values[9]
-        self.PLL_I = PLL_Values[10]
-        self.PLL_D = PLL_Values[11] 
-        self.PLL_SimBW = PLL_Values[12]
-        self.PLL_PM = PLL_Values[13]
-        self.PLL_Rate = PLL_Values[14]
+        self.PLL_P = PLL_Values[10]
+        self.PLL_I = PLL_Values[11]
+        self.PLL_D = PLL_Values[12] 
+        self.PLL_SimBW = PLL_Values[13]
+        self.PLL_PM = PLL_Values[14]
+        self.PLL_Rate = PLL_Values[15]
         
         self.FT_Input = FT_Values[0]
         self.FT_Frequency = FT_Values[1]
@@ -531,6 +577,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.lineEdit_PLL_I.editingFinished.connect(self.setPLL_I)
         self.lineEdit_PLL_D.editingFinished.connect(self.setPLL_D)
         
+        self.comboBox_PLL_Advise.currentIndexChanged.connect(self.setPLL_AdviseMode)
         self.comboBox_PLL_FilterOrder.currentIndexChanged.connect(self.setPLL_FilterOrder)
         self.comboBox_PLL_Harmonic.currentIndexChanged.connect(self.setPLL_Harmonic)
         self.comboBox_PLL_Input.currentIndexChanged.connect(self.setPLL_Input)
@@ -556,6 +603,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         
     def loadValues(self):
         self.lineEdit_TargetBW.setText(formatNum(self.PLL_TargetBW))
+        self.comboBox_PLL_Advise.setCurrentIndex(self.PLL_AdviseMode)
         self.comboBox_PLL_Input.setCurrentIndex(self.PLL_Input - 1)
         if self.PLL_CenterFreq is not None:
             self.lineEdit_PLL_CenterFreq.setText(formatNum(self.PLL_CenterFreq))
@@ -570,7 +618,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.comboBox_PLL_Harmonic.setCurrentIndex(self.PLL_Harmonic -1)
         self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
         self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
-        self.comboBox_PLL_FilterOrder.setCurrentIndex(self.PLL_FilterOder -1)
+        self.comboBox_PLL_FilterOrder.setCurrentIndex(self.PLL_FilterOrder -1)
         
         self.lineEdit_PLL_P.setText(formatNum(self.PLL_P, 4))
         self.lineEdit_PLL_I.setText(formatNum(self.PLL_I, 4))
@@ -641,13 +689,17 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         val = readNum(new_TC)
         if isinstance(val,float):
             self.PLL_TC = val
+            self.PLL_FilterBW = 0.0692291283 / val
         self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
+        self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
         
     def setPLL_FilterBW(self):
         new_filterBW = str(self.lineEdit_PLL_FilterBW.text())
         val = readNum(new_filterBW)
         if isinstance(val,float):
             self.PLL_FilterBW = val
+            self.PLL_TC = 0.0692291283 / val
+        self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
         self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
         
     def setPLL_P(self):
@@ -678,7 +730,10 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.PLL_Harmonic = self.comboBox_PLL_Harmonic.currentIndex() + 1
         
     def setPLL_FilterOrder(self):
-        self.PLL_FilterOder = self.comboBox_PLL_FilterOrder.currentIndex() + 1
+        self.PLL_FilterOrder = self.comboBox_PLL_FilterOrder.currentIndex() + 1
+        
+    def setPLL_AdviseMode(self):
+        self.PLL_AdviseMode = self.comboBox_PLL_Advise.currentIndex()
         
     def setFT_Freq(self):
         new_freq = str(self.lineEdit_FT_Freq.text())
@@ -733,21 +788,21 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.accept()
         
     def advisePID(self, c = None):
-        self.PID_results = None
+        self.PID_advice = None
         self.computePIDParameters()
         self.displayCalculatingGraphics()
         
     @inlineCallbacks
     def computePIDParameters(self):
         yield self.sleep(3)
-        # yield self.hf.advisePID(self.PLL_TargetBW, self.PLL_Type, 1)
+        # yield self.hf.advisePID(self.PLL_TargetBW, self.PLL_AdviseMode, 1)
         print 'pasta'
-        self.test = 'Pasta'
+        self.PID_advice = 'Pasta'
         
     @inlineCallbacks
     def displayCalculatingGraphics(self):
         i = 0
-        while self.test is None:
+        while self.PID_advice is None:
             self.push_AdvisePID.setStyleSheet(self.sheets[i])
             yield self.sleep(0.025)
             i = (i+1)%80
@@ -756,7 +811,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
     def getValues(self):
         PLL_Values = [self.PLL_TargetBW, self.PLL_Input, self.PLL_CenterFreq, 
                     self.PLL_CenterPhase, self.PLL_Range, self.PLL_Harmonic, 
-                    self.PLL_TC, self.PLL_FilterBW, self.PLL_FilterOder, self.PLL_P, 
+                    self.PLL_TC, self.PLL_FilterBW, self.PLL_FilterOrder, self.PLL_P, 
                     self.PLL_I, self.PLL_D, self.PLL_SimBW, self.PLL_PM, self.PLL_Rate]
         FT_Values = [self.FT_Input, self.FT_Frequency, self.FT_Output, self.FT_Amplitude, self.F_Demod, 
                         self.F_Harmonic, self.F_TC, self.T_Demod, self.T_Harmonic, self.T_TC]

@@ -109,6 +109,12 @@ qproperty-wordWrap: true;
 color: rgb(168,168,168);
 background: rgb(60, 60, 60);
 border-radius: 4px;
+}
+
+QPushButton:pressed#push_ConnectAll{
+color: rgb(168,168,168);
+background-color:rgb(100,100,100);
+border-radius: 4px
 }</string>
     </property>
     <property name="text">
@@ -183,6 +189,12 @@ qproperty-alignment: 'AlignVCenter | AlignCenter';
 color: rgb(168,168,168);
 background: rgb(60, 60, 60);
 border-radius: 4px;
+}
+
+QPushButton:pressed#push_DisconnectAll{
+color: rgb(168,168,168);
+background-color:rgb(100,100,100);
+border-radius: 4px
 }</string>
     </property>
     <property name="text">

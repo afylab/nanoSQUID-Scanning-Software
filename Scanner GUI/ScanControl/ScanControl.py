@@ -19,7 +19,6 @@ Make sure no scan more than maximum area
 Fix linewidth to be constant number of pixels instead of bullshit variable stuff it does now
 '''
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
-    
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
         
@@ -567,7 +566,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.currYc = self.Yc
         self.currW = self.W
         self.currH = self.H
-
         
         if self.scanCoordinates:
             self.moveROI()
