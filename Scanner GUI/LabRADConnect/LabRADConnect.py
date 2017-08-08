@@ -236,9 +236,9 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                     "background: rgb(161,0,0);border-radius: 4px;}")
                     self.label_CPSC_status.setText('No device detected') 
             except:
-                self.push_HF2LI.setStyleSheet("#push_CPSC{" + 
+                self.push_CPSC.setStyleSheet("#push_CPSC{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
-                self.label_HF2LI_status.setText('Connection Failed')
+                self.label_CPSC_status.setText('Connection Failed')
            
     @inlineCallbacks
     def chooseSession(self, c = None):
