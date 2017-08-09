@@ -276,7 +276,7 @@ color:rgb(168,168,168)
    <property name="geometry">
     <rect>
      <x>200</x>
-     <y>540</y>
+     <y>570</y>
      <width>91</width>
      <height>16</height>
     </rect>
@@ -289,7 +289,7 @@ color:rgb(168,168,168)
    <property name="geometry">
     <rect>
      <x>200</x>
-     <y>600</y>
+     <y>540</y>
      <width>71</width>
      <height>16</height>
     </rect>
@@ -1154,15 +1154,13 @@ color:rgb(168,168,168)
    <property name="geometry">
     <rect>
      <x>300</x>
-     <y>600</y>
+     <y>540</y>
      <width>71</width>
      <height>20</height>
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">#lineEdit_PLL_Rate{
-background: rgb(168,168,168)
-}</string>
+    <string notr="true"/>
    </property>
    <property name="text">
     <string/>
@@ -1171,14 +1169,14 @@ background: rgb(168,168,168)
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
    <property name="readOnly">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
   </widget>
   <widget class="QLineEdit" name="lineEdit_PLL_SimBW">
    <property name="geometry">
     <rect>
      <x>300</x>
-     <y>540</y>
+     <y>570</y>
      <width>71</width>
      <height>20</height>
     </rect>
@@ -1239,7 +1237,7 @@ background: rgb(168,168,168);
    <property name="geometry">
     <rect>
      <x>300</x>
-     <y>570</y>
+     <y>600</y>
      <width>71</width>
      <height>20</height>
     </rect>
@@ -1263,7 +1261,7 @@ background: rgb(168,168,168)
    <property name="geometry">
     <rect>
      <x>200</x>
-     <y>570</y>
+     <y>600</y>
      <width>91</width>
      <height>16</height>
     </rect>
@@ -1387,6 +1385,25 @@ border-radius: 2px;
    </property>
    <property name="alignment">
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="push_stability">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>504</y>
+     <width>16</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#push_stability{
+background: rgb(161, 0, 0);
+border-radius: 8px;
+}</string>
+   </property>
+   <property name="text">
+    <string/>
    </property>
   </widget>
  </widget>

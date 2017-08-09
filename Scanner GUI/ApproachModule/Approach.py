@@ -329,13 +329,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 #--------------------------------------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to toggling measurements."""
-    def toggleControllers(self):
+    @inlineCallbacks
+    def toggleControllers(self, c = None):
         if not self.measuring:
             if self.checkBox_Field.isChecked():
                 print 'Starting field measurement'
             if self.checkBox_Freq.isChecked():
-                self.setHF2LI_PLL_Settings()
-                print 'Starting freq measurement'
+                yield self.setHF2LI_PLL_Settings()
+                yield self.startFrequencyMonitoring()
             if self.checkBox_Temp.isChecked():
                 print 'Starting temp measurement'
             
@@ -356,12 +357,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_StartControllers.setStyleSheet(style)
             self.measuring = True
             self.push_MeasurementSettings.setEnabled(False)
-            if self.checkBox_Field.isChecked():
-                print 'Starting field measurement'
-            if self.checkBox_Freq.isChecked():
-                self.startFrequencyMonitoring()
-            if self.checkBox_Temp.isChecked():
-                print 'Starting temp measurement'
         else: 
             self.push_StartControllers.setText("Start Controllers")
             style = """ QPushButton#push_StartControllers{
@@ -401,7 +396,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         yield self.hf.set_PLL_harmonic(1,self.PLL_Harmonic)
         yield self.hf.set_PLL_TC(1,self.PLL_TC)
-        self.PLL_TC = self.hf.get_PLL_TC(1)
+        self.PLL_TC = yield self.hf.get_PLL_TC(1)
         self.PLL_FilterBW = 0.0692291283 / self.PLL_TC
         
         yield self.hf.set_PLL_filterorder(1,self.PLL_FilterOrder)
@@ -409,9 +404,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         yield self.hf.set_PLL_P(1,self.PLL_P)
         yield self.hf.set_PLL_I(1,self.PLL_I)
         yield self.hf.set_PLL_D(1,self.PLL_D)
-        yield self.hf.set_PLL_rate(1,self.PLL_Rate)
-        self.PLL_Rate = yield self.hf.get_PLL_rate(1)
-        #pm?
+        #These don't work yet, but should be added once they do
+        #yield self.hf.set_PLL_rate(1,self.PLL_Rate)
+        #self.PLL_Rate = yield self.hf.get_PLL_rate(1)
         
     @inlineCallbacks
     def startFrequencyMonitoring(self, c=None):
@@ -530,11 +525,6 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.push_AdvisePID.clicked.connect(self.advisePID)
         
         self.hf = server
-
-        #if self.hf is None:
-        #    self.push_AdvisePID.setEnabled(False)
-        #else:
-        #    self.push_AdvisePID.setEnabled(True)
             
         self.PLL_TargetBW = PLL_Values[0]
         self.PLL_AdviseMode = PLL_Values[1]
@@ -576,6 +566,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.lineEdit_PLL_P.editingFinished.connect(self.setPLL_P)
         self.lineEdit_PLL_I.editingFinished.connect(self.setPLL_I)
         self.lineEdit_PLL_D.editingFinished.connect(self.setPLL_D)
+        self.lineEdit_PLL_Rate.editingFinished.connect(self.setPLL_Rate)
         
         self.comboBox_PLL_Advise.currentIndexChanged.connect(self.setPLL_AdviseMode)
         self.comboBox_PLL_FilterOrder.currentIndexChanged.connect(self.setPLL_FilterOrder)
@@ -605,6 +596,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.lineEdit_TargetBW.setText(formatNum(self.PLL_TargetBW))
         self.comboBox_PLL_Advise.setCurrentIndex(self.PLL_AdviseMode)
         self.comboBox_PLL_Input.setCurrentIndex(self.PLL_Input - 1)
+        
         if self.PLL_CenterFreq is not None:
             self.lineEdit_PLL_CenterFreq.setText(formatNum(self.PLL_CenterFreq))
         else:
@@ -616,16 +608,25 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.lineEdit_PLL_Range.setText(formatNum(self.PLL_Range))
         
         self.comboBox_PLL_Harmonic.setCurrentIndex(self.PLL_Harmonic -1)
+        self.hf.set_advisor_harmonic(self.PLL_Harmonic)
+        
         self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
         self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
+        self.hf.set_advisor_tc(self.PLL_TC)
+        
         self.comboBox_PLL_FilterOrder.setCurrentIndex(self.PLL_FilterOrder -1)
+        self.hf.set_advisor_filterorder(self.PLL_FilterOrder)
         
         self.lineEdit_PLL_P.setText(formatNum(self.PLL_P, 4))
+        self.hf.set_advisor_p(self.PLL_P)
         self.lineEdit_PLL_I.setText(formatNum(self.PLL_I, 4))
+        self.hf.set_advisor_i(self.PLL_I)
         self.lineEdit_PLL_D.setText(formatNum(self.PLL_D, 4))
+        self.hf.set_advisor_d(self.PLL_D)
         self.lineEdit_PLL_SimBW.setText(formatNum(self.PLL_SimBW, 4))
         self.lineEdit_PLL_PM.setText(formatNum(self.PLL_PM, 4))
         self.lineEdit_PLL_Rate.setText(formatNum(self.PLL_Rate, 4))
+        
         
         self.comboBox_FT_Input.setCurrentIndex(self.FT_Input-1)
         self.comboBox_FT_Output.setCurrentIndex(self.FT_Output-1)
@@ -684,53 +685,83 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.PLL_Range = val
         self.lineEdit_PLL_Range.setText(formatNum(self.PLL_Range))
         
-    def setPLL_TC(self):
+    @inlineCallbacks
+    def setPLL_Range(self, c = None):
+        new_rate = str(self.lineEdit_PLL_Rate.text())
+        val = readNum(new_rate)
+        if isinstance(val,float):
+            self.PLL_Rate = val
+            yield self.hf.set_advisor_rate(self.PLL_Rate)
+            yield self.updateSimulation()
+        self.lineEdit_PLL_Range.setText(formatNum(self.PLL_Range))
+    
+    @inlineCallbacks
+    def setPLL_TC(self, c = None):
         new_TC = str(self.lineEdit_PLL_TC.text())
         val = readNum(new_TC)
         if isinstance(val,float):
             self.PLL_TC = val
             self.PLL_FilterBW = 0.0692291283 / val
+            yield self.hf.set_advisor_tc(self.PLL_TC)
+            yield self.updateSimulation()
         self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
         self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
-        
-    def setPLL_FilterBW(self):
+    @inlineCallbacks
+    def setPLL_FilterBW(self, c = None):
         new_filterBW = str(self.lineEdit_PLL_FilterBW.text())
         val = readNum(new_filterBW)
         if isinstance(val,float):
             self.PLL_FilterBW = val
             self.PLL_TC = 0.0692291283 / val
+            yield self.hf.set_advisor_tc(self.PLL_TC)
+            yield self.updateSimulation()
         self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
         self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
-        
-    def setPLL_P(self):
+    
+    @inlineCallbacks
+    def setPLL_P(self, c=  None):
         new_P = str(self.lineEdit_PLL_P.text())
         val = readNum(new_P)
         if isinstance(val,float):
             self.PLL_P = val
+            yield self.hf.set_advisor_p(self.PLL_P)
+            yield self.updateSimulation()
         self.lineEdit_PLL_P.setText(formatNum(self.PLL_P))
         
-    def setPLL_I(self):
+    @inlineCallbacks
+    def setPLL_I(self, c = None):
         new_I = str(self.lineEdit_PLL_I.text())
         val = readNum(new_I)
         if isinstance(val,float):
             self.PLL_I = val
+            yield self.hf.set_advisor_i(self.PLL_I)
+            yield self.updateSimulation()
         self.lineEdit_PLL_I.setText(formatNum(self.PLL_I))
         
-    def setPLL_D(self):
+    @inlineCallbacks
+    def setPLL_D(self, c = None):
         new_D = str(self.lineEdit_PLL_D.text())
         val = readNum(new_D)
         if isinstance(val,float):
             self.PLL_D = val
+            yield self.hf.set_advisor_d(self.PLL_D)
+            yield self.updateSimulation()
         self.lineEdit_PLL_D.setText(formatNum(self.PLL_D))
         
     def setPLL_Input(self):
         self.PLL_Input = self.comboBox_PLL_Input.currentIndex() + 1
         
-    def setPLL_Harmonic(self):
+    @inlineCallbacks
+    def setPLL_Harmonic(self, c = None):
         self.PLL_Harmonic = self.comboBox_PLL_Harmonic.currentIndex() + 1
+        yield self.hf.set_advisor_harmonic(self.PLL_Harmonic)
+        yield self.updateSimulation()
         
+    @inlineCallbacks
     def setPLL_FilterOrder(self):
         self.PLL_FilterOrder = self.comboBox_PLL_FilterOrder.currentIndex() + 1
+        yield self.hf.set_advisor_filterorder(self.PLL_FilterOrder)
+        yield self.updateSimulation()
         
     def setPLL_AdviseMode(self):
         self.PLL_AdviseMode = self.comboBox_PLL_Advise.currentIndex()
@@ -783,6 +814,17 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         if isinstance(val,float):
             self.T_TC = val
         self.lineEdit_T_TC.setText(formatNum(self.T_TC))
+    
+    @inlineCallbacks
+    def updateSimulation(self):
+        #Give time for automatic calculation of phase margin and simulated bandwidth
+        yield self.sleep(0.25)
+        pm = self.hf.get_advisor_pm()
+        bw = self.hf.get_advisor_simbw()
+        self.PLL_PM = pm
+        self.PLL_SimBW = bw
+        self.lineEdit_PLL_PM.setText(formatNum(self.PLL_PM))
+        self.lineEdit_PLL_SimBW.setText(formatNum(self.PLL_SimBW))
         
     def acceptNewValues(self):
         self.accept()

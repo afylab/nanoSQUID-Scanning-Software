@@ -748,7 +748,7 @@ class HF2LIServer(LabradServer):
 
     @setting(162, returns = 'v[]')
     def get_Advisor_PM(self, c):
-        """Gets the PLL PID phase marging"""
+        """Gets the PLL PID phase margin"""
         setting = 'pidAdvisor/pm' 
         dic = yield self.pidAdvisor.get(setting,True)
         PM = float(dic['/pm'])
@@ -815,8 +815,16 @@ class HF2LIServer(LabradServer):
         """Gets the PLL PID advisor sampling rate"""
         setting = 'pidAdvisor/demod/order' 
         dic = yield self.pidAdvisor.get(setting,True)
-        rate = int(dic['/demod/order'])
-        returnValue(rate)
+        order = int(dic['/demod/order'])
+        returnValue(order)
+        
+    @setting(172, returns = 'v[]')
+    def get_Advisor_simbw(self, c):
+        """Gets the PLL PID advisor simulated bandwidth"""
+        setting = 'pidAdvisor/bw' 
+        dic = yield self.pidAdvisor.get(setting,True)
+        bw = float(dic['/bw'])
+        returnValue(bw)
 
     @setting(155, returns = 's')
     def version(self,c):
