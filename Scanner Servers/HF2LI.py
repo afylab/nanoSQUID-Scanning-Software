@@ -48,14 +48,14 @@ class HF2LIServer(LabradServer):
         print "Server initialization complete"
         
     @inlineCallbacks
-    def initPIDAdvisor(self, c):
+    def initPIDAdvisor(self, c = None):
         self.pidAdvisor = yield self.daq.pidAdvisor()
         #Set device
         yield self.pidAdvisor.set('pidAdvisor/device', self.dev_ID)
         #Automatic response calculation triggered by parameter change.
-        yield self.pidAdvisor.set('pidAdvisor/auto', True)
+        yield self.pidAdvisor.set('pidAdvisor/auto', 1)
         #Adjusts the demodulator bandwidth to fit best to the specified target bandwidth of the full system.
-        yield self.pidAdvisor.set('pidAdvisor/pid/autobw', True)
+        yield self.pidAdvisor.set('pidAdvisor/pid/autobw', 1)
         # DUT model
         # source = 4: Internal PLL
         yield self.pidAdvisor.set('pidAdvisor/dut/source', 4)
@@ -63,7 +63,7 @@ class HF2LIServer(LabradServer):
         # for a step change. This parameter does not affect the shape of
         # the DUT transfer function
         yield self.pidAdvisor.set('pidAdvisor/dut/delay', 0.0)
-        
+
     @setting(100,returns = '')
     def detect_devices(self,c):
         """ Attempt to connect to the LabOne server (not a LadRAD server) and get a list of devices."""
@@ -91,12 +91,12 @@ class HF2LIServer(LabradServer):
         if dev_ID == "None":
             self.dev_ID = self.device_list[0]
             (self.daq, self.dev_ID, self.props) = yield zhinst.utils.create_api_session(self.dev_ID, 1)
-            self.initializePIDAdvisor()
+            self.initPIDAdvisor()
         else: 
             if dev_ID in self.device_list:
                 self.dev_ID = dev_ID
                 (self.daq, self.dev_ID, self.props) = yield zhinst.utils.create_api_session(self.dev_ID, 1)
-                self.initializePIDAdvisor()
+                self.initPIDAdvisor()
             else:
                 print "Provided device ID is not in the list of possible devices."
    
@@ -448,8 +448,10 @@ class HF2LIServer(LabradServer):
         except: 
             pass
 
-    @setting(128, targetBW = 'v[]', pidMode = 'i', PID_index = 'i', returns = '*v[]')
-    def advisePID(self, c, targetBW, pidMode, PID_index):
+    @setting(128, PLL_index = 'i', targetBW = 'v[]', pidMode = 'i', harmonic = 'i', filter_order = 'i', returns = '*v[]')
+    def advise_PLL_PID(self, c, PLL_index, targetBW, pidMode, harmonic, filter_order):
+        yield self.pidAdvisor.set('pidAdvisor/type', 'pll')
+
         if pidMode == 0:
             #P mode
             yield self.pidAdvisor.set('pidAdvisor/pid/mode',1)
@@ -466,8 +468,11 @@ class HF2LIServer(LabradServer):
         yield self.pidAdvisor.set('pidAdvisor/pid/targetbw', targetBW)
 
         # PID index to use (first PID of device: 0)
-        yield self.pidAdvisor.set('pidAdvisor/index', PID_index)
+        yield self.pidAdvisor.set('pidAdvisor/index', PLL_index-1)
         
+        yield self.pidAdvisor.set('pidAdvisor/demod/harmonic', harmonic)
+        yield self.pidAdvisor.set('pidAdvisor/demod/order', filter_order)
+
         #Reset everything to 0 prior to calculation
         yield self.pidAdvisor.set('pidAdvisor/pid/p', 0)
         yield self.pidAdvisor.set('pidAdvisor/pid/i', 0)
@@ -514,8 +519,8 @@ class HF2LIServer(LabradServer):
         else:
             returnValue([0, 0, 0, 0, 0, 0])
 
-    @setting(1280,returns = '')
-    def get_simulated_pm(self, c)
+    #@setting(1280,returns = '')
+    #def get_simulated_pm(self, c)
             
     @setting(129,PLL = 'i', freq = 'v[]', returns = '')
     def set_PLL_freqcenter(self, c, PLL, freq):
@@ -655,7 +660,7 @@ class HF2LIServer(LabradServer):
         setting = ['/%s/plls/%d/enable' % (self.dev_ID, PLL-1), 0],
         yield self.daq.set(setting)
 
-    @setting(149,PLL = 'i', siging = 'i', returns = '')
+    @setting(149,PLL = 'i', sigin = 'i', returns = '')
     def set_PLL_input(self, c, PLL, sigin):
         """Sets the PLL input signal (1/2 correspond to sig in 1/2, 3/4 correspond to Aux In 1/2, and 5/6 correspond to
             DIO D0/D1"""
@@ -667,8 +672,8 @@ class HF2LIServer(LabradServer):
         """Gets the PID input signal channel"""
         setting = '/%s/plls/%d/adcselect' % (self.dev_ID, PLL-1)
         dic = yield self.daq.get(setting,True)
-        sigin = float(dic[setting])
-        returnValue(sigin)
+        sigin = int(dic[setting])
+        returnValue(sigin+1)
         
     @setting(151,PLL = 'i', rate = 'v[]', returns = '')
     def set_PLL_rate(self, c, PLL, rate):
@@ -684,15 +689,15 @@ class HF2LIServer(LabradServer):
         rate = float(dic[setting])
         returnValue(rate)
         
-    @setting(152, PLL = 'i', returns = 'v[]')
+    @setting(153, PLL = 'i', returns = 'v[]')
     def get_PLL_PM(self, c, PLL):
         """Gets the PLL PID phase marging"""
-        setting = '/%s/plls/%d/pm' % (self.dev_ID, PLL-1)
-        dic = yield self.daq.get(setting,True)
+        setting = '/pidAdvisor/pm' 
+        dic = yield self.pidAdvisor.get(setting,True)
         PM = float(dic[setting])
         returnValue(PM)
         
-    @setting(153,PLL_index = 'i', rec_time= 'v[]', timeout = 'i', returns = '**v[]')
+    @setting(154,PLL_index = 'i', rec_time= 'v[]', timeout = 'i', returns = '**v[]')
     def poll_PLL(self,c, PLL_index, rec_time, timeout):
         """This function returns subscribed data previously in the API's buffers or
             obtained during the specified time. It returns a dict tree containing
@@ -716,6 +721,12 @@ class HF2LIServer(LabradServer):
         
         returnValue([ans[path_freqdelta],ans[path_error]])
    
+    @setting(155, returns = 's')
+    def version(self,c):
+		"""Returns the version of the software installed on this computer"""
+		ver = yield self.daq.version()
+		returnValue(ver)
+
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
         other operations to be done elsewhere while paused."""
