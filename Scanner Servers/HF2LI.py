@@ -632,13 +632,20 @@ class HF2LIServer(LabradServer):
         yield self.daq.subscribe(path)
 
         ans = yield self.daq.poll(rec_time, timeout, 1, True)
-
         #print ans[path_freqdelta]
         #print ans[path_error]
 
         yield self.daq.unsubscribe(path)
-        
-        returnValue([ans[path_freqdelta],ans[path_error]])
+        try:
+            freqdelta = ans[path_freqdelta]
+        except:
+            freqdelta = []
+        try:
+            error = ans[path_error]
+        except:
+            error = []
+
+        returnValue([freqdelta,error])
 
     @setting(128, PLL_index = 'i', targetBW = 'v[]', pidMode = 'i', returns = 'b')
     def advise_PLL_PID(self, c, PLL_index, targetBW, pidMode):
@@ -648,7 +655,7 @@ class HF2LIServer(LabradServer):
         Function returns true once calculations are complete. Computer parameters should be 
         retrieved using the appropriate get commands."""
 
-        yield self.pidAdvisor.set('pidAdvisor/type', 'pll')
+        #yield self.pidAdvisor.set('pidAdvisor/type', 'pll')
 
         if pidMode == 0:
             #P mode
@@ -705,7 +712,7 @@ class HF2LIServer(LabradServer):
         returnValue(True)
 
     @setting(156, P = 'v[]', returns = '')
-    def set_Advisor_P(self, c, PLL, P):
+    def set_Advisor_P(self, c, P):
         """Sets the proportional term on the PID Advisor"""
         setting = ['pidAdvisor/pid/p', P],
         yield self.pidAdvisor.set(setting)
