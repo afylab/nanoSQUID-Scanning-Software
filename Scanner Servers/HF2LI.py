@@ -447,80 +447,6 @@ class HF2LIServer(LabradServer):
             self.sweeper.clear()
         except: 
             pass
-
-    @setting(128, PLL_index = 'i', targetBW = 'v[]', pidMode = 'i', harmonic = 'i', filter_order = 'i', returns = '*v[]')
-    def advise_PLL_PID(self, c, PLL_index, targetBW, pidMode, harmonic, filter_order):
-        yield self.pidAdvisor.set('pidAdvisor/type', 'pll')
-
-        if pidMode == 0:
-            #P mode
-            yield self.pidAdvisor.set('pidAdvisor/pid/mode',1)
-        elif pidMode == 1:
-            #I mode
-            yield self.pidAdvisor.set('pidAdvisor/pid/mode',2)
-        elif pidMode == 2:
-            #PI mode
-            yield self.pidAdvisor.set('pidAdvisor/pid/mode',3)
-        elif pidMode == 3:
-            #PID mode
-            yield self.pidAdvisor.set('pidAdvisor/pid/mode',7)
-        
-        yield self.pidAdvisor.set('pidAdvisor/pid/targetbw', targetBW)
-
-        # PID index to use (first PID of device: 0)
-        yield self.pidAdvisor.set('pidAdvisor/index', PLL_index-1)
-        
-        yield self.pidAdvisor.set('pidAdvisor/demod/harmonic', harmonic)
-        yield self.pidAdvisor.set('pidAdvisor/demod/order', filter_order)
-
-        #Reset everything to 0 prior to calculation
-        yield self.pidAdvisor.set('pidAdvisor/pid/p', 0)
-        yield self.pidAdvisor.set('pidAdvisor/pid/i', 0)
-        yield self.pidAdvisor.set('pidAdvisor/pid/d', 0)
-        yield self.pidAdvisor.set('pidAdvisor/calculate', 0)
-
-        # Start the module thread
-        yield self.pidAdvisor.execute()
-        yield self.sleep(2.0)
-        # Advise
-        yield self.pidAdvisor.set('pidAdvisor/calculate', 1)
-        print('Starting advising. Optimization process may run up to a minute...')
-        reply = yield self.pidAdvisor.get('pidAdvisor/calculate')
-
-        t_start = time.time()
-        t_timeout = t_start + 60
-        while reply['calculate'][0] == 1:
-            reply = yield self.pidAdvisor.get('pidAdvisor/calculate')
-            if time.time() > t_timeout:
-                yield self.pidAdvisor.finish()
-                raise Exception("PID advising failed due to timeout.")
-
-        print("Advice took {:0.1f} s.".format(time.time() - t_start))
-
-        # Get all calculated parameters.
-        result = yield self.pidAdvisor.get('pidAdvisor/*')
-        # Check that the dictionary returned by poll contains the data that are needed.
-        assert result, "pidAdvisor returned an empty data dictionary?"
-        assert 'pid' in result, "data dictionary has no key 'pid'"
-        assert 'step' in result, "data dictionary has no key 'step'"
-        assert 'bode' in result, "data dictionary has no key 'bode'"
-
-        if result is not None:
-            print result['pid']
-            # Now copy the values from the PID Advisor to the PID and enable the PID.
-            p_adv = result['pid']['p'][0]
-            i_adv = result['pid']['i'][0]
-            d_adv = result['pid']['d'][0]
-            dlimittimeconstant_adv = result['pid']['dlimittimeconstant'][0]
-            rate_adv = result['pid']['rate'][0]
-            bw_adv = result['bw'][0]
-
-            returnValue([p_adv, i_adv, d_adv, dlimittimeconstant_adv, rate_adv, bw_adv])
-        else:
-            returnValue([0, 0, 0, 0, 0, 0])
-
-    #@setting(1280,returns = '')
-    #def get_simulated_pm(self, c)
             
     @setting(129,PLL = 'i', freq = 'v[]', returns = '')
     def set_PLL_freqcenter(self, c, PLL, freq):
@@ -645,8 +571,8 @@ class HF2LIServer(LabradServer):
         """Gets the derivative term of the specified PLL (either 1 or 2) PID loop"""
         setting = '/%s/plls/%d/d' % (self.dev_ID, PLL-1)
         dic = yield self.daq.get(setting,True)
-        I = float(dic[setting])
-        returnValue(I)
+        D = float(dic[setting])
+        returnValue(D)
 
     @setting(147,PLL = 'i', returns = '')
     def set_PLL_on(self, c, PLL):
@@ -675,6 +601,7 @@ class HF2LIServer(LabradServer):
         sigin = int(dic[setting])
         returnValue(sigin+1)
         
+    #Following two methods currently do not work
     @setting(151,PLL = 'i', rate = 'v[]', returns = '')
     def set_PLL_rate(self, c, PLL, rate):
         """Sets the PLL PID sampling rate"""
@@ -688,14 +615,6 @@ class HF2LIServer(LabradServer):
         dic = yield self.daq.get(setting,True)
         rate = float(dic[setting])
         returnValue(rate)
-        
-    @setting(153, PLL = 'i', returns = 'v[]')
-    def get_PLL_PM(self, c, PLL):
-        """Gets the PLL PID phase marging"""
-        setting = '/pidAdvisor/pm' 
-        dic = yield self.pidAdvisor.get(setting,True)
-        PM = float(dic[setting])
-        returnValue(PM)
         
     @setting(154,PLL_index = 'i', rec_time= 'v[]', timeout = 'i', returns = '**v[]')
     def poll_PLL(self,c, PLL_index, rec_time, timeout):
@@ -720,7 +639,185 @@ class HF2LIServer(LabradServer):
         yield self.daq.unsubscribe(path)
         
         returnValue([ans[path_freqdelta],ans[path_error]])
-   
+
+    @setting(128, PLL_index = 'i', targetBW = 'v[]', pidMode = 'i', returns = 'b')
+    def advise_PLL_PID(self, c, PLL_index, targetBW, pidMode):
+        """Simulates and computes values for the PLL PID loop. Make sure that the Harmonic 
+        and Filter Order is set on the advisor before running. Requires the index of the PLL, 
+        the desired BW of the PLL PID, and the PID Mode (0 is P, 1 is I, 2 is PI, and 3 is PID)
+        Function returns true once calculations are complete. Computer parameters should be 
+        retrieved using the appropriate get commands."""
+
+        yield self.pidAdvisor.set('pidAdvisor/type', 'pll')
+
+        if pidMode == 0:
+            #P mode
+            yield self.pidAdvisor.set('pidAdvisor/pid/mode',1)
+        elif pidMode == 1:
+            #I mode
+            yield self.pidAdvisor.set('pidAdvisor/pid/mode',2)
+        elif pidMode == 2:
+            #PI mode
+            yield self.pidAdvisor.set('pidAdvisor/pid/mode',3)
+        elif pidMode == 3:
+            #PID mode
+            yield self.pidAdvisor.set('pidAdvisor/pid/mode',7)
+        
+        yield self.pidAdvisor.set('pidAdvisor/pid/targetbw', targetBW)
+
+        # PID index to use (first PID of device: 0)
+        yield self.pidAdvisor.set('pidAdvisor/index', PLL_index-1)
+
+        #Reset everything to 0 prior to calculation
+        yield self.pidAdvisor.set('pidAdvisor/pid/p', 0)
+        yield self.pidAdvisor.set('pidAdvisor/pid/i', 0)
+        yield self.pidAdvisor.set('pidAdvisor/pid/d', 0)
+        yield self.pidAdvisor.set('pidAdvisor/calculate', 0)
+
+        # Start the module thread
+        yield self.pidAdvisor.execute()
+        yield self.sleep(2.0)
+        # Advise
+        yield self.pidAdvisor.set('pidAdvisor/calculate', 1)
+        print('Starting advising. Optimization process may run up to a minute...')
+        reply = yield self.pidAdvisor.get('pidAdvisor/calculate')
+
+        t_start = time.time()
+        t_timeout = t_start + 60
+        while reply['calculate'][0] == 1:
+            reply = yield self.pidAdvisor.get('pidAdvisor/calculate')
+            if time.time() > t_timeout:
+                yield self.pidAdvisor.finish()
+                raise Exception("PID advising failed due to timeout.")
+
+        print("Advice took {:0.1f} s.".format(time.time() - t_start))
+    	
+    	"""
+        # Get all calculated parameters.
+        result = yield self.pidAdvisor.get('pidAdvisor/*')
+        # Check that the dictionary returned by poll contains the data that are needed.
+        assert result, "pidAdvisor returned an empty data dictionary?"
+        assert 'pid' in result, "data dictionary has no key 'pid'"
+        assert 'step' in result, "data dictionary has no key 'step'"
+        assert 'bode' in result, "data dictionary has no key 'bode'"
+		"""
+
+        returnValue(True)
+
+    @setting(156, P = 'v[]', returns = '')
+    def set_Advisor_P(self, c, PLL, P):
+        """Sets the proportional term on the PID Advisor"""
+        setting = ['pidAdvisor/pid/p', P],
+        yield self.pidAdvisor.set(setting)
+
+    @setting(157, returns = 'v[]')
+    def get_Advisor_P(self, c):
+        """Gets the proportional term on the PID Advisor"""
+        setting = 'pidAdvisor/pid/p'
+        dic = yield self.pidAdvisor.get(setting,True)
+        P = float(dic['/pid/p'])
+        returnValue(P)
+        
+    @setting(158,I = 'v[]', returns = '')
+    def set_Advisor_I(self, c, I):
+        """Sets the integral term on the PID Advisor"""
+        setting = ['pidAdvisor/pid/i', I],
+        yield self.pidAdvisor.set(setting)
+
+    @setting(159, returns = 'v[]')
+    def get_Advisor_I(self, c):
+        """Gets the integral term on the PID Advisor"""
+        setting = 'pidAdvisor/pid/i'
+        dic = yield self.pidAdvisor.get(setting,True)
+        I = float(dic['/pid/i'])
+        returnValue(I)
+
+    @setting(160,D = 'v[]', returns = '')
+    def set_Advisor_D(self, c, D):
+        """Sets the derivative term on the PID Advisor"""
+        setting = ['pidAdvisor/pid/d', D],
+        yield self.pidAdvisor.set(setting)
+
+    @setting(161, returns = 'v[]')
+    def get_Advisor_D(self, c):
+        """Gets the derivative term on the PID Advisor"""
+        setting = 'pidAdvisor/pid/d'
+        dic = yield self.pidAdvisor.get(setting,True)
+        D = float(dic['/pid/d'])
+        returnValue(D)
+
+    @setting(162, returns = 'v[]')
+    def get_Advisor_PM(self, c):
+        """Gets the PLL PID phase marging"""
+        setting = 'pidAdvisor/pm' 
+        dic = yield self.pidAdvisor.get(setting,True)
+        PM = float(dic['/pm'])
+        returnValue(PM)
+
+    @setting(163, returns = 'i')
+    def get_Advisor_stable(self, c):
+        """Returns whether or not the current parameters in the PID Advisor are stable."""
+        setting = 'pidAdvisor/stable' 
+        dic = yield self.pidAdvisor.get(setting,True)
+        stable = int(dic['/stable'])
+        returnValue(stable)
+
+    @setting(164, tc = 'v[]', returns = '')
+    def set_Advisor_tc(self, c, tc):
+        """Sets the PLL PID adivsor tc"""
+        setting = ['pidAdvisor/demod/timeconstant', tc],
+        yield self.pidAdvisor.set(setting)
+
+    @setting(165, returns = 'v[]')
+    def get_Advisor_tc(self, c):
+        """Gets the PLL PID adivsor tc"""
+        setting = '/pidAdvisor/demod/timeconstant' 
+        dic = yield self.pidAdvisor.get(setting,True)
+        tc = float(dic['/demod/timeconstant'])
+        returnValue(tc)
+
+    @setting(166,rate = 'v[]', returns = '')
+    def set_Advisor_rate(self, c, rate):
+        """Sets the PLL PID advisor sampling rate"""
+        setting = ['pidAdvisor/pid/rate', rate],
+        yield self.pidAdvisor.set(setting)
+        
+    @setting(167, returns = 'v[]')
+    def get_Advisor_rate(self, c):
+        """Gets the PLL PID advisor sampling rate"""
+        setting = 'pidAdvisor/pid/rate' 
+        dic = yield self.pidAdvisor.get(setting,True)
+        rate = float(dic['/pid/rate'])
+        returnValue(rate)
+
+    @setting(168, harm  = 'i', returns = '')
+    def set_Advisor_harmonic(self, c, harm):
+        """Sets the PLL PID advisor harmonic (can be 1 or 2)"""
+        setting = ['pidAdvisor/demod/harmonic', harm],
+        yield self.pidAdvisor.set(setting)
+        
+    @setting(169, returns = 'i')
+    def get_Advisor_harmonic(self, c):
+        """Gets the PLL PID advisor sampling rate"""
+        setting = 'pidAdvisor/demod/harmonic' 
+        dic = yield self.pidAdvisor.get(setting,True)
+        rate = int(dic['/demod/harmonic'])
+        returnValue(rate)
+
+    @setting(170, order = 'i', returns = '')
+    def set_Advisor_filterorder(self, c, order):
+        """Sets the PLL PID advisor harmonic (can be 1 or 2)"""
+        setting = ['pidAdvisor/demod/order', order],
+        yield self.pidAdvisor.set(setting)
+        
+    @setting(171, returns = 'i')
+    def get_Advisor_filterorder(self, c):
+        """Gets the PLL PID advisor sampling rate"""
+        setting = 'pidAdvisor/demod/order' 
+        dic = yield self.pidAdvisor.get(setting,True)
+        rate = int(dic['/demod/order'])
+        returnValue(rate)
+
     @setting(155, returns = 's')
     def version(self,c):
 		"""Returns the version of the software installed on this computer"""
