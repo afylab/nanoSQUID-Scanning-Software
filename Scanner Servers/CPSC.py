@@ -162,12 +162,12 @@ class CPSCServer(LabradServer):
         
     @setting(107, returns = 'v[]')
     def get_height(self,c):
-        """Returns the height from the sample to the pivot location. """
+        """Returns the height from the sample to the pivot location. Units of mm"""
         return self.h
         
     @setting(108, h = 'v[]', returns = 'v[]')
     def set_height(self,c, h):
-        """Sets and returns the height from the sample to the pivot location. """
+        """Sets and returns the height from the sample to the pivot location. Units of mm"""
         self.h = h
         self.T1 = [[-self.R * np.sqrt(3) / (2*self.h), self.R / (2*self.h), 1],[0,-self.R/(self.h),1],[self.R * np.sqrt(3) / (2*self.h), self.R / (2*self.h), 1]]
         return self.h
@@ -343,7 +343,7 @@ class CPSCServer(LabradServer):
             num_cycles  = num_steps / cycle_size
             remainder  = num_steps % cycle_size
             
-            print "Taking " + str(num_steps) +  " steps in channels 1 and 3."
+            print "Taking " + str(num_steps) +  " steps in channels 1, 2 and 3."
             print "This will be done over " + str(num_cycles) + " cycles of " + str(cycle_size) + " steps."
             print "And a final cycle with the remainder of " + str(remainder) + " steps."
             
@@ -365,6 +365,7 @@ class CPSCServer(LabradServer):
             
         returnValue('Success!')
         
+    #Que? 
     @setting(114, ADDR = 'i', returns = '')
     def pause_while_moving(self,c, ADDR):
         """Pauses the server as long as the stepper is moving."""

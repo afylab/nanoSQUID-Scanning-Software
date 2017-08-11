@@ -102,7 +102,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.hf = dict['hf2li']
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
-            self.serversConnected = True
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  

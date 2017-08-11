@@ -47,6 +47,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_tempSet.editingFinished.connect(self.setTempThresh)
         self.lineEdit_fieldSet.editingFinished.connect(self.setFieldThresh)
         
+        self.push_Approach.clicked.connect(self.startApproachSequence)
+        self.push_Approach_Abort.clicked.connect(self.abortApproachSequence)
+        
+        self.push_Withdraw.clicked.connect(self.withdrawSpecifiedDistance)
+        self.lineEdit_Withdraw.editingFinished.connect(self.setWithdrawDistance)
         #Initialize all the labrad connections as none
         self.cxn = None
         self.dv = None
@@ -58,6 +63,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.fieldThreshold = 1e-4
         
         self.measuring = False
+        self.approaching = False
         
         self.setFreqThresh()
         self.setTempThresh()
@@ -98,6 +104,37 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.T_Harmonic = 2
         self.T_TC = 0.001
         
+        
+        self.Atto_Z_DAC_Out = 1 #Output channel from dac that goes to Z of attocubes
+        self.Atto_Z_DAC_Voltage = 0
+        self.Approach_MeasTime = 1 #In seconds
+        
+        self.Atto_Z_Step = 5e-9 #in units of meters
+        self.Atto_Z_Points = 50
+        self.Atto_Z_Delay = 1e-3 #in units of seconds
+        self.Atto_Z_Speed = 5e-9 / (50 * 1e-3) #in units of meters per seconds
+        
+        #Attocube always retracts the whole range (24 um) before 
+        self.Atto_Retract_Points = 1000
+        self.Atto_Retract_Delay = 5e-4
+        self.Atto_Retract_Speed = 24e-6 / (50*5e-4)
+        
+        self.JPE_Tip_Height = 24e-3 #in meters
+        self.JPE_Module_Address = 1
+        
+        self.JPE_Approach_Steps = 1000
+        self.JPE_Approach_Size = 100
+        self.JPE_Approach_Freq = 600 
+        
+        self.JPE_Retract_Steps = 10000
+        self.JPE_Retract_Size = 100
+        self.JPE_Retract_Freq = 600 
+        
+        self.Temperature = 293 #in kelvin
+        self.z_volts_to_meters = 10/ 24e-6 #24 microns corresponds to 10 volts, eventually value should depend on temperature
+        
+        self.withdrawDistance = 2e-6
+        
         self.lockInterface()
         
     def moveDefault(self):    
@@ -109,15 +146,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.cxn = dict['cxn']
             self.hf = dict['hf2li']
             self.dac = dict['dac_adc']
+            self.cpsc = dict['cpsc']
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
-            self.serversConnected = True
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
-        if self.dv is None:
+        if self.cxn is None or self.hf is None or self.dac is None or self.cpsc is None:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
+            self.unlockInterface()
             
     def disconnectLabRAD(self):
         self.dv = None
@@ -130,8 +168,43 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         serList.exec_()
         
     def showAdvancedApproach(self):
-        advApp = advancedApproachSettings(self.reactor, 0, self)
-        advApp.exec_()
+        atto_z_values = [self.Approach_MeasTime,self.Atto_Z_Step, self.Atto_Z_Points,self.Atto_Z_Delay, 
+                        self.Atto_Z_Speed, self.Atto_Retract_Points,  self.Atto_Retract_Delay, self.Atto_Retract_Speed, 
+                        self.Atto_Z_DAC_Out]
+                      
+        JPE_values = [self.JPE_Tip_Height, self.JPE_Module_Address, self.JPE_Approach_Steps, self.JPE_Approach_Size, 
+                        self.JPE_Approach_Freq, self.JPE_Retract_Steps, self.JPE_Retract_Size, self.JPE_Retract_Freq, self.Temperature]
+                        
+        advApp = advancedApproachSettings(self.reactor, atto_z_values, JPE_values, self)
+        
+        if advApp.exec_():
+            atto_z_values, JPE_values = advApp.getValues()
+            
+            self.Approach_MeasTime = atto_z_values[0]
+        
+            self.Atto_Z_Step = atto_z_values[1]
+            self.Atto_Z_Points = atto_z_values[2]
+            self.Atto_Z_Delay = atto_z_values[3]
+            self.Atto_Z_Speed = atto_z_values[4]
+            
+            self.Atto_Retract_Points = atto_z_values[5]
+            self.Atto_Retract_Delay = atto_z_values[6]
+            self.Atto_Retract_Speed = atto_z_values[7]
+            
+            self.Atto_Z_DAC_Out = atto_z_values[8]
+            
+            self.JPE_Tip_Height = JPE_values[0]
+            self.JPE_Module_Address = JPE_values[1]
+            
+            self.JPE_Approach_Steps = JPE_values[2]
+            self.JPE_Approach_Size = JPE_values[3]
+            self.JPE_Approach_Freq = JPE_values[4]
+            
+            self.JPE_Retract_Steps = JPE_values[5]
+            self.JPE_Retract_Size = JPE_values[6]
+            self.JPE_Retract_Freq = JPE_values[7]
+        
+            self.Temperature = JPE_values[8]
         
     def showAdvancedFeedback(self):
         advFeed = advancedFeedbackSettings(self.reactor, 0, self)
@@ -357,7 +430,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 yield self.startFrequencyMonitoring()
             if self.checkBox_Temp.isChecked():
                 print 'Starting temp measurement'
-            
         else: 
             self.push_StartControllers.setText("Start Controllers")
             style = """ QPushButton#push_StartControllers{
@@ -447,6 +519,90 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_toggleFeedback.setStyleSheet("#push_toggleFeedback{color: rgb(50,168,50);background-color:rgb(0,0,0);border: 2px solid rgb(50,168,50);border-radius: 5px}")
             self.feedback = True
             
+#--------------------------------------------------------------------------------------------------------------------------#
+    """ The following section contains the approach sequence."""
+    
+    @inlineCallbacks
+    def startApproachSequence(self, c = None):
+        self.approaching = True
+        
+        #yield self.cpsc.set_height(self.JPE_Tip_Height*1000 + 33.9)
+        
+        while self.approaching:
+            yield self.sleep(0.25)
+            
+            #data = yield self.hf.poll_pll(1, self.Approach_MeasTime, 500)
+            #df_avg = np.avg(data[0])
+            #if dv_avg > self.freqThreshold:
+            #    self.approaching = False
+            #    break
+            #Here need to compute conversion rate between voltage and step size
+            start_voltage = self.Atto_Z_DAC_Voltage
+            end_voltage = self.Atto_Z_DAC_Voltage + self.Atto_Z_Step * self.z_volts_to_meters
+            if end_voltage < 10 and self.approaching:
+                #yield self.dac.buffer_ramp([self.Atto_Z_DAC_Out],[],[start_voltage],[end_voltage], self.Atto_Z_Points, self.Atto_Z_Delay * 1e6)
+                self.lineEdit_FineZ.setText(formatNum(end_voltage / self.z_volts_to_meters))
+                self.Atto_Z_DAC_Voltage = end_voltage
+                self.progressBar.setValue(int(100*self.Atto_Z_DAC_Voltage))
+            elif self.approaching:
+                end_voltage = 0
+                self.Atto_Z_DAC_Voltage = end_voltage
+                self.progressBar.setValue(int(100*self.Atto_Z_DAC_Voltage))
+                #retract atto
+                #yield self.dac.buffer_ramp([self.Atto_Z_DAC_Out],[],[start_voltage],[end_voltage], self.Atto_Retract_Points, self.Atto_Retract_Delay * 1e6)
+                self.lineEdit_FineZ.setText(formatNum(end_voltage / self.z_volts_to_meters))
+                #Do a coarse step forward
+                #yield self.cpsc.move_z(self.JPE_Module_Address, self.Temperature, , self.JPE_Approach_Freq, self.JPE_Approach_Size, self.JPE_Approach_Steps)
+            print 'Starting at voltage: ' + str(start_voltage) + '. Finishing at voltage: ' + str(end_voltage)
+            
+            #measure deltaf, get average value
+            #if below threshold, step by specified step size
+            #repeat until full z voltage
+            #retract entire way 
+            #step forward with JPEs
+            #repeat atto cube process
+                
+    
+    def abortApproachSequence(self):
+        self.approaching = False
+        
+    @inlineCallbacks
+    def withdrawSpecifiedDistance(self, c = None):
+        try:
+            #Eventually add a way to make sure that the DAC / JPEs are no longer moving anything before sending the retract command
+            self.approaching = False
+            start_voltage = self.Atto_Z_DAC_Voltage
+            end_voltage = self.Atto_Z_DAC_Voltage - self.withdrawDistance * self.z_volts_to_meters
+            
+            if end_voltage < 0:
+                end_voltage = 0
+                #eventually send message saying can't withdraw distance without coarse movement
+                
+            yield self.sleep(0.25)
+            
+            retract_delay =  int(1e6*self.withdrawDistance / (self.Atto_Retract_Speed * self.Atto_Retract_Points))
+            if retract_delay < 100:
+                retract_delay = 100
+            print 'Retract delay in microseconds: ' + str(retract_delay)
+            #yield self.dac.ramp1(self.Atto_Z_DAC_Out, start_voltage, end_voltage, self.Atto_Retract_Points,retract_delay)
+            
+            self.Atto_Z_DAC_Voltage = end_voltage
+            self.progressBar.setValue(int(100*self.Atto_Z_DAC_Voltage))
+            self.lineEdit_FineZ.setText(formatNum(self.Atto_Z_DAC_Voltage / self.z_volts_to_meters))
+        except Exception as inst:
+            print inst
+        
+        
+    def setWithdrawDistance(self):
+        val = readNum(str(self.lineEdit_Withdraw.text()))
+        if isinstance(val,float):
+            if val < 0:
+                val = 0
+            elif val > 24e-6:
+                val = 24e-6
+            self.withdrawDistance = val
+        self.lineEdit_Withdraw.setText(formatNum(self.withdrawDistance))
+
 #----------------------------------------------------------------------------------------------#         
     """ The following section has generally useful functions."""  
     
@@ -464,8 +620,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_fieldSet.setDisabled(True)
         self.lineEdit_tempSet.setDisabled(True)
         self.lineEdit_freqSet.setDisabled(True)
-        self.lineEdit_ScanRangeX.setDisabled(True)
-        self.lineEdit_ScanRangeY.setDisabled(True)
         self.lineEdit_FineZ.setDisabled(True)
         
         self.comboBox_FeedbackOutput.setEnabled(False)
@@ -488,8 +642,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_fieldSet.setDisabled(False)
         self.lineEdit_tempSet.setDisabled(False)
         self.lineEdit_freqSet.setDisabled(False)
-        self.lineEdit_ScanRangeX.setDisabled(False)
-        self.lineEdit_ScanRangeY.setDisabled(False)
         self.lineEdit_FineZ.setDisabled(False)
     
         self.comboBox_FeedbackOutput.setEnabled(True)
@@ -497,6 +649,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.fieldSlider.setEnabled(True)
         self.tempSlider.setEnabled(True)
         self.freqSlider.setEnabled(True)
+        
+    def sleep(self,secs):
+        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
+        other operations to be done elsewhere while paused."""
+        d = Deferred()
+        self.reactor.callLater(secs,d.callback,'Sleeping')
+        return d
         
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
@@ -506,17 +665,216 @@ class serversList(QtGui.QDialog, Ui_ServerList):
         self.move(pos)
         
 class advancedApproachSettings(QtGui.QDialog, Ui_advancedApproachSettings):
-    def __init__(self,reactor, values, parent = None):
+    def __init__(self,reactor, atto_z_values, JPE_values, parent = None):
         super(advancedApproachSettings, self).__init__(parent)
         self.setupUi(self)
         
         self.pushButton.clicked.connect(self.acceptNewValues)
       
+        #Set all the required values
+        self.Approach_MeasTime = atto_z_values[0]
+        
+        self.Atto_Z_Step = atto_z_values[1]
+        self.Atto_Z_Points = atto_z_values[2]
+        self.Atto_Z_Delay = atto_z_values[3]
+        self.Atto_Z_Speed = atto_z_values[4]
+        
+        self.Atto_Retract_Points = atto_z_values[5]
+        self.Atto_Retract_Delay = atto_z_values[6]
+        self.Atto_Retract_Speed = atto_z_values[7]
+        
+        self.Atto_Z_DAC_Out = atto_z_values[8]
+      
+        self.JPE_Tip_Height = JPE_values[0]
+        self.JPE_Module_Address = JPE_values[1]
+        
+        self.JPE_Approach_Steps = JPE_values[2]
+        self.JPE_Approach_Size = JPE_values[3]
+        self.JPE_Approach_Freq = JPE_values[4]
+        
+        self.JPE_Retract_Steps = JPE_values[5]
+        self.JPE_Retract_Size = JPE_values[6]
+        self.JPE_Retract_Freq = JPE_values[7]
+    
+        self.Temperature = JPE_values[8]
+        
+        #Load those values into their appropriate GUI item
+        self.loadValues()
+        
+        self.lineEdit_Atto_Z_Step_Size.editingFinished.connect(self.setAtto_Z_Step_Size)
+        self.lineEdit_Atto_Z_Points.editingFinished.connect(self.setAtto_Z_Points)
+        self.lineEdit_Atto_Z_Delay.editingFinished.connect(self.setAtto_Z_Delay)
+        self.lineEdit_Atto_Z_Speed.editingFinished.connect(self.setAtto_Z_Speed)
+        self.lineEdit_Atto_Retract_Points.editingFinished.connect(self.setAtto_Retract_Points)
+        self.lineEdit_Atto_Retract_Delay.editingFinished.connect(self.setAtto_Retract_Delay)
+        self.lineEdit_Atto_Retract_Speed.editingFinished.connect(self.setAtto_Retract_Speed)
+        
+        self.lineEdit_Approach_MeasTime.editingFinished.connect(self.setApproach_MeasTime)
+        self.comboBox_Atto_Z_DAC_Out.currentIndexChanged.connect(self.setAtto_Z_DAC_Out)
+      
+        self.lineEdit_Temperature.editingFinished.connect(self.setTemperature)
+        self.lineEdit_Tip_Height.editingFinished.connect(self.setJPE_Tip_Height)
+        self.comboBox_JPE_Address.currentIndexChanged.connect(self.setJPE_Address)
+        
+        self.lineEdit_JPE_Approach_Steps.editingFinished.connect(self.setJPE_Approach_Steps)
+        self.lineEdit_JPE_Approach_Size.editingFinished.connect(self.setJPE_Approach_Size)
+        self.lineEdit_JPE_Approach_Freq.editingFinished.connect(self.setJPE_Approach_Freq)
+        
+        self.lineEdit_JPE_Retract_Steps.editingFinished.connect(self.setJPE_Retract_Steps)
+        self.lineEdit_JPE_Retract_Size.editingFinished.connect(self.setJPE_Retract_Size)
+        self.lineEdit_JPE_Retract_Freq.editingFinished.connect(self.setJPE_Retract_Freq)
+        
+    def loadValues(self):
+        self.lineEdit_Atto_Z_Step_Size.setText(formatNum(self.Atto_Z_Step)) 
+        self.lineEdit_Atto_Z_Points.setText(formatNum(self.Atto_Z_Points)) 
+        self.lineEdit_Atto_Z_Delay.setText(formatNum(self.Atto_Z_Delay)) 
+        self.lineEdit_Atto_Z_Speed.setText(formatNum(self.Atto_Z_Speed)) 
+        self.lineEdit_Atto_Retract_Points.setText(formatNum(self.Atto_Retract_Points)) 
+        self.lineEdit_Atto_Retract_Delay.setText(formatNum(self.Atto_Retract_Delay))
+        self.lineEdit_Atto_Retract_Speed.setText(formatNum(self.Atto_Retract_Speed))
+        
+        self.lineEdit_Approach_MeasTime.setText(formatNum(self.Approach_MeasTime))
+        self.comboBox_Atto_Z_DAC_Out.setCurrentIndex(self.Atto_Z_DAC_Out - 1)
+        
+        self.lineEdit_Temperature.setText(formatNum(self.Temperature))
+        self.lineEdit_Tip_Height.setText(formatNum(self.JPE_Tip_Height))
+        self.comboBox_JPE_Address.setCurrentIndex(self.JPE_Module_Address - 1)
+        
+        self.lineEdit_JPE_Approach_Steps.setText(formatNum(self.JPE_Approach_Steps))
+        self.lineEdit_JPE_Approach_Size.setText(formatNum(self.JPE_Approach_Size))
+        self.lineEdit_JPE_Approach_Freq.setText(formatNum(self.JPE_Approach_Freq))
+        
+        self.lineEdit_JPE_Retract_Steps.setText(formatNum(self.JPE_Retract_Steps))
+        self.lineEdit_JPE_Retract_Size.setText(formatNum(self.JPE_Retract_Size))
+        self.lineEdit_JPE_Retract_Freq.setText(formatNum(self.JPE_Retract_Freq))
+        
+    def setAtto_Z_Step_Size(self):
+        val = readNum(str(self.lineEdit_Atto_Z_Step_Size.text()))
+        if isinstance(val,float):
+            self.Atto_Z_Step = val
+            self.Atto_Z_Speed = self.Atto_Z_Step / (self.Atto_Z_Points * self.Atto_Z_Delay)
+        self.lineEdit_Atto_Z_Step_Size.setText(formatNum(self.Atto_Z_Step))
+        self.lineEdit_Atto_Z_Speed.setText(formatNum(self.Atto_Z_Speed))
+        
+    def setAtto_Z_Points(self):
+        val = readNum(str(self.lineEdit_Atto_Z_Points.text()))
+        if isinstance(val,float):
+            self.Atto_Z_Points = val
+            self.Atto_Z_Speed = self.Atto_Z_Step / (self.Atto_Z_Points * self.Atto_Z_Delay)
+        self.lineEdit_Atto_Z_Points.setText(formatNum(self.Atto_Z_Points))
+        self.lineEdit_Atto_Z_Speed.setText(formatNum(self.Atto_Z_Speed))
+        
+    def setAtto_Z_Delay(self):
+        val = readNum(str(self.lineEdit_Atto_Z_Delay.text()))
+        if isinstance(val,float):
+            self.Atto_Z_Delay = val
+            self.Atto_Z_Speed = self.Atto_Z_Step / (self.Atto_Z_Points * self.Atto_Z_Delay)
+        self.lineEdit_Atto_Z_Delay.setText(formatNum(self.Atto_Z_Delay))
+        self.lineEdit_Atto_Z_Speed.setText(formatNum(self.Atto_Z_Speed))
+        
+    def setAtto_Z_Speed(self):
+        val = readNum(str(self.lineEdit_Atto_Z_Speed.text()))
+        if isinstance(val,float):
+            self.Atto_Z_Speed = val
+            self.Atto_Z_Delay = self.Atto_Z_Step / (self.Atto_Z_Points * self.Atto_Z_Speed)
+        self.lineEdit_Atto_Z_Speed.setText(formatNum(self.Atto_Z_Speed))
+        self.lineEdit_Atto_Z_Delay.setText(formatNum(self.Atto_Z_Delay))
+        
+    def setAtto_Retract_Delay(self):
+        val = readNum(str(self.lineEdit_Atto_Retract_Delay.text()))
+        if isinstance(val,float):
+            self.Atto_Retract_Delay = val
+            self.Atto_Retract_Speed = 24e-6 / (self.Atto_Retract_Points* self.Atto_Retract_Delay)
+        self.lineEdit_Atto_Retract_Delay.setText(formatNum(self.Atto_Retract_Delay))
+        self.lineEdit_Atto_Retract_Speed.setText(formatNum(self.Atto_Retract_Speed))
+        
+    def setAtto_Retract_Points(self):
+        val = readNum(str(self.lineEdit_Atto_Retract_Points.text()))
+        if isinstance(val,float):
+            self.Atto_Retract_Points = val
+            self.Atto_Retract_Speed = 24e-6 / (self.Atto_Retract_Points* self.Atto_Retract_Delay)
+        self.lineEdit_Atto_Retract_Points.setText(formatNum(self.Atto_Retract_Points))
+        self.lineEdit_Atto_Retract_Speed.setText(formatNum(self.Atto_Retract_Speed))
+        
+    def setAtto_Retract_Speed(self):
+        val = readNum(str(self.lineEdit_Atto_Retract_Speed.text()))
+        if isinstance(val,float):
+            self.Atto_Retract_Speed = val
+            self.Atto_Retract_Delay = 24e-6 / (self.Atto_Retract_Points* self.Atto_Retract_Speed)
+        self.lineEdit_Atto_Retract_Speed.setText(formatNum(self.Atto_Retract_Speed))
+        self.lineEdit_Atto_Retract_Delay.setText(formatNum(self.Atto_Retract_Delay))
+        
+    def setApproach_MeasTime(self):
+        val = readNum(str(self.lineEdit_Approach_MeasTime.text()))
+        if isinstance(val,float):
+            self.Approach_MeasTime = val
+        self.lineEdit_Approach_MeasTime.setText(formatNum(self.Approach_MeasTime))
+        
+    def setAtto_Z_DAC_Out(self):
+        self.Atto_Z_DAC_Out = self.comboBox_Atto_Z_DAC_Out.currentIndex() + 1
+        
+    def setTemperature(self):
+        val = readNum(str(self.lineEdit_Temperature.text()))
+        if isinstance(val,float):
+            self.Temperature = val
+        self.lineEdit_Temperature.setText(formatNum(self.Temperature))
+    
+    def setJPE_Tip_Height(self):
+        val = readNum(str(self.lineEdit_Tip_Height.text()))
+        if isinstance(val,float):
+            self.JPE_Tip_Height = val
+        self.lineEdit_Tip_Height.setText(formatNum(self.JPE_Tip_Height))
+        
+    def setJPE_Address(self):
+        self.JPE_Module_Address = self.comboBox_JPE_Address.currentIndex() + 1
+    
+    def setJPE_Approach_Steps(self):
+        val = readNum(str(self.lineEdit_JPE_Approach_Steps.text()))
+        if isinstance(val,float):
+            self.JPE_Approach_Steps = val
+        self.lineEdit_JPE_Approach_Steps.setText(formatNum(self.JPE_Approach_Steps))
+        
+    def setJPE_Approach_Size(self):
+        val = readNum(str(self.lineEdit_JPE_Approach_Size.text()))
+        if isinstance(val,float):
+            self.JPE_Approach_Size = val
+        self.lineEdit_JPE_Approach_Size.setText(formatNum(self.JPE_Approach_Size))
+        
+    def setJPE_Approach_Freq(self):
+        val = readNum(str(self.lineEdit_JPE_Approach_Freq.text()))
+        if isinstance(val,float):
+            self.JPE_Approach_Freq = val
+        self.lineEdit_JPE_Approach_Freq.setText(formatNum(self.JPE_Approach_Freq))
+        
+    def setJPE_Retract_Steps(self):
+        val = readNum(str(self.lineEdit_JPE_Retract_Steps.text()))
+        if isinstance(val,float):
+            self.JPE_Retract_Steps = val
+        self.lineEdit_JPE_Retract_Steps.setText(formatNum(self.JPE_Retract_Steps))
+        
+    def setJPE_Retract_Size(self):
+        val = readNum(str(self.lineEdit_JPE_Retract_Size.text()))
+        if isinstance(val,float):
+            self.JPE_Retract_Size = val
+        self.lineEdit_JPE_Retract_Size.setText(formatNum(self.JPE_Retract_Size))
+        
+    def setJPE_Retract_Freq(self):
+        val = readNum(str(self.lineEdit_JPE_Retract_Freq.text()))
+        if isinstance(val,float):
+            self.JPE_Retract_Freq = val
+        self.lineEdit_JPE_Retract_Freq.setText(formatNum(self.JPE_Retract_Freq))
+    
     def acceptNewValues(self):
         self.accept()
         
     def getValues(self):
-        return "stuff"
+        atto_z_values = [self.Approach_MeasTime,self.Atto_Z_Step, self.Atto_Z_Points,self.Atto_Z_Delay, 
+                        self.Atto_Z_Speed, self.Atto_Retract_Points,  self.Atto_Retract_Delay, self.Atto_Retract_Speed, 
+                        self.Atto_Z_DAC_Out]
+                      
+        JPE_values = [self.JPE_Tip_Height, self.JPE_Module_Address, self.JPE_Approach_Steps, self.JPE_Approach_Size, 
+                        self.JPE_Approach_Freq, self.JPE_Retract_Steps, self.JPE_Retract_Size, self.JPE_Retract_Freq, self.Temperature]
+        return [atto_z_values, JPE_values]
         
 class advancedFeedbackSettings(QtGui.QDialog, Ui_advancedFeedbackSettings):
     def __init__(self,reactor, values,parent = None):
