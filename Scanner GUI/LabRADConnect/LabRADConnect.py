@@ -107,7 +107,9 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.label_HF2LI_status.setText('Not connected')
-        
+        self.push_CPSC.setStyleSheet("#push_CPSC{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_CPSC_status.setText('Not connected')
         
         self.cxnDisconnected.emit(self.connectionDictionary)   
 

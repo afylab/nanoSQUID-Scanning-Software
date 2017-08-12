@@ -64,6 +64,11 @@ class HF2LIServer(LabradServer):
         # the DUT transfer function
         yield self.pidAdvisor.set('pidAdvisor/dut/delay', 0.0)
 
+    @inlineCallbacks
+    def initSweeper(self, c = None):
+        self.sweeper  = yield self.daq.sweep()
+        yield self.sweeper.set('sweep/device', self.dev_ID)
+
     @setting(100,returns = '')
     def detect_devices(self,c):
         """ Attempt to connect to the LabOne server (not a LadRAD server) and get a list of devices."""
@@ -92,11 +97,13 @@ class HF2LIServer(LabradServer):
             self.dev_ID = self.device_list[0]
             (self.daq, self.dev_ID, self.props) = yield zhinst.utils.create_api_session(self.dev_ID, 1)
             self.initPIDAdvisor()
+            self.initSweeper()
         else: 
             if dev_ID in self.device_list:
                 self.dev_ID = dev_ID
                 (self.daq, self.dev_ID, self.props) = yield zhinst.utils.create_api_session(self.dev_ID, 1)
                 self.initPIDAdvisor()
+                self.initSweeper()
             else:
                 print "Provided device ID is not in the list of possible devices."
    
@@ -173,6 +180,12 @@ class HF2LIServer(LabradServer):
         """Set the frequency of the designated oscillator (1 indexed) to the provided frequency. The HF2LI Lock-in has
         two oscillators. """
         setting = ['/%s/oscs/%d/freq' % (self.dev_ID, osc_index-1), freq],
+        yield self.daq.set(setting)
+
+    @setting(1110,demod_index= 'i', on = 'b', returns = '')
+    def set_demod(self,c, demod_index, on):
+        """Turns the specified demodulator on, if on is True, and off, if on is False"""
+        setting = ['/%s/demods/%d/enable' % (self.dev_ID, demod_index-1), on],
         yield self.daq.set(setting)
         
     @setting(111,demod_index= 'i', oscselect = 'i', returns = '')
@@ -284,11 +297,6 @@ class HF2LIServer(LabradServer):
         Returns the 4 by samplecount array with the first column corresponding to grid of the swept parameter, 
         the second corresponds to the demodulator R, the third to the phase, and the fourth to the frequency.
         Loop count greater than 1 not yet implemented. """
-        
-        #Initialize the sweeper object and specify the device
-        if self.sweeper is None:
-            self.sweeper  = yield self.daq.sweep()
-            yield self.sweeper.set('sweep/device', self.dev_ID)
             
         self.sweeper_path = '/%s/demods/%d/sample' % (self.dev_ID, demod - 1)
         #Set the parameter to be swept
@@ -655,7 +663,7 @@ class HF2LIServer(LabradServer):
         Function returns true once calculations are complete. Computer parameters should be 
         retrieved using the appropriate get commands."""
 
-        #yield self.pidAdvisor.set('pidAdvisor/type', 'pll')
+        yield self.pidAdvisor.set('pidAdvisor/pid/type', 'pll')
 
         if pidMode == 0:
             #P mode
@@ -778,7 +786,7 @@ class HF2LIServer(LabradServer):
     @setting(165, returns = 'v[]')
     def get_Advisor_tc(self, c):
         """Gets the PLL PID adivsor tc"""
-        setting = '/pidAdvisor/demod/timeconstant' 
+        setting = 'pidAdvisor/demod/timeconstant' 
         dic = yield self.pidAdvisor.get(setting,True)
         tc = float(dic['/demod/timeconstant'])
         returnValue(tc)
@@ -832,6 +840,15 @@ class HF2LIServer(LabradServer):
         dic = yield self.pidAdvisor.get(setting,True)
         bw = float(dic['/bw'])
         returnValue(bw)
+
+    @setting(173, returns = 'b')
+    def get_advisor_calc(self,c):
+        """Returns True if the pid advisor is mid calculation. Fasle otherwise."""
+        reply = yield self.pidAdvisor.get('pidAdvisor/calculate')
+        if reply['calculate'][0] == 1:
+            returnValue(True)
+        else:
+            returnValue(False)
 
     @setting(155, returns = 's')
     def version(self,c):

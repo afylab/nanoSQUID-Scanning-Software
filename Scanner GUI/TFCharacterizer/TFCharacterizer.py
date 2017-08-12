@@ -16,7 +16,7 @@ Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 Ui_advancedSettings, QtBaseClass = uic.loadUiType(path + r"\advancedSettings.ui")
 
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
-    workingPointSelected = QtCore.pyqtSignal(float, float)
+    workingPointSelected = QtCore.pyqtSignal(float, float, int, float)
 
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
@@ -35,7 +35,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.input = 1
         self.output = 1
         self.sweep_param = 'oscillator 1'
-        
+        self.demod = 1 #demodulator being used
+
         #initialize advanced lock in settings
         self.bandcontrol = 0
         self.log = False
@@ -342,12 +343,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.input = 1
             self.output = 1
             self.sweep_param = 'oscillator 1'
+            self.demod = 1
             self.radio_out1.setChecked(True)
             self.reinitSweep()
         elif self.radio_in2.isChecked():
             self.input = 2
             self.output = 2
             self.sweep_param = 'oscillator 2'
+            self.demod = 4
             self.radio_out2.setChecked(True)
             self.reinitSweep()
             
@@ -356,12 +359,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.output = 1
             self.input = 1
             self.sweep_param = 'oscillator 1'
+            self.demod = 1
             self.radio_in1.setChecked(True)
             self.reinitSweep()
         elif self.radio_out2.isChecked():
             self.output = 2
             self.input = 2
             self.sweep_param = 'oscillator 2'
+            self.demod = 4
             self.radio_in2.setChecked(True)
             self.reinitSweep()
             
@@ -387,13 +392,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         else:
             phase = self.phi[index]
             
-        self.workingPointSelected.emit(self.selectFreq, phase)
+        self.workingPointSelected.emit(self.selectFreq, phase, self.output, self.exAmp)
             
     @inlineCallbacks
     def startSweep(self, c = None):    
         try:
             doneSweeping = False
             yield self.hf.set_output(self.output,True)
+            yield self.hf.set_demod(self.demod,True)
             yield self.hf.start_sweep()
             self.push_fitData.setEnabled(False)
             self.push_advancedSettings.setEnabled(False)
@@ -412,7 +418,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_advancedSettings.setEnabled(True)
             
             yield self.hf.set_output(self.output,False)
-
+            yield self.hf.set_demod(self.demod,False)
             yield self.dv.new("Tuning Fork Voltage vs. Frequency " + self.fileName,['Frequency'],['Amplitude R', 'Phase Phi'])
             
             formated_data = []
@@ -447,7 +453,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def reinitSweep(self,c = None):
         #Uses demodulater 1, might need to change depending on input/output selected
         try:
-            yield self.hf.create_sweep_object(self.startFreq, self.stopFreq, self.points, self.sweep_param, 1, self.log, self.bandcontrol, self.bandwidth, self.overlap, self.loopcount, self.settle_time, self.settle_acc, self.average_TC, self.average_sample)
+            yield self.hf.create_sweep_object(self.startFreq, self.stopFreq, self.points, self.sweep_param, self.demod, self.log, self.bandcontrol, self.bandwidth, self.overlap, self.loopcount, self.settle_time, self.settle_acc, self.average_TC, self.average_sample)
         except Exception as inst:
             print inst
             
@@ -455,11 +461,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.freq = data[1]
         self.R = data[2]
         self.phi = data[3]
+
         try:
             self.ampPlot.removeItem(self.prevAmpPlot)
             self.phasePlot.removeItem(self.prevPhasePlot)
         except Exception as inst:
             pass
+
         self.prevAmpPlot = self.ampPlot.plot(self.freq,self.R)
         self.prevPhasePlot = self.phasePlot.plot(self.freq,self.phi)
         

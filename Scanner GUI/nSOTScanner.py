@@ -140,10 +140,12 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.TFChar.disconnectLabRAD()
         self.Approach.disconnectLabRAD()
     
-    def distributeWorkingPoint(self,freq, phase):
+    def distributeWorkingPoint(self,freq, phase, channel, amplitude):
         print freq
         print phase
-        self.Approach.setWorkingPoint(freq, phase)
+        print channel
+        print amplitude
+        self.Approach.setWorkingPoint(freq, phase, channel, amplitude)
 #----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to setting the default layouts."""

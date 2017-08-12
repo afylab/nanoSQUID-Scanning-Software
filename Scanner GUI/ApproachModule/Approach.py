@@ -90,6 +90,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.PLL_SimBW = 272.2
         self.PLL_PM = 61.72
         self.PLL_Rate = 1.842e+6
+
+        self.PLL_Output = 1
+        self.PLL_Output_Amp = 0.01
         
         self.FT_Input = 1
         self.FT_Frequency = 20000
@@ -211,33 +214,38 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         advFeed.exec_()
         
     def showMeasurementSettings(self):
-        PLL_values = [self.PLL_TargetBW, self.PLL_AdviseMode, self.PLL_Input, self.PLL_CenterFreq, self.PLL_CenterPhase, 
+        PLL_Values = [self.PLL_TargetBW, self.PLL_AdviseMode, self.PLL_Input, self.PLL_CenterFreq, self.PLL_CenterPhase, 
                         self.PLL_Range, self.PLL_Harmonic, self.PLL_TC, self.PLL_FilterBW, self.PLL_FilterOrder, 
-                        self.PLL_P, self.PLL_I, self.PLL_D, self.PLL_SimBW, self.PLL_PM, self.PLL_Rate]        
+                        self.PLL_P, self.PLL_I, self.PLL_D, self.PLL_SimBW, self.PLL_PM, self.PLL_Rate, self.PLL_Output,
+                        self.PLL_Output_Amp]        
         FT_Values = [self.FT_Input, self.FT_Frequency, self.FT_Output, self.FT_Amplitude, self.F_Demod, 
                         self.F_Harmonic, self.F_TC, self.T_Demod, self.T_Harmonic, self.T_TC]
-        MeasSet = MeasurementSettings(self.reactor, PLL_values, FT_Values, parent = self, server = self.hf)
+        MeasSet = MeasurementSettings(self.reactor, PLL_Values, FT_Values, parent = self, server = self.hf)
         if MeasSet.exec_():
             PLL_Values, FT_Values = MeasSet.getValues()
             
             self.PLL_TargetBW = PLL_Values[0]
+            self.PLL_AdviseMode = PLL_Values[1]
         
-            self.PLL_Input  = PLL_Values[1]
-            self.PLL_CenterFreq = PLL_Values[2]
-            self.PLL_CenterPhase = PLL_Values[3]
-            self.PLL_Range = PLL_Values[4]
+            self.PLL_Input  = PLL_Values[2]
+            self.PLL_CenterFreq = PLL_Values[3]
+            self.PLL_CenterPhase = PLL_Values[4]
+            self.PLL_Range = PLL_Values[5]
             
-            self.PLL_Harmonic = PLL_Values[5]
-            self.PLL_TC = PLL_Values[6]
-            self.PLL_FilterBW = PLL_Values[7]
-            self.PLL_FilterOrder = PLL_Values[8]
+            self.PLL_Harmonic = PLL_Values[6]
+            self.PLL_TC = PLL_Values[7]
+            self.PLL_FilterBW = PLL_Values[8]
+            self.PLL_FilterOrder = PLL_Values[9]
             
-            self.PLL_P = PLL_Values[9]
-            self.PLL_I = PLL_Values[10]
-            self.PLL_D = PLL_Values[11] 
-            self.PLL_SimBW = PLL_Values[12]
-            self.PLL_PM = PLL_Values[13]
-            self.PLL_Rate = PLL_Values[14]
+            self.PLL_P = PLL_Values[10]
+            self.PLL_I = PLL_Values[11]
+            self.PLL_D = PLL_Values[12] 
+            self.PLL_SimBW = PLL_Values[13]
+            self.PLL_PM = PLL_Values[14]
+            self.PLL_Rate = PLL_Values[15]
+
+            self.PLL_Output = PLL_Values[16]
+            self.PLL_Output_Amp = PLL_Values[17]
             
             self.FT_Input = FT_Values[0]
             self.FT_Frequency = FT_Values[1]
@@ -449,7 +457,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.measuring = False
             self.push_MeasurementSettings.setEnabled(True)
             
-    def setWorkingPoint(self, freq, phase):
+    def setWorkingPoint(self, freq, phase, out, amp):
         self.checkBox_Freq.setCheckable(True)
         self.push_CenterSet.setStyleSheet("""#push_CenterSet{
                                             background: rgb(0, 170, 0);
@@ -457,6 +465,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                                             }""")
         self.PLL_CenterFreq = freq
         self.PLL_CenterPhase = phase
+        self.PLL_Output = out
+        self.PLL_Output_Amp = amp
         
     @inlineCallbacks
     def setHF2LI_PLL_Settings(self, c = None):
@@ -920,6 +930,9 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.PLL_SimBW = PLL_Values[13]
         self.PLL_PM = PLL_Values[14]
         self.PLL_Rate = PLL_Values[15]
+
+        self.PLL_Output = PLL_Values[16]
+        self.PLL_Output_Amp = PLL_Values[17]
         
         self.FT_Input = FT_Values[0]
         self.FT_Frequency = FT_Values[1]
@@ -964,74 +977,70 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.comboBox_T_Demod.currentIndexChanged.connect(self.setT_Demod)
         self.comboBox_T_Harmonic.currentIndexChanged.connect(self.setT_Harmonic)
         
+        self.lineEdit_PLL_Amplitude.editingFinished.connect(self.setPLL_Output_Amplitude)
+        self.comboBox_PLL_Output.currentIndexChanged.connect(self.setPLL_Output)
+
         self.loadValues()
         self.createLoadingColors()
         
     def loadValues(self):
-        print 'loading values'
-        try:
-            self.lineEdit_TargetBW.setText(formatNum(self.PLL_TargetBW))
-            self.comboBox_PLL_Advise.setCurrentIndex(self.PLL_AdviseMode)
-            self.comboBox_PLL_Input.setCurrentIndex(self.PLL_Input - 1)
-            
-            if self.PLL_CenterFreq is not None:
-                self.lineEdit_PLL_CenterFreq.setText(formatNum(self.PLL_CenterFreq))
-            else:
-                self.lineEdit_PLL_CenterFreq.setText('None')
-            if self.PLL_CenterPhase is not None:
-                self.lineEdit_PLL_phaseSetPoint.setText(formatNum(self.PLL_CenterPhase))
-            else:
-                self.lineEdit_PLL_phaseSetPoint.setText('None')
-            self.lineEdit_PLL_Range.setText(formatNum(self.PLL_Range))
-            
-            self.comboBox_PLL_Harmonic.setCurrentIndex(self.PLL_Harmonic -1)
-            print 'setting harmonic'
-            self.hf.set_advisor_harmonic(self.PLL_Harmonic)
-            
-            self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
-            self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
-            print 'setting tc'
-            self.hf.set_advisor_tc(self.PLL_TC)
-            
-            self.comboBox_PLL_FilterOrder.setCurrentIndex(self.PLL_FilterOrder -1)
-            print 'setting order'
-            self.hf.set_advisor_filterorder(self.PLL_FilterOrder)
-            
-            self.lineEdit_PLL_P.setText(formatNum(self.PLL_P, 4))
-            print 'setting p'
-            self.hf.set_advisor_p(self.PLL_P)
-            self.lineEdit_PLL_I.setText(formatNum(self.PLL_I, 4))
-            print 'setting i'
-            self.hf.set_advisor_i(self.PLL_I)
-            self.lineEdit_PLL_D.setText(formatNum(self.PLL_D, 4))
-            print 'setting d'
-            self.hf.set_advisor_d(self.PLL_D)
-            self.lineEdit_PLL_SimBW.setText(formatNum(self.PLL_SimBW, 4))
-            self.lineEdit_PLL_PM.setText(formatNum(self.PLL_PM, 4))
-            self.lineEdit_PLL_Rate.setText(formatNum(self.PLL_Rate, 4))
-            
-            
-            self.comboBox_FT_Input.setCurrentIndex(self.FT_Input-1)
-            self.comboBox_FT_Output.setCurrentIndex(self.FT_Output-1)
-            
-            self.lineEdit_FT_Freq.setText(formatNum(self.FT_Frequency))
+        self.lineEdit_TargetBW.setText(formatNum(self.PLL_TargetBW))
+        self.comboBox_PLL_Advise.setCurrentIndex(self.PLL_AdviseMode)
+        self.comboBox_PLL_Input.setCurrentIndex(self.PLL_Input - 1)
+        
+        if self.PLL_CenterFreq is not None:
+            self.lineEdit_PLL_CenterFreq.setText(formatNum(self.PLL_CenterFreq))
+        else:
+            self.lineEdit_PLL_CenterFreq.setText('None')
+        if self.PLL_CenterPhase is not None:
+            self.lineEdit_PLL_phaseSetPoint.setText(formatNum(self.PLL_CenterPhase))
+        else:
+            self.lineEdit_PLL_phaseSetPoint.setText('None')
+        self.lineEdit_PLL_Range.setText(formatNum(self.PLL_Range))
+        
+        self.comboBox_PLL_Harmonic.setCurrentIndex(self.PLL_Harmonic -1)
+        self.hf.set_advisor_harmonic(self.PLL_Harmonic)
+        
+        self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
+        self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
+        self.hf.set_advisor_tc(self.PLL_TC)
+        
+        self.comboBox_PLL_FilterOrder.setCurrentIndex(self.PLL_FilterOrder -1)
+        self.hf.set_advisor_filterorder(self.PLL_FilterOrder)
+        
+        self.lineEdit_PLL_P.setText(formatNum(self.PLL_P, 4))
+        self.hf.set_advisor_p(self.PLL_P)
+        self.lineEdit_PLL_I.setText(formatNum(self.PLL_I, 4))
+        self.hf.set_advisor_i(self.PLL_I)
+        self.lineEdit_PLL_D.setText(formatNum(self.PLL_D, 4))
+        self.hf.set_advisor_d(self.PLL_D)
+        self.lineEdit_PLL_SimBW.setText(formatNum(self.PLL_SimBW, 4))
+        self.lineEdit_PLL_PM.setText(formatNum(self.PLL_PM, 4))
+        self.lineEdit_PLL_Rate.setText(formatNum(self.PLL_Rate, 4))
+        
+        
+        self.comboBox_FT_Input.setCurrentIndex(self.FT_Input-1)
+        self.comboBox_FT_Output.setCurrentIndex(self.FT_Output-1)
+        
+        self.lineEdit_FT_Freq.setText(formatNum(self.FT_Frequency))
 
-            if self.FT_Output == 3:
-                self.lineEdit_FT_Amp.setText('N/A')
-                self.lineEdit_FT_Amp.setEnabled(False)
-            else:
-                self.lineEdit_FT_Amp.setText(formatNum(self.FT_Amplitude))
-                self.lineEdit_FT_Amp.setEnabled(True)
-                
-            self.comboBox_F_Demod.setCurrentIndex(self.F_Demod-1)
-            self.comboBox_F_Harmonic.setCurrentIndex(self.F_Harmonic-1)
-            self.lineEdit_F_TC.setText(formatNum(self.F_TC))
+        if self.FT_Output == 3:
+            self.lineEdit_FT_Amp.setText('N/A')
+            self.lineEdit_FT_Amp.setEnabled(False)
+        else:
+            self.lineEdit_FT_Amp.setText(formatNum(self.FT_Amplitude))
+            self.lineEdit_FT_Amp.setEnabled(True)
             
-            self.comboBox_T_Demod.setCurrentIndex(self.T_Demod-1)
-            self.comboBox_T_Harmonic.setCurrentIndex(self.T_Harmonic-1)
-            self.lineEdit_T_TC.setText(formatNum(self.T_TC))
-        except Exception as inst:
-            print inst
+        self.comboBox_F_Demod.setCurrentIndex(self.F_Demod-1)
+        self.comboBox_F_Harmonic.setCurrentIndex(self.F_Harmonic-1)
+        self.lineEdit_F_TC.setText(formatNum(self.F_TC))
+        
+        self.comboBox_T_Demod.setCurrentIndex(self.T_Demod-1)
+        self.comboBox_T_Harmonic.setCurrentIndex(self.T_Harmonic-1)
+        self.lineEdit_T_TC.setText(formatNum(self.T_TC))
+
+        self.lineEdit_PLL_Amplitude.setText(formatNum(self.PLL_Output_Amp))
+        self.comboBox_PLL_Output.setCurrentIndex(self.PLL_Output - 1)
         
     #Creates a list of stylesheets with a gradient of grey to black. This
     #will be used when the advisePID button is pressed to indicate that
@@ -1091,6 +1100,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             yield self.updateSimulation()
         self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
         self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
+    
     @inlineCallbacks
     def setPLL_FilterBW(self, c = None):
         new_filterBW = str(self.lineEdit_PLL_FilterBW.text())
@@ -1135,7 +1145,16 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         
     def setPLL_Input(self):
         self.PLL_Input = self.comboBox_PLL_Input.currentIndex() + 1
+
+    def setPLL_Output(self):
+        self.PLL_Output = self.comboBox_PLL_Output.currentIndex() + 1
         
+    def setPLL_Output_Amplitude(self):
+        val = readNum(str(self.lineEdit_PLL_Amplitude.text()))
+        if isinstance(val,float):
+            self.PLL_Output_Amp = val
+        self.lineEdit_PLL_Amplitude.setText(formatNum(self.PLL_Output_Amp))
+
     @inlineCallbacks
     def setPLL_Harmonic(self, c = None):
         self.PLL_Harmonic = self.comboBox_PLL_Harmonic.currentIndex() + 1
@@ -1202,21 +1221,29 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
     
     @inlineCallbacks
     def updateSimulation(self):
-        #Give time for automatic calculation of phase margin and simulated bandwidth
-        yield self.sleep(0.25)
-        pm = yield self.hf.get_advisor_pm()
-        bw = yield self.hf.get_advisor_simbw()
-        self.PLL_PM = pm
-        self.PLL_SimBW = bw
-        self.lineEdit_PLL_PM.setText(formatNum(self.PLL_PM))
-        self.lineEdit_PLL_SimBW.setText(formatNum(self.PLL_SimBW))
+        try:
+            calculating = True
+            print 'Waiting for calculation'
+            yield self.sleep(0.25)
+            while calculating:
+                calculating = yield self.hf.get_advisor_calc()
+                print calculating
+            print 'done calaculating'
+            pm = yield self.hf.get_advisor_pm()
+            bw = yield self.hf.get_advisor_simbw()
+            self.PLL_PM = pm
+            self.PLL_SimBW = bw
+            self.lineEdit_PLL_PM.setText(formatNum(self.PLL_PM))
+            self.lineEdit_PLL_SimBW.setText(formatNum(self.PLL_SimBW))
+        except Exception as inst:
+            print inst
         
     def acceptNewValues(self):
         self.accept()
         
     def advisePID(self):
         try:
-            self.PID_advice = None
+            self.PID_advice = False
             self.computePIDParameters()
             self.displayCalculatingGraphics()
         except Exception as inst:
@@ -1225,9 +1252,26 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def computePIDParameters(self, c = None):
         try:
-            yield self.hf.advise_pll_pid(1, self.PLL_TargetBW,self.PLL_AdviseMode)
-            print 'pasta'
-            self.PID_advice = 'Pasta'
+            self.PID_advice = yield self.hf.advise_pll_pid(1, self.PLL_TargetBW,self.PLL_AdviseMode)
+            self.PLL_P = yield self.hf.get_advisor_p()
+            self.PLL_I = yield self.hf.get_advisor_i()
+            self.PLL_D = yield self.hf.get_advisor_d()
+            self.PLL_SimBW = yield self.hf.get_advisor_simbw()
+            self.PLL_Rate  = yield self.hf.get_advisor_rate()
+            self.PLL_PM = yield self.hf.get_advisor_pm()
+            self.PLL_TC = yield self.hf.get_advisor_tc()
+            self.PLL_FilterBW = 0.0692291283 / self.PLL_TC
+
+            self.lineEdit_PLL_P.setText(formatNum(self.PLL_P))
+            self.lineEdit_PLL_I.setText(formatNum(self.PLL_I))
+            self.lineEdit_PLL_D.setText(formatNum(self.PLL_D))
+            self.lineEdit_PLL_PM.setText(formatNum(self.PLL_PM))
+            self.lineEdit_PLL_SimBW.setText(formatNum(self.PLL_SimBW))
+            self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
+            self.lineEdit_PLL_Rate.setText(formatNum(self.PLL_Rate))
+            self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
+
+            #self.PID_advice = 'Pasta'
         except Exception as inst:
             print inst
         
@@ -1235,7 +1279,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
     def displayCalculatingGraphics(self, c = None):
         try:
             i = 0
-            while self.PID_advice is None:
+            while not self.PID_advice:
                 self.push_AdvisePID.setStyleSheet(self.sheets[i])
                 yield self.sleep(0.025)
                 i = (i+1)%80
@@ -1244,10 +1288,10 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             print inst
 
     def getValues(self):
-        PLL_Values = [self.PLL_TargetBW, self.PLL_Input, self.PLL_CenterFreq, 
-                    self.PLL_CenterPhase, self.PLL_Range, self.PLL_Harmonic, 
-                    self.PLL_TC, self.PLL_FilterBW, self.PLL_FilterOrder, self.PLL_P, 
-                    self.PLL_I, self.PLL_D, self.PLL_SimBW, self.PLL_PM, self.PLL_Rate]
+        PLL_Values = [self.PLL_TargetBW, self.PLL_AdviseMode, self.PLL_Input, self.PLL_CenterFreq, self.PLL_CenterPhase, 
+                        self.PLL_Range, self.PLL_Harmonic, self.PLL_TC, self.PLL_FilterBW, self.PLL_FilterOrder, 
+                        self.PLL_P, self.PLL_I, self.PLL_D, self.PLL_SimBW, self.PLL_PM, self.PLL_Rate, self.PLL_Output,
+                        self.PLL_Output_Amp]   
         FT_Values = [self.FT_Input, self.FT_Frequency, self.FT_Output, self.FT_Amplitude, self.F_Demod, 
                         self.F_Harmonic, self.F_TC, self.T_Demod, self.T_Harmonic, self.T_TC]
         return PLL_Values, FT_Values
