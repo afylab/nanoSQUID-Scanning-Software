@@ -113,7 +113,7 @@ background: rgb(144, 140, 9);
      <string notr="true"/>
     </property>
     <property name="text">
-     <string>30.000</string>
+     <string>30k</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -129,7 +129,7 @@ background: rgb(144, 140, 9);
      </rect>
     </property>
     <property name="text">
-     <string>34.000</string>
+     <string>34k</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -167,7 +167,7 @@ background: rgb(144, 140, 9);
      <string notr="true"/>
     </property>
     <property name="text">
-     <string>50.000</string>
+     <string>50</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -188,7 +188,7 @@ color:rgb(168,168,168)
 }</string>
     </property>
     <property name="text">
-     <string>Start (kHz):</string>
+     <string>Start (Hz):</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_MaxFreq">
@@ -206,7 +206,7 @@ color:rgb(168,168,168)
 }</string>
     </property>
     <property name="text">
-     <string>Stop (kHz):</string>
+     <string>Stop (Hz):</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_freqParams">
@@ -830,7 +830,7 @@ color:rgb(168,168,168)
 }</string>
     </property>
     <property name="text">
-     <string>Phase f0 (kHz)</string>
+     <string>Phase f0 (Hz)</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_fitParams">
@@ -936,7 +936,7 @@ color:rgb(168,168,168)
 }</string>
     </property>
     <property name="text">
-     <string>Amplitude f0 (kHz)</string>
+     <string>Amplitude f0 (Hz)</string>
     </property>
    </widget>
    <widget class="Line" name="line_18">
@@ -1300,7 +1300,7 @@ color:rgb(168,168,168)
      <string notr="true"/>
     </property>
     <property name="text">
-     <string>32.000</string>
+     <string>32k</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

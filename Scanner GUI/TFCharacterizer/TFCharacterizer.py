@@ -218,32 +218,32 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def ampMinChanged(self,item):
         self.minFreqLine2.setPos(item.pos())
         self.startFreq = item.pos().x()
-        self.lineEdit_MinFreq.setText(formatFreq(self.startFreq))
+        self.lineEdit_MinFreq.setText(formatNum(self.startFreq, 4))
         
     def ampMaxChanged(self,item):
         self.maxFreqLine2.setPos(item.pos())
         self.stopFreq = item.pos().x()
-        self.lineEdit_MaxFreq.setText(formatFreq(self.stopFreq))
+        self.lineEdit_MaxFreq.setText(formatNum(self.stopFreq, 4))
         
     def ampSelectChanged(self,item):
         self.freqSelectLine2.setPos(item.pos())
         self.selectFreq = item.pos().x()
-        self.lineEdit_freqSelect.setText(formatFreq(self.selectFreq))
+        self.lineEdit_freqSelect.setText(formatNum(self.selectFreq, 4))
         
     def phaseMinChanged(self,item):
         self.minFreqLine.setPos(item.pos())
         self.startFreq = item.pos().x()
-        self.lineEdit_MinFreq.setText(formatFreq(self.startFreq))
+        self.lineEdit_MinFreq.setText(formatNum(self.startFreq, 4))
         
     def phaseMaxChanged(self,item):
         self.maxFreqLine.setPos(item.pos())
         self.stopFreq = item.pos().x()
-        self.lineEdit_MaxFreq.setText(formatFreq(self.stopFreq))
+        self.lineEdit_MaxFreq.setText(formatNum(self.stopFreq, 4))
         
     def phaseSelectChanged(self,item):
         self.freqSelectLine.setPos(item.pos())
         self.selectFreq = item.pos().x()
-        self.lineEdit_freqSelect.setText(formatFreq(self.selectFreq))
+        self.lineEdit_freqSelect.setText(formatNum(self.selectFreq, 4))
         
     def ampRangeChanged(self,item):
         range = item.getPlotItem().getViewBox().viewRange()
@@ -263,55 +263,55 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateStartFreq(self):
         new_startFreq = str(self.lineEdit_MinFreq.text())
-        val = readFreq(new_startFreq)
+        val = readNum(new_startFreq)
         if isinstance(val,float):
-            self.startFreq = val*1000
+            self.startFreq = val
             self.minFreqLine.setPos(self.startFreq)
             self.minFreqLine2.setPos(self.startFreq)
             self.points = int(np.abs(self.startFreq-self.stopFreq)/self.freqStep)
             self.reinitSweep()
-        self.lineEdit_MinFreq.setText(formatFreq(self.startFreq))
+        self.lineEdit_MinFreq.setText(formatNum(self.startFreq, 4))
     
     def updateStopFreq(self):
         new_stopFreq = str(self.lineEdit_MaxFreq.text())
-        val = readFreq(new_stopFreq)
+        val = readNum(new_stopFreq)
         if isinstance(val,float):
-            self.stopFreq = val*1000
+            self.stopFreq = val
             self.maxFreqLine.setPos(self.stopFreq)
             self.maxFreqLine2.setPos(self.stopFreq)
             self.points = int(np.abs(self.startFreq-self.stopFreq)/self.freqStep)
             self.reinitSweep()
-        self.lineEdit_MaxFreq.setText(formatFreq(self.stopFreq))
+        self.lineEdit_MaxFreq.setText(formatNum(self.stopFreq, 4))
     
     def updateSelectFreq(self):
         new_selectFreq = str(self.lineEdit_freqSelect.text())
-        val = readFreq(new_selectFreq)
+        val = readNum(new_selectFreq)
         if isinstance(val,float):
-            self.selectFreq = val*1000
+            self.selectFreq = val
             self.freqSelectLine.setPos(self.selectFreq)
             self.freqSelectLine2.setPos(self.selectFreq)
             self.reinitSweep()
-        self.lineEdit_freqSelect.setText(formatFreq(self.selectFreq))
+        self.lineEdit_freqSelect.setText(formatNum(self.selectFreq, 4))
         
     def updateStepSize(self):
         new_freqStep = str(self.lineEdit_deltaF.text())
-        val = readFreq(new_freqStep)
+        val = readNum(new_freqStep)
         if isinstance(val,float):
             self.freqStep = val
             self.points = int(np.abs(self.startFreq-self.stopFreq)/self.freqStep)
             self.reinitSweep()
-        self.lineEdit_deltaF.setText(formatFreq(self.freqStep*1000))
+        self.lineEdit_deltaF.setText(formatNum(self.freqStep))
                 
     @inlineCallbacks
     def updateSensitivity(self, c = None):
         try:
             new_sens = str(self.lineEdit_sensitivity.text())
-            val = readVolt(new_sens)
+            val = readNum(new_sens)
             if isinstance(val,float):
                 yield self.hf.set_range(self.input, val)
                 range = yield self.hf.get_range(self.input)
                 self.sensitvity = range
-            self.lineEdit_sensitivity.setText(formatVolt(self.sensitvity))
+            self.lineEdit_sensitivity.setText(formatNum(self.sensitvity))
         except Exception as inst:
             print inst
             
@@ -319,24 +319,24 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def updateOutputAmplitude(self, c = None):
         try:
             new_Amp = str(self.lineEdit_Amplitude.text())
-            val = readVolt(new_Amp)
+            val = readNum(new_Amp)
             if isinstance(val,float):
                 yield self.hf.set_output_range(self.output,val)
                 range = yield self.hf.get_output_range(self.output)
                 yield self.hf.set_output_amplitude(self.output,val/range)
                 self.exAmp = val
-            self.lineEdit_Amplitude.setText(formatVolt(self.exAmp))
+            self.lineEdit_Amplitude.setText(formatNum(self.exAmp))
         except Exception as inst:
             print inst
         
     @inlineCallbacks
     def updateTC(self, c = None):
         new_Tc = str(self.lineEdit_timeConst.text())
-        val = readTime(new_Tc)
+        val = readNum(new_Tc)
         if isinstance(val, float):
             yield self.hf.set_demod_time_constant(1,val)
             self.timeConst = yield self.hf.get_demod_time_constant(1)
-        self.lineEdit_timeConst.setText(formatTime(self.timeConst))
+        self.lineEdit_timeConst.setText(formatNum(self.timeConst))
     
     def toggleInChannel(self):
         if self.radio_in1.isChecked():
@@ -437,7 +437,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         try:
             time  = yield self.hf.sweep_time_remaining()
             #print time
-            self.lineEdit_timeRemaining.setText(formatTime(time))
+            self.lineEdit_timeRemaining.setText(formatNum(time))
         except Exception as inst:
             print inst
     
@@ -515,9 +515,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         perr = np.sqrt(np.diag(pcov))
         self.prevAmpFit = self.ampPlot.plot(self.freq,ampFunc(self.freq, *popt))
         
-        self.lineEdit_peakF.setText(formatFreq(popt[0]))
-        self.lineEdit_peakFSig.setText(formatFreq(perr[0]*1000))
-        self.lineEdit_QFactor.setText(formatVolt(popt[1]))
+        self.lineEdit_peakF.setText(formatNum(popt[0]))
+        self.lineEdit_peakFSig.setText(formatNum(perr[0]))
+        self.lineEdit_QFactor.setText(formatNum(popt[1]))
         
         #Can also use smarter guesses for 2nd fit
         #[popt[0],popt[1],popt[2]]
@@ -525,9 +525,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         perr = np.sqrt(np.diag(pcov))
         self.prevPhaseFit = self.phasePlot.plot(self.freq,phaseFunc(self.freq, *popt))
 
-        self.lineEdit_PhasePeakF.setText(formatFreq(popt[0]))
-        self.lineEdit_PhasePeakFSig.setText(formatFreq(perr[0]*1000))
-        self.lineEdit_PhaseQFactor.setText(formatVolt(popt[1]))
+        self.lineEdit_PhasePeakF.setText(formatNum(popt[0]))
+        self.lineEdit_PhasePeakFSig.setText(formatNum(perr[0]))
+        self.lineEdit_PhaseQFactor.setText(formatNum(popt[1]))
         #Maybe iterate fits/starting parameters? 
         
 #----------------------------------------------------------------------------------------------#         
@@ -634,17 +634,17 @@ class advancedSettings(QtGui.QDialog, Ui_advancedSettings):
         
     def updateSettleTime(self):
         new_settle_time = str(self.lineEdit_settle_time.text())
-        val = readTime(new_settle_time)
+        val = readNum(new_settle_time)
         if isinstance(val, float):
             self.settle_time = val
-        self.lineEdit_settle_time.setText(formatTime(self.settle_time))
+        self.lineEdit_settle_time.setText(formatNum(self.settle_time))
         
     def updateSettleAcc(self):
         new_settle_acc = str(self.lineEdit_settle_acc.text())
-        val = readVolt(new_settle_acc)
+        val = readNum(new_settle_acc)
         if isinstance(val, float):
             self.settle_acc = val
-        self.lineEdit_settle_acc.setText(formatVolt(self.settle_acc))
+        self.lineEdit_settle_acc.setText(formatNum(self.settle_acc))
     
     def updateAvgTC(self):
         new_avg_tc = str(self.lineEdit_avg_tc.text())
@@ -664,10 +664,10 @@ class advancedSettings(QtGui.QDialog, Ui_advancedSettings):
         
     def updateBandwidth(self):
         new_bandwidth = str(self.lineEdit_bandwidth.text())
-        val = readFreq(new_bandwidth)
+        val = readNum(new_bandwidth)
         if isinstance(val, float):
-            self.bandwidth = val*1000
-        self.lineEdit_bandwidth.setText(formatFreq(self.bandwidth))
+            self.bandwidth = val
+        self.lineEdit_bandwidth.setText(formatNum(self.bandwidth))
         
     def updateLoopcount(self):
         new_loopcount = str(self.lineEdit_loopcount.text())
@@ -714,11 +714,11 @@ class advancedSettings(QtGui.QDialog, Ui_advancedSettings):
         if self.overlap:
             self.checkBox_overlap.setChecked(True)
         
-        self.lineEdit_settle_time.setText(formatTime(self.settle_time))
-        self.lineEdit_settle_acc.setText(formatVolt(self.settle_acc))
+        self.lineEdit_settle_time.setText(formatNum(self.settle_time))
+        self.lineEdit_settle_acc.setText(formatNum(self.settle_acc))
         self.lineEdit_avg_tc.setText(str(self.average_TC))
         self.lineEdit_avg_sample.setText(str(self.average_sample))
-        self.lineEdit_bandwidth.setText(formatFreq(self.bandwidth))
+        self.lineEdit_bandwidth.setText(formatNum(self.bandwidth))
         self.lineEdit_loopcount.setText(str(self.loopcount))
     
 #---------------------------------------------------------------------------------------------------------#         
@@ -738,8 +738,8 @@ def phaseFunc(f, f0, Q, C):
     
 #---------------------------------------------------------------------------------------------------------#         
     """ The following section describes how to read and write values to various lineEdits on the GUI."""
-        
-def formatTime(val):
+
+def formatNum(val, decimal_values = 2):
     if val != val:
         return 'nan'
         
@@ -752,7 +752,7 @@ def formatTime(val):
         if num - int(num) == 0:
             num = int(num)
         else: 
-            num = round(num,2)
+            num = round(num,decimal_values)
         string = str(num)+'n'
     elif exp < -3:
         diff = exp + 6
@@ -760,7 +760,7 @@ def formatTime(val):
         if num - int(num) == 0:
             num = int(num)
         else: 
-            num = round(num,2)
+            num = round(num,decimal_values)
         string = str(num)+'u'
     elif exp < 0:
         diff = exp + 3
@@ -768,17 +768,41 @@ def formatTime(val):
         if num - int(num) == 0:
             num = int(num)
         else: 
-            num = round(num,2)
+            num = round(num,decimal_values)
         string = str(num)+'m'
-    elif exp >= 0:
+    elif exp < 3:
         if val - int(val) == 0:
             val = int(val)
         else: 
-            val = round(val,2)
+            val = round(val,decimal_values)
         string = str(val)
+    elif exp < 6:
+        diff = exp - 3
+        num = num * 10**diff
+        if num - int(num) == 0:
+            num = int(num)
+        else: 
+            num = round(num,decimal_values)
+        string = str(num)+'k'
+    elif exp < 9:
+        diff = exp - 6
+        num = num * 10**diff
+        if num - int(num) == 0:
+            num = int(num)
+        else: 
+            num = round(num,decimal_values)
+        string = str(num)+'M'
+    elif exp < 12:
+        diff = exp - 9
+        num = num * 10**diff
+        if num - int(num) == 0:
+            num = int(num)
+        else: 
+            num = round(num,decimal_values)
+        string = str(num)+'G'
     return string
     
-def readTime(string):
+def readNum(string):
     try:
         val = float(string)
     except:
@@ -789,44 +813,14 @@ def readTime(string):
             exp = 1e-6
         if exp == 'n':
             exp = 1e-9
+        if exp == 'k':
+            exp = 1e3
+        if exp == 'M':
+            exp = 1e6
+        if exp == 'G':
+            exp = 1e9
         try:
             val = float(string[0:-1])*exp
         except: 
             return 'Incorrect Format'
     return val
-        
-def formatFreq(val):
-    string = str(val/1000)
-    length = len(string)
-    if val<100000:
-        if length >=6:
-            string = string[0:6]
-        elif length <3:
-            string = string + '.000'
-        elif length == 4:
-            string = string + '00'
-        else:
-            string = string + '0'
-    if val>=100000:
-        if length >=7:
-            string = string[0:7]
-        elif length <4:
-            string = string + '.000'
-        elif length == 5:
-            string = string + '00'
-        else:
-            string = string + '0'
-    return string
-        
-def formatVolt(val):
-    return formatTime(val)
-    
-def readFreq(string):
-    try:
-        val = float(string)
-    except:
-        return 'Incorrect Format'
-    return val
-    
-def readVolt(string):
-    return readTime(string)

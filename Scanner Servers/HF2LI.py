@@ -404,7 +404,8 @@ class HF2LIServer(LabradServer):
 
         grid = demod_data[0][0]['grid']
         R = np.abs(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'])
-        phi = np.angle(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'], True)
+        #phi = np.angle(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'], True)
+        phi = np.arctan2(demod_data[0][0]['y'], demod_data[0][0]['x'])
         frequency  = demod_data[0][0]['frequency']
         
         formatted_data = [[],[],[],[]]
@@ -655,6 +656,31 @@ class HF2LIServer(LabradServer):
 
         returnValue([freqdelta,error])
 
+    @setting(1540,PLL_index = 'i', returns  = '**v[]')
+    def getSample_PLL(self,c, PLL_index):
+        """Gets a single sample from the PLL"""
+
+        path = '/%s/plls/%d/*' % (self.dev_ID, PLL_index-1)
+        path_freqdelta = '/%s/plls/%d/freqdelta' % (self.dev_ID, PLL_index-1)
+        path_error = '/%s/plls/%d/error' % (self.dev_ID, PLL_index-1)
+
+
+        ans = yield self.daq.getSample(path)
+        #print ans[path_freqdelta]
+        #print ans[path_error]
+
+        yield self.daq.unsubscribe(path)
+        try:
+            freqdelta = ans[path_freqdelta]
+        except:
+            freqdelta = []
+        try:
+            error = ans[path_error]
+        except:
+            error = []
+
+        returnValue([freqdelta,error])
+
     @setting(128, PLL_index = 'i', targetBW = 'v[]', pidMode = 'i', returns = 'b')
     def advise_PLL_PID(self, c, PLL_index, targetBW, pidMode):
         """Simulates and computes values for the PLL PID loop. Make sure that the Harmonic 
@@ -855,6 +881,27 @@ class HF2LIServer(LabradServer):
 		"""Returns the version of the software installed on this computer"""
 		ver = yield self.daq.version()
 		returnValue(ver)
+
+    @setting(174,PLL_index = 'i', on = 'b', returns = '')
+    def set_PLL_autocenter(self, c, PLL_index, on):
+        """Set the PLL auto center frequency of the provided PLL (1 indexed) to on, if on is True, 
+        and to off, if on is False"""
+        setting = ['/%s/plls/%d/autocenter' % (self.dev_ID, PLL_index-1), on],
+        yield self.daq.set(setting)
+
+    @setting(175,PLL_index = 'i', on = 'b', returns = '')
+    def set_PLL_autotc(self, c, PLL_index, on):
+        """Set the PLL auto time constant of the provided PLL (1 indexed) to on, if on is True, 
+        and to off, if on is False"""
+        setting = ['/%s/plls/%d/autotimeconstant' % (self.dev_ID, PLL_index-1), on],
+        yield self.daq.set(setting)
+
+    @setting(176,PLL_index = 'i', on = 'b', returns = '')
+    def set_PLL_autopid(self, c, PLL_index, on):
+        """Set the PLL auto pid of the provided PLL (1 indexed) to on, if on is True, 
+        and to off, if on is False"""
+        setting = ['/%s/plls/%d/autopid' % (self.dev_ID, PLL_index-1), on],
+        yield self.daq.set(setting)
 
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows

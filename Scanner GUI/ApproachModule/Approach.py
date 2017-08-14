@@ -22,7 +22,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         self.moveDefault()        
 
-
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
         
@@ -84,11 +83,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.PLL_FilterBW = 500.1
         self.PLL_FilterOrder = 4
         
-        self.PLL_P = 2.537
-        self.PLL_I = 3.282
+        self.PLL_P = 1.397
+        self.PLL_I = 2.626
         self.PLL_D = 0 
-        self.PLL_SimBW = 272.2
-        self.PLL_PM = 61.72
+        self.PLL_SimBW = 0
+        self.PLL_PM = 0
         self.PLL_Rate = 1.842e+6
 
         self.PLL_Output = 1
@@ -471,22 +470,27 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def setHF2LI_PLL_Settings(self, c = None):
         try:
+            #first disable autoSettings
+            yield self.hf.set_pll_autocenter(self.PLL_Output,False)
+            yield self.hf.set_pll_autotc(self.PLL_Output,False)
+            yield self.hf.set_pll_autopid(self.PLL_Output,False)
+
             #All settings are set for PLL 1
-            yield self.hf.set_pll_input(1,self.PLL_Input)
-            yield self.hf.set_pll_freqcenter(1, self.PLL_CenterFreq)
-            yield self.hf.set_pll_setpoint(1,self.PLL_CenterPhase)
-            yield self.hf.set_pll_freqrange(1,self.PLL_Range)
+            yield self.hf.set_pll_input(self.PLL_Output,self.PLL_Input)
+            yield self.hf.set_pll_freqcenter(self.PLL_Output, self.PLL_CenterFreq)
+            yield self.hf.set_pll_setpoint(self.PLL_Output,self.PLL_CenterPhase)
+            yield self.hf.set_pll_freqrange(self.PLL_Output,self.PLL_Range)
             
-            yield self.hf.set_pll_harmonic(1,self.PLL_Harmonic)
-            yield self.hf.set_pll_tc(1,self.PLL_TC)
-            self.PLL_TC = yield self.hf.get_pll_tc(1)
+            yield self.hf.set_pll_harmonic(self.PLL_Output,self.PLL_Harmonic)
+            yield self.hf.set_pll_tc(self.PLL_Output,self.PLL_TC)
+            self.PLL_TC = yield self.hf.get_pll_tc(self.PLL_Output)
             self.PLL_FilterBW = 0.0692291283 / self.PLL_TC
             
-            yield self.hf.set_pll_filterorder(1,self.PLL_FilterOrder)
+            yield self.hf.set_pll_filterorder(self.PLL_Output,self.PLL_FilterOrder)
             
-            yield self.hf.set_pll_p(1,self.PLL_P)
-            yield self.hf.set_pll_i(1,self.PLL_I)
-            yield self.hf.set_pll_d(1,self.PLL_D)
+            yield self.hf.set_pll_p(self.PLL_Output,self.PLL_P)
+            yield self.hf.set_pll_i(self.PLL_Output,self.PLL_I)
+            yield self.hf.set_pll_d(self.PLL_Output,self.PLL_D)
             #These don't work yet, but should be added once they do
             #yield self.hf.set_PLL_rate(1,self.PLL_Rate)
             #self.PLL_Rate = yield self.hf.get_PLL_rate(1)
@@ -496,12 +500,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def startFrequencyMonitoring(self, c=None):
         try:
-            #All settings are set for PLL 1
-            yield self.hf.set_pll_on(1)
+            #Turn on out and start PLL
+            yield self.hf.set_output(self.PLL_Output, True)
+            yield self.hf.set_pll_on(self.PLL_Output)
             while self.measuring:
                 deltaf = None
                 phaseError = None
-                data = yield self.hf.poll_pll(1, 0.15, 100)
+                data = yield self.hf.poll_pll(self.PLL_Output, 0.15, 100)
                 try:
                     deltaf = data[0][0]
                 except:
@@ -516,6 +521,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     self.lineEdit_phaseError.setText(formatNum(phaseError))
 
             yield self.hf.set_pll_off(1)
+            yield self.hf.set_output(self.PLL_Output, False)
         except Exception as inst:
             print inst
         
@@ -904,6 +910,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         super(MeasurementSettings, self).__init__(parent)
         self.reactor = reactor
         self.setupUi(self)
+        self.setupAdditionalUi()
         
         self.pushButton.clicked.connect(self.acceptNewValues)
         
@@ -982,6 +989,9 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
 
         self.loadValues()
         self.createLoadingColors()
+
+    def setupAdditionalUi(self):
+        self.comboBox_PLL_Input.view().setMinimumWidth(100)
         
     def loadValues(self):
         self.lineEdit_TargetBW.setText(formatNum(self.PLL_TargetBW))
@@ -1008,15 +1018,15 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.comboBox_PLL_FilterOrder.setCurrentIndex(self.PLL_FilterOrder -1)
         self.hf.set_advisor_filterorder(self.PLL_FilterOrder)
         
-        self.lineEdit_PLL_P.setText(formatNum(self.PLL_P, 4))
+        self.lineEdit_PLL_P.setText(formatNum(self.PLL_P, 3))
         self.hf.set_advisor_p(self.PLL_P)
-        self.lineEdit_PLL_I.setText(formatNum(self.PLL_I, 4))
+        self.lineEdit_PLL_I.setText(formatNum(self.PLL_I, 3))
         self.hf.set_advisor_i(self.PLL_I)
-        self.lineEdit_PLL_D.setText(formatNum(self.PLL_D, 4))
+        self.lineEdit_PLL_D.setText(formatNum(self.PLL_D, 3))
         self.hf.set_advisor_d(self.PLL_D)
-        self.lineEdit_PLL_SimBW.setText(formatNum(self.PLL_SimBW, 4))
-        self.lineEdit_PLL_PM.setText(formatNum(self.PLL_PM, 4))
-        self.lineEdit_PLL_Rate.setText(formatNum(self.PLL_Rate, 4))
+        self.lineEdit_PLL_SimBW.setText(formatNum(self.PLL_SimBW, 3))
+        self.lineEdit_PLL_PM.setText(formatNum(self.PLL_PM, 3))
+        self.lineEdit_PLL_Rate.setText(formatNum(self.PLL_Rate, 3))
         
         
         self.comboBox_FT_Input.setCurrentIndex(self.FT_Input-1)
@@ -1121,7 +1131,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.PLL_P = val
             yield self.hf.set_advisor_p(self.PLL_P)
             yield self.updateSimulation()
-        self.lineEdit_PLL_P.setText(formatNum(self.PLL_P))
+        self.lineEdit_PLL_P.setText(formatNum(self.PLL_P, 3))
         
     @inlineCallbacks
     def setPLL_I(self, c = None):
@@ -1131,7 +1141,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.PLL_I = val
             yield self.hf.set_advisor_i(self.PLL_I)
             yield self.updateSimulation()
-        self.lineEdit_PLL_I.setText(formatNum(self.PLL_I))
+        self.lineEdit_PLL_I.setText(formatNum(self.PLL_I, 3))
         
     @inlineCallbacks
     def setPLL_D(self, c = None):
@@ -1141,7 +1151,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.PLL_D = val
             yield self.hf.set_advisor_d(self.PLL_D)
             yield self.updateSimulation()
-        self.lineEdit_PLL_D.setText(formatNum(self.PLL_D))
+        self.lineEdit_PLL_D.setText(formatNum(self.PLL_D, 3))
         
     def setPLL_Input(self):
         self.PLL_Input = self.comboBox_PLL_Input.currentIndex() + 1
@@ -1222,22 +1232,42 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def updateSimulation(self):
         try:
-            calculating = True
-            print 'Waiting for calculation'
-            yield self.sleep(0.25)
-            while calculating:
-                calculating = yield self.hf.get_advisor_calc()
-                print calculating
-            print 'done calaculating'
+            #Waiting for one second seems to work fine for auto calculation to be complete
+            yield self.sleep(1)
+            #This method doesn't seem to work for anything other than an optimization
+            #calculating = True
+            #while calculating:
+            #    calculating = yield self.hf.get_advisor_calc()
+            #    print calculating
+            #print 'done calaculating'
             pm = yield self.hf.get_advisor_pm()
             bw = yield self.hf.get_advisor_simbw()
             self.PLL_PM = pm
             self.PLL_SimBW = bw
             self.lineEdit_PLL_PM.setText(formatNum(self.PLL_PM))
             self.lineEdit_PLL_SimBW.setText(formatNum(self.PLL_SimBW))
+
+            self.updateStability()
         except Exception as inst:
             print inst
-        
+         
+    @inlineCallbacks
+    def updateStability(self, c = None):
+        stable = yield self.hf.get_advisor_stable()
+        if stable:
+            style = """ #push_stability{
+                    background: rgb(0, 161, 0);
+                    border-radius: 8px;
+                    }
+                    """
+        else:
+            style = """ #push_stability{
+                    background: rgb(161, 0, 0);
+                    border-radius: 8px;
+                    }
+                    """
+        self.push_stability.setStyleSheet(style)
+
     def acceptNewValues(self):
         self.accept()
         
@@ -1262,16 +1292,16 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.PLL_TC = yield self.hf.get_advisor_tc()
             self.PLL_FilterBW = 0.0692291283 / self.PLL_TC
 
-            self.lineEdit_PLL_P.setText(formatNum(self.PLL_P))
-            self.lineEdit_PLL_I.setText(formatNum(self.PLL_I))
-            self.lineEdit_PLL_D.setText(formatNum(self.PLL_D))
+            self.lineEdit_PLL_P.setText(formatNum(self.PLL_P, 3))
+            self.lineEdit_PLL_I.setText(formatNum(self.PLL_I, 3))
+            self.lineEdit_PLL_D.setText(formatNum(self.PLL_D, 3))
             self.lineEdit_PLL_PM.setText(formatNum(self.PLL_PM))
             self.lineEdit_PLL_SimBW.setText(formatNum(self.PLL_SimBW))
             self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
-            self.lineEdit_PLL_Rate.setText(formatNum(self.PLL_Rate))
+            self.lineEdit_PLL_Rate.setText(formatNum(self.PLL_Rate, 3))
             self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
 
-            #self.PID_advice = 'Pasta'
+            self.updateStability()
         except Exception as inst:
             print inst
         

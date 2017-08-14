@@ -93,7 +93,7 @@ color:rgb(168,168,168)
     <string notr="true"/>
    </property>
    <property name="text">
-    <string>1.000</string>
+    <string>1k</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -114,7 +114,7 @@ color:rgb(168,168,168)
 }</string>
    </property>
    <property name="text">
-    <string>Bandwidth (kHz)</string>
+    <string>Bandwidth (Hz)</string>
    </property>
   </widget>
   <widget class="QLineEdit" name="lineEdit_settle_acc">
