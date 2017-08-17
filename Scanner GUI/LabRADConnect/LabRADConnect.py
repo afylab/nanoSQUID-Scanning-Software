@@ -25,14 +25,15 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         #Initialize variables for all possible server connections in a dictionary
         #Makes multiple connections for browsing data vault in every desired context
         self.emptyDictionary = {
-        'cxn'       : None,
-        'dv'        : None,
-        'ser_server': None,
-        'dac_adc'   : None,       
-        'hf2li'     : None,
-        'cpsc'      : None
+        'cxn'       : False,
+        'dv'        : False,
+        'ser_server': False,
+        'dac_adc'   : False,       
+        'hf2li'     : False,
+        'cpsc'      : False
         }
-        self.connectionDictionary = self.emptyDictionary
+        self.connectionDictionary = self.emptyDictionary.copy()
+        self.cxnAttemptDictionary = self.emptyDictionary.copy()
         
         self.lineEdit_Session.setReadOnly(True)
         self.session = ''
@@ -49,38 +50,74 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.push_Session.clicked.connect(self.chooseSession)
     
     def setupAdditionalUi(self):
-        pass
-        
+        #Creates and array of stylesheets for the connect button 
+        base_sheet = """#push_ConnectAll{
+                color: rgb(168,168,168);
+                background: rgb(60, 60, 60);
+                border-radius: 4px;
+                }
+                QPushButton:pressed#push_ConnectAll{
+                color: rgb(168,168,168);
+                background-color:rgb(100,100,100);
+                border-radius: 4px
+                }
+                """
+        self.sheets = []
+        for i in range(0,40):
+            new_background = 60 + i*3
+            new_sheet = base_sheet.replace('60',str(new_background))
+            self.sheets.append(new_sheet)
+        for i in range(0,41):
+            new_background = 180 - i*3
+            new_sheet = base_sheet.replace('60',str(new_background))
+            self.sheets.append(new_sheet)
+    
     def moveDefault(self):    
         self.move(10,170)
         
     @inlineCallbacks
     def connectAllServers(self, c = None):
         #TODO: Lock buttons so prevent clicking during automatic connection
-        #TODO: 
-        
-        #First create connection to labrad and give time for connection to be made
+        self.cxnAttemptDictionary = self.emptyDictionary.copy()
+
+        self.displayConnectingGraphics()
+        #First create connection to labrad. Yielding this command ensures it will be completed before
+        #starting following connections
         yield self.connectLabRAD()
-        yield self.sleep(0.5)
 
-        #Then create connection to Data Vault and Serial Server (and eventually GPIB server if needed)
-        yield self.connectDataVault()
-        yield self.connectSerialServer()
-
-        #Give time for serial server connection to be made, before connecting to serial devices
-        yield self.sleep(0.5)
-
-        yield self.connectDACADC()
+        #Then create other connects. These are not yielded so that they happen 'simultaneously'
+        self.connectDataVault()
+        self.connectHF2LI()
+        self.connectCPSC()
         
-        yield self.connectHF2LI()
-        
-        yield self.connectCPSC()
-        
-        self.cxnSuccessful.emit(self.connectionDictionary) 
-        
+        self.connectSerialDevices()
+        self.connectGPIBDevices()
         #Unlock buttons once connection is done
-        
-        
+    
+    @inlineCallbacks
+    def displayConnectingGraphics(self, c = None):
+        try:
+            i = 0
+            while not self.allConnectionsAttmpted():
+                self.push_ConnectAll.setStyleSheet(self.sheets[i])
+                yield self.sleep(0.025)
+                i = (i+1)%81
+            self.push_ConnectAll.setStyleSheet(self.sheets[0])
+        except Exception as inst:
+            print inst
+
+    def allConnectionsAttmpted(self):
+        allCxnAttempted = True
+        cxnAttempts = self.cxnAttemptDictionary.values()
+        for attempt in cxnAttempts:
+            allCxnAttempted = allCxnAttempted * attempt
+        return allCxnAttempted
+
+    def emitConnectionDictionary(self):
+        #Emits a connection dictionary only if all the connections were attempted
+        if self.allConnectionsAttmpted():
+            self.cxnSuccessful.emit(self.connectionDictionary)
+
     @inlineCallbacks
     def disconnectLabRAD(self, c = None):
         try: 
@@ -88,7 +125,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         except:
             pass
 
-        self.connectionDictionary = self.emptyDictionary
+        self.connectionDictionary = self.emptyDictionary.copy()
         
         self.lineEdit_Session.setText('')
 
@@ -113,6 +150,10 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         
         self.cxnDisconnected.emit(self.connectionDictionary)   
 
+#--------------------------------------------------------------------------------------------------------------------------#
+            
+    """ The following section has the methods for connecting independent devices."""
+
     @inlineCallbacks
     def connectLabRAD(self, c = None):
         from labrad.wrappers import connectAsync
@@ -126,10 +167,12 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.label_LabRAD_status.setText('Connection Failed.')
             self.push_LabRAD.setStyleSheet("#push_LabRAD{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
+        self.cxnAttemptDictionary['cxn'] = True
+        self.emitConnectionDictionary()
         
     @inlineCallbacks
     def connectDataVault(self, c = None):
-        if self.connectionDictionary['cxn'] is None:
+        if self.connectionDictionary['cxn'] is False:
             self.push_DataVault.setStyleSheet("#push_DataVault{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             self.label_DataVault_status.setText('Not connected')
@@ -147,53 +190,12 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 self.push_DataVault.setStyleSheet("#push_DataVault{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_DataVault_status.setText('Connection Failed')
-              
-    @inlineCallbacks
-    def connectSerialServer(self, c = None):
-        if self.connectionDictionary['cxn'] is None:
-            self.push_SerialServer.setStyleSheet("#push_SerialServer{" + 
-            "background: rgb(144, 140, 9);border-radius: 4px;}")
-            self.label_SerialServer_status.setText('Not connected')
-        else: 
-            try:
-                ser_server = yield self.cxn.marec_pc_serial_server
-                print self.ser_server
-                self.push_SerialServer.setStyleSheet("#push_SerialServer{" + 
-                "background: rgb(0,170,0);border-radius: 4px;}")
-                self.label_SerialServer_status.setText('Connected')
-                self.connectionDictionary['ser_server'] = ser_server
-            except:
-                self.push_SerialServer.setStyleSheet("#push_SerialServer{" + 
-                "background: rgb(161,0,0);border-radius: 4px;}")
-                self.label_SerialServer_status.setText('Connection Failed')
-        
-    @inlineCallbacks
-    def connectDACADC(self, c = None):
-        if self.connectionDictionary['ser_server'] is None:
-            self.push_DACADC.setStyleSheet("#push_DACADC{" + 
-            "background: rgb(144, 140, 9);border-radius: 4px;}")
-            self.label_DACADC_status.setText('Not connected')
-        else: 
-            try:
-                self.dac = yield self.cxn.dac_adc
-            except:
-                self.push_DACADC.setStyleSheet("#push_DACADC{" + 
-                "background: rgb(161,0,0);border-radius: 4px;}")
-                self.label_DACADC_status.setText('Connection Failed')
-            try: 
-                yield self.dac.select_device()
-                self.push_DACADC.setStyleSheet("#push_DACADC{" + 
-                "background: rgb(0,170,0);border-radius: 4px;}")
-                self.label_DACADC_status.setText('Connected')
-                self.connectionDictionary['dac_adc'] = dac
-            except:
-                self.push_DACADC.setStyleSheet("#push_DACADC{" + 
-                "background: rgb(161,0,0);border-radius: 4px;}")
-                self.label_DACADC_status.setText('No device detected')
-           
+        self.cxnAttemptDictionary['dv'] = True
+        self.emitConnectionDictionary()
+
     @inlineCallbacks
     def connectHF2LI(self, c = None):
-        if self.connectionDictionary['cxn'] is None:
+        if self.connectionDictionary['cxn'] is False:
             self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             self.label_HF2LI_status.setText('Not connected')
@@ -216,10 +218,12 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_HF2LI_status.setText('Connection Failed')
+        self.cxnAttemptDictionary['hf2li'] = True
+        self.emitConnectionDictionary()
 
     @inlineCallbacks
     def connectCPSC(self, c = None):
-        if self.connectionDictionary['cxn'] is None:
+        if self.connectionDictionary['cxn'] is False:
             self.push_CPSC.setStyleSheet("#push_CPSC{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             self.label_CPSC_status.setText('Not connected')
@@ -241,10 +245,78 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 self.push_CPSC.setStyleSheet("#push_CPSC{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_CPSC_status.setText('Connection Failed')
+        self.cxnAttemptDictionary['cpsc'] = True
+        self.emitConnectionDictionary()
+#--------------------------------------------------------------------------------------------------------------------------#
+            
+    """ The following section has the methods for connecting Serial devices."""
+
+    @inlineCallbacks
+    def connectSerialDevices(self, c = None):
+        yield self.connectSerialServer()
+        self.connectDACADC()
+
+    @inlineCallbacks
+    def connectSerialServer(self, c = None):
+        if self.connectionDictionary['cxn'] is False:
+            self.push_SerialServer.setStyleSheet("#push_SerialServer{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+            self.label_SerialServer_status.setText('Not connected')
+        else: 
+            try:
+                ser_server = yield self.cxn.marec_pc_serial_server
+                self.push_SerialServer.setStyleSheet("#push_SerialServer{" + 
+                "background: rgb(0,170,0);border-radius: 4px;}")
+                self.label_SerialServer_status.setText('Connected')
+                self.connectionDictionary['ser_server'] = ser_server
+            except:
+                self.push_SerialServer.setStyleSheet("#push_SerialServer{" + 
+                "background: rgb(161,0,0);border-radius: 4px;}")
+                self.label_SerialServer_status.setText('Connection Failed')
+        self.cxnAttemptDictionary['ser_server'] = True
+        self.emitConnectionDictionary()
+
+    @inlineCallbacks
+    def connectDACADC(self, c = None):
+        if self.connectionDictionary['ser_server'] is False:
+            self.push_DACADC.setStyleSheet("#push_DACADC{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+            self.label_DACADC_status.setText('Not connected')
+        else: 
+            try:
+                dac = yield self.cxn.dac_adc
+            except:
+                self.push_DACADC.setStyleSheet("#push_DACADC{" + 
+                "background: rgb(161,0,0);border-radius: 4px;}")
+                self.label_DACADC_status.setText('Connection Failed')
+            try: 
+                yield self.dac.select_device()
+                self.push_DACADC.setStyleSheet("#push_DACADC{" + 
+                "background: rgb(0,170,0);border-radius: 4px;}")
+                self.label_DACADC_status.setText('Connected')
+                self.connectionDictionary['dac_adc'] = dac
+            except:
+                self.push_DACADC.setStyleSheet("#push_DACADC{" + 
+                "background: rgb(161,0,0);border-radius: 4px;}")
+                self.label_DACADC_status.setText('No device detected')
+        self.cxnAttemptDictionary['dac_adc'] = True
+        self.emitConnectionDictionary()
+
+#--------------------------------------------------------------------------------------------------------------------------#
+            
+    """ The following section has the methods for connecting GPIB devices."""
+
+    @inlineCallbacks
+    def connectGPIBDevices(self, c = None):
+        yield self.sleep(1)
+
+#--------------------------------------------------------------------------------------------------------------------------#
+            
+    """ The following section has the methods for choosing the datavault location."""
            
     @inlineCallbacks
     def chooseSession(self, c = None):
-        if self.connectionDictionary['dv'] is None:
+        if self.connectionDictionary['dv'] is False:
             msgBox = QtGui.QMessageBox(self)
             msgBox.setIcon(QtGui.QMessageBox.Information)
             msgBox.setWindowTitle('Data Vault Connection Missing')

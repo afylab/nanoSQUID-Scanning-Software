@@ -106,7 +106,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
-        if self.cxn is None or self.dv is None or self.hf is None:
+        if self.cxn is None: 
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+        elif self.dv is None:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+        elif self.hf is None:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
         else:
@@ -556,6 +562,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.freqSelectLine.setMovable(False)
         self.freqSelectLine2.setMovable(False)
         
+        self.radio_in1.setEnabled(False)
+        self.radio_in2.setEnabled(False)
+        self.radio_out1.setEnabled(False)
+        self.radio_out2.setEnabled(False)
+
     def unlockInterface(self):
         self.push_Start.setEnabled(True)
         self.push_Stop.setEnabled(True)
@@ -578,6 +589,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.maxFreqLine2.setMovable(True)
         self.freqSelectLine.setMovable(True)
         self.freqSelectLine2.setMovable(True)
+
+        self.radio_in1.setEnabled(True)
+        self.radio_in2.setEnabled(True)
+        self.radio_out1.setEnabled(True)
+        self.radio_out2.setEnabled(True)
         
     def printStuff(self):
         #Test plot stuff

@@ -141,10 +141,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Approach.disconnectLabRAD()
     
     def distributeWorkingPoint(self,freq, phase, channel, amplitude):
-        print freq
-        print phase
-        print channel
-        print amplitude
         self.Approach.setWorkingPoint(freq, phase, channel, amplitude)
 #----------------------------------------------------------------------------------------------#
             

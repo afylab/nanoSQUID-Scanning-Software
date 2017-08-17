@@ -144,7 +144,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def connectLabRAD(self, dict):
         try:
-            self.unlockInterface()
+            #self.unlockInterface()
             self.cxn = dict['cxn']
             self.hf = dict['hf2li']
             self.dac = dict['dac_adc']
@@ -154,11 +154,22 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
-        if self.cxn is None or self.hf is None or self.dac is None or self.cpsc is None:
+        if self.cxn is None: 
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
+        elif self.dac is None:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+        elif self.hf is None:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+        elif self.cpsc is None:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+        else:
             self.unlockInterface()
-            
+
+
     def disconnectLabRAD(self):
         self.dv = None
         self.cxn = None
@@ -484,7 +495,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.hf.set_pll_harmonic(self.PLL_Output,self.PLL_Harmonic)
             yield self.hf.set_pll_tc(self.PLL_Output,self.PLL_TC)
             self.PLL_TC = yield self.hf.get_pll_tc(self.PLL_Output)
-            self.PLL_FilterBW = 0.0692291283 / self.PLL_TC
+            self.PLL_FilterBW = self.calculate_FilterBW(self.PLL_TC)
             
             yield self.hf.set_pll_filterorder(self.PLL_Output,self.PLL_FilterOrder)
             
@@ -1105,7 +1116,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         val = readNum(new_TC)
         if isinstance(val,float):
             self.PLL_TC = val
-            self.PLL_FilterBW = 0.0692291283 / val
+            self.PLL_FilterBW = self.calculate_FilterBW(self.PLL_TC)
             yield self.hf.set_advisor_tc(self.PLL_TC)
             yield self.updateSimulation()
         self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
@@ -1117,7 +1128,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         val = readNum(new_filterBW)
         if isinstance(val,float):
             self.PLL_FilterBW = val
-            self.PLL_TC = 0.0692291283 / val
+            self.PLL_TC = self.calculate_FilterBW(self.PLL_FilterBW)
             yield self.hf.set_advisor_tc(self.PLL_TC)
             yield self.updateSimulation()
         self.lineEdit_PLL_TC.setText(formatNum(self.PLL_TC))
@@ -1174,6 +1185,8 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def setPLL_FilterOrder(self, c = None):
         self.PLL_FilterOrder = self.comboBox_PLL_FilterOrder.currentIndex() + 1
+        self.PLL_FilterBW = self.calculate_FilterBW(self.PLL_TC)
+        self.lineEdit_PLL_FilterBW.setText(formatNum(self.PLL_FilterBW))
         yield self.hf.set_advisor_filterorder(self.PLL_FilterOrder)
         yield self.updateSimulation()
         
@@ -1229,6 +1242,27 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.T_TC = val
         self.lineEdit_T_TC.setText(formatNum(self.T_TC))
     
+    def calculate_FilterBW(self, tc):
+        #note, this works to calculate either the bandwidth or the time constant, since
+        # BW = const / TC and TC = const / BW. 
+        if self.PLL_FilterOrder == 1:
+            BW = 0.1591549431 / tc
+        elif self.PLL_FilterOrder == 2:
+            BW = 0.1024312067 / tc
+        elif self.PLL_FilterOrder == 3:
+            BW = 0.0811410938 / tc
+        elif self.PLL_FilterOrder == 4:
+            BW = 0.0692291283 / tc
+        elif self.PLL_FilterOrder == 5:
+            BW = 0.0613724151 / tc
+        elif self.PLL_FilterOrder == 6:
+            BW = 0.0556956006 / tc
+        elif self.PLL_FilterOrder == 7:
+            BW = 0.0513480105 / tc
+        elif self.PLL_FilterOrder == 8:
+            BW = 0.0478809738 / tc
+        return BW
+
     @inlineCallbacks
     def updateSimulation(self):
         try:
@@ -1290,7 +1324,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.PLL_Rate  = yield self.hf.get_advisor_rate()
             self.PLL_PM = yield self.hf.get_advisor_pm()
             self.PLL_TC = yield self.hf.get_advisor_tc()
-            self.PLL_FilterBW = 0.0692291283 / self.PLL_TC
+            self.PLL_FilterBW = self.calculate_FilterBW(self.PLL_TC)
 
             self.lineEdit_PLL_P.setText(formatNum(self.PLL_P, 3))
             self.lineEdit_PLL_I.setText(formatNum(self.PLL_I, 3))

@@ -16,12 +16,13 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Cryo Positioning Systems Controller (CPSC) Server
+name = Zurich High Frequency Lock In (HF2LI) Server
 version = 1.0
-description = Communicates with the CPSC which controls the JPE piezo stacks. 
-Must be placed in the same directory as cacli.exe in order to work. 
+description = Communicates with the Lock in, which has built in PLL / PID methods.  
 ### END NODE INFO
 """
+
+#TODO: Filter BW, Filter Order, and Harmonic info for PID control
 
 from labrad.server import LabradServer, setting
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -96,14 +97,14 @@ class HF2LIServer(LabradServer):
         if dev_ID == "None":
             self.dev_ID = self.device_list[0]
             (self.daq, self.dev_ID, self.props) = yield zhinst.utils.create_api_session(self.dev_ID, 1)
-            self.initPIDAdvisor()
-            self.initSweeper()
+            yield self.initPIDAdvisor()
+            yield self.initSweeper()
         else: 
             if dev_ID in self.device_list:
                 self.dev_ID = dev_ID
                 (self.daq, self.dev_ID, self.props) = yield zhinst.utils.create_api_session(self.dev_ID, 1)
-                self.initPIDAdvisor()
-                self.initSweeper()
+                yield self.initPIDAdvisor()
+                yield self.initSweeper()
             else:
                 print "Provided device ID is not in the list of possible devices."
    
@@ -227,26 +228,7 @@ class HF2LIServer(LabradServer):
         tc = yield self.daq.get(setting, True)
         returnValue(float(tc[setting]))
         
-    @setting(116,demod_index = 'i', rec_time= 'v[]', timeout = 'i', returns = '**v[]')
-    def poll_demod(self,c, demod_index, rec_time, timeout):
-        """This function returns subscribed data previously in the API's buffers or
-            obtained during the specified time. It returns a dict tree containing
-            the recorded data. This function blocks until the recording time is
-            elapsed. Recording time input is in seconds. Timeout time input is in 
-            milliseconds. Recommended timeout value is 500ms."""
-        
-        path = '/%s/demods/%d/sample' % (self.dev_ID, demod_index-1)
-        yield self.daq.flush()
-        yield self.daq.subscribe(path)
-        
-        ans = yield self.daq.poll(rec_time, timeout, 1, True)
-        
-        x_data = ans[path]['x']
-        y_data = ans[path]['y']
-        
-        yield self.daq.unsubscribe(path)
-        
-        returnValue([x_data, y_data])
+11
         
     @setting(117,output_channel = 'i', on = 'b', returns = '')
     def set_output(self, c, output_channel, on):
@@ -902,6 +884,303 @@ class HF2LIServer(LabradServer):
         and to off, if on is False"""
         setting = ['/%s/plls/%d/autopid' % (self.dev_ID, PLL_index-1), on],
         yield self.daq.set(setting)
+
+    @setting(177, aux_out_index = 'i', signal_index = 'i', returns = '')
+    def set_aux_output_signal(self, c, aux_out_index, signal_index):
+        """Set the Auxilary Output Signal (1 through 4) to be proportional to the specified signal. 
+        Signal index: Corresponding Signal
+         0          : Demod X
+         1          : Demod Y
+         2          : Demod R
+         3          : Demod Theta
+         4          : PLL 1 df
+         5          : PLL 2 df
+        -2          : PID 1 Out
+        -3          : PID 2 Out
+        -4          : PID 3 Out
+        -5          : PID 4 Out
+        -1          : Manual"""
+
+        setting = ['/%s/auxouts/%d/outputselect' % (self.dev_ID, aux_out_index-1), signal_index],
+        yield self.daq.set(setting)
+
+    @setting(178, aux_out_index = 'i', returns = 'i')
+    def get_aux_output_signal(self, c, aux_out_index):
+        """Get the Auxilary Output Signal (1 through 4) to be proportional to the specified signal. 
+        Signal index: Corresponding Signal
+         0          : Demod X
+         1          : Demod Y
+         2          : Demod R
+         3          : Demod Theta
+         4          : PLL 1 df
+         5          : PLL 2 df
+        -2          : PID 1 Out
+        -3          : PID 2 Out
+        -4          : PID 3 Out
+        -5          : PID 4 Out
+        -1          : Manual"""
+
+        setting = '/%s/auxouts/%d/outputselect' % (self.dev_ID, aux_out_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        sig_ind = int(dic[setting])
+        returnValue(sig_ind)
+
+    @setting(179, aux_out_index = 'i', signal_index = 'i', returns = '')
+    def set_aux_output_demod(self, c, aux_out_index, demod_index):
+        """If the Auxilary Output Signal (1 through 4) is set to a deomulator signal (signal index 0 through 3), 
+        then this allows you to specify which demodulator is being used (1 through 6)."""
+
+        setting = ['/%s/auxouts/%d/demodselect' % (self.dev_ID, aux_out_index-1), demod_index - 1],
+        yield self.daq.set(setting)
+
+    @setting(180, aux_out_index = 'i', returns = 'i')
+    def get_aux_output_demod(self, c, aux_out_index):
+        """If the Auxilary Output Signal (1 through 4) is set to a deomulator signal (signal index 0 through 3), 
+        then this allows you to get which demodulator is being used (1 through 6)."""
+
+        setting = '/%s/auxouts/%d/demodselect' % (self.dev_ID, aux_out_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        demod = int(dic[setting])+1
+        returnValue(demod)
+
+    @setting(181, aux_out_index = 'i', scale = 'v[]', returns = '')
+    def set_aux_output_scale(self, c, aux_out_index, scale):
+        """Sets the Auxilary Output (1 through 4) Scale, or multiplier value."""
+
+        setting = ['/%s/auxouts/%d/scale' % (self.dev_ID, aux_out_index-1), scale],
+        yield self.daq.set(setting)
+
+    @setting(182, aux_out_index = 'i', returns = 'v[]')
+    def get_aux_output_scale(self, c, aux_out_index):
+        """Gets the Auxilary Output (1 through 4) Scale, or multiplier value."""
+        setting = '/%s/auxouts/%d/scale' % (self.dev_ID, aux_out_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        scale = float(dic[setting])
+        returnValue(scale)
+
+    @setting(183, aux_out_index = 'i', offset = 'v[]', returns = '')
+    def set_aux_output_offset(self, c, aux_out_index, offset):
+        """Sets the Auxilary Output (1 through 4) offset value."""
+        setting = ['/%s/auxouts/%d/offset' % (self.dev_ID, aux_out_index-1), offset],
+        yield self.daq.set(setting)
+
+    @setting(184, aux_out_index = 'i', returns = 'v[]')
+    def get_aux_output_offset(self, c, aux_out_index):
+        """Gets the Auxilary Output (1 through 4) offset value."""
+        setting = '/%s/auxouts/%d/offset' % (self.dev_ID, aux_out_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        offset = float(dic[setting])
+        returnValue(offset)
+
+    @setting(185, aux_out_index = 'i', rec_time= 'v[]', timeout = 'i', returns = '*v[]')
+    def poll_aux_output_value(self, c, aux_out_index, rec_time, timeout):
+        """This function returns subscribed data previously in the API's buffers or
+            obtained during the specified time. It returns a dict tree containing
+            the recorded data. This function blocks until the recording time is
+            elapsed. Recording time input is in seconds. Timeout time input is in 
+            milliseconds. Recommended timeout value is 500ms."""
+        
+        path = '/%s/auxouts/%d/value' % (self.dev_ID, aux_out_index-1)
+        yield self.daq.flush()
+        yield self.daq.subscribe(path)
+        
+        ans = yield self.daq.poll(rec_time, timeout, 1, True)
+        data = ans[path]
+
+        yield self.daq.unsubscribe(path)
+        returnValue(data)
+
+    @setting(186, pid_index = 'i', signal_index = 'i', returns = '')
+    def set_pid_input_signal(self, c, pid_index, signal_index):
+        """Set the PID Input Signal (1 through 4) to be the specified signal. 
+        Signal index: Corresponding Signal
+         0          : Demod X
+         1          : Demod Y
+         2          : Demod R
+         3          : Demod Theta
+         4          : Aux Input
+         5          : Aux Output
+         6          : Modulation
+         7          : Dual Frequency Tracking |Z(i+1)| - |Z(i)|
+         8          : Demod X(i+1)-X(i)
+         9          : Demod|Z(i+1)-Z(i)|
+        10          : Oscillator Frequency"""
+
+        setting = ['/%s/pids/%d/input' % (self.dev_ID, pid_index-1), signal_index],
+        yield self.daq.set(setting)
+
+    @setting(187, pid_index = 'i', returns = 'i')
+    def get_pid_input_signal(self, c, pid_index):
+        """Gets the PID Input Signal (1 through 4). 
+        Signal index: Corresponding Signal
+         0          : Demod X
+         1          : Demod Y
+         2          : Demod R
+         3          : Demod Theta
+         4          : Aux Input
+         5          : Aux Output
+         6          : Modulation
+         7          : Dual Frequency Tracking |Z(i+1)| - |Z(i)|
+         8          : Demod X(i+1)-X(i)
+         9          : Demod|Z(i+1)-Z(i)|
+        10          : Oscillator Frequency"""
+
+        setting = '/%s/pids/%d/input' % (self.dev_ID, pid_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        sig_ind = int(dic[setting])
+        returnValue(sig_ind)
+
+    @setting(186, pid_index = 'i', signal_chn = 'i', returns = '')
+    def set_pid_input_channel(self, c, pid_index, signal_chn):
+        """Set the PID Input Signal (1 through 4) to the specified channel. If the input signal
+        is currently set to a demodulator, this corresponds to the demodulator index. If it's
+        set to aux, it's the aux input number. Etc..."""
+
+        setting = ['/%s/pids/%d/inputchannel' % (self.dev_ID, pid_index-1), signal_index],
+        yield self.daq.set(setting)
+
+    @setting(187, pid_index = 'i', returns = 'i')
+    def get_pid_input_channel(self, c, pid_index):
+        """Get the PID Input Signal (1 through 4) channel. If the input signal
+        is currently set to a demodulator, this corresponds to the demodulator index. If it's
+        set to aux, it's the aux input number. Etc..."""
+
+        setting = '/%s/pids/%d/inputchannel' % (self.dev_ID, pid_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        sig_chn = int(dic[setting])+1
+        returnValue(sig_chn)
+
+    @setting(188, pid_index = 'i', setpoint = 'v[]', returns = '')
+    def set_pid_setpoint(self, c, pid_index, setpoint):
+        """Sets the PID (1 through 4) setpoint."""
+
+        setting = ['/%s/pids/%d/setpoint' % (self.dev_ID, pid_index-1), setpoint],
+        yield self.daq.set(setting)
+
+    @setting(189, pid_index = 'i', returns = 'v[]')
+    def get_pid_setpoint(self, c, pid_index):
+        """Gets the PID (1 through 4) setpoint."""
+        setting = '/%s/pids/%d/setpoint' % (self.dev_ID, pid_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        setpoint = float(dic[setting])
+        returnValue(setpoint)
+
+    @setting(190, pid_index = 'i', signal_index = 'i', returns = '')
+    def set_pid_output_signal(self, c, pid_index, signal_index):
+        """Set the PID Output Signal (1 through 4).
+        Signal index: Corresponding Signal
+         0          : Output 1 Amplitude (This requires output channel to be set to 7)
+         1          : Output 2 Amplitude (This requires output channel to be set to 8)
+         2          : Oscillator Frequency
+         3          : Aux Output Offset
+         4          : DIO (int16)"""
+
+        setting = ['/%s/pids/%d/output' % (self.dev_ID, pid_index-1), signal_index],
+        yield self.daq.set(setting)
+
+    @setting(191, pid_index = 'i', returns = 'i')
+    def get_pid_output_signal(self, c, pid_index):
+        """Get the PID Output Signal (1 through 4).
+        Signal index: Corresponding Signal
+         0          : Output 1 Amplitude (This requires output channel to be set to 6)
+         1          : Output 2 Amplitude (This requires output channel to be set to 7)
+         2          : Oscillator Frequency
+         3          : Aux Output Offset
+         4          : DIO (int16)"""
+
+        setting = '/%s/pids/%d/output' % (self.dev_ID, pid_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        sig_chn = int(dic[setting])
+        returnValue(sig_chn)
+
+    @setting(192, pid_index = 'i', signal_chn = 'i', returns = '')
+    def set_pid_output_channel(self, c, pid_index, signal_chn):
+        """Set the PID Output Signal (1 through 4) to the specified channel. If the output signal
+        is currently set to oscillator frequency, this corresponds to the oscillator index (1 or 2). If
+        set to Aux Output Offset, this corresponds to the aux output number. If signal is set to output
+        1 amplitude, this must be set to 6. output 2 amplitude should have this set to 7. And DIO (int16)
+        should have this set to 1."""
+
+        setting = ['/%s/pids/%d/outputchannel' % (self.dev_ID, pid_index-1), signal_chn-1],
+        yield self.daq.set(setting)
+
+    @setting(193, pid_index = 'i', returns = 'i')
+    def get_pid_output_signal(self, c, pid_index):
+    """Set the PID Output Signal (1 through 4) channel."""
+        setting = '/%s/pids/%d/outputchannel' % (self.dev_ID, pid_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        sig_chn = int(dic[setting])+1
+        returnValue(sig_chn)
+
+    @setting(194, pid_index = 'i', center = 'v[]', returns = '')
+    def set_pid_output_center(self, c, pid_index, center):
+        """Set the PID Output (1 through 4) Signal center."""
+        setting = ['/%s/pids/%d/center' % (self.dev_ID, pid_index-1), center],
+        yield self.daq.set(setting)
+
+    @setting(195, pid_index = 'i', returns = 'v[]')
+    def get_pid_output_center(self, c, pid_index):
+    """Gets the PID Output (1 through 4) signal center."""
+        setting = '/%s/pids/%d/center' % (self.dev_ID, pid_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        center = float(dic[setting])
+        returnValue(center)
+
+    @setting(196, pid_index = 'i', range = 'v[]', returns = '')
+    def set_pid_output_range(self, c, pid_index, range):
+        """Set the PID Output (1 through 4) signal range. Full range is center - range to center + range."""
+        setting = ['/%s/pids/%d/range' % (self.dev_ID, pid_index-1), range],
+        yield self.daq.set(setting)
+
+    @setting(197, pid_index = 'i', returns = 'v[]')
+    def get_pid_output_range(self, c, pid_index):
+        """Gets the PID Output (1 through 4) signal range. Full range is center - range to center + range."""
+        setting = '/%s/pids/%d/range' % (self.dev_ID, pid_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        center = float(dic[setting])
+        returnValue(center)
+
+    @setting(198, pid_index = 'i', P = 'v[]', returns = '')
+    def set_pid_p(self, c, pid_index, P):
+        """Set the PID (1 through 4) proportional term."""
+        setting = ['/%s/pids/%d/p' % (self.dev_ID, pid_index-1), P],
+        yield self.daq.set(setting)
+
+    @setting(199, pid_index = 'i', returns = 'v[]')
+    def get_pid_p(self, c, pid_index):
+        """Gets the PID (1 through 4) proportional term."""
+        setting = '/%s/pids/%d/p' % (self.dev_ID, pid_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        p = float(dic[setting])
+        returnValue(p)
+
+    @setting(200, pid_index = 'i', I = 'v[]', returns = '')
+    def set_pid_i(self, c, pid_index, I):
+        """Set the PID (1 through 4) integral term."""
+        setting = ['/%s/pids/%d/i' % (self.dev_ID, pid_index-1), I],
+        yield self.daq.set(setting)
+
+    @setting(201, pid_index = 'i', returns = 'v[]')
+    def get_pid_i(self, c, pid_index):
+        """Gets the PID (1 through 4) integral term."""
+        setting = '/%s/pids/%d/i' % (self.dev_ID, pid_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        i = float(dic[setting])
+        returnValue(i)
+
+    @setting(202, pid_index = 'i', D = 'v[]', returns = '')
+    def set_pid_d(self, c, pid_index, D):
+        """Set the PID (1 through 4) derivative term."""
+        setting = ['/%s/pids/%d/d' % (self.dev_ID, pid_index-1), D],
+        yield self.daq.set(setting)
+
+    @setting(203, pid_index = 'i', returns = 'v[]')
+    def get_pid_d(self, c, pid_index):
+        """Gets the PID (1 through 4) derivative term."""
+        setting = '/%s/pids/%d/d' % (self.dev_ID, pid_index-1)
+        dic = yield self.pidAdvisor.get(setting,True)
+        d = float(dic[setting])
+        returnValue(d)
 
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows

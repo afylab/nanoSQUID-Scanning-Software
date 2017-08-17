@@ -1160,7 +1160,9 @@ color:rgb(168,168,168)
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true"/>
+    <string notr="true">#lineEdit_PLL_Rate{
+background: rgb(168,168,168)
+}</string>
    </property>
    <property name="text">
     <string/>
@@ -1169,7 +1171,7 @@ color:rgb(168,168,168)
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
    <property name="readOnly">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QLineEdit" name="lineEdit_PLL_SimBW">
