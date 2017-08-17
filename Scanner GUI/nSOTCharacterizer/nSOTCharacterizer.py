@@ -1,3 +1,4 @@
+from __future__ import division
 import sys
 import twisted
 from PyQt4 import QtCore, QtGui, QtTest, uic
@@ -15,6 +16,7 @@ dialogBox = path + "\sweepCheck.ui"
 plotter = path + "\plotter.ui"
 dacSet = path + "\dacChannels.ui"
 acSet = path + r"\acSetting.ui"
+prelimSweep = path + "\preliminarySweep.ui"
 serlist = path + r"\requiredServers.ui"
 
 Ui_MainWindow, QtBaseClass = uic.loadUiType(characterGUI)
@@ -22,6 +24,7 @@ Ui_DialogBox, QtBaseClass = uic.loadUiType(dialogBox)
 Ui_Plotter, QtBaseClass = uic.loadUiType(plotter)
 Ui_dacSet, QtBaseClass = uic.loadUiType(dacSet)
 Ui_acSet, QtBaseClass = uic.loadUiType(acSet)
+Ui_prelimSweep, QtBaseClass = uic.loadUiType(prelimSweep)
 Ui_ServerList, QtBaseClass = uic.loadUiType(serlist)
 
 class Window(QtGui.QMainWindow, Ui_MainWindow):
@@ -35,14 +38,18 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.setUpPlots()
         
         self.plotNoPlot = 0
-        self.dacBiasOutChan, self.dacBlinkOutChan = 1, 2
+        self.dacBiasOutChan, self.dacBlinkOutChan, self.voltsOutChan, self.currentOutChan = 1, 2, 4, 3
         self.dacBiasInChan, self.dacDCInChan, self.dacACInChan, self.dacNoiseInChan = 1, 2 ,3 ,4
+        self.dacOutputChannels = [self.dacBiasOutChan, self.dacBlinkOutChan, self.voltsOutChan, self.currentOutChan]
+        self.dacInputChannels = [self.dacBiasInChan, self.dacDCInChan, self.dacACInChan, self.dacNoiseInChan]
+        self.dacChannelList = [self.dacInputChannels, self.dacOutputChannels]
         self.acFreq, self.acAmp = 4.0, 2.0
 
         self.fieldPos = 0
 
         self.startSweep.clicked.connect(self.checkSweep)
         self.abortSweep.clicked.connect(self.abortion)
+        self.prelim.clicked.connect(self.runPrelimSweep)
 
         self.fieldStepsInc.clicked.connect(self.toggleFieldSteps)
         self.fieldSIStat = True
@@ -97,7 +104,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         #Intialize the servers to None
         self.cxn = None
         self.dv = None
-        self.ips = None
         self.dac = None
         self.serversConnected = False
         
@@ -108,6 +114,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         try:
             self.cxn = dict['cxn']
             self.dv = dict['dv']
+            self.dac = dict['dac_adc']
             
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -123,7 +130,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     def disconnectLabRAD(self):
         self.dv = None
         self.cxn = None
-        self.ips = None
         self.dac = None
         self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -131,6 +137,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     def showServersList(self):
         serList = serversList(self.reactor, self)
         serList.exec_()
+        
+    def runPrelimSweep(self):
+        self.prelim.setEnabled(False)
+        self.prelimSweep = preliminarySweep(self.reactor, self.dv, self.dac, self.dacChannelList, self)
+        self.prelimSweep.show()
     
     def reformat(self, number, lineEdit):
         number = float(number)
@@ -157,7 +168,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     def toggleFieldSteps(self):
         if self.fieldSIStat is True:
             self.FieldInc.setText("Millitesla per Step")
-            self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(255,255,255); font: 10pt;}")
+            self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
             steps = float(self.fieldPointsSetValue.text())
             bMax = float(self.fieldMaxSetValue.text())
             bMin = float(self.fieldMinSetValue.text())
@@ -168,11 +179,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.fieldSIStat = False
             else:
                 self.FieldInc.setText("Millitesla per Step")
-                self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(255,255,255); font: 10pt;}")
+                self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
                 self.fieldSIStat = False
         else:
             self.FieldInc.setText("Number of Steps")
-            self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(255,255,255); font: 10pt;}")
+            self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
             inc = float(self.fieldPointsSetValue.text())
             bMax = float(self.fieldMaxSetValue.text())
             bMin = float(self.fieldMinSetValue.text())
@@ -182,12 +193,12 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.fieldSIStat = True
             else:
                 self.FieldInc.setText("Number of Steps")
-                self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(255,255,255); font: 10pt;}")
+                self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
                 self.fieldSIStat = True        
     def toggleBiasSteps(self):
         if self.biasSIStat is True:
             self.BiasInc.setText("Millivolts per Step")
-            self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(255,255,255); font: 10pt;}")
+            self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
             steps = float(self.biasPointsSetValue.text())
             vMax = float(self.biasMaxSetValue.text())
             vMin = float(self.biasMinSetValue.text())
@@ -198,11 +209,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.biasSIStat = False
             else:
                 self.BiasInc.setText("Millivolts per Step")
-                self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(255,255,255); font: 10pt;}")
+                self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
                 self.biasSIStat = False
         else:
             self.BiasInc.setText("Number of Steps")
-            self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(255,255,255); font: 10pt;}")
+            self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
             inc = float(self.biasPointsSetValue.text())
             vMax = float(self.biasMaxSetValue.text())
             vMin = float(self.biasMinSetValue.text())
@@ -212,7 +223,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.biasSIStat = True
             else:
                 self.BiasInc.setText("Number of Steps")
-                self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(255,255,255); font: 10pt;}")
+                self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
                 self.biasSIStat = True        
 
 
@@ -467,7 +478,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.dialog.accepted.connect(self.initSweep)
         self.dialog.rejected.connect(self.decline)
         #if self.dialog.exec_():
-        #	self.initSweep()
+        #   self.initSweep()
 
     def decline(self):
         self.startSweep.setEnabled(True)
@@ -590,7 +601,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.IVTracePlot.plot(x = xVals, y = yVals, pen = 0.5)
                 
     def updateBottomRetracePlot(self):
-        print 'updating bottom'
         index = self.currentBiasRetraceSelect.currentIndex()
         x0, x1 = (self.bMin , self.bMax)
         y0, y1 = (self.vMin, self.vMax)
@@ -691,7 +701,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             if self.plotNoPlot%2 == 1:
                 i = new_line[0][0]
                 new_curData = [(x[4] ) for x in new_line]
-                new_noiseData = [x[6] for x in new_line]
+                new_noiseData = [x[5] for x in new_line]
                 self.curRetraceData[i] = new_curData
                 self.noiseRetraceData[i] = new_noiseData
                 self.retracePlot.setImage(self.curRetraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
@@ -702,7 +712,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             elif self.plotNoPlot%2 == 0:
                 i = new_line[0][0]
                 new_curData = [x[4]  for x in new_line]
-                new_noiseData = [x[6] for x in new_line]
+                new_noiseData = [x[5] for x in new_line]
                 self.curTraceData[i] = new_curData
                 self.noiseTraceData[i] = new_noiseData
                 self.tracePlot.setImage(self.curTraceData, autoRange = False, autoLevels = True, pos=[self.x0,self.y0],scale=[self.xscale, self.yscale])
@@ -713,34 +723,27 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         elif self.sweepMod == 1:
             i = new_line[0][0]
             new_curData = [x[4]  for x in new_line]
-            new_noiseData = [x[6] for x in new_line]
-            if self.plotNoPlot%4 == 0:  #step 1
-                self.curTraceData[i][self.negative_points:self.vPoints] = new_curData
-                self.noiseTraceData[i][self.negative_points:self.vPoints] = new_noiseData
-                self.tracePlot.setImage(self.curTraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-                self.noiseTracePlot.setImage(self.noiseTraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-                self.update_bottomTracePlot(i)
-                self.plotNoPlot += 1
-            elif self.plotNoPlot%4 == 1:  #step 2
-                self.curRetraceData[i][self.negative_points:self.vPoints] = new_curData[::-1]
-                self.noiseRetraceData[i][self.negative_points:self.vPoints] = new_noiseData[::-1]
+            new_noiseData = [x[5] for x in new_line]
+            if self.plotNoPlot%2 == 1:
+                i = new_line[0][0]
+                new_curData = [(x[4] ) for x in new_line]
+                new_noiseData = [x[5] for x in new_line]
+                self.curRetraceData[i] = new_curData
+                self.noiseRetraceData[i] = new_noiseData
                 self.retracePlot.setImage(self.curRetraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
                 self.noiseRetracePlot.setImage(self.noiseRetraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
                 self.update_bottomRetracePlot(i)
                 self.plotNoPlot += 1
-            elif self.plotNoPlot%4 == 2:  #step 3
-                self.curTraceData[i][0:self.negative_points] = new_curData[::-1]
-                self.noiseTraceData[i][0:self.negative_points] = new_noiseData[::-1]
-                self.tracePlot.setImage(self.curTraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+
+            elif self.plotNoPlot%2 == 0:
+                i = new_line[0][0]
+                new_curData = [x[4]  for x in new_line]
+                new_noiseData = [x[5] for x in new_line]
+                self.curTraceData[i] = new_curData
+                self.noiseTraceData[i] = new_noiseData
+                self.tracePlot.setImage(self.curTraceData, autoRange = False, autoLevels = True, pos=[self.x0,self.y0],scale=[self.xscale, self.yscale])
                 self.noiseTracePlot.setImage(self.noiseTraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
                 self.update_bottomTracePlot(i)
-                self.plotNoPlot += 1
-            elif self.plotNoPlot%4 == 3:  #step 4
-                self.curRetraceData[i][0:self.negative_points] = new_curData
-                self.noiseRetraceData[i][0:self.negative_points] = new_noiseData
-                self.retracePlot.setImage(self.curRetraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-                self.noiseRetracePlot.setImage(self.noiseRetraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-                self.update_bottomRetracePlot(i)
                 self.plotNoPlot += 1                   
         
     @inlineCallbacks
@@ -755,472 +758,264 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         bias_points = self.vPoints
         V_range = abs(Vbias_max - Vbias_min)
 
-        #UNITS on delay??
+        #Converts DAC delay (DAC reads microseconds while GUI input is given in milliseconds)
         delay = float(self.vSpeed) * 1000
+        
+        #DAC OUTPUTS
+        
+        #DAC out channel that outputs DC bias (1 through 4)
+        DAC_out = self.dacBiasOutChan - 1
+        #DAC out channel that switches between 0 and 5 volts to toggle feedback off then on (aka blink)
+        DAC_blink = self.dacBlinkOutChan - 1
+        #DAC channel that sets the voltage setpoint for the Toellner power supply
+        DAC_set_volt = self.voltsOutChan - 1
+        #DAC channel that sets the current setpoint for the Toellner power supply
+        DAC_set_current = self.currentOutChan - 1
+        
+        
+        #DAC INPUTS
+        
+        #DAC in channel that reads DC bias (1 through 4)
+        DAC_in_ref = self.dacBiasInChan - 1
+        #DAC in channel that read DC signal (1 through 4)
+        V_out = self.dacDCInChan - 1
+        #DAC in channel that read DC signal proportional to AC signal (1 through 4)
+        dIdV_out = self.dacACInChan - 1
+        #DAC in channel to read noise measurement
+        noise = self.dacNoiseInChan - 1
+
 
         #AC excitation information for quasi dI/dV measurement. Frequency should be larger than 
         # ~2 kHz to avoid being filtered out by the lock in AC coupling high pass filter.  
+        #THIS FUNCTIONALITY IS DISABLED AND MUST BE SET MANUALLY ON THE SR830
         #AC Oscillation amplitude
         vac_amp = self.acAmp
         #Frequency in kilohertz
         frequency = self.acFreq
-        #lockin time constant
-        timeconstant = 0.001
+        '''
+        Function to set target magnetic filed on Toellner power supply. Given initial and final field values (B_i and B_f in Tesla) 
+        as well as a specified field sweep rate (B_speed in Tesla per minute), the function ramps the Toellner power supply current
+        and voltage such that the power supply stays in constant current mode and changes the magnetic field between the appropriate
+        values.
+         
+        '''
+        def sweep_field(B_i, B_f, B_speed):
+            #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
+            VV_conv = 3.20
+            #Toellner current set point / DAC voltage out conversion [I_Toellner / V_DAC]
+            IV_conv = 1.0 
 
-        #Choose demodulator, and oscillator for which to record data. Make sure this corresponds to the appropriate input. 
-        HF_demod = 1
-        HF_osc = 1
-        HF_out = 1
-        HF_in = 1
-        #Choose DAC out channel that outputs DC bias (1 through 4)
-        DAC_out = self.dacBiasOutChan - 1
-        #Choose DAC in channel that reads DC bias (1 through 4)
-        DAC_in_ref = self.dacBiasInChan - 1
-        #Choose DAC in channel that read DC signal (1 through 4)
-        V_out = self.dacDCInChan - 1
-        #Choose DAC in channel that read DC signal proportional to AC signal (1 through 4)
-        dIdV_out = self.dacACInChan - 1
-        #Choose DAC in channel to read quick and dirty noise measurement
-        noise = self.dacNoiseInChan - 1
-        #Choose DAC out channel that switches between 0 and 5 volts to toggle feedback off then on (aka blink)
-        DAC_blink = self.dacBlinkOutChan - 1
+            #Field / Current ratio on the dipper magnet (0.132 [Tesla / Amp])
+            IB_conv = 0.132
 
-        print 'Values assigned starting labrad connection'
-        #Connections made in the LabRad connect module
-        from labrad.wrappers import connectAsync
-        
-        print 'import success'
-        
-        cxn = yield connectAsync(name = 'New name?')
-        
-        print 'Async success'
-        dv = yield cxn.data_vault
-        print 'dataVault setup '
-        yield dv.cd('nSOT Testing')
-        print 'dataVault setup named'
-        yield dv.new("nSOT vs. Bias Voltage and Field", ('i','j','B'),('D','I'))
-        print 'dataVault setup fine'
-        '''
-        hf = cxn.hf2li_server
-        hf.detect_devices()
-        hf.select_device()
-        '''
-        '''
-        
-        ips = yield cxn.ips120_power_supply
-        yield ips.select_device()
-        dac = yield cxn.dac_adc
-        yield dac.select_device()
-        dv = yield cxn.data_vault
-        
-        self.ID_NEWSET = 00001
-        self.ID_NEWDATA = 00002
-        #yield self.dv.signal__new_dataset(self.ID_NEWSET)
-        #yield self.dv.addListener(listener=self.new_dataset, source=None, ID=self.ID_NEWSET)
-        #yield self.dv.signal__data_available(self.ID_NEWDATA)
-        #yield self.dv.addListener(listener=self.updatePlots, source=None, ID=self.ID_NEWDATA)
-            
-        print 'Connections success!'
-        
-        '''
-        '''
-        #Set the first demodulator to use the first oscillator
-        yield hf.set_demod_osc(HF_demod,HF_osc)
-        #Set the first demodulator to use the desired input
-        yield hf.set_demod_input(HF_demod,HF_in)
-        #Turn off AC coupling
-        yield hf.set_ac(HF_in,True)
-        #Turn on difference mode
-        yield hf.set_diff(HF_in,False)
-        #Turn off 50 ohm impedance
-        yield hf.set_imp50(HF_in,False)
-        #Set out amplitude
-        yield hf.set_output_range(HF_out,vac_amp)
-        output_range = yield hf.get_output_range(HF_out)
-        yield hf.set_output_amplitude(HF_out,vac_amp/output_range)
-        #Set to desired frequency
-        yield hf.set_oscillator_freq(HF_osc, frequency*1000)
-        #Set demodulator timeconstant
-        yield hf.set_demod_time_constant(HF_demod, timeconstant)
-        #Turn on output
-        yield hf.set_output(HF_out,True)
-        
-        
-        #Set to remote control
-        yield ips.set_control(3)
-        print 'ips com correct'
-        yield self.sleep(1)
-        print 'sleepy'
-        #Set to high precision \r\n communication protocl
-        yield ips.set_comm_protocol(6)
-        yield self.sleep(1)
-        print 'End ips init'
-      
-        #Set to go to set point
-        yield ips.set_activity(1)
-        self.sleep(1)
-   
-        yield ips.set_fieldsweep_rate(B_rate)
+            #Starting and ending field values in Tesla, use positive field values for now
+            B_range = np.absolute(B_f - B_i)
+
+            #Delay between DAC steps in microseconds
+            magnet_delay = 5000
+            #Converts between microseconds and minutes [us / minute]
+            t_conv = 6e07
+
+            #Sets the appropriate DAC buffer ramp parameters
+            sweep_steps = int((t_conv * B_range) / (B_speed * magnet_delay))  + 1
+            v_start = B_i / (IB_conv * IV_conv)
+            v_end = B_f / (IB_conv * IV_conv)
+
+            #Sets an appropraite voltage set point to ensure that the Toellner power supply stays in constant current mode
+            # assuming a parasitic resistance of R_p between the power supply and magnet
+            overshoot = 5
+            R_p = 2
+            V_setpoint =  (overshoot * R_p * np.amax([B_i, B_f])) / (VV_conv * IB_conv)
+            V_initial = (overshoot * R_p * np.amin([B_i, B_f])) / (VV_conv * IB_conv)
+            if V_setpoint > 10.0:
+                V_setpoint = 10.0
+            else:
+                pass
+            if V_initial > 10.0:
+                V_initial = 10.0
+            else:
+                pass
+
+            #Ramps the DAC such that the Toellner voltage setpoint stays in constant current mode
+            ramp_steps = int(np.absolute(V_setpoint - V_initial) * 1000)
+            ramp_delay = 1000
+            self.dac.buffer_ramp([DAC_set_volt], [DAC_in_ref], [V_initial], [V_setpoint], ramp_steps, ramp_delay)
+
+            print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
+            yield self.dac.buffer_ramp([DAC_set_current],[DAC_in_ref],[v_start],[v_end], sweep_steps, magnet_delay)
 
 
-        print "Data file created"
-        '''
+        yield self.dv.new("nSOT vs. Bias Voltage and Field", ['B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
+        print 'DataVault setup complete'
+
         B_space = np.linspace(B_min,B_max,B_points)
-    
+        
+        
+        #Minimum Bias to Maximum Bias Sweep Mode
         if self.sweepMod == 0:
+            
+            yield self.dac.set_voltage(DAC_out, 0)
+            #If minimum bias voltage is not zero, sweep bias to minimum value, 1mV per step with a reasonably short delay
+            if Vbias_min != 0:
+                yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [Vbias_min], int(Vbias_min * 1000), 1000)
+            else:
+                pass
+            
             for i in range(0, B_points):
-                print "Next desired magnetic field is: " + str(B_space[i])
-                '''
-                to test: is this necessary?
-                if B_space[i]< 0:
-                    yield ips.set_polarity(2)
+                
+                if i == 0:
+                    if B_space[0] != 0:
+                        print 'Ramping field to ' + str(B_space[0])+'.'
+                        yield sweep_field(0, B_start, B_rate)
+                    else:
+                        pass
                 else:
-                    yield ips.set_polarity(1)
-                
-                #set B field setpoint
-                yield ips.set_targetfield(B_space[i])
-                
-                
-                #wait for field to be reached
-                while True:
-                    curr_field = yield ips.read_parameter(7)
-                    if float(curr_field[1:]) <= B_space[i]+0.0000001 and float(curr_field[1:]) >= B_space[i]-0.0000001:
-                        break
-                    self.sleep(0.25)
+                    yield sweep_field(B_space[i-1], B_space[i], B_rate)
                     
-                '''
-          
                 print 'Starting sweep with magnetic field set to: ' + str(B_space[i])
-
-                
-                #START ascending/descending sweep mode
-                #set bias to minimum value
-                yield dac.set_voltage(DAC_out, Vbias_min)
-    
-                print 'Blink prior to forwards sweep'
-                yield dac.set_voltage(DAC_blink, 5)
+            
+                print 'Blinking prior to sweep'
+                yield self.dac.set_voltage(DAC_blink, 5)
                 self.sleep(0.25)
-                yield dac.set_voltage(DAC_blink, 0)
+                yield self.dac.set_voltage(DAC_blink, 0)
                 self.sleep(0.25)
 
-                #Sweep low to high
+                #Sweep from minimum to maximum bias voltage
                 print 'Ramping up nSOT bias voltage from ' + str(Vbias_min) + ' to ' + str(Vbias_max) + '.'
-                yield dac.buffer_ramp([DAC_out],[DAC_in_ref, V_out, dIdV_out, noise],[Vbias_min],[Vbias_max],bias_points,delay)
-                yield self.sleep(delay * bias_points / 1000000)
-                d_tmp = yield dac.serial_poll(4, bias_points)
-                print 'buffer ramp success'
-                    
-                print 'd_read success'  
-                # d_tmp = yield d_read.result()
-                #d_tmp = d_read
-                print 'd_read success 2'
+                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [Vbias_min], [Vbias_max], bias_points, delay)
                 
                 #Reform data and add to data vault
                 formated_data = []
                 for j in range(0, bias_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[0][j], d_tmp[1][j], d_tmp[2][j], d_tmp[3][j]))
-                print 'data vault format success'
+                    formated_data.append((i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
                 
-                yield dv.add(formated_data)
+                yield self.dv.add(formated_data)
                 yield self.updatePlots(formated_data)
-                
-                print 'data added'
-                #Sweep high to low, add data, and blink
-                print 'Ramping nSOT bias voltage back down from ' + str(Vbias_max) + ' to ' + str(Vbias_min) + '.'
-     
-                yield dac.buffer_ramp([DAC_out],[DAC_in_ref, V_out, dIdV_out, noise],[Vbias_max],[Vbias_min],bias_points,delay)
-                yield self.sleep(delay * bias_points / 1000000)
-                d_tmp = yield dac.serial_poll(4, bias_points)
 
+                #Sweep from maximum to minimum bias voltage
+                print 'Ramping nSOT bias voltage back down from ' + str(Vbias_max) + ' to ' + str(Vbias_min) + '.'
+                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [Vbias_max], [Vbias_min], bias_points, delay)
+                
+                #Reform data and add to data vault
                 formated_data = []
                 for j in range(0, bias_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[0][j], d_tmp[1][j], d_tmp[2][j], d_tmp[3][j]))
-        
-                yield dv.add(formated_data)
+                    formated_data.append((i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
+                
+                yield self.dv.add(formated_data)
                 yield self.updatePlots(formated_data[::-1])
+                
+            #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
+            if Vbias_min != 0:
+                yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [Vbias_min], [0], int(Vbias_min * 1000), 1000)
+            else:
+                pass
     
-            yield dac.set_voltage(DAC_out, 0)
-
-            yield ips.set_activity(2)
-
-            yield ips.set_control(2)
+            yield self.dac.set_voltage(DAC_out, 0)
             
+            #Go to zero field and set power supply voltage setpoint to zero.
+            sweep_field(B_space[-1], 0, B_rate)
+            self.dac.set_voltage(DAC_set_volt, 0)
+
             self.startSweep.setEnabled(True)
-            self.analyzeData.setEnabled(True)
 
-            # END ascending/descending sweep mode
-
+        #Zero to Minimum and Maximum Bias Voltage Sweep Mode
         elif self.sweepMod == 1:
+        
             positive_points = int((bias_points * Vbias_max) / V_range)
             negative_points = bias_points - positive_points
             for i in range (0, B_points):
-                print "Next desired magnetic field is: " + str(B_space[i])
-        
-                if B_space[i]< 0:
-                    yield ips.set_polarity(2)
+            
+                if i == 0:
+                    if B_space[0] != 0:
+                        print 'Ramping field to ' + str(B_space[0])+'.'
+                        yield sweep_field(0, B_start, B_rate)
+                    else:
+                        pass
                 else:
-                    yield ips.set_polarity(1)
-    
-                #set B field setpoint
-                yield ips.set_targetfield(B_space[i])
-                
-                '''
-                #wait for field to be reached
-                while True:
-                    curr_field = yield ips.read_parameter(7)
-                    if float(curr_field[1:]) <= B_space[i]+0.0000001 and float(curr_field[1:]) >= B_space[i]-0.0000001:
-                        break
-                    self.sleep(0.25)
-                '''
-                
-                print 'Starting sweep with magnetic field set to: ' + str(B_space[i])
-                #zero bias and blink
+                    yield sweep_field(B_space[i-1], B_space[i], B_rate)
 
+                print 'Starting sweep with magnetic field set to: ' + str(B_space[i])
+
+                #Set bias voltage to zero and blink
                 yield dac.set_voltage(DAC_out,0)
 
-
-                print 'Blink prior to positive sweep'
-                yield dac.set_voltage(DAC_blink, 5)
+                yield self.dac.set_voltage(DAC_blink, 5)
                 self.sleep(0.25)
-                yield dac.set_voltage(DAC_blink, 0)
+                yield self.dac.set_voltage(DAC_blink, 0)
                 self.sleep(0.25)
     
-                #Sweep zero to high
+                #Sweep from zero volts to maximum bias voltage
                 print 'Ramping up nSOT bias voltage from zero to ' + str(Vbias_max) + '.'
-                yield dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, dIdV_out, noise], [0], [Vbias_max], positive_points, delay)
-                yield self.sleep(delay * bias_points / 1000000)
-                d_tmp = yield dac.serial_poll(4, positive_points)
+                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [Vbias_max], positive_points, delay)
     
                 #Reform data and add to data vault
-                formated_data = []
+                #formated_data = []
+                data_uptrace = []
                 for j in range(0, positive_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[0][j], d_tmp[1][j], d_tmp[2][j], d_tmp[3][j]))
+                    data_uptrace.append((i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
 
-                yield dv.add(formated_data)
-                yield self.updatePlots(formated_data)
-                #Sweep high to zero, add data, and blink
+                #yield dv.add(formated_data)
+                #yield self.updatePlots(formated_data)
+                
+                
+                #Sweep from maximum bias voltage to zero volts and blink
                 print 'Ramping nSOT bias voltage back down from ' + str(Vbias_max) + ' to zero.'
-     
-                yield dac.buffer_ramp([DAC_out],[DAC_in_ref, V_out, dIdV_out, noise],[Vbias_max],[0],positive_points,delay)
-                yield self.sleep(delay * bias_points / 1000000)
-                d_tmp = yield dac.serial_poll(4, positive_points)
+                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [Vbias_max], [0], positive_points, delay)
 
-                formated_data = []
+                #formated_data = []
+                data_upretrace = []
                 for j in range(0, positive_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[0][j], d_tmp[1][j], d_tmp[2][j], d_tmp[3][j]))
+                    data_upretrace.append((i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
 
-                yield dv.add(formated_data)
-                yield self.updatePlots(formated_data)
+                #yield dv.add(formated_data)
+                #yield self.updatePlots(formated_data)
     
-                print 'Blinking prior to negative sweep.'
-                yield dac.set_voltage(DAC_blink, 5)
+                yield self.dac.set_voltage(DAC_blink, 5)
                 self.sleep(0.25)
-                yield dac.set_voltage(DAC_blink, 0)
+                yield self.dac.set_voltage(DAC_blink, 0)
                 self.sleep(0.25)
-                #Sweep zero to low
+                
+                #Sweep from zero volts to minimum bias voltage
                 print 'Ramping down nSOT bias voltage from zero to ' + str(Vbias_min) + '.'
-                yield dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, dIdV_out, noise], [0], [Vbias_min], negative_points, delay)
-                yield self.sleep(delay * bias_points / 1000000)
-                d_tmp = yield dac.serial_poll(4, negative_points)
+                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [Vbias_min], negative_points, delay)
     
                 #Reform data and add to data vault
-                formated_data = []
-                for j in range(0,negative_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[0][j], d_tmp[1][j], d_tmp[2][j], d_tmp[3][j]))
-
-        
-                yield dv.add(formated_data)
-                yield self.updatePlots(formated_data)
-                #Sweep low to zero, add data, and blink
-                print 'Ramping nSOT bias voltage up down from ' + str(Vbias_min) + ' to zero.'
-     
-                yield dac.buffer_ramp([DAC_out],[DAC_in_ref, V_out, dIdV_out, noise], [Vbias_min],[0], negative_points, delay)
-                yield self.sleep(delay * bias_points / 1000000)
-                d_tmp = yield dac.serial_poll(4, negative_points)
-
-                formated_data = []
+                #formated_data = []
+                data_downtrace = []
                 for j in range(0, negative_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[0][j], d_tmp[1][j], d_tmp[2][j], d_tmp[3][j]))
-        
-                yield dv.add(formated_data)
-                yield self.updatePlots(formated_data)
-    
-
-            # END zero-max, zero-min sweep mode
-
-    
-
-            #Set to go to 0 field
-            yield ips.set_activity(2)
-
-            #Set control method back to local control 
-            yield ips.set_control(2)
-            
-            self.startSweep.setEnabled(True)
-            self.analyzeData.setEnabled(True)
-    
-    @inlineCallbacks
-    def test_sweep(self):
-        #Set all relevant parameters here. Code starts below
-        B_min = self.bMin
-        B_max = self.bMax
-        B_points = self.bPoints
-        B_rate = self.bSpeed
-        Vbias_min = self.vMin
-        Vbias_max = self.vMax
-        bias_points = self.vPoints
-        V_range = abs(Vbias_max - Vbias_min)
-
-        #UNITS on delay??
-        delay = float(self.vSpeed) / 1000
-
-        #AC excitation information for quasi dI/dV measurement. Frequency should be larger than 
-        # ~2 kHz to avoid being filtered out by the lock in AC coupling high pass filter.  
-        #AC Oscillation amplitude
-        vac_amp = self.acAmp
-        #Frequency in kilohertz
-        frequency = self.acFreq
-        #lockin time constant
-
-        print 'Values assigned starting labrad connection'
-        #Connections made in the LabRad connect module
-        from labrad.wrappers import connectAsync
-        
-        print 'import success'
-        
-        cxn = yield connectAsync(name = 'New name?')
-        
-        print 'Async success'
-        dv = yield cxn.data_vault
-        print 'dataVault setup '
-        #yield dv.cd('nSOT Testing')
-        #print 'dataVault setup named'
-        yield dv.new("nSOT vs. Bias Voltage and Field", ('i','j','B', 'V'),('D','I', 'N'))
-        print 'dataVault setup fine'
-
-        B_space = np.linspace(B_min,B_max,B_points)
-    
-        if self.sweepMod == 0:
-            for i in range(0, B_points):
-          
-                print 'Starting sweep with magnetic field set to: ' + str(B_space[i])
+                    data_downtrace.append((i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
 
                 
-                #START ascending/descending sweep mode
-                #set bias to minimum value
-
-                #Sweep low to high
-
-                d_tmp = yield np.linspace(Vbias_min, Vbias_max, num = bias_points)
-                yield self.sleep(delay)
-
+                #yield dv.add(formated_data)
+                #yield self.updatePlots(formated_data)
                 
-                #Reform data and add to data vault
-                formated_data = []
-                for j in range(0, bias_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[j], i * d_tmp[j], i * d_tmp[j],  np.random.normal() * d_tmp[j]))
-                print 'data vault format success'
-                
-                yield dv.add(formated_data)
-                print 'dv added'
-                yield self.updatePlots(formated_data)
-                
-                print 'data added'
-                #Sweep high to low, add data, and blink
-                print 'Ramping nSOT bias voltage back down from ' + str(Vbias_max) + ' to ' + str(Vbias_min) + '.'
-     
-                d_tmp = yield np.linspace(Vbias_min, Vbias_max, num = bias_points)
-                yield self.sleep(delay)
-                
-                #Reform data and add to data vault
-                formated_data = []
-                for j in range(0, bias_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[j], i * d_tmp[j], i * d_tmp[j],  np.random.normal() * d_tmp[j]))
-                print 'data vault format success'
-                
-                yield dv.add(formated_data)
-                yield self.updatePlots(formated_data)
-            
-            self.startSweep.setEnabled(True)
-            self.analyzeData.setEnabled(True)
-            print 'sweep complete'
-
-            # END ascending/descending sweep mode
-
-        elif self.sweepMod == 1:
-            positive_points = int((bias_points * Vbias_max) / V_range)
-            negative_points = bias_points - positive_points
-            for i in range (0, B_points):
-
-    
-                #Sweep zero to high
-                print 'Ramping up nSOT bias voltage from zero to ' + str(Vbias_max) + '.'
-                d_tmp = yield np.linspace(0, Vbias_max, num = positive_points)
-                yield self.sleep(delay)
-
-                
-                #Reform data and add to data vault
-                formated_data = []
-                for j in range(0, positive_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[j], i * d_tmp[j], i * d_tmp[j],  np.random.normal() * d_tmp[j]))
-                print 'data vault format success'
-                
-                yield dv.add(formated_data)
-                print 'dv added'
-                yield self.updatePlots(formated_data)
-                #Sweep high to zero, add data, and blink
-                print 'Ramping nSOT bias voltage back down from ' + str(Vbias_max) + ' to zero.'
-     
-                d_tmp = yield np.linspace(Vbias_max, 0, num = positive_points)
-                yield self.sleep(delay)
-
-                
-                #Reform data and add to data vault
-                formated_data = []
-                for j in range(0, positive_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[j], i * d_tmp[j], i * d_tmp[j],  np.random.normal() * d_tmp[j]))
-                print 'data vault format success'
-                
-                yield dv.add(formated_data)
-                print 'dv added'
-                yield self.updatePlots(formated_data)
-
-
-                d_tmp = yield np.linspace(0, Vbias_min, num = negative_points)
-                yield self.sleep(delay)
-
-                
-                #Reform data and add to data vault
-                formated_data = []
-                for j in range(1, negative_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[j], i * d_tmp[j], i * d_tmp[j],  np.random.normal() * d_tmp[j]))
-                print 'data vault format success'
-                
-                yield dv.add(formated_data)
-                print 'dv added'
-                yield self.updatePlots(formated_data)
+                #Sweep from minimum bias voltage to zero volts
                 print 'Ramping nSOT bias voltage up down from ' + str(Vbias_min) + ' to zero.'
-     
-                d_tmp = yield np.linspace(Vbias_min, 0, num = negative_points)
-                yield self.sleep(delay)
+                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [Vbias_min], [0], negative_points, delay)
 
-                
                 #Reform data and add to data vault
-                formated_data = []
+                #formated_data = []
+                data_downretrace = []
                 for j in range(0, negative_points):
-                    formated_data.append((i, j, B_space[i], d_tmp[j], i * d_tmp[j], i * d_tmp[j],  np.random.normal() * d_tmp[j]))
-                print 'data vault format success'
+                    data_downretrace.append((i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
                 
-                yield dv.add(formated_data)
-                print 'dv added'
-                yield self.updatePlots(formated_data)
-    
+                trace_data = []
+                retrace_data = []
+                trace_data = data_downtrace[::-1] + data_uptrace
+                retrace_data = data_downretrace + data_upretrace[::-1]
+                
+                yield self.dv.add(trace_data)
+                yield self.updatePlots(trace_data)
+                yield self.dv.add(retrace_data)
+                yield self.updatePlots(retrace_data)
 
-            # END zero-max, zero-min sweep mode
+            yield self.dac.set_voltage(DAC_out, 0)
             
+            #Go to zero field and set power supply voltage setpoint to zero.
+            sweep_field(B_space[-1], 0, B_rate)
+            self.dac.set_voltage(DAC_set_volt, 0)
+                
             self.startSweep.setEnabled(True)
-            self.analyzeData.setEnabled(True)
-            print 'sweep complete'
 
     def closeEvent(self, e):
         pass
@@ -1228,19 +1023,20 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
         
 class dacSettings(QtGui.QDialog, Ui_dacSet):
-    def __init__(self,parent = None):
+    def __init__(self, parent = None):
         super(dacSettings, self).__init__(parent)
-
-        self.setupUi(self)
         self.window = parent
+        self.setupUi(self)
 
-        self.biasOutChannel.setText(str(self.window.dacBiasOutChan))
-        self.blinkOutChannel.setText(str(self.window.dacBlinkOutChan))
+        self.biasOutChannel.setValue(self.window.dacBiasOutChan)
+        self.blinkOutChannel.setValue(self.window.dacBlinkOutChan)
+        self.voltsOutChannel.setValue(self.window.voltsOutChan)
+        self.currentOutChannel.setValue(self.window.currentOutChan)
 
-        self.biasInChannel.setText(str(self.window.dacBiasInChan))
-        self.dcInChannel.setText(str(self.window.dacDCInChan))
-        self.acInChannel.setText(str(self.window.dacACInChan))
-        self.noiseInChannel.setText(str(self.window.dacNoiseInChan))
+        self.biasInChannel.setValue(self.window.dacBiasInChan)
+        self.dcInChannel.setValue(self.window.dacDCInChan)
+        self.acInChannel.setValue(self.window.dacACInChan)
+        self.noiseInChannel.setValue(self.window.dacNoiseInChan)
 
 
         self.cancelDAC.clicked.connect(self._close)
@@ -1254,25 +1050,23 @@ class dacSettings(QtGui.QDialog, Ui_dacSet):
         self.window.dacSetOpen.setEnabled(True)
         self.close()
     def _ok(self):
-        self.inputChans = [int(self.biasInChannel.text()) , int(self.dcInChannel.text()) , int(self.acInChannel.text()) , int(self.noiseInChannel.text())]
-        self.outputChans = [int(self.biasOutChannel.text()),  int(self.blinkOutChannel.text())]
-        dif = [self.inputChans[i] - self.inputChans[j] for i in range(0,4) for j in range(i+1,4) ]
-        if any(x>4 or x<1 for x in self.outputChans):
-            self.warning.setText("Output channels must be \n between 1 and 4.")
+        self.inputChans = [self.biasInChannel.value() , self.dcInChannel.value() , self.acInChannel.value() , self.noiseInChannel.value()]
+        self.outputChans = [self.biasOutChannel.value(),  self.blinkOutChannel.value(), self.voltsOutChannel.value(), self.currentOutChannel.value()]
+        dif_in = [self.inputChans[i] - self.inputChans[j] for i in range(0,4) for j in range(i+1,4) ]
+        dif_out = [self.outputChans[i] - self.outputChans[j] for i in range(0,4) for j in range(i+1,4) ]
+        if any(int(x) == 0 for x in dif_out):
+            print self.outputChans
+            self.warning.setText("Output channels must be \n distinct.")
             self.warning.setStyleSheet("QLabel#warning {color: rgb(255,0, 0);}")
-        elif any(x>4 or x<1 for x in self.inputChans):
-            self.warning.setText("Input channels must be \n between 1 and 4.")
-            self.warning.setStyleSheet("QLabel#warning {color: rgb(255,0, 0);}") 
-        elif int(self.biasOutChannel.text()) == int(self.blinkOutChannel.text()):
-            self.warning.setText("Output channels must be  \n distinct.")
-            self.warning.setStyleSheet("QLabel#warning {color: rgb(255,0, 0);}")
-        elif any(int(x) == 0 for x in dif):
+        elif any(int(x) == 0 for x in dif_in):
             self.warning.setText("Input channels must be \n distinct.")
             self.warning.setStyleSheet("QLabel#warning {color: rgb(255,0, 0);}")
 
         else:
-            self.window.dacBiasOutChan = int(self.biasOutChannel.text())
-            self.window.dacBlinkOutChan = int(self.blinkOutChannel.text())
+            self.window.dacBiasOutChan = self.outputChans[0]
+            self.window.dacBlinkOutChan = self.outputChans[1]
+            self.window.voltsOutChan = self.outputChans[2]
+            self.window.currentOutChan = self.outputChans[3]
 
             self.window.dacBiasInChan = self.inputChans[0]
             self.window.dacDCInChan = self.inputChans[1]
@@ -1422,22 +1216,22 @@ class Plotter(QtGui.QDialog, Ui_Plotter):
             self.plotData = self.Data
             self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
             self.plotTitle.setText("Current vs Bias Voltage and Magnetic Field")
-            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(255,255,255); font: 11pt;}")
+            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(168,168,168); font: 11pt;}")
         elif self.plotOptions.currentIndex() == 1:
             self.plotData = np.gradient(self.Data, self.deltaV, axis = 1)
             self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
             self.plotTitle.setText("dI/dV vs Bias Voltage and Magnetic Field")
-            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(255,255,255); font: 11pt;}")
+            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(168,168,168); font: 11pt;}")
         elif self.plotOptions.currentIndex() == 2:
             self.plotData = np.gradient(self.Data, self.deltaB, axis = 0)
             self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
             self.plotTitle.setText("dI/dB vs Bias Voltage and Magnetic Field")
-            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(255,255,255); font: 11pt;}")
+            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(168,168,168); font: 11pt;}")
         elif self.plotOptions.currentIndex() == 3:
             self.plotData = self.noiseData
             self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
             self.plotTitle.setText("Noise vs Bias Voltage and Magnetic Field")
-            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(255,255,255); font: 11pt;}")
+            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(168,168,168); font: 11pt;}")
         elif self.plotOptions.currentIndex() == 4:
             sens_noise = self.noiseData
             dIdB = np.gradient(self.Data, self.deltaB, axis = 0)
@@ -1451,7 +1245,7 @@ class Plotter(QtGui.QDialog, Ui_Plotter):
             self.plotData = data
             self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
             self.plotTitle.setText("Sensitivity vs Bias Voltage and Magnetic Field")
-            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(255,255,255); font: 11pt;}")
+            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(168,168,168); font: 11pt;}")
 
         if self.vhSelect.currentIndex() == 0:
             self.updateXZPlot(self.hLine.value())
@@ -1543,50 +1337,49 @@ class Plotter(QtGui.QDialog, Ui_Plotter):
 
 #GUI Window for finalizing sweep parameters, inherits the list of sweep parameters from the MainWindow checkSweep function
 class DialogBox(QtGui.QDialog, Ui_DialogBox):
-    def __init__(self, sweepParameters):
-        super(DialogBox, self).__init__()
-        self.window = window
+    def __init__(self, sweepParameters, parent = None):
+        super(DialogBox, self).__init__(parent)
+        self.window = parent
         self.setupUi(self)
-        #self.sweepParameters = self.window.sweepParameters
         self.sweepParameters = sweepParameters
 
         self.fieldMinValue.setText(str(self.sweepParameters[0]))
-        self.fieldMinValue.setStyleSheet("QLabel#fieldMinValue {color: rgb(255,255,255);}")
+        self.fieldMinValue.setStyleSheet("QLabel#fieldMinValue {color: rgb(168,168,168);}")
         self.fieldMaxValue.setText(str(self.sweepParameters[1]))
-        self.fieldMaxValue.setStyleSheet("QLabel#fieldMaxValue {color: rgb(255,255,255);}")
+        self.fieldMaxValue.setStyleSheet("QLabel#fieldMaxValue {color: rgb(168,168,168);}")
         self.fieldIncValue.setText(str(self.sweepParameters[2]))
-        self.fieldIncValue.setStyleSheet("QLabel#fieldIncValue {color: rgb(255,255,255);}")
+        self.fieldIncValue.setStyleSheet("QLabel#fieldIncValue {color: rgb(168,168,168);}")
         self.fieldSpeedValue.setText(str(self.sweepParameters[3]))
-        self.fieldSpeedValue.setStyleSheet("QLabel#fieldSpeedValue {color: rgb(255,255,255);}")
+        self.fieldSpeedValue.setStyleSheet("QLabel#fieldSpeedValue {color: rgb(168,168,168);}")
 
         self.biasMinValue.setText(str(self.sweepParameters[4]))
-        self.biasMinValue.setStyleSheet("QLabel#biasMinValue {color: rgb(255,255,255);}")
+        self.biasMinValue.setStyleSheet("QLabel#biasMinValue {color: rgb(168,168,168);}")
         self.biasMaxValue.setText(str(self.sweepParameters[5]))
-        self.biasMaxValue.setStyleSheet("QLabel#biasMaxValue {color: rgb(255,255,255);}")
+        self.biasMaxValue.setStyleSheet("QLabel#biasMaxValue {color: rgb(168,168,168);}")
         self.biasIncValue.setText(str(self.sweepParameters[6]))
-        self.biasIncValue.setStyleSheet("QLabel#biasIncValue {color: rgb(255,255,255);}")
+        self.biasIncValue.setStyleSheet("QLabel#biasIncValue {color: rgb(168,168,168);}")
         self.biasSpeedValue.setText(str(self.sweepParameters[7]))
-        self.biasSpeedValue.setStyleSheet("QLabel#biasSpeedValue {color: rgb(255,255,255);}")
+        self.biasSpeedValue.setStyleSheet("QLabel#biasSpeedValue {color: rgb(168,168,168);}")
 
         if self.sweepParameters[9] == 0:
             self.sweepModeSetting.setText('Max to Min')
-            self.sweepModeSetting.setStyleSheet("QLabel#sweepModeSetting {color: rgb(255,255,255);}")
+            self.sweepModeSetting.setStyleSheet("QLabel#sweepModeSetting {color: rgb(168,168,168);}")
         elif self.sweepParameters[9] ==1:
             self.sweepModeSetting.setText('Min to Max')
-            self.sweepModeSetting.setStyleSheet("QLabel#sweepModeSetting {color: rgb(255,255,255);}")
+            self.sweepModeSetting.setStyleSheet("QLabel#sweepModeSetting {color: rgb(168,168,168);}")
         elif self.sweepParameters[9] ==2:
             self.sweepModeSetting.setText('Zero to Max/Min')
-            self.sweepModeSetting.setStyleSheet("QLabel#sweepModeSetting {color: rgb(255,255,255);}")
+            self.sweepModeSetting.setStyleSheet("QLabel#sweepModeSetting {color: rgb(168,168,168);}")
 
         if self.sweepParameters[10] == 0:
             self.blinkOrNot.setText('Enabled')
-            self.blinkOrNot.setStyleSheet("QLabel#blinkOrNot {color: rgb(255,255,255);}")
+            self.blinkOrNot.setStyleSheet("QLabel#blinkOrNot {color: rgb(168,168,168);}")
         elif self.sweepParameters[10] == 1:
             self.blinkOrNot.setText('Disabled')
-            self.blinkOrNot.setStyleSheet("QLabel#blinkOrNot {color: rgb(255,255,255);}")
+            self.blinkOrNot.setStyleSheet("QLabel#blinkOrNot {color: rgb(168,168,168);}")
         if self.sweepParameters[8] != "infinite":
             self.sweepTime.setText(self.sweepParameters[8])
-            self.sweepTime.setStyleSheet("QLabel#sweepTime {color: rgb(255,255,255);}")
+            self.sweepTime.setStyleSheet("QLabel#sweepTime {color: rgb(168,168,168);}")
         else:
             self.sweepTime.setTextFormat(1)
             self.sweepTime.setText('<html><head/><body><p><span style=" font-size:10pt; color:#ffffff;">&#8734;</span></p></body></html>')
@@ -1597,13 +1390,143 @@ class DialogBox(QtGui.QDialog, Ui_DialogBox):
     #If accepted, runs the sweep
     def testSweep(self):
         self.accept()
-        #self.close()
     def exitDialog(self):
         #self.window.startSweep.setEnabled(True)
         self.reject()
-        #self.close()
     def closeEvent(self, e):
         self.window.startSweep.setEnabled(True)
+
+class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
+    def __init__(self, reactor, dv, dac, dacChannels, parent = None):
+        super(preliminarySweep, self).__init__(parent)
+        self.window = parent
+        self.reactor = reactor
+        self.setupUi(self)
+        
+        self.setupPlot()
+        self.dv = dv
+        self.dac = dac
+        
+        self.dacOutputs = dacChannels[0]
+        self.dacInputs = dacChannels[1]
+
+        self.critCurr.setReadOnly(True)
+        self.parRes.setReadOnly(True)
+        self.newSweep.setEnabled(False)
+
+        self.startSweep.clicked.connect(lambda: self.sweep(self.reactor))
+        self.newSweep.clicked.connect(self.refreshSweep)
+        self.closeWin.clicked.connect(self._close)
+
+
+
+    def refreshSweep(self):
+        self.startSweep.setEnabled(True)
+        self.newSweep.setEnabled(False)
+
+    def setupPlot(self):
+        self.sweepPlot = pg.PlotWidget(parent = self.plotSweep)
+        self.sweepPlot.setGeometry(QtCore.QRect(0, 0, 435, 290))
+        self.sweepPlot.setLabel('left', 'DC Feedback Voltage', units = 'V')
+        self.sweepPlot.setLabel('bottom', 'Bias Voltage', units = 'V')
+        self.sweepPlot.showAxis('right', show = True)
+        self.sweepPlot.showAxis('top', show = True)
+        self.sweepPlot.setXRange(0,1)
+        self.sweepPlot.setYRange(0,2)
+        
+    def plotSweepData(self, data):
+        self.data = data
+        xVals = [x[1] for x in self.data]
+        yVals = [x[2] for x in self.data]
+        
+        self.sweepPlot.plot(x = xVals, y = yVals, pen = 0.5)
+        
+        chi = 0
+        j = 5
+        while chi / (len(xVals) - 2) < 1e-5 and j<len(xVals):
+            p, chi, _, _, _ = np.polyfit(xVals[0:j], yVals[0:j], 1, full = True)
+            j += 1
+        p, chi, _, _, _ = np.polyfit(xVals[0:int(0.9 * j)], yVals[0:int(0.9 * j)], 1, full = True)
+        j = int(0.9 * j)
+        biasRes = float(self.biasRes.value())*1000
+        shuntRes = float(self.shuntRes.value())
+        ssaaRes = float(self.ssaaRes.value())*1000
+        winding = float(self.ssaaWinding.value())
+
+        alpha = shuntRes / (shuntRes + biasRes)
+        deltaV_DAC = xVals[j] - xVals[0]
+        deltaV_F = yVals[j] - yVals[0]
+        if deltaV_F == 0:
+            pass
+        else:
+            ratio = np.absolute(deltaV_DAC / deltaV_F)
+            r = np.round(alpha * (winding * ssaaRes * ratio - biasRes), decimals = 1)
+            self.parRes.setText(str(r))
+        
+    def sleep(self, secs):
+        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
+        other operations to be done elsewhere while paused."""
+        d = Deferred()
+        self.reactor.callLater(secs,d.callback,'Sleeping')
+        return d
+    def _close(self):
+        self.window.prelim.setEnabled(True)
+        self.close()
+    def closeEvent(self, e):
+        self.window.prelim.setEnabled(True)
+        self.close()
+
+    @inlineCallbacks
+    def sweep(self, c):
+        self.startSweep.setEnabled(False)
+        self.sweepPlot.clear()
+        
+        #Sets sweep parameters
+        biasMin = float(self.biasStart.value())
+        biasMax = float(self.biasEnd.value())
+        biasRange = abs(biasMax - biasMin)
+        
+        biasPoints = int(self.sweepPoints.value())
+        delay = int(self.delay.value() * 1000)
+        
+        #Sets DAC Channels
+        DAC_out = self.dacOutputs[0] - 1
+        DAC_blink = self.dacOutputs[1] - 1
+        
+        DAC_in_ref = self.dacInputs[0] - 1
+        DAC_in_sig = self.dacInputs[1] - 1
+        DAC_in_noise = self.dacInputs[3] - 1
+        
+        yield self.dv.new("nSOT Preliminary Sweep", ['Bias Voltage Index','Bias Voltage'],['DC SSAA Output','Noise'])
+        print 'DataVault setup complete'
+        
+        yield self.dac.set_voltage(DAC_out, 0)
+                
+        yield self.dac.set_voltage(DAC_blink, 5)
+        self.sleep(0.25)
+        yield self.dac.set_voltage(DAC_blink, 0)
+        self.sleep(.75)
+
+        if biasMin != 0:
+            yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [0], [biasMin], int(biasMin * 1000), 1000)
+            self.sleep(1)
+        #Do sweep
+        print 'Ramping up nSOT bias voltage from ' + str(biasMin) + ' to ' + str(biasMax) + '.'
+        dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMin], [biasMax], biasPoints, delay)
+
+        formatted_data = []
+        for j in range(0, biasPoints):
+                formatted_data.append((j, dac_read[0][j], dac_read[1][j], dac_read[2][j]))
+        yield self.dv.add(formatted_data)
+        yield self.plotSweepData(formatted_data)
+
+        #Return to zero voltage gently
+        yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMax], [0], int(biasMax * 1000), 1000)
+        self.sleep(0.25)
+        yield self.dac.set_voltage(DAC_out, 0)
+        print 'helo'
+        yield self.newSweep.setEnabled(True)
+
 
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
