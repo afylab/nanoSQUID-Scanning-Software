@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>255</width>
-    <height>135</height>
+    <height>112</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -71,24 +71,6 @@ color: rgb(168,168,168)
    </property>
    <property name="wordWrap">
     <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_5">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>110</y>
-     <width>131</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#label_5{
-color: rgb(168,168,168)
-}</string>
-   </property>
-   <property name="text">
-    <string>•  IPS 120 Power Supply</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_6">
