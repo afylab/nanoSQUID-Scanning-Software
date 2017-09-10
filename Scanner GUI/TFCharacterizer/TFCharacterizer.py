@@ -106,13 +106,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
-        if self.cxn is None: 
+        if not self.cxn: 
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif self.dv is None:
+        elif not self.dv:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif self.hf is None:
+        elif not self.hf:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
         else:

@@ -59,7 +59,8 @@ class CPSCServer(LabradServer):
         #print "Server initialization complete"
         
     @setting(100,returns = 'b')
-    def detect_device(self, c = None):
+    def detect_device(self, c = 1, d = 1):
+        #no idea how or why this sometimes takes three inputs, but it does. None of them are important. 
         resp = yield subprocess.check_output("cacli modlist")
         if resp.startswith("STATUS : INQUIRY OF INSTALLED MODULES"):
             print "CPSC detected. Communication active."
@@ -349,19 +350,19 @@ class CPSCServer(LabradServer):
             
             for i in range (0,num_cycles):
                 yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
                 yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, cycle_size)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
                 yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
             
             if remainder != 0:
                 yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
                 yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, remainder)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
                 yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
             
         returnValue('Success!')
         

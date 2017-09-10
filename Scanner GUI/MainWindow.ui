@@ -219,21 +219,22 @@ background: black;
     <property name="title">
      <string>System</string>
     </property>
+    <addaction name="actionLabRAD_Connect"/>
    </widget>
    <widget class="QMenu" name="menuGraphs">
     <property name="title">
      <string>Graphs</string>
     </property>
+    <addaction name="actionData_Plotter"/>
+    <addaction name="actionPLL_Monitor"/>
    </widget>
    <widget class="QMenu" name="menuModules">
     <property name="title">
      <string>Modules</string>
     </property>
     <addaction name="actionApproach_Control"/>
-    <addaction name="actionLabRAD_Connect"/>
-    <addaction name="actionScan_Control"/>
     <addaction name="actionnSOT_Characterizer"/>
-    <addaction name="actionData_Plotter"/>
+    <addaction name="actionScan_Control"/>
     <addaction name="actionTF_Characterizer"/>
    </widget>
    <widget class="QMenu" name="menuUser_Channels">
@@ -297,6 +298,11 @@ background: black;
   <action name="actionTF_Characterizer">
    <property name="text">
     <string>TF Characterizer</string>
+   </property>
+  </action>
+  <action name="actionPLL_Monitor">
+   <property name="text">
+    <string>PLL Monitor</string>
    </property>
   </action>
  </widget>

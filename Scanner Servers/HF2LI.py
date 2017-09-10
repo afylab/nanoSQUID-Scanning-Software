@@ -39,6 +39,11 @@ import sys
 class HF2LIServer(LabradServer):
     name = "HF2LI Server"    # Will be labrad name of server
  
+#------------------------------------------------------------------------------------------------------------------------------------------#
+    """
+    The following section of code has initializing and general lock in commands that can be useful in multiple contexts. 
+    """
+
     def initServer(self):  # Do initialization here
         self.daq = None
         self.dev_ID = None
@@ -46,6 +51,7 @@ class HF2LIServer(LabradServer):
         self.props = None
         self.sweeper = None
         self.pidAdvisor = None
+        self.poll_data = None
         print "Server initialization complete"
         
     @inlineCallbacks
@@ -128,7 +134,18 @@ class HF2LIServer(LabradServer):
             Ensure that the settings have taken effect on the device before setting
             the next configuration."""
         yield self.daq.sync()
+
+    @setting(155, returns = 's')
+    def version(self,c):
+        """Returns the version of the software installed on this computer"""
+        ver = yield self.daq.version()
+        returnValue(ver)
                
+#------------------------------------------------------------------------------------------------------------------------------------------#
+    """
+    The following section of code has all of the commands relevant to basic controls of the lock in reading and output. 
+    """
+
     @setting(105,returns = '')
     def disable_outputs(self,c):
         """Create a base instrument configuration: disable all outputs, demods and scopes."""
@@ -228,8 +245,6 @@ class HF2LIServer(LabradServer):
         tc = yield self.daq.get(setting, True)
         returnValue(float(tc[setting]))
         
-11
-        
     @setting(117,output_channel = 'i', on = 'b', returns = '')
     def set_output(self, c, output_channel, on):
         """Turns the output of the provided output channel (1 indexed) to on, if on is True, 
@@ -264,6 +279,11 @@ class HF2LIServer(LabradServer):
         range = float(dic[setting])
         returnValue(range)
         
+#------------------------------------------------------------------------------------------------------------------------------------------#
+    """
+    The following section of code has all of the commands relevant to using the HF2LI built in sweeper. 
+    """
+
     @setting(121,start = 'v[]', stop = 'v[]', samplecount  = 'i', sweep_param = 's', demod = 'i', log = 'b', bandwidthcontrol = 'i', bandwidth = 'v[]', bandwidthoverlap = 'b', loopcount = 'i', settle_time = 'v[]', settle_inaccuracy = 'v[]', averaging_tc = 'v[]', averaging_sample = 'v[]', returns = 'b')
     def create_sweep_object(self,c,start,stop, samplecount, sweep_param, demod = 1, log = False, bandwidthcontrol = 2, bandwidth = 1000, bandwidthoverlap = False, loopcount = 1, settle_time = 0, settle_inaccuracy = 0.001, averaging_tc = 5, averaging_sample = 5):
         """Sweeps the provided sweep parameter from the provided start value to the provided stop value with 
@@ -382,12 +402,11 @@ class HF2LIServer(LabradServer):
         return_flat_dict = True
         data = yield self.sweeper.read(return_flat_dict)
         demod_data = data[self.sweeper_path]
-        #print demod_data
 
         grid = demod_data[0][0]['grid']
         R = np.abs(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'])
         #phi = np.angle(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'], True)
-        phi = np.arctan2(demod_data[0][0]['y'], demod_data[0][0]['x'])
+        phi = 180*np.arctan2(demod_data[0][0]['y'], demod_data[0][0]['x'])/np.pi
         frequency  = demod_data[0][0]['frequency']
         
         formatted_data = [[],[],[],[]]
@@ -438,6 +457,11 @@ class HF2LIServer(LabradServer):
             self.sweeper.clear()
         except: 
             pass
+
+#------------------------------------------------------------------------------------------------------------------------------------------#
+    """
+    The following section of code has all of the commands relevant to modifing the PLL module options. 
+    """
             
     @setting(129,PLL = 'i', freq = 'v[]', returns = '')
     def set_PLL_freqcenter(self, c, PLL, freq):
@@ -591,8 +615,11 @@ class HF2LIServer(LabradServer):
         dic = yield self.daq.get(setting,True)
         sigin = int(dic[setting])
         returnValue(sigin+1)
-        
-    #Following two methods currently do not work
+
+    '''
+    Following two methods currently do not work, also don't really ever need to be used. Kept commented out in case someone 
+    needs them in the future and wants a starting point. Farily certain that PLL rate cannot be set, through reading it
+    should be possible. 
     @setting(151,PLL = 'i', rate = 'v[]', returns = '')
     def set_PLL_rate(self, c, PLL, rate):
         """Sets the PLL PID sampling rate"""
@@ -606,62 +633,54 @@ class HF2LIServer(LabradServer):
         dic = yield self.daq.get(setting,True)
         rate = float(dic[setting])
         returnValue(rate)
-        
-    @setting(154,PLL_index = 'i', rec_time= 'v[]', timeout = 'i', returns = '**v[]')
-    def poll_PLL(self,c, PLL_index, rec_time, timeout):
-        """This function returns subscribed data previously in the API's buffers or
-            obtained during the specified time. It returns a dict tree containing
-            the recorded data. This function blocks until the recording time is
-            elapsed. Recording time input is in seconds. Timeout time input is in 
-            milliseconds. Recommended timeout value is 500ms."""
+    '''
 
-        path = '/%s/plls/%d/*' % (self.dev_ID, PLL_index-1)
-        path_freqdelta = '/%s/plls/%d/freqdelta' % (self.dev_ID, PLL_index-1)
-        path_error = '/%s/plls/%d/error' % (self.dev_ID, PLL_index-1)
+    @setting(174,PLL_index = 'i', on = 'b', returns = '')
+    def set_PLL_autocenter(self, c, PLL_index, on):
+        """Set the PLL auto center frequency of the provided PLL (1 indexed) to on, if on is True, 
+        and to off, if on is False"""
+        setting = ['/%s/plls/%d/autocenter' % (self.dev_ID, PLL_index-1), on],
+        yield self.daq.set(setting)
 
-        yield self.daq.flush()
-        yield self.daq.subscribe(path)
+    @setting(175,PLL_index = 'i', on = 'b', returns = '')
+    def set_PLL_autotc(self, c, PLL_index, on):
+        """Set the PLL auto time constant of the provided PLL (1 indexed) to on, if on is True, 
+        and to off, if on is False"""
+        setting = ['/%s/plls/%d/autotimeconstant' % (self.dev_ID, PLL_index-1), on],
+        yield self.daq.set(setting)
 
-        ans = yield self.daq.poll(rec_time, timeout, 1, True)
-        #print ans[path_freqdelta]
-        #print ans[path_error]
+    @setting(176,PLL_index = 'i', on = 'b', returns = '')
+    def set_PLL_autopid(self, c, PLL_index, on):
+        """Set the PLL auto pid of the provided PLL (1 indexed) to on, if on is True, 
+        and to off, if on is False"""
+        setting = ['/%s/plls/%d/autopid' % (self.dev_ID, PLL_index-1), on],
+        yield self.daq.set(setting)
 
-        yield self.daq.unsubscribe(path)
-        try:
-            freqdelta = ans[path_freqdelta]
-        except:
-            freqdelta = []
-        try:
-            error = ans[path_error]
-        except:
-            error = []
+    @setting(1520, PLL = 'i', returns = 'i')
+    def get_PLL_lock(self, c, PLL):
+        """Returns 0 if the PLL is NOT locked, and returns 1 if the PLL is locked."""
+        setting = '/%s/plls/%d/locked' % (self.dev_ID, PLL-1)
+        lock = yield self.daq.getInt(setting)
+        returnValue(lock)
 
-        returnValue([freqdelta,error])
+    @setting(1521,PLL_index = 'i', returns = 'v[]')
+    def get_pll_freqdelta(self, c, PLL_index):
+        """Gets the PLL (1 or 2) latest output freq delta."""
+        setting = '/%s/plls/%d/freqdelta' % (self.dev_ID, PLL_index-1)
+        val = yield self.daq.getDouble(setting)
+        returnValue(val)
 
-    @setting(1540,PLL_index = 'i', returns  = '**v[]')
-    def getSample_PLL(self,c, PLL_index):
-        """Gets a single sample from the PLL"""
+    @setting(1522,PLL_index = 'i', returns = 'v[]')
+    def get_pll_error(self, c, PLL_index):
+        """Gets the Auxilary Output (1 through 4) latest output error."""
+        setting = '/%s/plls/%d/error' % (self.dev_ID, PLL_index-1)
+        val = yield self.daq.getDouble(setting)
+        returnValue(val)
 
-        path = '/%s/plls/%d/*' % (self.dev_ID, PLL_index-1)
-        path_freqdelta = '/%s/plls/%d/freqdelta' % (self.dev_ID, PLL_index-1)
-        path_error = '/%s/plls/%d/error' % (self.dev_ID, PLL_index-1)
-
-
-        ans = yield self.daq.getSample(path)
-        #print ans[path_freqdelta]
-        #print ans[path_error]
-
-        yield self.daq.unsubscribe(path)
-        try:
-            freqdelta = ans[path_freqdelta]
-        except:
-            freqdelta = []
-        try:
-            error = ans[path_error]
-        except:
-            error = []
-
-        returnValue([freqdelta,error])
+#------------------------------------------------------------------------------------------------------------------------------------------#
+    """
+    The following section of code has all of the commands relevant to using the PID advisor
+    """
 
     @setting(128, PLL_index = 'i', targetBW = 'v[]', pidMode = 'i', returns = 'b')
     def advise_PLL_PID(self, c, PLL_index, targetBW, pidMode):
@@ -858,32 +877,10 @@ class HF2LIServer(LabradServer):
         else:
             returnValue(False)
 
-    @setting(155, returns = 's')
-    def version(self,c):
-		"""Returns the version of the software installed on this computer"""
-		ver = yield self.daq.version()
-		returnValue(ver)
-
-    @setting(174,PLL_index = 'i', on = 'b', returns = '')
-    def set_PLL_autocenter(self, c, PLL_index, on):
-        """Set the PLL auto center frequency of the provided PLL (1 indexed) to on, if on is True, 
-        and to off, if on is False"""
-        setting = ['/%s/plls/%d/autocenter' % (self.dev_ID, PLL_index-1), on],
-        yield self.daq.set(setting)
-
-    @setting(175,PLL_index = 'i', on = 'b', returns = '')
-    def set_PLL_autotc(self, c, PLL_index, on):
-        """Set the PLL auto time constant of the provided PLL (1 indexed) to on, if on is True, 
-        and to off, if on is False"""
-        setting = ['/%s/plls/%d/autotimeconstant' % (self.dev_ID, PLL_index-1), on],
-        yield self.daq.set(setting)
-
-    @setting(176,PLL_index = 'i', on = 'b', returns = '')
-    def set_PLL_autopid(self, c, PLL_index, on):
-        """Set the PLL auto pid of the provided PLL (1 indexed) to on, if on is True, 
-        and to off, if on is False"""
-        setting = ['/%s/plls/%d/autopid' % (self.dev_ID, PLL_index-1), on],
-        yield self.daq.set(setting)
+#------------------------------------------------------------------------------------------------------------------------------------------#
+    """
+    The following section of code has all of the commands relevant to modifing the PID module options. 
+    """
 
     @setting(177, aux_out_index = 'i', signal_index = 'i', returns = '')
     def set_aux_output_signal(self, c, aux_out_index, signal_index):
@@ -925,11 +922,10 @@ class HF2LIServer(LabradServer):
         sig_ind = int(dic[setting])
         returnValue(sig_ind)
 
-    @setting(179, aux_out_index = 'i', signal_index = 'i', returns = '')
+    @setting(179, aux_out_index = 'i', demod_index = 'i', returns = '')
     def set_aux_output_demod(self, c, aux_out_index, demod_index):
         """If the Auxilary Output Signal (1 through 4) is set to a deomulator signal (signal index 0 through 3), 
         then this allows you to specify which demodulator is being used (1 through 6)."""
-
         setting = ['/%s/auxouts/%d/demodselect' % (self.dev_ID, aux_out_index-1), demod_index - 1],
         yield self.daq.set(setting)
 
@@ -937,9 +933,8 @@ class HF2LIServer(LabradServer):
     def get_aux_output_demod(self, c, aux_out_index):
         """If the Auxilary Output Signal (1 through 4) is set to a deomulator signal (signal index 0 through 3), 
         then this allows you to get which demodulator is being used (1 through 6)."""
-
         setting = '/%s/auxouts/%d/demodselect' % (self.dev_ID, aux_out_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         demod = int(dic[setting])+1
         returnValue(demod)
 
@@ -954,7 +949,7 @@ class HF2LIServer(LabradServer):
     def get_aux_output_scale(self, c, aux_out_index):
         """Gets the Auxilary Output (1 through 4) Scale, or multiplier value."""
         setting = '/%s/auxouts/%d/scale' % (self.dev_ID, aux_out_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         scale = float(dic[setting])
         returnValue(scale)
 
@@ -968,27 +963,53 @@ class HF2LIServer(LabradServer):
     def get_aux_output_offset(self, c, aux_out_index):
         """Gets the Auxilary Output (1 through 4) offset value."""
         setting = '/%s/auxouts/%d/offset' % (self.dev_ID, aux_out_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         offset = float(dic[setting])
         returnValue(offset)
 
-    @setting(185, aux_out_index = 'i', rec_time= 'v[]', timeout = 'i', returns = '*v[]')
-    def poll_aux_output_value(self, c, aux_out_index, rec_time, timeout):
-        """This function returns subscribed data previously in the API's buffers or
-            obtained during the specified time. It returns a dict tree containing
-            the recorded data. This function blocks until the recording time is
-            elapsed. Recording time input is in seconds. Timeout time input is in 
-            milliseconds. Recommended timeout value is 500ms."""
-        
-        path = '/%s/auxouts/%d/value' % (self.dev_ID, aux_out_index-1)
-        yield self.daq.flush()
-        yield self.daq.subscribe(path)
-        
-        ans = yield self.daq.poll(rec_time, timeout, 1, True)
-        data = ans[path]
+    @setting(1810, aux_out_index = 'i', scale = 'v[]', returns = '')
+    def set_aux_output_monitorscale(self, c, aux_out_index, scale):
+        """Sets the Auxilary Output (1 through 4) monitor scale, or multiplier value. This is the scale
+        that gets applied when the signal of the aux output is monitoring a PID output."""
+        setting = ['/%s/pids/%d/monitorscale' % (self.dev_ID, aux_out_index-1), scale],
+        yield self.daq.set(setting)
 
-        yield self.daq.unsubscribe(path)
-        returnValue(data)
+    @setting(1820, aux_out_index = 'i', returns = 'v[]')
+    def get_aux_output_monitorscale(self, c, aux_out_index):
+        """Gets the Auxilary Output (1 through 4) monitor cale, or multiplier value. This is the scale
+        that gets applied when the signal of the aux output is monitoring a PID output."""
+        setting = '/%s/pids/%d/monitorscale' % (self.dev_ID, aux_out_index-1)
+        dic = yield self.daq.get(setting,True)
+        scale = float(dic[setting])
+        returnValue(scale)
+
+    @setting(1830, aux_out_index = 'i', offset = 'v[]', returns = '')
+    def set_aux_output_monitoroffset(self, c, aux_out_index, offset):
+        """Sets the Auxilary Output (1 through 4) offset value. This is the offset
+        that gets applied when the signal of the aux output is monitoring a PID output."""
+        setting = ['/%s/pids/%d/monitoroffset' % (self.dev_ID, aux_out_index-1), offset],
+        yield self.daq.set(setting)
+
+    @setting(1840, aux_out_index = 'i', returns = 'v[]')
+    def get_aux_output_monitoroffset(self, c, aux_out_index):
+        """Gets the Auxilary Output (1 through 4) offset value. This is the offset
+        that gets applied when the signal of the aux output is monitoring a PID output."""
+        setting = '/%s/pids/%d/monitoroffset' % (self.dev_ID, aux_out_index-1)
+        dic = yield self.daq.get(setting,True)
+        offset = float(dic[setting])
+        returnValue(offset)
+
+    @setting(185,aux_out_index = 'i', returns = 'v[]')
+    def get_aux_output_value(self,c,aux_out_index):
+        """Gets the Auxilary Output (1 through 4) latest output value."""
+        setting = '/%s/auxouts/%d/value' % (self.dev_ID, aux_out_index-1)
+        val = yield self.daq.getDouble(setting)
+        returnValue(val)
+
+#------------------------------------------------------------------------------------------------------------------------------------------#
+    """
+    The following section of code has all of the commands relevant to modifing the PID module options. 
+    """
 
     @setting(186, pid_index = 'i', signal_index = 'i', returns = '')
     def set_pid_input_signal(self, c, pid_index, signal_index):
@@ -1026,27 +1047,27 @@ class HF2LIServer(LabradServer):
         10          : Oscillator Frequency"""
 
         setting = '/%s/pids/%d/input' % (self.dev_ID, pid_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         sig_ind = int(dic[setting])
         returnValue(sig_ind)
 
-    @setting(186, pid_index = 'i', signal_chn = 'i', returns = '')
+    @setting(1860, pid_index = 'i', signal_chn = 'i', returns = '')
     def set_pid_input_channel(self, c, pid_index, signal_chn):
         """Set the PID Input Signal (1 through 4) to the specified channel. If the input signal
         is currently set to a demodulator, this corresponds to the demodulator index. If it's
         set to aux, it's the aux input number. Etc..."""
 
-        setting = ['/%s/pids/%d/inputchannel' % (self.dev_ID, pid_index-1), signal_index],
+        setting = ['/%s/pids/%d/inputchannel' % (self.dev_ID, pid_index-1), signal_chn-1],
         yield self.daq.set(setting)
 
-    @setting(187, pid_index = 'i', returns = 'i')
+    @setting(1870, pid_index = 'i', returns = 'i')
     def get_pid_input_channel(self, c, pid_index):
         """Get the PID Input Signal (1 through 4) channel. If the input signal
         is currently set to a demodulator, this corresponds to the demodulator index. If it's
         set to aux, it's the aux input number. Etc..."""
 
         setting = '/%s/pids/%d/inputchannel' % (self.dev_ID, pid_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         sig_chn = int(dic[setting])+1
         returnValue(sig_chn)
 
@@ -1061,7 +1082,7 @@ class HF2LIServer(LabradServer):
     def get_pid_setpoint(self, c, pid_index):
         """Gets the PID (1 through 4) setpoint."""
         setting = '/%s/pids/%d/setpoint' % (self.dev_ID, pid_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         setpoint = float(dic[setting])
         returnValue(setpoint)
 
@@ -1089,7 +1110,7 @@ class HF2LIServer(LabradServer):
          4          : DIO (int16)"""
 
         setting = '/%s/pids/%d/output' % (self.dev_ID, pid_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         sig_chn = int(dic[setting])
         returnValue(sig_chn)
 
@@ -1106,9 +1127,9 @@ class HF2LIServer(LabradServer):
 
     @setting(193, pid_index = 'i', returns = 'i')
     def get_pid_output_signal(self, c, pid_index):
-    """Set the PID Output Signal (1 through 4) channel."""
+        """Set the PID Output Signal (1 through 4) channel."""
         setting = '/%s/pids/%d/outputchannel' % (self.dev_ID, pid_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         sig_chn = int(dic[setting])+1
         returnValue(sig_chn)
 
@@ -1120,9 +1141,9 @@ class HF2LIServer(LabradServer):
 
     @setting(195, pid_index = 'i', returns = 'v[]')
     def get_pid_output_center(self, c, pid_index):
-    """Gets the PID Output (1 through 4) signal center."""
+        """Gets the PID Output (1 through 4) signal center."""
         setting = '/%s/pids/%d/center' % (self.dev_ID, pid_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         center = float(dic[setting])
         returnValue(center)
 
@@ -1136,7 +1157,7 @@ class HF2LIServer(LabradServer):
     def get_pid_output_range(self, c, pid_index):
         """Gets the PID Output (1 through 4) signal range. Full range is center - range to center + range."""
         setting = '/%s/pids/%d/range' % (self.dev_ID, pid_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         center = float(dic[setting])
         returnValue(center)
 
@@ -1150,7 +1171,7 @@ class HF2LIServer(LabradServer):
     def get_pid_p(self, c, pid_index):
         """Gets the PID (1 through 4) proportional term."""
         setting = '/%s/pids/%d/p' % (self.dev_ID, pid_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         p = float(dic[setting])
         returnValue(p)
 
@@ -1164,7 +1185,7 @@ class HF2LIServer(LabradServer):
     def get_pid_i(self, c, pid_index):
         """Gets the PID (1 through 4) integral term."""
         setting = '/%s/pids/%d/i' % (self.dev_ID, pid_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         i = float(dic[setting])
         returnValue(i)
 
@@ -1178,9 +1199,124 @@ class HF2LIServer(LabradServer):
     def get_pid_d(self, c, pid_index):
         """Gets the PID (1 through 4) derivative term."""
         setting = '/%s/pids/%d/d' % (self.dev_ID, pid_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         d = float(dic[setting])
         returnValue(d)
+
+    @setting(2020, pid_index = 'i', on = 'b', returns = '')
+    def set_pid_on(self, c, pid_index, on):
+        """Enable the PID if on is True, disable it if on is False."""
+        setting = ['/%s/pids/%d/enable' % (self.dev_ID, pid_index-1), on],
+        yield self.daq.set(setting)
+
+    @setting(2030, pid_index = 'i', returns = 'b')
+    def get_pid_on(self, c, pid_index):
+        """Returns True if the PID is on, False if the PID is off."""
+        setting = '/%s/pids/%d/enable' % (self.dev_ID, pid_index-1)
+        dic = yield self.daq.get(setting,True)
+        d = bool(dic[setting])
+        returnValue(d)
+
+#------------------------------------------------------------------------------------------------------------------------------------------#
+    """
+    The following section of code has all of the commands relevant to polling data. Most of the data reading happens in this section. 
+    This allows you to probe data that being read quickly by the Zurich lock in. Poll data will update the server polled data variable 
+    with a dictionary containing the data to all the subscribed paths. Ie, if you're interested in the data coming from the PLL, you 
+    need to subscribe to the PLL, then poll the data. Then, use the functions to extract the desired data from the polled data dictionary. 
+    """
+
+    @setting(501, rec_time= 'v[]', timeout = 'i', returns = '')
+    def poll_data(self,c, rec_time, timeout):
+        """This function returns the data previously in the API's buffers or
+        obtained during the specified time. It only returns data of subscribed 
+        channels. This function blocks until the recording time is
+        elapsed. Recording time input is in seconds. Timeout time input is in 
+        milliseconds. Recommended timeout value is 500ms. Below is an example of code: 
+            
+        cxn = labrad.connect() \n
+        hf = cxn.hf2li_server \n
+        hf.detect_devices() \n
+        hf.select_device() \n
+        hf.subscribe_PLL(1) \n
+        #Sync clears the buffer and ensures all the settings are set before continuing \n
+        hf.sync() \n
+        hf.poll_data(0.1, 500) \n
+        freq = hf.polled_PLL_freqdelta(1) \n
+        """
+
+        self.poll_data = yield self.daq.poll(rec_time, timeout, 1, True)
+        print self.poll_data
+       
+    @setting(502, PLL_index = 'i', returns = '')
+    def subscribe_pll(self, c, PLL_index):
+        """Subscribes the poll command to the outputs of the PLL with the provided index. This includes the
+        PLL freqdelta, PLL error, and the PLL locked parameter (not working)."""
+        path = '/%s/plls/%d/*' % (self.dev_ID, PLL_index-1)
+        yield self.daq.subscribe(path)
+
+    @setting(503, PLL_index = 'i', returns = '')
+    def unsubscribe_pll(self, c, PLL_index):
+        """Subscribes the poll command to the outputs of the PLL with the provided index."""
+        path = '/%s/plls/%d/*' % (self.dev_ID, PLL_index-1)
+        yield self.daq.unsubscribe(path)
+
+    @setting(504, PLL_index = 'i', returns = '*v[]')
+    def polled_pll_freqdelta(self, c, PLL_index):
+        """Returns the data Subscribes the poll command to the outputs of the PLL with the provided index."""
+        path = '/%s/plls/%d/freqdelta' % (self.dev_ID, PLL_index-1)
+        try:
+            freqdelta = yield self.poll_data[path]
+        except:
+            freqdelta = []
+        returnValue(freqdelta)
+
+    @setting(505, PLL_index = 'i', returns = '*v[]')
+    def polled_pll_error(self, c, PLL_index):
+        """Returns the data Subscribes the poll command to the outputs of the PLL with the provided index."""
+        path = '/%s/plls/%d/error' % (self.dev_ID, PLL_index-1)
+        try:
+            error = yield self.poll_data[path]
+        except:
+            error = []
+        returnValue(error)
+
+    #Currently doesn't work, tbd if fixable
+    @setting(5050, PLL_index = 'i', returns = '*v[]')
+    def polled_pll_lock(self, c, PLL_index):
+        """Returns the data Subscribes the poll command to the outputs of the PLL with the provided index."""
+        path = '/%s/plls/%d/locked' % (self.dev_ID, PLL_index-1)
+        try:
+            error = yield self.poll_data[path]
+        except:
+            error = []
+        returnValue(error)
+
+    @setting(506, aux_out_index = 'i', returns = '')
+    def subscribe_aux_out(self, c, aux_out_index):
+        """Subscribes the poll command to the outputs of the Auxiliary Output with the provided index. CURRENLTY NOT FUNCTIONAL"""
+        path = '/%s/auxouts/%d/value' % (self.dev_ID, aux_out_index-1)
+        yield self.daq.subscribe(path)
+
+    @setting(507, aux_out_index = 'i', returns = '')
+    def unsubscribe_aux_out(self, c, aux_out_index):
+        """Subscribes the poll command to the outputs of the Auxiliary Output with the provided index. CURRENLTY NOT FUNCTIONAL"""
+        path = '/%s/auxouts/%d/value' % (self.dev_ID, aux_out_index-1)
+        yield self.daq.unsubscribe(path)
+    
+    @setting(508, aux_out_index = 'i', returns = '*v[]')
+    def polled_aux_out(self, c, aux_out_index):
+        """Returns the data Subscribes the poll command to the outputs of the PLL with the provided index. CURRENLTY NOT FUNCTIONAL"""
+        path = '/%s/auxouts/%d/value' % (self.dev_ID, aux_out_index-1)
+        try:
+            aux_out = yield self.poll_data[path]
+        except:
+            aux_out = []
+        returnValue(aux_out)
+
+#------------------------------------------------------------------------------------------------------------------------------------------#
+    """
+    Additional functions that may be useful for programming the server. 
+    """
 
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows

@@ -14,6 +14,7 @@ sys.path.append(path+'\DataVaultBrowser')
 sys.path.append(path+'\Plotter')
 sys.path.append(path+'\TFCharacterizer')
 sys.path.append(path+'\ApproachModule')
+sys.path.append(path+'\PLLMonitor')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -25,6 +26,7 @@ import nSOTCharacterizer
 import plotter
 import TFCharacterizer
 import Approach
+import PLLMonitor
 
 import exceptions
 
@@ -50,6 +52,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Plot = plotter.Plotter(self.reactor, None)
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
         self.Approach = Approach.Window(self.reactor, None)
+        self.PLLMonitor = PLLMonitor.Window(self.reactor, None)
         
         
         #Connects all drop down menu button
@@ -59,7 +62,8 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.actionData_Plotter.triggered.connect(self.openDataPlotter)
         self.actionTF_Characterizer.triggered.connect(self.openTFCharWindow)
         self.actionApproach_Control.triggered.connect(self.openApproachWindow)
-        
+        self.actionPLL_Monitor.triggered.connect(self.openPLLMonitorWindow)
+
         #Connectors all layout buttons
         self.push_Layout1.clicked.connect(self.setLayout1)
         
@@ -71,6 +75,9 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.LabRAD.cxnDisconnected.connect(self.disconnectLabRADConnections)
         
         self.TFChar.workingPointSelected.connect(self.distributeWorkingPoint)
+
+        self.Approach.newPLLData.connect(self.updatePLLMonitor)
+        
         #Open by default the LabRAD Connect Module
         self.openLabRADConnectWindow()
         
@@ -121,6 +128,12 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Approach.raise_()
         if self.Approach.isVisible() == False:
             self.Approach.show()
+
+    def openPLLMonitorWindow(self):
+        self.PLLMonitor.moveDefault()
+        self.PLLMonitor.raise_()
+        if self.PLLMonitor.isVisible() == False:
+            self.PLLMonitor.show()
             
 #----------------------------------------------------------------------------------------------#
             
@@ -139,9 +152,17 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.SC.disconnectLabRAD()
         self.TFChar.disconnectLabRAD()
         self.Approach.disconnectLabRAD()
-    
+
+#----------------------------------------------------------------------------------------------#
+            
+    """ The following section connects signals between various modules."""
+
     def distributeWorkingPoint(self,freq, phase, channel, amplitude):
         self.Approach.setWorkingPoint(freq, phase, channel, amplitude)
+
+    def updatePLLMonitor(self, deltaF, phaseError):
+        self.PLLMonitor.updatePlots(deltaF, phaseError)
+        
 #----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to setting the default layouts."""
@@ -169,6 +190,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Plot.hide()
         self.TFChar.hide()
         self.Approach.hide()
+        self.PLLMonitor.hide()
             
     def closeEvent(self, e):
         self.SC.close()
@@ -178,6 +200,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Approach.close()
         self.LabRAD.disconnectLabRAD()
         self.LabRAD.close()
+        self.PLLMonitor.close()
         
 #----------------------------------------------------------------------------------------------#     
 """ The following runs the GUI"""

@@ -32,7 +32,10 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         'hf2li'     : False,
         'cpsc'      : False
         }
+
+        #Dictionary that holds all the connections made
         self.connectionDictionary = self.emptyDictionary.copy()
+        #Dictionary that keeps track of whether or not the module has attempted to connect 
         self.cxnAttemptDictionary = self.emptyDictionary.copy()
         
         self.lineEdit_Session.setReadOnly(True)
@@ -236,12 +239,12 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                     self.push_CPSC.setStyleSheet("#push_CPSC{" + 
                     "background: rgb(0,170,0);border-radius: 4px;}")
                     self.label_CPSC_status.setText('Connected')
-                    self.connectionDictionary['cpsc'] = cspc
+                    self.connectionDictionary['cpsc'] = cpsc
                 else:
                     self.push_CPSC.setStyleSheet("#push_CPSC{" + 
                     "background: rgb(161,0,0);border-radius: 4px;}")
                     self.label_CPSC_status.setText('No device detected') 
-            except:
+            except Exception as inst:
                 self.push_CPSC.setStyleSheet("#push_CPSC{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_CPSC_status.setText('Connection Failed')

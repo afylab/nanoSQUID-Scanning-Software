@@ -52,6 +52,9 @@ background-color: rgb(0, 0, 0);
       <height>15</height>
      </rect>
     </property>
+    <property name="toolTip">
+     <string>Push to see server requirements. </string>
+    </property>
     <property name="styleSheet">
      <string notr="true">#push_Servers{
 background: rgb(144, 140, 9);
