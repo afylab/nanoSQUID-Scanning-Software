@@ -130,7 +130,7 @@ color:rgb(168,168,168)
     <string notr="true"/>
    </property>
    <property name="text">
-    <string>100m</string>
+    <string>1m</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -164,7 +164,7 @@ color:rgb(168,168,168)
     </rect>
    </property>
    <property name="text">
-    <string>1m</string>
+    <string>5m</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -318,7 +318,7 @@ color:rgb(168,168,168)
     <string notr="true"/>
    </property>
    <property name="text">
-    <string>5</string>
+    <string>15</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

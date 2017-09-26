@@ -1034,17 +1034,19 @@ background: rgb(168,168,168);
   </widget>
  </widget>
  <tabstops>
-  <tabstop>lineEdit_Atto_Z_Step_Size</tabstop>
-  <tabstop>lineEdit_Atto_Z_Points</tabstop>
-  <tabstop>lineEdit_Atto_Z_Delay</tabstop>
-  <tabstop>lineEdit_Atto_Z_Speed</tabstop>
+  <tabstop>comboBox_Atto_Z_DAC_Out</tabstop>
   <tabstop>lineEdit_Approach_MeasTime</tabstop>
+  <tabstop>lineEdit_Atto_Z_Step_Size</tabstop>
   <tabstop>lineEdit_Atto_Retract_Distance</tabstop>
+  <tabstop>lineEdit_Atto_Z_Points</tabstop>
   <tabstop>lineEdit_Atto_Retract_Points</tabstop>
+  <tabstop>lineEdit_Atto_Z_Delay</tabstop>
   <tabstop>lineEdit_Atto_Retract_Delay</tabstop>
+  <tabstop>lineEdit_Atto_Z_Speed</tabstop>
   <tabstop>lineEdit_Atto_Retract_Speed</tabstop>
   <tabstop>lineEdit_Tip_Height</tabstop>
   <tabstop>lineEdit_Temperature</tabstop>
+  <tabstop>comboBox_JPE_Address</tabstop>
   <tabstop>lineEdit_JPE_Approach_Steps</tabstop>
   <tabstop>lineEdit_JPE_Approach_Size</tabstop>
   <tabstop>lineEdit_JPE_Approach_Freq</tabstop>
@@ -1052,8 +1054,8 @@ background: rgb(168,168,168);
   <tabstop>lineEdit_JPE_Retract_Size</tabstop>
   <tabstop>lineEdit_JPE_Retract_Freq</tabstop>
   <tabstop>pushButton</tabstop>
-  <tabstop>comboBox_Atto_Z_DAC_Out</tabstop>
-  <tabstop>comboBox_JPE_Address</tabstop>
+  <tabstop>lineEdit_ScanRangeX</tabstop>
+  <tabstop>lineEdit_ScanRangeY</tabstop>
  </tabstops>
  <resources/>
  <connections/>

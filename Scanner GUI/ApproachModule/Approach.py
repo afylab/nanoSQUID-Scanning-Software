@@ -11,6 +11,9 @@ Ui_advancedStepApproachSettings, QtBaseClass = uic.loadUiType(path + r"\advanced
 Ui_advancedPIDApproachSettings, QtBaseClass = uic.loadUiType(path + r"\advancedPIDApproachSettings.ui")
 Ui_MeasurementSettings, QtBaseClass = uic.loadUiType(path + r"\MeasurementSettings.ui")
 
+sys.path.append(sys.path[0]+'\Resources')
+from nSOTScannerFormat import readNum, formatNum
+
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
     newPLLData = QtCore.pyqtSignal(float, float)
 
@@ -53,7 +56,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_PIDApproach.clicked.connect(self.startPIDApproachSequence)
         self.push_PIDApproach_Abort.clicked.connect(self.abortApproachSequence)
         
-        self.push_Home(self.returnToHomePosition)
+        self.push_Home.clicked.connect(self.returnToHomePosition)
         self.push_Withdraw.clicked.connect(self.withdrawSpecifiedDistance)
         self.lineEdit_Withdraw.editingFinished.connect(self.setWithdrawDistance)
         
@@ -87,7 +90,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.measurementSettings = {
                 'pll_targetBW'        : 100,       #target bandwidth for pid advisor
                 'pll_advisemode'      : 2,         #advisor mode. 0 is just proportional term, 1 just integral, 2 is prop + int, and 3 is full PID
-                'pll_input'           : 2,         #hf2li input that has the signal for the pll
+                'pll_input'           : 1,         #hf2li input that has the signal for the pll
                 'pll_centerfreq'      : None,      #center frequency of the pll loop
                 'pll_phase_setpoint'  : None,      #phase setpoint of pll pid loop
                 'pll_range'           : 20,        #range around center frequency that the pll is allowed to go
@@ -103,7 +106,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 'pll_rate'            : 1.842e+6,  #Sampling rate of the PLL. Cannot be changed, despite it being spit out by the pid advisor. Just... is what it is. 
                 'pll_output'          : 1,         #hf2li output to be used to completel PLL loop. 
                 'pll_output_amp'      : 0.01,      #output amplitude   
-                'ft_input'            : 1,         #input of the field / temperature measurement (same input, but different harmonics)
+                'ft_input'            : 2,         #input of the field / temperature measurement (same input, but different harmonics)
                 'ft_freq'             : 20000,     #frequency of the field / temperature measurement
                 'ft_output'           : 3,         #output to sample / meander of the field / temperature measurement 
                 'ft_amplitude'        : 0.1,       #amplitude of output  
@@ -545,6 +548,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_StartControllers.setStyleSheet(style)
             self.measuring = False
             self.push_MeasurementSettings.setEnabled(True)
+            yield self.sleep(0.1)
+            self.PLL_Locked = 0
             self.push_Locked.setStyleSheet("""#push_Locked{
                     background: rgb(161, 0, 0);
                     border-radius: 5px;
@@ -613,9 +618,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                                         }""")
                     else: 
                         self.push_Locked.setStyleSheet("""#push_Locked{
-                                    background: rgb(0, 170, 0);
-                                    border-radius: 5px;
-                                    }""")
+                                        background: rgb(0, 170, 0);
+                                        border-radius: 5px;
+                                        }""")
+
                     self.PLL_Locked = locked
 
             yield self.hf.set_pll_off(self.measurementSettings['pll_output'])
@@ -623,7 +629,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except Exception as inst:
             print inst
 
-            
 #--------------------------------------------------------------------------------------------------------------------------#
     """ The following section contains the approach sequence."""
     
@@ -647,7 +652,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
             if end_voltage < 10 and self.approaching:
                 #yield self.dac.buffer_ramp([self.Atto_Z_DAC_Out],[],[start_voltage],[end_voltage], self.stepwiseApproachSettings['atto_z_points'], self.stepwiseApproachSettings['atto_z_points_delay'] * 1e6)
-                self.lineEdit_FineZ.setText(formatNum(end_voltage / self.z_volts_to_meters))
+                self.lineEdit_FineZ.setText(formatNum(end_voltage / self.z_volts_to_meters, 3))
                 self.Atto_Z_Voltage = end_voltage
                 self.progressBar.setValue(int(100*self.Atto_Z_Voltage))
             elif self.approaching:
@@ -726,7 +731,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 yield self.hf.set_pid_setpoint(self.PID_Index, self.measurementSettings['pll_centerfreq'] - self.freqThreshold)
 
         except Exception as inst:
-            print inst
+            print "Set PID settings error" + str(inst)
 
     @inlineCallbacks
     def setHF2LI_PID_Integrator(self, val = 0, speed = 1):
@@ -778,7 +783,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 yield self.setHF2LI_PID_Settings()
 
         except Exception as inst:
-            print inst
+            print "Set integrator error" + str(inst)
 
 
     @inlineCallbacks
@@ -827,18 +832,17 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         try:
             pidapproach_enabled = False
             if self.push_PIDApproach.isEnabled():
-                pidapparoch_enabled = True
+                pidapproach_enabled = True
                 self.push_PIDApproach.setEnabled(False)
 
             stepapproach_enabled = False
             if self.push_Approach.isEnabled():
-                stepapparoch_enabled = True
+                stepapproach_enabled = True
                 self.push_Approach.setEnabled(False)
 
             retract_speed = self.PIDApproachSettings['atto_retract_speed'] * self.z_volts_to_meters
             yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
-
-            length = len(JPE_Steps)
+            length = len(self.JPE_Steps)
             for i in range (0,length):
                 JPE_Step_Info = self.JPE_Steps[length -1 -i]
                 #Go through the steps in reverse direction
@@ -853,7 +857,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.push_Approach.setEnabled(True)
 
         except Exception as inst:
-            print inst
+            print "Return home error" + str(inst)
 
     def setWithdrawDistance(self):
         val = readNum(str(self.lineEdit_Withdraw.text()))
@@ -1762,69 +1766,6 @@ class MySlider(QtGui.QSlider):
         val = min + np.log10(val/self.tickPos[0])*max/np.log10(self.tickPos[-1]/self.tickPos[0])
         self.valueChangedManually = True
         self.setSliderPosition(int(round(val)))
-            
-def formatNum(val, decimal_values = 2):
-    if val != val:
-        return 'nan'
-        
-    string = '%e'%val
-    num  = float(string[0:-4])
-    exp = int(string[-3:])
-    if exp < -6:
-        diff = exp + 9
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'n'
-    elif exp < -3:
-        diff = exp + 6
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'u'
-    elif exp < 0:
-        diff = exp + 3
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'m'
-    elif exp < 3:
-        if val - int(val) == 0:
-            val = int(val)
-        else: 
-            val = round(val,decimal_values)
-        string = str(val)
-    elif exp < 6:
-        diff = exp - 3
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'k'
-    elif exp < 9:
-        diff = exp - 6
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'M'
-    elif exp < 12:
-        diff = exp - 9
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'G'
-    return string
 
 def calculate_FilterBW(PLL_FilterOrder, tc):
     #note, this works to calculate either the bandwidth or the time constant, since
@@ -1846,27 +1787,3 @@ def calculate_FilterBW(PLL_FilterOrder, tc):
     elif PLL_FilterOrder == 8:
         BW = 0.0478809738 / tc
     return BW
-    
-def readNum(string):
-    try:
-        val = float(string)
-    except:
-        exp = string[-1]
-        if exp == 'm':
-            exp = 1e-3
-        if exp == 'u':
-            exp = 1e-6
-        if exp == 'n':
-            exp = 1e-9
-        if exp == 'k':
-            exp = 1e3
-        if exp == 'M':
-            exp = 1e6
-        if exp == 'G':
-            exp = 1e9
-        try:
-            val = float(string[0:-1])*exp
-        except: 
-            return 'Incorrect Format'
-    return val
-    

@@ -834,7 +834,24 @@ p, li { white-space: pre-wrap; }
   </widget>
  </widget>
  <tabstops>
+  <tabstop>lineEdit_P</tabstop>
+  <tabstop>lineEdit_I</tabstop>
+  <tabstop>lineEdit_D</tabstop>
+  <tabstop>comboBox_Atto_Z_DAC_Out</tabstop>
+  <tabstop>lineEdit_Atto_Retract_Distance</tabstop>
+  <tabstop>lineEdit_Atto_Retract_Time</tabstop>
+  <tabstop>lineEdit_Atto_Retract_Speed</tabstop>
+  <tabstop>lineEdit_Tip_Height</tabstop>
+  <tabstop>lineEdit_Temperature</tabstop>
+  <tabstop>comboBox_JPE_Address</tabstop>
+  <tabstop>lineEdit_JPE_Approach_Steps</tabstop>
+  <tabstop>lineEdit_JPE_Approach_Size</tabstop>
+  <tabstop>lineEdit_JPE_Approach_Freq</tabstop>
+  <tabstop>lineEdit_JPE_Retract_Steps</tabstop>
+  <tabstop>lineEdit_JPE_Retract_Size</tabstop>
+  <tabstop>lineEdit_JPE_Retract_Freq</tabstop>
   <tabstop>pushButton</tabstop>
+  <tabstop>textEdit</tabstop>
  </tabstops>
  <resources/>
  <connections/>

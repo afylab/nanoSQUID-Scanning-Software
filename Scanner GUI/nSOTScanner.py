@@ -15,6 +15,7 @@ sys.path.append(path+'\Plotter')
 sys.path.append(path+'\TFCharacterizer')
 sys.path.append(path+'\ApproachModule')
 sys.path.append(path+'\PLLMonitor')
+sys.path.append(path+'\JPEPositionControl')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -27,6 +28,7 @@ import plotter
 import TFCharacterizer
 import Approach
 import PLLMonitor
+import JPEControl
 
 import exceptions
 
@@ -53,7 +55,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
         self.Approach = Approach.Window(self.reactor, None)
         self.PLLMonitor = PLLMonitor.Window(self.reactor, None)
-        
+        self.JPEControl = JPEControl.Window(self.reactor, None)
         
         #Connects all drop down menu button
         self.actionScan_Control.triggered.connect(self.openScanControlWindow)
@@ -63,6 +65,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.actionTF_Characterizer.triggered.connect(self.openTFCharWindow)
         self.actionApproach_Control.triggered.connect(self.openApproachWindow)
         self.actionPLL_Monitor.triggered.connect(self.openPLLMonitorWindow)
+        self.actionJPE_Coarse_Position_Control.triggered.connect(self.openJPEControlWindow)
 
         #Connectors all layout buttons
         self.push_Layout1.clicked.connect(self.setLayout1)
@@ -135,6 +138,11 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         if self.PLLMonitor.isVisible() == False:
             self.PLLMonitor.show()
             
+    def openJPEControlWindow(self):
+        self.JPEControl.moveDefault()
+        self.JPEControl.raise_()
+        if self.JPEControl.isVisible() == False:
+            self.JPEControl.show()
 #----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to passing LabRAD connections."""
@@ -145,6 +153,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.SC.connectLabRAD(dict)
         self.TFChar.connectLabRAD(dict)
         self.Approach.connectLabRAD(dict)
+        self.JPEControl.connectLabRAD(dict)
         
     def disconnectLabRADConnections(self,dict):
         self.Plot.disconnectLabRAD()
@@ -152,6 +161,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.SC.disconnectLabRAD()
         self.TFChar.disconnectLabRAD()
         self.Approach.disconnectLabRAD()
+        self.JPEControl.disconnectLabRAD()
 
 #----------------------------------------------------------------------------------------------#
             
@@ -191,6 +201,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.TFChar.hide()
         self.Approach.hide()
         self.PLLMonitor.hide()
+        self.JPEControl.hide()
             
     def closeEvent(self, e):
         self.SC.close()
@@ -201,6 +212,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.LabRAD.disconnectLabRAD()
         self.LabRAD.close()
         self.PLLMonitor.close()
+        self.JPEControl.close()
         
 #----------------------------------------------------------------------------------------------#     
 """ The following runs the GUI"""

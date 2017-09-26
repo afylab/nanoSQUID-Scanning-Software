@@ -151,7 +151,7 @@ background: rgb(144, 140, 9);
      <string notr="true"/>
     </property>
     <property name="text">
-     <string>100m</string>
+     <string>10m</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -216,7 +216,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>36</x>
-      <y>61</y>
+      <y>62</y>
       <width>171</width>
       <height>16</height>
      </rect>
@@ -369,7 +369,7 @@ color:rgb(168,168,168)
      </rect>
     </property>
     <property name="text">
-     <string>1m</string>
+     <string>5m</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -640,7 +640,7 @@ color:rgb(168,168,168)
      <string notr="true"/>
     </property>
     <property name="text">
-     <string>100m</string>
+     <string>2</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -840,7 +840,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>640</x>
-      <y>60</y>
+      <y>62</y>
       <width>91</width>
       <height>16</height>
      </rect>
@@ -947,7 +947,7 @@ color:rgb(168,168,168)
      <rect>
       <x>730</x>
       <y>62</y>
-      <width>50</width>
+      <width>40</width>
       <height>16</height>
      </rect>
     </property>
@@ -985,9 +985,9 @@ color:rgb(168, 168, 168)
    <widget class="QPushButton" name="push_fitData">
     <property name="geometry">
      <rect>
-      <x>790</x>
+      <x>779</x>
       <y>61</y>
-      <width>61</width>
+      <width>63</width>
       <height>23</height>
      </rect>
     </property>
@@ -998,9 +998,9 @@ color:rgb(168, 168, 168)
    <widget class="Line" name="line_20">
     <property name="geometry">
      <rect>
-      <x>860</x>
+      <x>960</x>
       <y>62</y>
-      <width>250</width>
+      <width>150</width>
       <height>16</height>
      </rect>
     </property>
@@ -1262,21 +1262,24 @@ color:rgb(168,168,168)
    <widget class="QPushButton" name="push_WorkingPoint">
     <property name="geometry">
      <rect>
-      <x>1130</x>
-      <y>152</y>
-      <width>141</width>
+      <x>1150</x>
+      <y>110</y>
+      <width>101</width>
       <height>23</height>
      </rect>
     </property>
+    <property name="toolTip">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the working point to the exact value specified by the while line. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
     <property name="text">
-     <string>Commit Working Point</string>
+     <string>Set Manually</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_working">
     <property name="geometry">
      <rect>
       <x>1130</x>
-      <y>122</y>
+      <y>85</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -1294,7 +1297,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>1200</x>
-      <y>122</y>
+      <y>85</y>
       <width>71</width>
       <height>20</height>
      </rect>
@@ -1402,14 +1405,72 @@ color:rgb(168,168,168)
    <widget class="QPushButton" name="push_SuggestWorkingPoint">
     <property name="geometry">
      <rect>
-      <x>1130</x>
-      <y>91</y>
-      <width>141</width>
+      <x>1150</x>
+      <y>150</y>
+      <width>101</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the working point using the fit data. Requires successful amplitude AND phase fits. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="text">
+     <string>Set Automatically</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_26">
+    <property name="geometry">
+     <rect>
+      <x>850</x>
+      <y>62</y>
+      <width>30</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_26{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_showFit">
+    <property name="geometry">
+     <rect>
+      <x>889</x>
+      <y>60</y>
+      <width>63</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
-     <string>Suggest Working Point</string>
+     <string>Hide Fit</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_27">
+    <property name="geometry">
+     <rect>
+      <x>1125</x>
+      <y>134</y>
+      <width>150</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_27{
+color:rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
     </property>
    </widget>
   </widget>

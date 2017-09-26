@@ -1,8 +1,3 @@
-'''
-TODO LIST:
-Add suggest and select working point functionality
-'''
-
 import sys
 from PyQt4 import QtGui, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
@@ -10,10 +5,14 @@ import pyqtgraph as pg
 import numpy as np
 from scipy.optimize import curve_fit
 
+
 path = sys.path[0] + r"\TFCharacterizer"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\TFCharacterizer.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 Ui_advancedSettings, QtBaseClass = uic.loadUiType(path + r"\advancedSettings.ui")
+
+sys.path.append(sys.path[0]+'\Resources')
+from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
     workingPointSelected = QtCore.pyqtSignal(float, float, int, float)
@@ -28,9 +27,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.selectFreq = 32000
         
-        self.exAmp = 0.1
-        self.timeConst = 0.001
-        self.sensitvity = 0.2
+        self.exAmp = 0.01
+        self.timeConst = 0.005
+        self.sensitvity = 2
         
         self.input = 1
         self.output = 1
@@ -41,9 +40,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.bandcontrol = 0
         self.log = False
         self.overlap = False
-        self.settle_time = 0
+        self.settle_time = 0.005
         self.settle_acc = 0.001
-        self.average_TC = 5 
+        self.average_TC = 15 
         self.average_sample = 0
         self.bandwidth = 1000
         self.loopcount = 1
@@ -51,6 +50,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.freq = None
         self.R = None
         self.phi = None
+
+        self.showFit = True
         
         self.fileName = 'unnnamed'
         
@@ -78,9 +79,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         #Connect all push buttons
         self.push_fitData.clicked.connect(self.fitCurrData)
+        self.push_showFit.clicked.connect(self.toggleFitView)
         self.push_Start.clicked.connect(self.startSweep)
         self.push_Stop.clicked.connect(self.stopSweep)
         self.push_WorkingPoint.clicked.connect(self.selectWorkingPoint)
+        self.push_SuggestWorkingPoint.clicked.connect(self.selectAutoWorkingPoint)
         
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
@@ -377,21 +380,23 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.reinitSweep()
             
     def selectWorkingPoint(self):
-        index = np.argmin(np.abs(self.freq - self.selectFreq))
+        #linear extrapolation between two nearest data points to the set frequency 
+        freq = self.freq[~np.isnan(self.freq)]
+        index = np.argmin(np.abs(freq - self.selectFreq))
         
-        if self.selectFreq - self.freq[index] > 0:
-            f1 = self.freq[index]
-            f2 = self.freq[index+1]
-            p1 = self.phi[index]
-            p2 = self.phi[index+1]
+        if self.selectFreq - freq[index] > 0:
+            f1 = freq[index]
+            f2 = freq[index+1]
+            p1 = self.phi_unwrapped[index]
+            p2 = self.phi_unwrapped[index+1]
             m = (p1 - p2)/(f1-f2)
             c = -m*f1 + p1
             phase = m*self.selectFreq + c
-        elif self.selectFreq - self.freq[index] <0:
+        elif self.selectFreq - freq[index] <0:
             f1 = self.freq[index-1]
             f2 = self.freq[index]
-            p1 = self.phi[index-1]
-            p2 = self.phi[index]
+            p1 = self.phi_unwrapped[index-1]
+            p2 = self.phi_unwrapped[index]
             m = (p1 - p2)/(f1-f2)
             c = -m*f1 + p1
             phase = m*self.selectFreq + c
@@ -399,7 +404,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             phase = self.phi[index]
             
         self.workingPointSelected.emit(self.selectFreq, phase, self.output, self.exAmp)
-            
+
+    def selectAutoWorkingPoint(self):
+
+        phase = phaseFunc(self.ampFitParams[0], *self.phaseFitParams)
+
+        self.workingPointSelected.emit(self.ampFitParams[0], phase, self.output, self.exAmp)
+
     @inlineCallbacks
     def startSweep(self, c = None):    
         try:
@@ -407,8 +418,15 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.hf.set_output(self.output,True)
             yield self.hf.set_demod(self.demod,True)
             yield self.hf.start_sweep()
+
             self.push_fitData.setEnabled(False)
             self.push_advancedSettings.setEnabled(False)
+
+            self.minFreqLine.setMovable(False)
+            self.maxFreqLine.setMovable(False)
+            self.minFreqLine2.setMovable(False)
+            self.maxFreqLine2.setMovable(False)
+
             while not doneSweeping:
                 doneSweeping = yield self.hf.sweep_complete()
                 self.updateRemainingTime()
@@ -422,6 +440,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
             self.push_fitData.setEnabled(True)
             self.push_advancedSettings.setEnabled(True)
+
+            self.minFreqLine.setMovable(True)
+            self.maxFreqLine.setMovable(True)
+            self.minFreqLine2.setMovable(True)
+            self.maxFreqLine2.setMovable(True)
             
             yield self.hf.set_output(self.output,False)
             yield self.hf.set_demod(self.demod,False)
@@ -466,7 +489,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def plotData(self, data):
         self.freq = data[1]
         self.R = data[2]
-        self.phi = data[3]
+        self.phi_unwrapped = data[3]
+        self.phi = 180*np.arctan2(np.tan(np.pi*self.phi_unwrapped/180),1)/np.pi
 
         try:
             self.ampPlot.removeItem(self.prevAmpPlot)
@@ -479,7 +503,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def fitCurrData(self):
         #ideas: scale voltage data up to avoid small values, makes it easier to fit. Then rescale back down. 
-        #avoiding small numbers as much as possible is good
+        #avoiding small numbers as much as possible is good seems to work fine right now, so not necessary. 
+        #But if data fitting is bad in the future this can be a possible fix. 
+
         '''
         self.startFreq = 32000
         self.stopFreq = 33500
@@ -492,13 +518,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.freq = np.linspace(self.startFreq, self.stopFreq, self.points)
         #params = [27100, 8100, 2.9e-15, 1.2e-12]
         params = [32838.1, 61670, 0.00670979, 3.7e-5]
-        param = [32838.1, 61670, 0.00670979]
+        param = [32838.1, 61670, 0.00670979, -3]
         #params = [32838.1, 5000, 0.0067, 3.7e-5]
         #param = [32838.1, 5000, 0.0067]
         self.R = ampFunc(self.freq, *params) + 5e-6*(np.random.rand(self.points)-0.5)
         self.phi = phaseFunc(self.freq, *param) + np.random.rand(self.points)-0.5
-        '''
-        
+
+        #removes previous data plot and replots it. Doesn't seem necessary
         try:
             self.ampPlot.removeItem(self.prevAmpPlot)
             self.phasePlot.removeItem(self.prevPhasePlot)
@@ -507,35 +533,68 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
         self.prevAmpPlot = self.ampPlot.plot(self.freq,self.R)
         self.prevPhasePlot = self.phasePlot.plot(self.freq,self.phi)
-        
-        try: 
-            self.ampPlot.removeItem(self.prevAmpFit)
-            self.phasePlot.removeItem(self.prevPhaseFit)
-        except:
-            pass
-            
+        '''
+
         max = np.amax(self.R)
         f0_guess = self.freq[np.argmax(self.R)]
         
-        popt, pcov = curve_fit(ampFunc, self.freq, self.R, p0 = [f0_guess, 5000, 0.1, max])
+        self.ampFitParams, pcov = curve_fit(ampFunc, self.freq, self.R, p0 = [f0_guess, 5000, 0.1, max])
         perr = np.sqrt(np.diag(pcov))
-        self.prevAmpFit = self.ampPlot.plot(self.freq,ampFunc(self.freq, *popt))
-        
-        self.lineEdit_peakF.setText(formatNum(popt[0]))
-        self.lineEdit_peakFSig.setText(formatNum(perr[0]))
-        self.lineEdit_QFactor.setText(formatNum(popt[1]))
-        
-        #Can also use smarter guesses for 2nd fit
-        #[popt[0],popt[1],popt[2]]
-        popt, pcov = curve_fit(phaseFunc, self.freq, self.phi, p0 = [f0_guess, 10000, 0.01])
-        perr = np.sqrt(np.diag(pcov))
-        self.prevPhaseFit = self.phasePlot.plot(self.freq,phaseFunc(self.freq, *popt))
 
-        self.lineEdit_PhasePeakF.setText(formatNum(popt[0]))
+        if self.showFit:
+            try: 
+                self.ampPlot.removeItem(self.prevAmpFit)
+            except:
+                pass
+            self.prevAmpFit = self.ampPlot.plot(self.freq,ampFunc(self.freq, *self.ampFitParams))
+
+        self.lineEdit_peakF.setText(formatNum(self.ampFitParams[0]))
+        self.lineEdit_peakFSig.setText(formatNum(perr[0]))
+        self.lineEdit_QFactor.setText(formatNum(self.ampFitParams[1]))
+        
+        avg = 0
+        for i in range(0,10):
+            avg = avg + self.phi[i]
+        avg = avg/10
+        self.phaseFitParams, pcov = curve_fit(phaseFunc, self.freq, self.phi, p0 = [self.ampFitParams[0], self.ampFitParams[1], self.ampFitParams[2], avg-90])
+        perr = np.sqrt(np.diag(pcov))
+
+        if self.showFit:
+            try:
+                self.phasePlot.removeItem(self.prevPhaseFit)
+            except:
+                pass
+            self.prevPhaseFit = self.phasePlot.plot(self.freq,phaseFunc(self.freq, *self.phaseFitParams))
+
+        self.lineEdit_PhasePeakF.setText(formatNum(self.phaseFitParams[0]))
         self.lineEdit_PhasePeakFSig.setText(formatNum(perr[0]))
-        self.lineEdit_PhaseQFactor.setText(formatNum(popt[1]))
+        self.lineEdit_PhaseQFactor.setText(formatNum(self.phaseFitParams[1]))
         #Maybe iterate fits/starting parameters? 
         
+    def toggleFitView(self):
+        if self.showFit:
+            #hide fit
+            try: 
+                self.ampPlot.removeItem(self.prevAmpFit)
+            except:
+                pass
+            try:
+                self.phasePlot.removeItem(self.prevPhaseFit)
+            except:
+                pass
+
+            self.push_showFit.setText('Show Fit')
+            self.showFit = False
+        else:
+            #show fit
+            try:
+                self.prevAmpFit = self.ampPlot.plot(self.freq,ampFunc(self.freq, *self.ampFitParams))
+                self.prevPhaseFit = self.phasePlot.plot(self.freq,phaseFunc(self.freq, *self.phaseFitParams))
+            except:
+                pass
+
+            self.push_showFit.setText('Hide Fit')
+            self.showFit = True
 #----------------------------------------------------------------------------------------------#         
     """ The following section has generally useful functions."""
            
@@ -546,6 +605,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_WorkingPoint.setEnabled(False)
         self.push_SuggestWorkingPoint.setEnabled(False)
         self.push_advancedSettings.setEnabled(False)
+        self.push_showFit.setEnabled(False)
         
         self.lineEdit_MinFreq.setDisabled(True)
         self.lineEdit_MaxFreq.setDisabled(True)
@@ -574,7 +634,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_WorkingPoint.setEnabled(True)
         self.push_SuggestWorkingPoint.setEnabled(True)
         self.push_advancedSettings.setEnabled(True)
-        
+        self.push_showFit.setEnabled(True)
+
         self.lineEdit_MinFreq.setDisabled(False)
         self.lineEdit_MaxFreq.setDisabled(False)
         self.lineEdit_deltaF.setDisabled(False)
@@ -594,15 +655,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.radio_in2.setEnabled(True)
         self.radio_out1.setEnabled(True)
         self.radio_out2.setEnabled(True)
-        
-    def printStuff(self):
-        #Test plot stuff
-        a = [0.0,1.0,2.0,3.0]
-        b = [0.0,2.0,4.0,6.0]
-        a.append(float('nan'))
-        b.append(float('nan'))
-        self.ampPlot.plot(a,b)
-        self.phasePlot.plot(a,b)
     
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
@@ -746,97 +798,9 @@ def ampFunc(f, f0, Q, C, V):
     w0 = 2*np.pi*f0
     return V*np.sqrt((1 + ((w/w0)*C*(1 + (Q*w/w0)**2*(1 - (w0/w)**2)**2) - (Q*w/w0)*(1 - (w0/w)**2))**2)/(1 + (Q*w/w0)**2*(1 - (w0/w)**2)**2)**2)
     
-def phaseFunc(f, f0, Q, C):
+def phaseFunc(f, f0, Q, C, off):
     #C = C0 R w0
     w = 2*np.pi*f
     w0 = 2*np.pi*f0
-    return 180*np.arctan2((w/w0)*C*(1 + (Q*w/w0)**2*(1 - (w0/w)**2)**2) - (Q*w/w0)*(1 - (w0/w)**2),1)/np.pi
+    return off + 180*np.arctan2(((w/w0)*C*(1 + (Q*w/w0)**2*(1 - (w0/w)**2)**2) - (Q*w/w0)*(1 - (w0/w)**2)),1)/np.pi
     
-#---------------------------------------------------------------------------------------------------------#         
-    """ The following section describes how to read and write values to various lineEdits on the GUI."""
-
-def formatNum(val, decimal_values = 2):
-    if val != val:
-        return 'nan'
-        
-    string = '%e'%val
-    num  = float(string[0:-4])
-    exp = int(string[-3:])
-    if exp < -6:
-        diff = exp + 9
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'n'
-    elif exp < -3:
-        diff = exp + 6
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'u'
-    elif exp < 0:
-        diff = exp + 3
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'m'
-    elif exp < 3:
-        if val - int(val) == 0:
-            val = int(val)
-        else: 
-            val = round(val,decimal_values)
-        string = str(val)
-    elif exp < 6:
-        diff = exp - 3
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'k'
-    elif exp < 9:
-        diff = exp - 6
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'M'
-    elif exp < 12:
-        diff = exp - 9
-        num = num * 10**diff
-        if num - int(num) == 0:
-            num = int(num)
-        else: 
-            num = round(num,decimal_values)
-        string = str(num)+'G'
-    return string
-    
-def readNum(string):
-    try:
-        val = float(string)
-    except:
-        exp = string[-1]
-        if exp == 'm':
-            exp = 1e-3
-        if exp == 'u':
-            exp = 1e-6
-        if exp == 'n':
-            exp = 1e-9
-        if exp == 'k':
-            exp = 1e3
-        if exp == 'M':
-            exp = 1e6
-        if exp == 'G':
-            exp = 1e9
-        try:
-            val = float(string[0:-1])*exp
-        except: 
-            return 'Incorrect Format'
-    return val

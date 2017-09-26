@@ -611,6 +611,9 @@ color:rgb(168,168,168);
       <height>17</height>
      </rect>
     </property>
+    <property name="toolTip">
+     <string>Working point must first be selected using the TF Characterization module. </string>
+    </property>
     <property name="styleSheet">
      <string notr="true">#checkBox_Freq{
 color:rgb(168,168,168);
@@ -1025,7 +1028,7 @@ border: 1px solid rgb(100,100,100);
      </rect>
     </property>
     <property name="text">
-     <string>0.00u</string>
+     <string>0.000u</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -1143,9 +1146,9 @@ border: 1px solid rgb(100,100,100);
     </property>
     <property name="styleSheet">
      <string notr="true">QPushButton#push_Approach_Abort{
-color: rgb(168,50,50);
+color: rgb(168,168,168);
 background-color:rgb(0,0,0);
-border: 1px solid rgb(168,50,50);
+border: 1px solid rgb(168,168,168);
 border-radius: 5px
 }
 
@@ -1281,9 +1284,9 @@ background: rgb(161, 0, 0);
     </property>
     <property name="styleSheet">
      <string notr="true">QPushButton#push_PIDApproach_Abort{
-color: rgb(168,50,50);
+color: rgb(168,168,168);
 background-color:rgb(0,0,0);
-border: 1px solid rgb(168,50,50);
+border: 1px solid rgb(168,168,168);
 border-radius: 5px
 }
 

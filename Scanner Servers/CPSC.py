@@ -202,25 +202,25 @@ class CPSCServer(LabradServer):
         elif VEC[0] < 0: 
             yield self.move(c, ADDR, 1, 'CA1801', TEMP, 0, FREQ, REL, -VEC[0])
             print "Moving channel 1 by " + str(VEC[0])
-            self.pause_while_moving(c,ADDR)
+            yield self.pause_while_moving(c,ADDR)
             
         if VEC[1] > 0:
             yield self.move(c, ADDR, 2, 'CA1801', TEMP, 1, FREQ, REL, VEC[1])
             print "Moving channel 2 by " + str(VEC[1])
-            self.pause_while_moving(c,ADDR)
+            yield self.pause_while_moving(c,ADDR)
         elif VEC[1] < 0: 
             yield self.move(c, ADDR, 2, 'CA1801', TEMP, 0, FREQ, REL, -VEC[1])
             print "Moving channel 2 by " + str(VEC[1])
-            self.pause_while_moving(c,ADDR)
+            yield self.pause_while_moving(c,ADDR)
             
         if VEC[2] > 0:
             yield self.move(c, ADDR, 3, 'CA1801', TEMP, 1, FREQ, REL, VEC[2])
             print "Moving channel 3 by " + str(VEC[2])
-            self.pause_while_moving(c,ADDR)
+            yield self.pause_while_moving(c,ADDR)
         elif VEC[2] < 0: 
             yield self.move(c, ADDR, 3, 'CA1801', TEMP, 0, FREQ, REL, -VEC[2])
             print "Moving channel 3 by " + str(VEC[2])
-            self.pause_while_moving(c,ADDR)
+            yield self.pause_while_moving(c,ADDR)
         
         returnValue('Success!')
     
@@ -257,15 +257,15 @@ class CPSCServer(LabradServer):
             
             for i in range (0,num_cycles):
                 yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
                 yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
             
             if remainder != 0:
                 yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
                 yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
             
         returnValue('Success!')
         
@@ -302,18 +302,18 @@ class CPSCServer(LabradServer):
             
             for i in range (0,num_cycles):
                 yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
                 yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, 2*cycle_size)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
                 yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
             if remainder != 0:
                 yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
                 yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, 2*remainder)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
                 yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder)
-                self.pause_while_moving(c,ADDR)
+                yield self.pause_while_moving(c,ADDR)
             
         returnValue('Success!')
         
@@ -366,11 +366,12 @@ class CPSCServer(LabradServer):
             
         returnValue('Success!')
         
-    #Que? 
-    @setting(114, ADDR = 'i', returns = '')
+    @setting(114, ADDR = 'i', returns = 's')
     def pause_while_moving(self,c, ADDR):
-        """Pauses the server as long as the stepper is moving."""
-        #MAKE THIS BETTER
+        """Returns 'Success' once the server is no longer actively stepping. Function should be called
+        immediately after a cpsc.move(...) command to avoid sending more commands while the move is
+        being executed. move_x, move_y, move_z, and move_xyz already have this function built into them."""
+
         while True:
             status = yield self.status(c,ADDR)
             if status.startswith("STATUS : STOP"):

@@ -1,6 +1,11 @@
 <RCC>
   <qresource prefix="nSOTScanner">
+    <file>Pictures/Tip-Sample.png</file>
     <file>Pictures/21232342.bmp</file>
+    <file>Pictures/doublearrow_down.png</file>
+    <file>Pictures/doublearrow_left.png</file>
+    <file>Pictures/doublearrow_right.png</file>
+    <file>Pictures/doublearrow_up.png</file>
     <file>Pictures/21232342inverted.bmp</file>
     <file>Pictures/lock.jpg</file>
     <file>Pictures/backIcon.png</file>

@@ -241,6 +241,7 @@ background: black;
     <property name="title">
      <string>User Channels</string>
     </property>
+    <addaction name="actionJPE_Coarse_Position_Control"/>
    </widget>
    <widget class="QMenu" name="menuExeriments">
     <property name="title">
@@ -303,6 +304,11 @@ background: black;
   <action name="actionPLL_Monitor">
    <property name="text">
     <string>PLL Monitor</string>
+   </property>
+  </action>
+  <action name="actionJPE_Coarse_Position_Control">
+   <property name="text">
+    <string>JPE Coarse Position Control</string>
    </property>
   </action>
  </widget>

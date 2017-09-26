@@ -13,6 +13,9 @@ path = sys.path[0] + r"\ScanControl"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\ScanControlWindow.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 
+sys.path.append(sys.path[0]+'\Resources')
+from nSOTScannerFormat import readNum, formatNum
+
 '''
 THINGS TO DO:
 Make sure no scan more than maximum area
@@ -286,59 +289,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     #----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to drawing the scanning square."""
-        
-    def formatNum(self,val):
-        string = '%e'%val
-        num  = float(string[0:-4])
-        exp = int(string[-3:])
-        if exp < -6:
-            diff = exp + 9
-            num = num * 10**diff
-            if num - int(num) == 0:
-                num = int(num)
-            else: 
-                num = round(num,2)
-            string = str(num)+'n'
-        elif exp < -3:
-            diff = exp + 6
-            num = num * 10**diff
-            if num - int(num) == 0:
-                num = int(num)
-            else: 
-                num = round(num,2)
-            string = str(num)+'u'
-        elif exp < 0:
-            diff = exp + 3
-            num = num * 10**diff
-            if num - int(num) == 0:
-                num = int(num)
-            else: 
-                num = round(num,2)
-            string = str(num)+'m'
-        elif exp >= 0:
-            if val - int(val) == 0:
-                val = int(val)
-            else: 
-                val = round(val,2)
-            string = str(val)
-        return string
-        
-    def readNum(self,string):
-        try:
-            val = float(string)
-        except:
-            exp = string[-1]
-            if exp == 'm':
-                exp = 1e-3
-            if exp == 'u':
-                exp = 1e-6
-            if exp == 'n':
-                exp = 1e-9
-            try:
-                val = float(string[0:-1])*exp
-            except: 
-                return 'Incorrect Format'
-        return val
                     
     def updateROI(self,input):
         #Use rules for updating GUI for when the first ROI is changed
@@ -390,13 +340,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.Yc = self.y + self.H*np.cos(self.angle*np.pi/180)/2 + self.W*np.sin(self.angle*np.pi/180)/2
         
     def updateGUI(self):
-        self.lineEdit_Xc.setText(self.formatNum(self.Xc))
-        self.lineEdit_Yc.setText(self.formatNum(self.Yc))
+        self.lineEdit_Xc.setText(formatNum(self.Xc))
+        self.lineEdit_Yc.setText(formatNum(self.Yc))
         
-        self.lineEdit_Angle.setText(self.formatNum(self.angle))
+        self.lineEdit_Angle.setText(formatNum(self.angle))
         
-        self.lineEdit_H.setText(self.formatNum(self.H))
-        self.lineEdit_W.setText(self.formatNum(self.W))
+        self.lineEdit_H.setText(formatNum(self.H))
+        self.lineEdit_W.setText(formatNum(self.W))
         
         self.updateSpeed()
         
@@ -438,124 +388,124 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateXc(self):
         new_Xc = str(self.lineEdit_Xc.text())
-        val = self.readNum(new_Xc)
+        val = readNum(new_Xc)
         if isinstance(val,float):
             self.Xc = val
             self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
             self.moveROI()
             self.moveROI2()
-        self.lineEdit_Xc.setText(self.formatNum(self.Xc))
+        self.lineEdit_Xc.setText(formatNum(self.Xc))
         
     def updateYc(self):
         new_Yc = str(self.lineEdit_Yc.text())
-        val = self.readNum(new_Yc)
+        val = readNum(new_Yc)
         if isinstance(val,float):
             self.Yc = val
             self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
             self.moveROI()
             self.moveROI2()
-        self.lineEdit_Yc.setText(self.formatNum(self.Yc))
+        self.lineEdit_Yc.setText(formatNum(self.Yc))
         
     def updateAngle(self):
         new_Angle = str(self.lineEdit_Angle.text())
-        val = self.readNum(new_Angle)
+        val = readNum(new_Angle)
         if isinstance(val,float):
             self.angle = val
             self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
             self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
             self.moveROI()
             self.moveROI2()
-        self.lineEdit_Angle.setText(self.formatNum(self.angle))
+        self.lineEdit_Angle.setText(formatNum(self.angle))
         
     def updateH(self):
         new_H = str(self.lineEdit_H.text())
-        val = self.readNum(new_H)
+        val = readNum(new_H)
         if isinstance(val,float):
             self.H = val
             if self.FrameLocked:
                 self.W = self.H
-                self.lineEdit_W.setText(self.formatNum(self.W))
+                self.lineEdit_W.setText(formatNum(self.W))
                 self.updateSpeed()
             self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
             self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
             self.moveROI()
             self.moveROI2()
-        self.lineEdit_H.setText(self.formatNum(self.H))
+        self.lineEdit_H.setText(formatNum(self.H))
             
     def updateW(self):
         new_W = str(self.lineEdit_W.text())
-        val = self.readNum(new_W)
+        val = readNum(new_W)
         if isinstance(val,float):
             self.W = val
             if self.FrameLocked:
                 self.H = self.W
-                self.lineEdit_H.setText(self.formatNum(self.H))
+                self.lineEdit_H.setText(formatNum(self.H))
             self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
             self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
             self.moveROI()
             self.moveROI2()
             self.updateSpeed()
-        self.lineEdit_W.setText(self.formatNum(self.W))
+        self.lineEdit_W.setText(formatNum(self.W))
         
     def updateSpeed(self):
         if self.LinearSpeedLocked:
             self.lineTime = self.W / self.linearSpeed
-            self.lineEdit_LineTime.setText(self.formatNum(self.lineTime))
+            self.lineEdit_LineTime.setText(formatNum(self.lineTime))
             self.FrameTime = self.lines * self.lineTime
-            self.lineEdit_FrameTime.setText(self.formatNum(self.FrameTime))
+            self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
         else: 
             self.linearSpeed = self.W / self.lineTime
-            self.lineEdit_Linear.setText(self.formatNum(self.linearSpeed))
+            self.lineEdit_Linear.setText(formatNum(self.linearSpeed))
         
     def updatePixels(self):
         new_Pixels = str(self.lineEdit_Pixels.text())
-        val = self.readNum(new_Pixels)
+        val = readNum(new_Pixels)
         if isinstance(val,float):
             self.pixels = int(val)
             if self.DataLocked:
                 self.lines = int(val/self.PixelsAspectRatio)
-                self.lineEdit_Lines.setText(self.formatNum(self.lines))
+                self.lineEdit_Lines.setText(formatNum(self.lines))
                 self.FrameTime = self.lines * self.lineTime
-                self.lineEdit_FrameTime.setText(self.formatNum(self.FrameTime))
+                self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
             else:
                 self.PixelsAspectRatio = float(self.pixels)/float(self.lines)
-        self.lineEdit_Pixels.setText(self.formatNum(self.pixels))
+        self.lineEdit_Pixels.setText(formatNum(self.pixels))
         
     def updateLines(self):
         new_Lines = str(self.lineEdit_Lines.text())
-        val = self.readNum(new_Lines)
+        val = readNum(new_Lines)
         if isinstance(val,float):
             self.lines = int(val)
             if self.DataLocked:
                 self.pixels = int(val*self.PixelsAspectRatio)
-                self.lineEdit_Pixels.setText(self.formatNum(self.pixels))
+                self.lineEdit_Pixels.setText(formatNum(self.pixels))
             else:
                 self.PixelsAspectRatio = float(self.pixels)/float(self.lines)
             self.FrameTime = self.lines * self.lineTime
-            self.lineEdit_FrameTime.setText(self.formatNum(self.FrameTime))
-        self.lineEdit_Lines.setText(self.formatNum(self.lines))
+            self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
+        self.lineEdit_Lines.setText(formatNum(self.lines))
         
     def updateLinearSpeed(self):
         new_LinearSpeed = str(self.lineEdit_Linear.text())
-        val = self.readNum(new_LinearSpeed)
+        val = readNum(new_LinearSpeed)
         if isinstance(val,float):
             self.linearSpeed = val
             self.lineTime = self.W/self.linearSpeed
-            self.lineEdit_LineTime.setText(self.formatNum(self.lineTime))
+            self.lineEdit_LineTime.setText(formatNum(self.lineTime))
             self.FrameTime = self.lineTime * self.lines
-            self.lineEdit_FrameTime.setText(self.formatNum(self.FrameTime))
-        self.lineEdit_Linear.setText(self.formatNum(self.linearSpeed))
+            self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
+        self.lineEdit_Linear.setText(formatNum(self.linearSpeed))
         
     def updateLineTime(self):
         new_LineTime = str(self.lineEdit_LineTime.text())
-        val = self.readNum(new_LineTime)
+        val = readNum(new_LineTime)
         if isinstance(val,float):
             self.lineTime = val
             self.linearSpeed = self.W/self.lineTime
-            self.lineEdit_Linear.setText(self.formatNum(self.linearSpeed))
+            self.lineEdit_Linear.setText(formatNum(self.linearSpeed))
             self.FrameTime = self.lineTime * self.lines
-            self.lineEdit_FrameTime.setText(self.formatNum(self.FrameTime))
-        self.lineEdit_LineTime.setText(self.formatNum(self.lineTime))
+            self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
+        self.lineEdit_LineTime.setText(formatNum(self.lineTime))
         
 #----------------------------------------------------------------------------------------------#      
     """ The following section has test functions."""  
