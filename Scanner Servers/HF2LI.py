@@ -102,15 +102,13 @@ class HF2LIServer(LabradServer):
         all the functionality for the HF2LI."""
         if dev_ID == "None":
             self.dev_ID = self.device_list[0]
-            (self.daq, self.dev_ID, self.props) = yield zhinst.utils.create_api_session(self.dev_ID, 1)
-            yield self.initPIDAdvisor()
-            yield self.initSweeper()
+            self.initPIDAdvisor()
+            self.initSweeper()
         else: 
             if dev_ID in self.device_list:
                 self.dev_ID = dev_ID
-                (self.daq, self.dev_ID, self.props) = yield zhinst.utils.create_api_session(self.dev_ID, 1)
-                yield self.initPIDAdvisor()
-                yield self.initSweeper()
+                self.initPIDAdvisor()
+                self.initSweeper()
             else:
                 print "Provided device ID is not in the list of possible devices."
    
