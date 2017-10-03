@@ -54,7 +54,7 @@ class Window(QtGui.QMainWindow, PLLMonitorUI):
         self.phaseErrorPlot.setLabel('bottom', 'Time', units = 's')
         self.phaseErrorPlot.showAxis('right', show = True)
         self.phaseErrorPlot.showAxis('top', show = True)
-        self.phaseErrorPlot.setTitle('PLL Delta F vs. Time (s)')
+        self.phaseErrorPlot.setTitle('PLL Error vs. Time (s)')
 
     def updatePlots(self, deltaF, phaseError):
         

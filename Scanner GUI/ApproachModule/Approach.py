@@ -56,6 +56,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_PIDApproach.clicked.connect(self.startPIDApproachSequence)
         self.push_PIDApproach_Abort.clicked.connect(self.abortApproachSequence)
         
+        self.push_ApproachForFeedback.clicked.connect(self.startFeedbackApproachSequence)
+        
         self.push_Home.clicked.connect(self.returnToHomePosition)
         self.push_Withdraw.clicked.connect(self.withdrawSpecifiedDistance)
         self.lineEdit_Withdraw.editingFinished.connect(self.setWithdrawDistance)
@@ -74,7 +76,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's hard coded in
         self.PID_Index = 1
 
-        self.Atto_Z_Voltage = 0 #Current voltage being sent to Z of attocubes. 
+        self.Atto_Z_Voltage = 0 #Voltage being sent to Z of attocubes. 
         self.Temperature = 293 #in kelvin
         self.z_volts_to_meters = 3/ 24e-6 #24 microns corresponds to 3 volts, units of volts per meter. Eventually value should depend on temperature
         
@@ -95,7 +97,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 'pll_phase_setpoint'  : None,      #phase setpoint of pll pid loop
                 'pll_range'           : 20,        #range around center frequency that the pll is allowed to go
                 'pll_harmonic'        : 1,         #harmonic of the input to the pll
-                'pll_tc'              : 138.46e-6,  #pll time constant
+                'pll_tc'              : 138.46e-6, #pll time constant
                 'pll_filterBW'        : 500.0,     #pll filter bandwidth 
                 'pll_filterorder'     : 4,         #pll filter order (how many filters are cascaded)
                 'pll_p'               : 1.397,     #pll pid proportional term
@@ -179,7 +181,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.setTempThresh()
         self.setFieldThresh()
 
-        self.lockInterface()
+        #self.lockInterface()
 
 
     def moveDefault(self):    
@@ -187,7 +189,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def connectLabRAD(self, dict):
         try:
-            #self.unlockInterface()
             self.cxn = dict['cxn']
             self.hf = dict['hf2li']
             self.dac = dict['dac_adc']
@@ -206,14 +207,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         elif not self.cpsc:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-        #elif not self.dac:
-        #    self.push_Servers.setStyleSheet("#push_Servers{" + 
-        #    "background: rgb(161, 0, 0);border-radius: 4px;}")
+        elif not self.dac:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
         else:
             self.unlockInterface()
             self.unlockPIDApproach()
-        if self.dac != False:
-            self.unlockStepwiseApproach()
+        #if self.dac != False:
+        #    self.unlockStepwiseApproach()
 
         self.zeroHF2LI_Aux_Out()
         self.initializePID()
@@ -248,71 +249,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.hf.set_aux_output_offset(3,0)
             yield self.hf.set_aux_output_offset(4,0)
 
-        except Exception as inst:
-            print inst
-
-    @inlineCallbacks
-    def initializePID(self, c = None):
-        '''
-        This function sets the output range of the PID to be 0V to 10 V. It also
-        makes sure the integrator value of the PID is set such that the starting output voltage is 0 volts. 
-        By default, when the range is from 0 to 3 V, the starting output voltage is 1.5V; this fixes that
-        problem. 
-        '''
-        try:
-            #Make sure the PID is off
-            pid_on = yield self.hf.get_pid_on(self.PID_Index)
-            if pid_on:
-                yield self.hf.set_pid_on(self.PID_Index, False)
-
-            #Set the output range to be 0 to 3 V, which is the required range for room temperature. 
-            yield self.hf.set_pid_output_center(self.PID_Index, 1.5)
-            yield self.hf.set_pid_output_range(self.PID_Index, 1.5)
-
-            #First turn off proportional and derivative terms
-            yield self.hf.set_pid_p(self.PID_Index, 0)
-            yield self.hf.set_pid_d(self.PID_Index, 0)
-            #Set integrator term to 1
-            yield self.hf.set_pid_i(self.PID_Index, 1)
-
-            #Sets the PID input signal to be the auxiliary output 
-            yield self.hf.set_pid_input_signal(self.PID_Index, 5)
-            #Sets channel to be aux output 4, which should never be in use elsewhere (as warned on the GUI)
-            yield self.hf.set_pid_input_channel(self.PID_Index, 4)
-
-            #The following two settings get reset elsewhere in the code before running anything important. 
-            #They're useful for understanding the units if the set integrator term (and making sure that
-            # 1 is sufficient.)
-
-            #Sets the output signal type to be an auxiliary output offset
-            yield self.hf.set_pid_output_signal(self.PID_Index, 3)
-            #Sets the correct channel of the aux output
-            yield self.hf.set_pid_output_channel(self.PID_Index, self.PIDApproachSettings['atto_z_output'])
-            
-            yield self.hf.set_pid_setpoint(self.PID_Index, -10)
-            #Sets the setpoint to be -10V. The input signal (aux output 4), is always left as 0 Volt output. 
-            #This means that the rate at which the voltage changes is this setpoint (-10V) times the integrator
-            # value (10 /s). So, this changes the voltage at a rate of 10V/s. 
-            
-            #once monitored, can turn the multiplier to 0 so that the output is always 0 volts. 
-            yield self.hf.set_aux_output_monitorscale(self.PIDApproachSettings['atto_z_output'],0)
-            #Set the aux output corresponding the to output going to the attocubes to be monitored. 
-            yield self.hf.set_aux_output_signal(self.PIDApproachSettings['atto_z_output'], -2)
-
-            #At this point, turn on the PID. 
-            yield self.hf.set_pid_on(self.PID_Index, True)
-            #Wait for the voltage to go from 5V to 0V (should take 0.5 second). However, there's a weird bug that
-            #if the monitor scale is set to 0, the integrator when the pid is turned on instantly goes to 0. 
-            #Just toggling is sufficient. 
-            yield self.sleep(0.25)
-            #Turn off PID
-            yield self.hf.set_pid_on(self.PID_Index, False)
-            #none of this output any voltage. This is good in case instructions were ignored and the attocubes were left plugged in. 
-
-            #turn the multiplier back to 1 for future use. 
-            yield self.hf.set_aux_output_monitorscale(self.PIDApproachSettings['atto_z_output'], 1)
-            #set output back to manual control 
-            yield self.hf.set_aux_output_signal(self.PIDApproachSettings['atto_z_output'], -1)
         except Exception as inst:
             print inst
 
@@ -371,8 +307,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.freqSlider.setMinimum(0)
         self.freqSlider.setMaximum(1000000)
         self.freqSlider.setStyleSheet("QSlider::groove:horizontal {border: 1px solid #bbb;background: white;height: 10px;border-radius: 4px;}QSlider::sub-page:horizontal {background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,    stop: 0 #66e, stop: 1 #bbf);background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,    stop: 0 #bbf, stop: 1 #55f);border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::add-page:horizontal {background: #fff;border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::handle:horizontal {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #eee, stop:1 #ccc);border: 1px solid #777;width: 13px;margin-top: -2px;margin-bottom: -2px;border-radius: 4px;}QSlider::handle:horizontal:hover {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #fff, stop:1 #ddd);border: 1px solid #444;border-radius: 4px;}QSlider::sub-page:horizontal:disabled {background: #bbb;border-color: #999;}QSlider::add-page:horizontal:disabled {background: #eee;border-color: #999;}QSlider::handle:horizontal:disabled {background: #eee;border: 1px solid #aaa;border-radius: 4px;}")
-        self.freqSlider.setTickPos([0.08, 0.1,0.2,0.4,0.6, 0.8,1, 2, 4, 6, 8, 10, 20])
-        self.freqSlider.setNumPos([0.1,1,10])
+        self.freqSlider.setTickPos([0.008, 0.01, 0.02, 0.04,0.06, 0.08, 0.1,0.2,0.4,0.6, 0.8,1, 2, 4, 6, 8, 10, 20])
+        self.freqSlider.setNumPos([0.01, 0.1,1,10])
         self.freqSlider.lower()
         
         self.freqSlider.logValueChanged.connect(self.updateFreqThresh)
@@ -389,8 +325,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.lineEdit_freqSet.setText(formatNum(self.freqThreshold))
             self.freqSlider.setPosition(self.freqThreshold)
             self.setFreqThreshholdSign()
-
-
         except Exception as inst:
             print inst
 
@@ -406,16 +340,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         new_freqThresh = str(self.lineEdit_freqSet.text())
         val = readNum(new_freqThresh)
         if isinstance(val,float):
-            if val < 0.08:
-                val = 0.08
+            if val < 0.008:
+                val = 0.008
             elif val > 20:
                 val = 20
             self.updateFreqThresh(value = val)
         
     def incrementFreqThresh(self):
         val = self.freqThreshold * 1.01
-        if val < 0.08:
-            val = 0.8
+        if val < 0.008:
+            val = 0.008
         elif val > 20:
             val = 20
         self.updateFreqThresh(value = val)
@@ -423,8 +357,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def decrementFreqThresh(self):
         val = self.freqThreshold * 0.99
-        if val < 0.08:
-            val = 0.08
+        if val < 0.008:
+            val = 0.008
         elif val > 20:
             val = 20
         self.updateFreqThresh(value = val)
@@ -630,10 +564,23 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             print inst
 
 #--------------------------------------------------------------------------------------------------------------------------#
-    """ The following section contains the approach sequence."""
+    """ The following section contains the stepwise approach sequence."""
     
     @inlineCallbacks
     def startApproachSequence(self, c = None):
+        '''
+        Function needs to be updated with new HF2LI Server subcribe / poll syntax.
+        
+        General procedure: 
+            1. Measure deltaf, get average value. 
+            2. Compare to threshhold. If below, procedure to step 3. Otherwise, you're done!
+            3. Attempt to step the z voltage by the specified step size. 
+               If this is possible (ie. z + z_step < z_max), return to step 1. 
+               If not, proceed to step 4. 
+            4. Set z voltage back to 0. 
+            5. Step JPEs forward. Then return to step 1. 
+        '''
+        
         self.approaching = True
         
         #yield self.cpsc.set_height(self.JPE_Tip_Height*1000 + 33.9)
@@ -665,31 +612,34 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Do a coarse step forward
                 #yield self.cpsc.move_z(self.JPE_Module_Address, self.Temperature, , self.JPE_Approach_Freq, self.JPE_Approach_Size, self.JPE_Approach_Steps)
             print 'Starting at voltage: ' + str(start_voltage) + '. Finishing at voltage: ' + str(end_voltage)
-            
-            #measure deltaf, get average value
-            #if below threshold, step by specified step size
-            #repeat until full z voltage
-            #retract entire way 
-            #step forward with JPEs
-            #repeat atto cube process
     
     def abortApproachSequence(self):
         self.approaching = False
 
+#--------------------------------------------------------------------------------------------------------------------------#
+    """ The following section contains the PID approach sequence and all related functions."""
+        
     @inlineCallbacks
     def startPIDApproachSequence(self, c = None):
-
+        '''
+        General procedure: 
+            1. Describe this at some point
+        '''
+    
         #Add checks that controllers are running and working properly
         self.approaching = True
 
         #Initializes all the PID settings
         yield self.setHF2LI_PID_Settings()
+        
+        #Set the output range to be 0 to 3 V, which is the required range for room temperature. 
+        yield self.setPIDOutputRange(3)
 
         yield self.hf.set_pid_on(self.PID_Index, True)
 
         while self.approaching:
-            self.Atto_Z_Voltage = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
-            if self.Atto_Z_Voltage >= 3:
+            z_voltage = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
+            if z_voltage >= 3:
                 yield self.hf.set_pid_on(self.PID_Index, False)
 
                 #Find desired retract speed in volts per second
@@ -705,15 +655,75 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         yield self.hf.set_pid_on(self.PID_Index, False)
 
     @inlineCallbacks
+    def initializePID(self, c = None):
+        '''
+        This function ensures the integrator value of the PID is set such that the starting output voltage is 0 volts. 
+        By default, when the range is from 0 to 3 V, the starting output voltage is 1.5V; this fixes that problem. 
+        Also sets the output range from 0 to 3V, which is the default for room temperature. 
+        '''
+        try:
+            #Make sure the PID is off
+            pid_on = yield self.hf.get_pid_on(self.PID_Index)
+            if pid_on:
+                yield self.hf.set_pid_on(self.PID_Index, False)
+
+            #Set the output range to be 0 to 3 V, which is the required range for room temperature. 
+            yield self.setPIDOutputRange(3)
+
+            #Set integral term to 1, and 0 to the rest
+            yield self.hf.set_pid_p(self.PID_Index, 0)
+            yield self.hf.set_pid_d(self.PID_Index, 0)
+            yield self.hf.set_pid_i(self.PID_Index, 1)
+
+            #Sets the PID input signal to be the auxiliary output 
+            yield self.hf.set_pid_input_signal(self.PID_Index, 5)
+            #Sets channel to be aux output 4, which should never be in use elsewhere (as warned on the GUI)
+            yield self.hf.set_pid_input_channel(self.PID_Index, 4)
+
+            #The following two settings get reset elsewhere in the code before running anything important. 
+            #They're useful for understanding the units if the set integrator term (and making sure that
+            # 1 is sufficient.)
+
+            #Sets the output signal type to be an auxiliary output offset
+            yield self.hf.set_pid_output_signal(self.PID_Index, 3)
+            #Sets the correct channel of the aux output
+            yield self.hf.set_pid_output_channel(self.PID_Index, self.PIDApproachSettings['atto_z_output'])
+            
+            yield self.hf.set_pid_setpoint(self.PID_Index, -10)
+            #Sets the setpoint to be -10V. The input signal (aux output 4), is always left as 0 Volt output. 
+            #This means that the rate at which the voltage changes is this setpoint (-10V) times the integrator
+            # value (1 /s). So, this changes the voltage at a rate of 10V/s. 
+            
+            #once monitored, can turn the multiplier to 0 so that the output is always 0 volts. 
+            yield self.hf.set_aux_output_monitorscale(self.PIDApproachSettings['atto_z_output'],0)
+            #Set the aux output corresponding the to output going to the attocubes to be monitored. 
+            yield self.hf.set_aux_output_signal(self.PIDApproachSettings['atto_z_output'], -2)
+
+            #At this point, turn on the PID. 
+            yield self.hf.set_pid_on(self.PID_Index, True)
+            #Wait for the voltage to go from 5V to 0V (should take 0.5 second). However, there's a weird bug that
+            #if the monitor scale is set to 0, the integrator when the pid is turned on instantly goes to 0. 
+            #Just toggling is sufficient. 
+            yield self.sleep(0.25)
+            #Turn off PID
+            yield self.hf.set_pid_on(self.PID_Index, False)
+            #none of this output any voltage. This is good in case instructions were ignored and the attocubes were left plugged in. 
+
+            #turn the multiplier back to 1 for future use. 
+            yield self.hf.set_aux_output_monitorscale(self.PIDApproachSettings['atto_z_output'], 1)
+            #set output back to manual control 
+            yield self.hf.set_aux_output_signal(self.PIDApproachSettings['atto_z_output'], -1)
+        except Exception as inst:
+            print inst
+        
+        
+    @inlineCallbacks
     def setHF2LI_PID_Settings(self, c = None):
         try:
             #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's hard coded in (initialized at start)
 
-            #first set PID parameters, noting that i cannot ever be 0, because otherwise this will lead to voltage jumps as it resets the integrator value. 
-            yield self.hf.set_pid_p(self.PID_Index, self.PIDApproachSettings['p'])
-            yield self.hf.set_pid_i(self.PID_Index, self.PIDApproachSettings['i'])
-            yield self.hf.set_pid_d(self.PID_Index, self.PIDApproachSettings['d'])
-
+            #Set PID parameters
+            yield self.setPIDParameters()
             #Sets the output signal type to be an auxiliary output offset
             yield self.hf.set_pid_output_signal(self.PID_Index, 3)
             #Sets the correct channel of the aux output
@@ -724,7 +734,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             #Sets the oscillator frequency to be the same as the one for which the PLL is running
             yield self.hf.set_pid_input_channel(self.PID_Index, self.measurementSettings['pll_output'])
 
-            #Set setpoint
+            #Set the setpoint, noting whether it should be plus or minus as specified in the GUI
             if self.radioButton_plus.isChecked():
                 yield self.hf.set_pid_setpoint(self.PID_Index, self.measurementSettings['pll_centerfreq'] + self.freqThreshold)
             else:
@@ -732,14 +742,30 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         except Exception as inst:
             print "Set PID settings error" + str(inst)
-
+            
+    @inlineCallbacks
+    def setPIDOutputRange(self, max):
+        #Set the output range to be 0 to 3 V, which is the required range for room temperature. 
+        yield self.hf.set_pid_output_center(self.PID_Index, max/2)
+        yield self.hf.set_pid_output_range(self.PID_Index, max/2)
+        
+    @inlineCallbacks
+    def setPIDParameters(self):
+        #Sets PID parameters, noting that i cannot ever be 0, because otherwise this will lead to 
+        #voltage jumps as it resets the integrator value. 
+        yield self.hf.set_pid_p(self.PID_Index, self.PIDApproachSettings['p'])
+        yield self.hf.set_pid_i(self.PID_Index, self.PIDApproachSettings['i'])
+        yield self.hf.set_pid_d(self.PID_Index, self.PIDApproachSettings['d'])
+            
     @inlineCallbacks
     def setHF2LI_PID_Integrator(self, val = 0, speed = 1):
-        #Function takes the provided speed (in V/s) to set the integrator value from its current value to the desired value. 
-        #note: this method can only reduce the voltage. This is done to avoid approaching the sample with PID off. Whenever
-        #getting closer, the PID should always be active. 
+        '''
+        Function takes the provided speed (in V/s) to set the integrator value from its current value to the desired value. 
+        note: this method can only reduce the voltage. This is done to avoid approaching the sample with PID off. Whenever
+        getting closer, the PID should always be active. 
+        '''
+        #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's hard coded in (initialized at start)
         try:
-            #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's hard coded in (initialized at start)
             curr_val = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
 
             if 0 <= val and val <= curr_val:
@@ -791,29 +817,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         try:          
             #Eventually add a way to make sure that the DAC / JPEs are no longer moving anything before sending the retract command
             self.approaching = False
-
-            yield self.sleep(0.25)
-            #eventually replace with a proper condition identifying that the DAC ADC is connected instead of connected via aux out of the hf2li pid.
-            if False:
-                start_voltage = self.Atto_Z_Voltage
-                end_voltage = self.Atto_Z_Voltage - self.withdrawDistance * self.z_volts_to_meters
-                
-                #eventually send message saying can't withdraw distance without coarse movement
-                if end_voltage < 0:
-                    end_voltage = 0
-
-                retract_delay =  int(1e6*self.withdrawDistance / (self.stepwiseApproachSettings['atto_retract_speed'] * self.stepwiseApproachSettings['atto_retract_points']))
-
-                if retract_delay < 100:
-                    retract_delay = 100
-
-                print 'Retract delay in microseconds: ' + str(retract_delay)
-                #yield self.dac.ramp1(self.Atto_Z_DAC_Out, start_voltage, end_voltage, self.Atto_Retract_Points,retract_delay)
-                self.Atto_Z_Voltage = end_voltage
-                self.progressBar.setValue(int(100*self.Atto_Z_Voltage))
-                self.lineEdit_FineZ.setText(formatNum(self.Atto_Z_Voltage / self.z_volts_to_meters))
-            else: 
-                z_voltage = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
+            #Turn PID off
+            yield self.hf.set_pid_on(self.PID_Index, False)
+            z_voltage = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
+            #eventually replace with a proper condition identifying that the DAC ADC is connected instead of connected 
+            #via aux out of the hf2li pid.
+            
+            if z_voltage >= 0.01: 
                 #Find desired end voltage
                 end_voltage = z_voltage - self.withdrawDistance * self.z_volts_to_meters
 
@@ -823,6 +833,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Find desired retract speed in volts per second
                 retract_speed = self.PIDApproachSettings['atto_retract_speed'] * self.z_volts_to_meters
                 yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
+            elif self.Atto_Z_Voltage > 0:
+                start_voltage = self.Atto_Z_Voltage
+                end_voltage = self.Atto_Z_Voltage - self.withdrawDistance * self.z_volts_to_meters
+                
+                #eventually send message saying can't withdraw distance without coarse movement
+                if end_voltage < 0:
+                    end_voltage = 0
+
+                yield self.dac.ramp1(self.Atto_Z_DAC_Out, start_voltage, end_voltage, self.stepwiseApproachSettings['atto_retract_points'],self.stepwiseApproachSettings['atto_retract_points_delay'])
+                self.Atto_Z_Voltage = end_voltage
 
         except Exception as inst:
             print inst
@@ -830,6 +850,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def returnToHomePosition(self, c = None):
         try:
+            #Stop you from being able to reapproach while the 
+            #PID is taking you home
             pidapproach_enabled = False
             if self.push_PIDApproach.isEnabled():
                 pidapproach_enabled = True
@@ -840,8 +862,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 stepapproach_enabled = True
                 self.push_Approach.setEnabled(False)
 
+            #note retract speed is divided by 10 when in the divide by 10 mode
+            #This retracts the attocubes voltage contribution from the HF2LI
             retract_speed = self.PIDApproachSettings['atto_retract_speed'] * self.z_volts_to_meters
             yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
+            
+            
             length = len(self.JPE_Steps)
             for i in range (0,length):
                 JPE_Step_Info = self.JPE_Steps[length -1 -i]
@@ -859,6 +885,65 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except Exception as inst:
             print "Return home error" + str(inst)
 
+    @inlineCallbacks
+    def startFeedbackApproachSequence(self):
+        msgBox = QtGui.QMessageBox(self)
+        msgBox.setIcon(QtGui.QMessageBox.Information)
+        msgBox.setWindowTitle('MAKE SURE IN DIVIDE BY 10 MODE')
+        msgBox.setText("\r\n MAKE SURE HF2LI OUTPUT IS BEING DIVIDED BY 10, OTHERWISE CATASTROPHE.")
+        msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+        msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+        if msgBox.exec_():
+            #Make sure the PID is off
+            pid_on = yield self.hf.get_pid_on(self.PID_Index)
+            if pid_on:
+                yield self.hf.set_pid_on(self.PID_Index, False)
+                
+            #Set range from 0 to 10 V. This voltage should be divided by 10, at room temperature
+            #This corresponds to ~8 microns
+            yield self.setPIDOutputRange(10)
+            
+            #Initializes all the PID settings. Note: for now this uses the same settings as
+            #The PID approach
+            yield self.setHF2LI_PID_Settings()
+            
+            #start PID approach sequence
+            self.approaching = True
+            yield self.hf.set_pid_on(self.PID_Index, True)
+
+            while self.approaching:
+                z_voltage = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
+                if z_voltage >= 10:
+                    break
+            #Once PID maxes out, step forward with the DAC adc
+            
+            #Atto_Z_Voltage corresponds to the DAC ADC output voltage. HF2LI PID voltage is 
+            #always added in on top of this voltage. 
+            start_voltage = self.Atto_Z_Voltage
+            end_voltage = self.Atto_Z_Voltage + self.stepwiseApproachSettings['atto_z_step_size'] * self.z_volts_to_meters
+            while self.approaching:
+                #Take a step forward as specified by the stepwise approach advanced settings
+                #yield self.dac.ramp1(self.stepwiseApproachSettings['atto_z_output'],start_voltage,end_voltage,self.stepwiseApproachSettings['atto_z_points'], self.stepwiseApproachSettings['atto_z_points_delay'] * 1e6)
+                #For now hard coded to be output 0
+                yield self.dac.ramp1(0,start_voltage,end_voltage,self.stepwiseApproachSettings['atto_z_points'], self.stepwiseApproachSettings['atto_z_points_delay'] * 1e6)
+                #check to see if output voltage of the PID has dropped to below 8V 
+                PID_output = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
+                if PID_output < 8:
+                    print 'In feedback biotch'
+                    break
+                self.Atto_Z_Voltage = end_voltage
+                start_voltage = end_voltage
+                end_voltage = end_voltage + self.stepwiseApproachSettings['atto_z_step_size'] * self.z_volts_to_meters
+                
+                if end_voltage >3:
+                    print 'We have gone too far!'
+                    break
+                        
+            #if yes, stop stepping
+            
+            #Add checks that controllers are running and working properly
+            
+            
     def setWithdrawDistance(self):
         val = readNum(str(self.lineEdit_Withdraw.text()))
         if isinstance(val,float):
@@ -872,13 +957,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def monitorZVoltage(self):
         while True:
-            z_voltage = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
+            #z_voltage = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
+            #Z voltage for now is hard coded to be read by the DAC's first (0th) input
+            z_voltage = yield self.dac.read_voltage(0)
             self.progressBar.setValue(int(1000*(z_voltage/3)))
             self.lineEdit_FineZ.setText(formatNum(z_voltage / self.z_volts_to_meters))
-
-        #self.progressBar.setValue(int(100*self.Atto_Z_Voltage))
-        #self.lineEdit_FineZ.setText(formatNum(self.Atto_Z_Voltage / self.z_volts_to_meters))
-
 
 #----------------------------------------------------------------------------------------------#         
     """ The following section has generally useful functions."""  
@@ -1602,12 +1685,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         try:
             #Waiting for one second seems to work fine for auto calculation to be complete
             yield self.sleep(1)
-            #This method doesn't seem to work for anything other than an optimization
-            #calculating = True
-            #while calculating:
-            #    calculating = yield self.hf.get_advisor_calc()
-            #    print calculating
-            #print 'done calaculating'
+
             pm = yield self.hf.get_advisor_pm()
             bw = yield self.hf.get_advisor_simbw()
             self.measSettings['pll_pm'] = pm

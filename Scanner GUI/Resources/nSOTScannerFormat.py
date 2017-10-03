@@ -1,6 +1,9 @@
 #---------------------------------------------------------------------------------------------------------#         
 """ The following section describes how to read and write values to various lineEdits on the GUI."""
 
+import numpy as np
+from itertools import product
+
 def formatNum(val, decimal_values = 2):
     if val != val:
         return 'nan'
@@ -87,3 +90,67 @@ def readNum(string):
         except: 
             return 'Incorrect Format'
     return val
+    
+def processLineData(lineData, process):
+    pixels = np.size(lineData)
+    if process == 'Raw':
+        return lineData 
+    elif process == 'Subtract Average':
+        x = np.linspace(0,pixels-1,pixels)
+        fit = np.polyfit(x, lineData, 0)
+        residuals  = lineData - fit[0]
+        return residuals
+    elif process == 'Subtract Linear Fit':
+        x = np.linspace(0,pixels-1,pixels)
+        fit = np.polyfit(x, lineData, 1)
+        residuals  = lineData - fit[0]*x - fit[1]
+        return residuals
+    elif process == 'Subtract Parabolic Fit':
+        x = np.linspace(0,pixels-1,pixels)
+        fit = np.polyfit(x, lineData, 2)
+        residuals  = lineData - fit[0]*x**2 - fit[1]*x - fit[2]
+        return residuals
+        
+def processImageData(image, process):
+    shape = np.shape(image)
+    
+    width = int(shape[1])
+    length = int(shape[0])
+    
+    x = np.linspace(0, 1, width)
+    y = np.linspace(0, 1, length)
+    X, Y = np.meshgrid(x, y, copy=False)
+    
+    X = X.flatten()
+    Y = Y.flatten()
+    
+    if process == 'Raw':
+        return image
+        
+    elif process == 'Subtract Average':
+        avg = np.average(image)
+        return image - avg
+        
+    elif process == 'Subtract Plane':
+        A = np.array([X*0+1, X, Y]).T
+        B = image.flatten()
+
+        coeff, r, rank, s = np.linalg.lstsq(A, B)
+
+        for i in xrange(length):
+            for j in xrange(width):
+                image[i][j] = image[i][j] - np.dot(coeff, [1, x[j], y[i]])	
+        return image
+        
+    elif process == 'Subtract Quadratic':
+        A = np.array([X*0+1, X, Y, X**2, Y**2, X*Y]).T
+        B = image.flatten()
+
+        coeff, r, rank, s = np.linalg.lstsq(A, B)
+
+        for i in xrange(length):
+            for j in xrange(width):
+                image[i][j] = image[i][j] - np.dot(coeff, [1, x[j], y[i], x[j]**2, y[i]**2, x[j]*y[i]])	
+        
+        return image
+
