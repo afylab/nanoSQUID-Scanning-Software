@@ -32,8 +32,6 @@ class Window(QtGui.QMainWindow, PLLMonitorUI):
         self.horizontalSlider.valueChanged[int].connect(self.setPlotTime)
 
         self.first_data_point = True
-
-        self.lockInterface()
         
     def moveDefault(self):    
         self.move(550,10)
@@ -102,15 +100,3 @@ class Window(QtGui.QMainWindow, PLLMonitorUI):
         d = Deferred()
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
-        
-#----------------------------------------------------------------------------------------------#         
-    """ The following section has generally useful functions."""
-           
-    def lockInterface(self):
-        pass
-        
-    def unlockInterface(self):
-        pass
-        
-        
-        

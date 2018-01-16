@@ -10,7 +10,6 @@ sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
-    
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
         
@@ -120,44 +119,62 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
     @inlineCallbacks
     def movePosX(self, c = None):
-        self.lockInterface()    
+        self.lockInterface()
         yield self.cpsc.set_height(self.tip_height+33.9)
-        yield self.cpsc.move_x(self.module_address, self.temperature, self.freq, self.size, self.steps)   
+        if self.checkBox_Torque.isChecked():
+            yield self.cpsc.move_x(self.module_address, self.temperature, self.freq, self.size, self.steps, 30)
+        else: 
+            yield self.cpsc.move_x(self.module_address, self.temperature, self.freq, self.size, self.steps)
         self.unlockInterface()
 
     @inlineCallbacks
     def moveNegX(self, c = None):
         self.lockInterface()
         yield self.cpsc.set_height(self.tip_height+33.9)
-        yield self.cpsc.move_x(self.module_address, self.temperature, self.freq, self.size, -self.steps) 
+        if self.checkBox_Torque.isChecked():
+            yield self.cpsc.move_x(self.module_address, self.temperature, self.freq, self.size, -self.steps, 30)
+        else:
+            yield self.cpsc.move_x(self.module_address, self.temperature, self.freq, self.size, -self.steps)
         self.unlockInterface()
 
     @inlineCallbacks
     def movePosY(self, c = None):
         self.lockInterface()
         yield self.cpsc.set_height(self.tip_height+33.9)
-        yield self.cpsc.move_y(self.module_address, self.temperature, self.freq, self.size, self.steps)   
+        if self.checkBox_Torque.isChecked():
+            yield self.cpsc.move_y(self.module_address, self.temperature, self.freq, self.size, self.steps, 30)
+        else:
+            yield self.cpsc.move_y(self.module_address, self.temperature, self.freq, self.size, self.steps)
         self.unlockInterface()
 
     @inlineCallbacks
     def moveNegY(self, c = None):
         self.lockInterface()
         yield self.cpsc.set_height(self.tip_height+33.9)
-        yield self.cpsc.move_y(self.module_address, self.temperature, self.freq, self.size, -self.steps) 
+        if self.checkBox_Torque.isChecked():
+            yield self.cpsc.move_y(self.module_address, self.temperature, self.freq, self.size, -self.steps, 30)
+        else:
+            yield self.cpsc.move_y(self.module_address, self.temperature, self.freq, self.size, -self.steps)
         self.unlockInterface()
 
     @inlineCallbacks
     def movePosZ(self, c = None):
         self.lockInterface()
         yield self.cpsc.set_height(self.tip_height+33.9)
-        yield self.cpsc.move_z(self.module_address, self.temperature, self.freq, self.size, self.steps)   
+        if self.checkBox_Torque.isChecked():
+            yield self.cpsc.move_z(self.module_address, self.temperature, self.freq, self.size, self.steps, 30)
+        else:
+            yield self.cpsc.move_z(self.module_address, self.temperature, self.freq, self.size, self.steps)
         self.unlockInterface()
 
     @inlineCallbacks
     def moveNegZ(self, c = None):
         self.lockInterface()
         yield self.cpsc.set_height(self.tip_height+33.9)
-        yield self.cpsc.move_z(self.module_address, self.temperature, self.freq, self.size, -self.steps) 
+        if self.checkBox_Torque.isChecked():
+            yield self.cpsc.move_z(self.module_address, self.temperature, self.freq, self.size, -self.steps, 30)
+        else:
+            yield self.cpsc.move_z(self.module_address, self.temperature, self.freq, self.size, -self.steps)
         self.unlockInterface()
 
     def showServersList(self):
@@ -190,6 +207,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_movePosY.setEnabled(False)
         self.push_moveNegX.setEnabled(False)
         self.push_movePosX.setEnabled(False)
+
+        self.checkBox_Torque.setEnabled(False)
         
     def unlockInterface(self):
         self.lineEdit_Temperature.setEnabled(True)
@@ -205,6 +224,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_movePosY.setEnabled(True)
         self.push_moveNegX.setEnabled(True)
         self.push_movePosX.setEnabled(True)
+
+        self.checkBox_Torque.setEnabled(True)
         
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):

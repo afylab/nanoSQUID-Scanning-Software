@@ -845,9 +845,9 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>235</x>
-      <y>480</y>
+      <y>510</y>
       <width>31</width>
-      <height>191</height>
+      <height>161</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -1022,10 +1022,13 @@ border: 1px solid rgb(100,100,100);
     <property name="geometry">
      <rect>
       <x>225</x>
-      <y>450</y>
+      <y>480</y>
       <width>51</width>
       <height>20</height>
      </rect>
+    </property>
+    <property name="toolTip">
+     <string>Distance moved in the Z direction with the attocubes.</string>
     </property>
     <property name="text">
      <string>0.000u</string>
@@ -1445,6 +1448,28 @@ border-radius: 5px
      <string>Approach 4 F33db4K</string>
     </property>
    </widget>
+   <widget class="QLineEdit" name="lineEdit_CoarseZ">
+    <property name="geometry">
+     <rect>
+      <x>225</x>
+      <y>450</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Coarse steps taken in the Z direction by the JPEs. 1000 steps corresponds to roughly 25 microns at room temperature.</string>
+    </property>
+    <property name="text">
+     <string>0</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
    <zorder>textEdit_2</zorder>
    <zorder>textEdit</zorder>
    <zorder>push_Servers</zorder>
@@ -1504,6 +1529,7 @@ border-radius: 5px
    <zorder>radioButton_minus</zorder>
    <zorder>line_4</zorder>
    <zorder>push_ApproachForFeedback</zorder>
+   <zorder>lineEdit_CoarseZ</zorder>
   </widget>
  </widget>
  <resources>

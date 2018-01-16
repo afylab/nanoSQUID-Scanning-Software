@@ -12,8 +12,9 @@ path = sys.path[0] + r"\LabRADConnect"
 LabRADConnectUI, QtBaseClass = uic.loadUiType(path + r"\LabRADConnect.ui")
 
 class Window(QtGui.QMainWindow, LabRADConnectUI):
-    cxnSuccessful = QtCore.pyqtSignal(dict)
-    cxnDisconnected = QtCore.pyqtSignal(dict)
+    cxnLocal = QtCore.pyqtSignal(dict)
+    cxnRemote = QtCore.pyqtSignal(dict)
+    cxnDisconnected = QtCore.pyqtSignal()
     
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
@@ -24,32 +25,57 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         
         #Initialize variables for all possible server connections in a dictionary
         #Makes multiple connections for browsing data vault in every desired context
-        self.emptyDictionary = {
+        self.emptyLocalDictionary = {
         'cxn'       : False,
         'dv'        : False,
         'ser_server': False,
-        'dac_adc'   : False,       
+        'dac_adc'   : False,
         'hf2li'     : False,
-        'cpsc'      : False
+        'cpsc'      : False,
+        'gpib_server': False, 
+        'gpib_manager': False
+        }
+        
+        self.emptyRemoteDictionary = {
+        'cxn'       : False,
+        'dv'        : False,
+        'gpib_server': False,
+        'gpib_manager': False,
+        'ser_server': False,
+        'ips120'   : False,
+        'ls350'     : False,
+        'lm510'      : False
         }
 
-        #Dictionary that holds all the connections made
-        self.connectionDictionary = self.emptyDictionary.copy()
-        #Dictionary that keeps track of whether or not the module has attempted to connect 
-        self.cxnAttemptDictionary = self.emptyDictionary.copy()
+        #Dictionary that holds all the local connections made
+        self.connectionLocalDictionary = self.emptyLocalDictionary.copy()
+        #Dictionary that holds all the remote connections made
+        self.connectionRemoteDictionary = self.emptyRemoteDictionary.copy()
+        
+        #Dictionary that keeps track of whether or not the module has attempted to connect locally
+        self.cxnAttemptLocalDictionary = self.emptyLocalDictionary.copy()
+        #Dictionary that keeps track of whether or not the module has attempted to connect remotely
+        self.cxnAttemptRemoteDictionary = self.emptyRemoteDictionary.copy()
         
         self.lineEdit_Session.setReadOnly(True)
         self.session = ''
         self.lineEdit_Session.setText(self.session)
         
         self.push_ConnectAll.clicked.connect(self.connectAllServers)
+        self.push_ConnectLocal.clicked.connect(self.connectLocalServers)
+        self.push_ConnectRemote.clicked.connect(self.connectRemoteServers)
         self.push_DisconnectAll.clicked.connect(self.disconnectLabRAD)
+
+        '''
+        Eventually add ability to toggle individual connections. Gotta think
+        about how to emit the dictionary
         self.push_LabRAD.clicked.connect(self.connectLabRAD)
         self.push_DataVault.clicked.connect(self.connectDataVault)
         self.push_SerialServer.clicked.connect(self.connectSerialServer)
         self.push_DACADC.clicked.connect(self.connectDACADC)
         self.push_HF2LI.clicked.connect(self.connectHF2LI)
-        
+        '''
+
         self.push_Session.clicked.connect(self.chooseSession)
     
     def setupAdditionalUi(self):
@@ -78,48 +104,99 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
     def moveDefault(self):    
         self.move(10,170)
         
-    @inlineCallbacks
-    def connectAllServers(self, c = None):
+    def connectAllServers(self):
         #TODO: Lock buttons so prevent clicking during automatic connection
-        self.cxnAttemptDictionary = self.emptyDictionary.copy()
-
-        self.displayConnectingGraphics()
-        #First create connection to labrad. Yielding this command ensures it will be completed before
-        #starting following connections
-        yield self.connectLabRAD()
-
-        #Then create other connects. These are not yielded so that they happen 'simultaneously'
-        self.connectDataVault()
-        self.connectHF2LI()
-        self.connectCPSC()
+        self.connectLocalServers()
+        self.connectRemoteServers()
         
-        self.connectSerialDevices()
-        self.connectGPIBDevices()
+        self.displayAllConnectingGraphics()
         #Unlock buttons once connection is done
-    
+            
     @inlineCallbacks
-    def displayConnectingGraphics(self, c = None):
+    def connectLocalServers(self, c = None):
         try:
-            i = 0
-            while not self.allConnectionsAttmpted():
-                self.push_ConnectAll.setStyleSheet(self.sheets[i])
-                yield self.sleep(0.025)
-                i = (i+1)%81
-            self.push_ConnectAll.setStyleSheet(self.sheets[0])
+            self.cxnAttemptLocalDictionary = self.emptyLocalDictionary.copy()
+
+            #Do connecting graphics for one button at a time?
+            #self.displayConnectingGraphics()
+
+            #First create connection to labrad. Yielding this command ensures it will be completed before
+            #starting following connections
+            yield self.connectLabRAD()
+
+            #First connect stand alone servers
+            self.connectDataVault()
+            self.connectHF2LI()
+            self.connectCPSC()
+            
+            #Then connect servers with dependencies on GPIB or Serial servers
+            self.connectSerialDevices()
+            self.connectGPIBDevices()
+            
+        except Exception as inst:
+            print inst
+            
+    @inlineCallbacks
+    def connectRemoteServers(self, c = None):
+        try:
+            self.cxnAttemptRemoteDictionary = self.emptyRemoteDictionary.copy()
+
+            #Do connecting graphics for one button at a time?
+            #self.displayConnectingGraphics()
+
+            #First create connection to labrad. Yielding this command ensures it will be completed before
+            #starting following connections
+            yield self.connectRemoteLabRAD()
+
+            #First connect stand alone servers
+            self.connectRemoteDataVault()
+            
+            #Then connect servers with dependencies on GPIB or Serial servers
+            self.connectRemoteSerialDevices()
+            self.connectRemoteGPIBDevices()
+            
         except Exception as inst:
             print inst
 
+    @inlineCallbacks
+    def displayAllConnectingGraphics(self, c = None):
+        i = 0
+        while not self.allConnectionsAttmpted():
+            self.push_ConnectAll.setStyleSheet(self.sheets[i])
+            yield self.sleep(0.025)
+            i = (i+1)%81
+            if i == 0:
+                print self.cxnAttemptRemoteDictionary
+                print self.cxnAttemptLocalDictionary
+        self.push_ConnectAll.setStyleSheet(self.sheets[0])
+        
     def allConnectionsAttmpted(self):
-        allCxnAttempted = True
-        cxnAttempts = self.cxnAttemptDictionary.values()
-        for attempt in cxnAttempts:
-            allCxnAttempted = allCxnAttempted * attempt
+        allCxnAttempted = self.localConnectionsAttempted() * self.remoteConnectionsAttempted()
         return allCxnAttempted
+        
+    def localConnectionsAttempted(self):
+        localCxnAttempted = True
+        cxnAttempts = self.cxnAttemptLocalDictionary.values()
+        for attempt in cxnAttempts:
+            localCxnAttempted = localCxnAttempted * attempt
+        return localCxnAttempted
 
-    def emitConnectionDictionary(self):
+    def remoteConnectionsAttempted(self):
+        remoteCxnAttempted = True
+        cxnAttempts = self.cxnAttemptRemoteDictionary.values()
+        for attempt in cxnAttempts:
+            remoteCxnAttempted = remoteCxnAttempted * attempt
+        return remoteCxnAttempted
+        
+    def emitLocalConnectionDictionary(self):
         #Emits a connection dictionary only if all the connections were attempted
-        if self.allConnectionsAttmpted():
-            self.cxnSuccessful.emit(self.connectionDictionary)
+        if self.localConnectionsAttempted():
+            self.cxnLocal.emit(self.connectionLocalDictionary)
+            
+    def emitRemoteConnectionDictionary(self):
+        #Emits a connection dictionary only if all the connections were attempted
+        if self.remoteConnectionsAttempted():
+            self.cxnRemote.emit(self.connectionRemoteDictionary)
 
     @inlineCallbacks
     def disconnectLabRAD(self, c = None):
@@ -128,7 +205,8 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         except:
             pass
 
-        self.connectionDictionary = self.emptyDictionary.copy()
+        self.connectionLocalDictionary = self.emptyLocalDictionary.copy()
+        self.connectionRemoteDictionary = self.emptyRemoteDictionary.copy()
         
         self.lineEdit_Session.setText('')
 
@@ -150,19 +228,51 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.push_CPSC.setStyleSheet("#push_CPSC{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.label_CPSC_status.setText('Not connected')
+        self.push_GPIBServer.setStyleSheet("#push_GPIBServer{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_GPIBServer_status.setText('Not connected')
+        self.push_GPIBMan.setStyleSheet("#push_GPIBMan{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_GPIBMan_status.setText('Not connected')
         
-        self.cxnDisconnected.emit(self.connectionDictionary)   
+        self.push_remoteLabRAD.setStyleSheet("#push_remoteLabRAD{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_remoteLabRAD_status.setText('Not connected')
+        self.push_remoteDataVault.setStyleSheet("#push_remoteDataVault{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_remoteDataVault_status.setText('Not connected')
+        self.push_remoteSerialServer.setStyleSheet("#push_remoteSerialServer{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_remoteSerialServer_status.setText('Not connected')
+        self.push_LM510.setStyleSheet("#push_LM510{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_LM510_status.setText('Not connected')
+        self.push_remoteGPIBMan.setStyleSheet("#push_remoteGPIBMan{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_remoteGPIBMan_status.setText('Not connected')
+        self.push_remoteGPIBServer.setStyleSheet("#push_remoteGPIBServer{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_remoteGPIBServer_status.setText('Not connected')
+        self.push_IPS120.setStyleSheet("#push_IPS120{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_IPS120_status.setText('Not connected')
+        self.push_LS350.setStyleSheet("#push_LS350{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_LS350_status.setText('Not connected')
+        
+        self.cxnDisconnected.emit()   
 
 #--------------------------------------------------------------------------------------------------------------------------#
             
-    """ The following section has the methods for connecting independent devices."""
+    """ The following section has the methods for connecting independent local devices."""
 
     @inlineCallbacks
     def connectLabRAD(self, c = None):
         from labrad.wrappers import connectAsync
         try:
-            cxn = yield connectAsync(name = 'nSOT Scanner Labrad Connection')
-            self.connectionDictionary['cxn'] = cxn
+            #Connects to the manager on the local computer. 
+            cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            self.connectionLocalDictionary['cxn'] = cxn
             self.label_LabRAD_status.setText('Connected')
             self.push_LabRAD.setStyleSheet("#push_LabRAD{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -170,40 +280,40 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.label_LabRAD_status.setText('Connection Failed.')
             self.push_LabRAD.setStyleSheet("#push_LabRAD{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-        self.cxnAttemptDictionary['cxn'] = True
-        self.emitConnectionDictionary()
+        self.cxnAttemptLocalDictionary['cxn'] = True
+        self.emitLocalConnectionDictionary()
         
     @inlineCallbacks
     def connectDataVault(self, c = None):
-        if self.connectionDictionary['cxn'] is False:
+        if self.connectionLocalDictionary['cxn'] is False:
             self.push_DataVault.setStyleSheet("#push_DataVault{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             self.label_DataVault_status.setText('Not connected')
         else: 
-            cxn = self.connectionDictionary['cxn']
+            cxn = self.connectionLocalDictionary['cxn']
             try:
                 dv = yield cxn.data_vault
                 self.push_DataVault.setStyleSheet("#push_DataVault{" + 
                 "background: rgb(0,170,0);border-radius: 4px;}")
                 self.label_DataVault_status.setText('Connected')
-                self.connectionDictionary['dv'] = dv
+                self.connectionLocalDictionary['dv'] = dv
                 self.session = r'\.dataVault'
                 self.lineEdit_Session.setText(self.session)
             except:
                 self.push_DataVault.setStyleSheet("#push_DataVault{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_DataVault_status.setText('Connection Failed')
-        self.cxnAttemptDictionary['dv'] = True
-        self.emitConnectionDictionary()
+        self.cxnAttemptLocalDictionary['dv'] = True
+        self.emitLocalConnectionDictionary()
 
     @inlineCallbacks
     def connectHF2LI(self, c = None):
-        if self.connectionDictionary['cxn'] is False:
+        if self.connectionLocalDictionary['cxn'] is False:
             self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             self.label_HF2LI_status.setText('Not connected')
         else: 
-            cxn = self.connectionDictionary['cxn']
+            cxn = self.connectionLocalDictionary['cxn']
             try:
                 hf = yield cxn.hf2li_server
                 try: 
@@ -212,7 +322,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                     self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
                     "background: rgb(0,170,0);border-radius: 4px;}")
                     self.label_HF2LI_status.setText('Connected')
-                    self.connectionDictionary['hf2li'] = hf
+                    self.connectionLocalDictionary['hf2li'] = hf
                 except:
                     self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
                     "background: rgb(161,0,0);border-radius: 4px;}")
@@ -221,17 +331,17 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_HF2LI_status.setText('Connection Failed')
-        self.cxnAttemptDictionary['hf2li'] = True
-        self.emitConnectionDictionary()
+        self.cxnAttemptLocalDictionary['hf2li'] = True
+        self.emitLocalConnectionDictionary()
 
     @inlineCallbacks
     def connectCPSC(self, c = None):
-        if self.connectionDictionary['cxn'] is False:
+        if self.connectionLocalDictionary['cxn'] is False:
             self.push_CPSC.setStyleSheet("#push_CPSC{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             self.label_CPSC_status.setText('Not connected')
         else: 
-            cxn = self.connectionDictionary['cxn']
+            cxn = self.connectionLocalDictionary['cxn']
             try:
                 cpsc = yield cxn.cpsc_server
                 dev_connected = yield cpsc.detect_device()
@@ -239,7 +349,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                     self.push_CPSC.setStyleSheet("#push_CPSC{" + 
                     "background: rgb(0,170,0);border-radius: 4px;}")
                     self.label_CPSC_status.setText('Connected')
-                    self.connectionDictionary['cpsc'] = cpsc
+                    self.connectionLocalDictionary['cpsc'] = cpsc
                 else:
                     self.push_CPSC.setStyleSheet("#push_CPSC{" + 
                     "background: rgb(161,0,0);border-radius: 4px;}")
@@ -248,11 +358,55 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 self.push_CPSC.setStyleSheet("#push_CPSC{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_CPSC_status.setText('Connection Failed')
-        self.cxnAttemptDictionary['cpsc'] = True
-        self.emitConnectionDictionary()
+        self.cxnAttemptLocalDictionary['cpsc'] = True
+        self.emitLocalConnectionDictionary()
+
 #--------------------------------------------------------------------------------------------------------------------------#
             
-    """ The following section has the methods for connecting Serial devices."""
+    """ The following section has the methods for connecting independent remote devices."""
+    @inlineCallbacks
+    def connectRemoteLabRAD(self, c = None):
+        from labrad.wrappers import connectAsync
+        try:
+            #Connects to the manager on the 4K system monitoring computer. Eventually add a way to
+            #input the name of the connection
+            cxn = yield connectAsync(host = '4KMonitor', password = 'pass')
+            self.connectionRemoteDictionary['cxn'] = cxn
+            self.label_remoteLabRAD_status.setText('Connected')
+            self.push_remoteLabRAD.setStyleSheet("#push_remoteLabRAD{" + 
+            "background: rgb(0, 170, 0);border-radius: 4px;}")
+        except: 
+            self.label_remoteLabRAD_status.setText('Connection Failed.')
+            self.push_remoteLabRAD.setStyleSheet("#push_remoteLabRAD{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+        self.cxnAttemptRemoteDictionary['cxn'] = True
+        self.emitRemoteConnectionDictionary()
+    
+    @inlineCallbacks
+    def connectRemoteDataVault(self, c = None):
+        if self.connectionRemoteDictionary['cxn'] is False:
+            self.push_remoteDataVault.setStyleSheet("#push_remoteDataVault{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+            self.label_remoteDataVault_status.setText('Not connected')
+        else: 
+            cxn = self.connectionRemoteDictionary['cxn']
+            try:
+                dv = yield cxn.data_vault
+                self.push_remoteDataVault.setStyleSheet("#push_remoteDataVault{" + 
+                "background: rgb(0,170,0);border-radius: 4px;}")
+                self.label_remoteDataVault_status.setText('Connected')
+                self.connectionRemoteDictionary['dv'] = dv
+            except:
+                self.push_remoteDataVault.setStyleSheet("#push_remoteDataVault{" + 
+                "background: rgb(161,0,0);border-radius: 4px;}")
+                self.label_remoteDataVault_status.setText('Connection Failed')
+        self.cxnAttemptRemoteDictionary['dv'] = True
+        self.emitRemoteConnectionDictionary()
+
+
+#--------------------------------------------------------------------------------------------------------------------------#
+            
+    """ The following section has the methods for connecting local Serial devices."""
 
     @inlineCallbacks
     def connectSerialDevices(self, c = None):
@@ -261,65 +415,301 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
 
     @inlineCallbacks
     def connectSerialServer(self, c = None):
-        if self.connectionDictionary['cxn'] is False:
+        if self.connectionLocalDictionary['cxn'] is False:
             self.push_SerialServer.setStyleSheet("#push_SerialServer{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             self.label_SerialServer_status.setText('Not connected')
         else: 
+            cxn = self.connectionLocalDictionary['cxn']
             try:
-                ser_server = yield self.cxn.marec_pc_serial_server
+                ser_server = yield cxn.nanosquid_ws_serial_server
                 self.push_SerialServer.setStyleSheet("#push_SerialServer{" + 
                 "background: rgb(0,170,0);border-radius: 4px;}")
                 self.label_SerialServer_status.setText('Connected')
-                self.connectionDictionary['ser_server'] = ser_server
+                self.connectionLocalDictionary['ser_server'] = ser_server
             except:
                 self.push_SerialServer.setStyleSheet("#push_SerialServer{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_SerialServer_status.setText('Connection Failed')
-        self.cxnAttemptDictionary['ser_server'] = True
-        self.emitConnectionDictionary()
+        self.cxnAttemptLocalDictionary['ser_server'] = True
+        self.emitLocalConnectionDictionary()
 
     @inlineCallbacks
     def connectDACADC(self, c = None):
-        if self.connectionDictionary['ser_server'] is False:
+        if self.connectionLocalDictionary['ser_server'] is False:
             self.push_DACADC.setStyleSheet("#push_DACADC{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             self.label_DACADC_status.setText('Not connected')
         else: 
+            cxn = self.connectionLocalDictionary['cxn']
             try:
-                dac = yield self.cxn.dac_adc
+                dac = yield cxn.dac_adc
             except:
                 self.push_DACADC.setStyleSheet("#push_DACADC{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_DACADC_status.setText('Connection Failed')
             try: 
-                yield self.dac.select_device()
+                yield dac.select_device()
                 self.push_DACADC.setStyleSheet("#push_DACADC{" + 
                 "background: rgb(0,170,0);border-radius: 4px;}")
                 self.label_DACADC_status.setText('Connected')
-                self.connectionDictionary['dac_adc'] = dac
+                self.connectionLocalDictionary['dac_adc'] = dac
             except:
                 self.push_DACADC.setStyleSheet("#push_DACADC{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_DACADC_status.setText('No device detected')
-        self.cxnAttemptDictionary['dac_adc'] = True
-        self.emitConnectionDictionary()
+        self.cxnAttemptLocalDictionary['dac_adc'] = True
+        self.emitLocalConnectionDictionary()
+
 
 #--------------------------------------------------------------------------------------------------------------------------#
             
-    """ The following section has the methods for connecting GPIB devices."""
+    """ The following section has the methods for connecting remote Serial devices."""
+
+    @inlineCallbacks
+    def connectRemoteSerialDevices(self, c = None):
+        yield self.connectRemoteSerialServer()
+        self.connectRemoteLM510()
+
+    @inlineCallbacks
+    def connectRemoteSerialServer(self, c = None):
+        try:
+            if self.connectionRemoteDictionary['cxn'] is False:
+                self.push_remoteSerialServer.setStyleSheet("#push_remoteSerialServer{" + 
+                "background: rgb(144, 140, 9);border-radius: 4px;}")
+                self.label_remoteSerialServer_status.setText('Not connected')
+            else: 
+                cxn = self.connectionRemoteDictionary['cxn']
+                try:
+                    ser_server = yield cxn.minint_o9n40pb_serial_server
+                    self.push_remoteSerialServer.setStyleSheet("#push_remoteSerialServer{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_remoteSerialServer_status.setText('Connected')
+                    self.connectionRemoteDictionary['ser_server'] = ser_server
+                except:
+                    self.push_remoteSerialServer.setStyleSheet("#push_remoteSerialServer{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_remoteSerialServer_status.setText('Connection Failed')
+            self.cxnAttemptRemoteDictionary['ser_server'] = True
+            self.emitRemoteConnectionDictionary()
+        except Exception as inst:
+            print inst
+
+    @inlineCallbacks
+    def connectRemoteLM510(self, c = None):
+        try:
+            if self.connectionRemoteDictionary['ser_server'] is False:
+                self.push_LM510.setStyleSheet("#push_LM510{" + 
+                "background: rgb(144, 140, 9);border-radius: 4px;}")
+                self.label_LM510_status.setText('Not connected')
+            else: 
+                cxn = self.connectionRemoteDictionary['cxn']
+                try:
+                    lm = yield cxn.lm_510
+                except:
+                    self.push_LM510.setStyleSheet("#push_LM510{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_LM510_status.setText('Connection Failed')
+                try: 
+                    yield lm.select_device()
+                    self.push_LM510.setStyleSheet("#push_LM510{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_LM510_status.setText('Connected')
+                    self.connectionRemoteDictionary['lm510'] = lm
+                except:
+                    self.push_LM510.setStyleSheet("#push_LM510{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_LM510_status.setText('No device detected')
+            self.cxnAttemptRemoteDictionary['lm510'] = True
+            self.emitRemoteConnectionDictionary()
+        except Exception as inst:
+            print inst
+
+#--------------------------------------------------------------------------------------------------------------------------#
+            
+    """ The following section has the methods for connecting local GPIB devices."""
 
     @inlineCallbacks
     def connectGPIBDevices(self, c = None):
-        yield self.sleep(1)
+        yield self.connectGPIBServer()
+        yield self.connectGPIBManager()
+        #add gpib devices here
 
+    @inlineCallbacks
+    def connectGPIBServer(self, c = None):
+        #TODO
+        #Get local information to get GPIB bus server name
+        try:
+            if self.connectionLocalDictionary['cxn'] is False:
+                self.push_GPIBServer.setStyleSheet("#push_GPIBServer{" + 
+                "background: rgb(144, 140, 9);border-radius: 4px;}")
+                self.label_GPIBServer_status.setText('Not connected')
+            else: 
+                cxn = self.connectionLocalDictionary['cxn']
+                try:
+                    gpib_server = yield cxn.nanosquid_ws_gpib_bus
+                    self.push_GPIBServer.setStyleSheet("#push_GPIBServer{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_GPIBServer_status.setText('Connected')
+                    self.connectionLocalDictionary['gpib_server'] = gpib_server
+                except Exception as inst:
+                    self.push_GPIBServer.setStyleSheet("#push_GPIBServer{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_GPIBServer_status.setText('Connection Failed')
+            self.cxnAttemptLocalDictionary['gpib_server'] = True
+            self.emitLocalConnectionDictionary()
+        except Exception as inst:
+            print inst
+            
+    @inlineCallbacks
+    def connectGPIBManager(self, c = None):
+        try:
+            if self.connectionLocalDictionary['cxn'] is False:
+                self.push_GPIBMan.setStyleSheet("#push_GPIBMan{" + 
+                "background: rgb(144, 140, 9);border-radius: 4px;}")
+                self.label_GPIBMan_status.setText('Not connected')
+            else: 
+                cxn = self.connectionLocalDictionary['cxn']
+                try:
+                    gpib_man = yield cxn.gpib_device_manager
+                    self.push_GPIBMan.setStyleSheet("#push_GPIBMan{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_GPIBMan_status.setText('Connected')
+                    self.connectionLocalDictionary['gpib_manager'] = gpib_man
+                except:
+                    self.push_GPIBMan.setStyleSheet("#push_GPIBMan{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_GPIBMan_status.setText('Connection Failed')
+            self.cxnAttemptLocalDictionary['gpib_manager'] = True
+            self.emitLocalConnectionDictionary()
+        except Exception as inst:
+            print inst
+            
+#--------------------------------------------------------------------------------------------------------------------------#
+            
+    """ The following section has the methods for connecting remote GPIB devices."""
+
+    @inlineCallbacks
+    def connectRemoteGPIBDevices(self, c = None):
+        yield self.connectRemoteGPIBServer()
+        yield self.connectRemoteGPIBManager()
+        self.connectRemoteIPS120()
+        self.connectRemoteLS350()
+
+    @inlineCallbacks
+    def connectRemoteGPIBServer(self, c = None):
+        try:
+            if self.connectionRemoteDictionary['cxn'] is False:
+                self.push_remoteGPIBServer.setStyleSheet("#push_remoteGPIBServer{" + 
+                "background: rgb(144, 140, 9);border-radius: 4px;}")
+                self.label_remoteGPIBServer_status.setText('Not connected')
+            else: 
+                cxn = self.connectionRemoteDictionary['cxn']
+                try:
+                    gpib_server = yield cxn.minint_o9n40pb_gpib_bus
+                    self.push_remoteGPIBServer.setStyleSheet("#push_remoteGPIBServer{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_remoteGPIBServer_status.setText('Connected')
+                    self.connectionRemoteDictionary['gpib_server'] = gpib_server
+                except Exception as inst:
+                    self.push_remoteGPIBServer.setStyleSheet("#push_remoteGPIBServer{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_remoteGPIBServer_status.setText('Connection Failed')
+            self.cxnAttemptRemoteDictionary['gpib_server'] = True
+            self.emitRemoteConnectionDictionary()
+        except Exception as inst:
+            print inst
+            
+    @inlineCallbacks
+    def connectRemoteGPIBManager(self, c = None):
+        try:
+            if self.connectionRemoteDictionary['cxn'] is False:
+                self.push_remoteGPIBMan.setStyleSheet("#push_remoteGPIBMan{" + 
+                "background: rgb(144, 140, 9);border-radius: 4px;}")
+                self.label_remoteGPIBMan_status.setText('Not connected')
+            else: 
+                cxn = self.connectionRemoteDictionary['cxn']
+                try:
+                    gpib_man = yield cxn.gpib_device_manager
+                    self.push_remoteGPIBMan.setStyleSheet("#push_remoteGPIBMan{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_remoteGPIBMan_status.setText('Connected')
+                    self.connectionRemoteDictionary['gpib_manager'] = gpib_man
+                except:
+                    self.push_remoteGPIBMan.setStyleSheet("#push_remoteGPIBMan{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_remoteGPIBMan_status.setText('Connection Failed')
+            self.cxnAttemptRemoteDictionary['gpib_manager'] = True
+            self.emitRemoteConnectionDictionary()
+        except Exception as inst:
+            print inst
+
+    @inlineCallbacks
+    def connectRemoteIPS120(self, c = None):
+        try:
+            if self.connectionRemoteDictionary['gpib_server'] is False or self.connectionRemoteDictionary['gpib_manager'] is False:
+                self.push_IPS120.setStyleSheet("#push_IPS120{" + 
+                "background: rgb(144, 140, 9);border-radius: 4px;}")
+                self.label_IPS120_status.setText('Not connected')
+            else: 
+                cxn = self.connectionRemoteDictionary['cxn']
+                try:
+                    ips = yield cxn.ips120_power_supply
+                except:
+                    self.push_IPS120.setStyleSheet("#push_IPS120{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_IPS120_status.setText('Connection Failed')
+                try: 
+                    yield ips.select_device()
+                    self.push_IPS120.setStyleSheet("#push_IPS120{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_IPS120_status.setText('Connected')
+                    self.connectionRemoteDictionary['IPS120'] = ips
+                except:
+                    self.push_IPS120.setStyleSheet("#push_IPS120{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_IPS120_status.setText('No device detected')
+            self.cxnAttemptRemoteDictionary['ips120'] = True
+            self.emitRemoteConnectionDictionary()
+        except Exception as inst:
+            print inst
+
+    @inlineCallbacks
+    def connectRemoteLS350(self, c = None):
+        try:
+            if self.connectionRemoteDictionary['gpib_server'] is False or self.connectionRemoteDictionary['gpib_manager'] is False:
+                self.push_LS350.setStyleSheet("#push_LS350{" + 
+                "background: rgb(144, 140, 9);border-radius: 4px;}")
+                self.label_LS350_status.setText('Not connected')
+            else: 
+                cxn = self.connectionRemoteDictionary['cxn']
+                try:
+                    ls = yield cxn.lakeshore_350
+                except:
+                    self.push_LS350.setStyleSheet("#push_LS350{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_LS350_status.setText('Connection Failed')
+                try: 
+                    yield ls.select_device()
+                    self.push_LS350.setStyleSheet("#push_LS350{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_LS350_status.setText('Connected')
+                    self.connectionRemoteDictionary['ls350'] = ls
+                except:
+                    self.push_LS350.setStyleSheet("#push_LS350{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_LS350_status.setText('No device detected')
+            self.cxnAttemptRemoteDictionary['ls350'] = True
+            self.emitRemoteConnectionDictionary()
+        except Exception as inst:
+            print inst
 #--------------------------------------------------------------------------------------------------------------------------#
             
     """ The following section has the methods for choosing the datavault location."""
            
     @inlineCallbacks
     def chooseSession(self, c = None):
-        if self.connectionDictionary['dv'] is False:
+        if self.connectionLocalDictionary['dv'] is False:
             msgBox = QtGui.QMessageBox(self)
             msgBox.setIcon(QtGui.QMessageBox.Information)
             msgBox.setWindowTitle('Data Vault Connection Missing')
@@ -328,7 +718,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
             msgBox.exec_()
         else: 
-            dv = self.connectionDictionary['dv']
+            dv = self.connectionLocalDictionary['dv']
             dvExplorer = dirExplorer.dataVaultExplorer(dv, self.reactor, self)
             if dvExplorer.exec_():
                 fileName, directory, variables = dvExplorer.dirFileVars()
@@ -345,9 +735,8 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                     print inst.args
                     print inst
                     
-                
     def closeEvent(self, e):
-        pass
+        self.disconnectLabRAD()
         
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows

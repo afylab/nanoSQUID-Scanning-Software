@@ -41,43 +41,70 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.x = -2.5e-6
         self.y = -2.5e-6
         #Center of the square
-        self.Xc = 0
-        self.Yc = 0
+        self.Xc = 0.0
+        self.Yc = 0.0
         #Height and width of scanning square
         self.H = 5e-6
         self.W = 5e-6
         #Angle of scanning square
-        self.angle = 0
+        self.angle = 0.0
         
         #Keep track of plotted data location / angle so that we can also plot it in scan coordinates
-        self.currAngle = 0
-        self.currXc = 0
-        self.currYc = 0
+        self.currAngle = 0.0
+        self.currXc = 0.0
+        self.currYc = 0.0
         self.currH = 2e-5
         self.currW = 2e-5
         self.curr_x = -1e-5
         self.curr_y = -1e-5
-        
+        self.currLine = 0
+
         #Number of pixels taken in each direction, and the ratio of pixels to lines
         self.pixels = 256
         self.lines = 256
         self.PixelsAspectRatio = 1.0
         
         #Measurement time information
-        self.FrameTime = 16.38
+        self.FrameTime = 32.76
         self.linearSpeed = 78.13e-6
         self.lineTime = 64e-3
         
-        #Conversion between meters and volts input to the attocubes
-        self.xy_volts_to_meters = 3/ 50e-6 #24 microns corresponds to 3 volts, units of volts per meter. Eventually value should depend on temperature
-        
+        '''
+        #The following should no longer be necessary anywhere
+        self.x_volts_to_meters = 3/ 50e-6 #50 microns corresponds to 3 volts, units of volts per meter. Default room temperature
+        self.y_volts_to_meters = 3/ 50e-6
+        self.z_volts_to_meters = 3/ 24e-6 #24 microns corresponds to 3 volts, units of volts per meter. Default room temperature
+        self.x_meters_max = 50e-6
+        self.y_meters_max = 50e-6
+        self.z_meters_max = 24e-6
+        self.x_volts_max = 3
+        self.y_volts_max = 3
+        self.z_volts_max = 3
+        '''
+
         #Initial attocube position
-        self.Atto_X_Voltage = 0
-        self.Atto_Y_Voltage = 0
+        self.Atto_X_Voltage = 0.0
+        self.Atto_Y_Voltage = 0.0
+        self.Atto_Z_Voltage = 0.0
+        
+        #Tilt in x and y direction
+        self.x_tilt = 0
+        self.y_tilt = 0
         
         #Flag to indicate whether or not we're scanning
         self.scanning = False
         
+        #Name of the file to be saved
+        self.fileName = 'unnamed'
+
+        #Initialize the Scan Mode
+        self.scanMode = 'Constant Height'
+        self.FeedbackReady = False
+        self.ConstantHeightReady = False
+
+        #Channel 0 corresponds to height, and 1 to magnetic field
+        self.channel = 0
+                
         #Set up rest of UI (must be done after initializing default values)
         self.setupAdditionalUi()
         self.setupScanningArea()
@@ -106,11 +133,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_Lines.editingFinished.connect(self.updateLines)
         self.lineEdit_LineTime.editingFinished.connect(self.updateLineTime)
         self.lineEdit_Linear.editingFinished.connect(self.updateLinearSpeed)
-                
+        self.lineEdit_FileName.editingFinished.connect(self.updateFileName)
+        self.lineEdit_XTilt.editingFinished.connect(self.updateXTilt)
+        self.lineEdit_YTilt.editingFinished.connect(self.updateYTilt)
+
         self.checkBox.toggled.connect(self.toggleROIVisibility)
                 
         self.comboBox_Processing.activated[str].connect(self.selectProcessing)
         self.comboBox_PostProcessing.activated[str].connect(self.selectPostProcessing)
+        self.comboBox_scanMode.activated[str].connect(self.updateScanMode)
+        self.comboBox_Channel.activated[str].connect(self.selectChannel)
         
         #ROI in trace plot
         self.ROI.sigRegionChanged.connect(self.updateROI)
@@ -122,12 +154,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
         
-        #Initialize all the labrad connections as none
-        self.cxn = None
-        self.dv = None
-        self.dac = None
-        self.hf = None
-        self.ips = None
+        #Initialize all the labrad connections as false
+        self.cxn = False
+        self.dv = False
+        self.dac = False
+        self.hf = False
+        self.ips = False
         
         self.lockInterface()
         
@@ -138,6 +170,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         try:
             self.cxn = dict['cxn']
             self.dac = dict['dac_adc']
+            self.dv = dict['dv']
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
         except:
@@ -149,14 +182,17 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         elif not self.dac:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
+        elif not self.dv:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
         else:
             self.unlockInterface()
             
     def disconnectLabRAD(self):
-        self.dv = None
-        self.cxn = None
-        self.ips = None
-        self.dac = None
+        self.dv = False
+        self.cxn = False
+        self.ips = False
+        self.dac = False
         self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             
@@ -169,6 +205,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_Linear.setReadOnly(False)
         self.lineEdit_LineTime.setReadOnly(True)
         
+        #Have drop down view be wider than the real view to see all the entries
+        self.comboBox_PostProcessing.view().setMinimumWidth(130)
+
         #Set up main plot
         self.view = pg.PlotItem(title="Trace")
         self.view.setLabel('left',text='Y position',units = 'm')
@@ -211,7 +250,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.view2.enableAutoRange(self.view2.getViewBox().XYAxes, enable = False)
         self.MiniPlot2D = pg.ImageView(parent = self.centralwidget, view = self.view2)
         self.view2.invertY(False)
-        self.MiniPlot2D.setGeometry(QtCore.QRect(5, 500, 228, 228))
+        self.MiniPlot2D.setGeometry(QtCore.QRect(5, 715, 228, 228))
         self.MiniPlot2D.ui.roiBtn.hide()
         self.MiniPlot2D.ui.menuBtn.hide()
         self.MiniPlot2D.ui.histogram.item.gradient.loadPreset('bipolar')
@@ -229,15 +268,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Determine plot scales
         self.xscale, self.yscale = self.currW / self.lines, self.currH / self.pixels
         
-        #Eventually default dataset will be 256x256x3 (Z info, B info, and T info)
-        #Create default dataset for initial plots
-        pxsize = (self.lines,self.pixels)
+        #Create default dataset for initial plots. lines x pixels x 2 (Z info and B info)
+        pxsize = (2, self.lines,self.pixels)
         #data and data_retrace contain only the raw data
         self.data = np.zeros(pxsize)
         self.data_retrace = np.zeros(pxsize)
         #plotData and plotData_retrace contain processed data for graphing
-        self.plotData = np.zeros(pxsize)
-        self.plotData_retrace = np.zeros(pxsize)
+        self.plotData = np.zeros(pxsize)[0]
+        self.plotData_retrace = np.zeros(pxsize)[0]
         
         #Load default empty image into all three plots
         self.Plot2D.setImage(self.plotData, autoRange = False, autoLevels = False, pos=[self.curr_x, self.curr_y],scale=[self.xscale, self.yscale])
@@ -256,6 +294,23 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.view.sigRangeChanged.connect(self.traceRangeChanged)
         self.view3.sigRangeChanged.connect(self.retraceRangeChanged)
         
+        #Set up UI that isn't easily done from Qt Designer
+        self.traceLinePlot = pg.PlotWidget(parent = self)
+        self.traceLinePlot.setGeometry(240,745,630,200)
+        self.traceLinePlot.setLabel('left', 'Z Voltage', units = 'V')
+        self.traceLinePlot.setLabel('bottom', 'Position', units = 'm')
+        self.traceLinePlot.showAxis('right', show = True)
+        self.traceLinePlot.showAxis('top', show = True)
+        self.PlotArea_3.hide()
+
+        self.retraceLinePlot = pg.PlotWidget(parent = self)
+        self.retraceLinePlot.setGeometry(910,745,630,200)
+        self.retraceLinePlot.setLabel('left', 'Z Voltage', units = 'V')
+        self.retraceLinePlot.setLabel('bottom', 'Position', units = 'm')
+        self.retraceLinePlot.showAxis('right', show = True)
+        self.retraceLinePlot.showAxis('top', show = True)
+        self.PlotArea_4.hide()
+
     def setupScanningArea(self):
         #Testing stuff
         self.ROI = pg.RectROI((-2.5e-6,-2.5e-6),(5e-6,5e-6), movable = True)
@@ -287,6 +342,33 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def updateHistogramLookup(self,hist):
         self.MiniPlot2D.ui.histogram.imageItem().setLookupTable(hist.getLookupTable)
         self.Plot2D.ui.histogram.imageItem().setLookupTable(hist.getLookupTable)
+
+    def set_voltage_calibration(self, calibration):
+        self.x_volts_to_meters = float(calibration[1])
+        self.y_volts_to_meters = float(calibration[2])
+        self.z_volts_to_meters = float(calibration[3])
+        self.x_meters_max = float(calibration[4])
+        self.y_meters_max = float(calibration[5])
+        self.z_meters_max = float(calibration[6])
+        self.x_volts_max = float(calibration[7])
+        self.y_volts_max = float(calibration[8])
+        self.z_volts_max = float(calibration[9])
+
+        print self.x_volts_to_meters
+        print self.y_volts_to_meters
+        print self.z_volts_to_meters 
+        print self.x_meters_max 
+        print self.y_meters_max
+        print self.z_meters_max 
+        print self.x_volts_max
+        print self.y_volts_max 
+        print self.z_volts_max 
+        print 'ScanControl Set'
+
+        #self.view2.setXRange(-self.x_meters_max/2 - 2.0e-7,self.x_meters_max/2,0)
+        #self.view2.setYRange(-self.y_meters_max/2,self.y_meters_max/2 + 2.0e-7,0)
+
+
         
 #----------------------------------------------------------------------------------------------#         
     """ The following section connects actions related to buttons on the Scan Control window."""
@@ -311,12 +393,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
     def toggleSpeedLock(self):
         if self.LinearSpeedLocked == False:
-            self.push_SpeedLock.move(170,299)
+            self.push_SpeedLock.move(170,322)
             self.LinearSpeedLocked = True
             self.lineEdit_Linear.setReadOnly(True)
             self.lineEdit_LineTime.setReadOnly(False)
         else:
-            self.push_SpeedLock.move(170,329)
+            self.push_SpeedLock.move(170,352)
             self.LinearSpeedLocked = False
             self.lineEdit_Linear.setReadOnly(False)
             self.lineEdit_LineTime.setReadOnly(True)
@@ -364,15 +446,42 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.moveROI3()
             self.push_scanCoordinates.setText('View Atto Coord.')
             
-    def selectProcessing(self, str):
-        self.dataProcessing = str
+    def selectProcessing(self, string):
+        self.dataProcessing = string
+        self.refreshPlotData()
+
+    def selectPostProcessing(self, string):
+        self.dataPostProcessing = string
         
-    def selectPostProcessing(self, str):
-        self.dataPostProcessing = str
+    def selectChannel(self,string):
+        if string == 'Z (V)':
+            self.channel = 0
+        elif string == 'B (T)':
+            self.channel = 1
+        self.refreshPlotData()
+        
+    def refreshPlotData(self):
+        if self.dataProcessing == 'Raw':
+            self.plotData = np.copy(self.data[self.channel])
+            self.plotData_retrace = np.copy(self.data_retrace[self.channel])
+        elif self.dataProcessing == 'Subtract Average':
+            self.plotData = processImageData(np.copy(self.data[self.channel]), 'Subtract Line Average')
+            self.plotData_retrace = processImageData(np.copy(self.data_retrace[self.channel]), 'Subtract Line Average')
+        elif self.dataProcessing == 'Subtract Linear Fit':
+            self.plotData = processImageData(np.copy(self.data[self.channel]), 'Subtract Line Linear')
+            self.plotData_retrace = processImageData(np.copy(self.data_retrace[self.channel]), 'Subtract Line Linear')
+        elif self.dataProcessing == 'Subtract Parabolic Fit':
+            self.plotData = processImageData(np.copy(self.data[self.channel]), 'Subtract Line Quadratic')
+            self.plotData_retrace = processImageData(np.copy(self.data_retrace[self.channel]), 'Subtract Line Quadratic')
+        self.update_gph()
         
     def apply2DFit(self):
-        self.plotData = processImageData(np.copy(self.data), self.dataPostProcessing)
-        self.plotData_retrace = processImageData(np.copy(self.data_retrace), self.dataPostProcessing)
+        if self.dataPostProcessing == 'Raw':
+            self.plotData = np.copy(self.data[self.channel])
+            self.plotData_retrace = np.copy(self.data_retrace[self.channel])
+        else:
+            self.plotData = processImageData(np.copy(self.plotData), self.dataPostProcessing)
+            self.plotData_retrace = processImageData(np.copy(self.plotData_retrace), self.dataPostProcessing)
         self.update_gph()
             
     #----------------------------------------------------------------------------------------------#
@@ -440,14 +549,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.Yc = self.y + self.H*np.cos(self.angle*np.pi/180)/2 + self.W*np.sin(self.angle*np.pi/180)/2
         
     def updateGUI(self):
-        self.lineEdit_Xc.setText(formatNum(self.Xc))
-        self.lineEdit_Yc.setText(formatNum(self.Yc))
-        
-        self.lineEdit_Angle.setText(formatNum(self.angle))
-        
-        self.lineEdit_H.setText(formatNum(self.H))
-        self.lineEdit_W.setText(formatNum(self.W))
-        
+        self.updateLineEdits()
         self.updateSpeed()
         
     def moveROI(self):
@@ -528,16 +630,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
             
             #update all the lines
-            self.lineEdit_W.setText(formatNum(self.W))
-            self.lineEdit_H.setText(formatNum(self.H))
-            self.lineEdit_Xc.setText(formatNum(self.Xc))
-            self.lineEdit_Yc.setText(formatNum(self.Yc))
-            self.lineEdit_Angle.setText(formatNum(self.angle))
+            updateLineEdits()
             
             #Update ROIs
-            self.moveROI()
-            self.moveROI2()
-            self.moveROI3()
+            self.moveROIs()
+
         else:
             #Set the appropriate information
             self.angle = 0
@@ -549,16 +646,22 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.y = y_range[0]
             
             #update all the lines
-            self.lineEdit_W.setText(formatNum(self.W))
-            self.lineEdit_H.setText(formatNum(self.H))
-            self.lineEdit_Xc.setText(formatNum(self.Xc))
-            self.lineEdit_Yc.setText(formatNum(self.Yc))
-            self.lineEdit_Angle.setText(formatNum(self.angle))
+            self.updateLineEdits()
             
             #Update ROIs
-            self.moveROI()
-            self.moveROI2()
-            self.moveROI3()
+            self.moveROIs()
+
+    def updateLineEdits(self):
+        self.lineEdit_W.setText(formatNum(self.W))
+        self.lineEdit_H.setText(formatNum(self.H))
+        self.lineEdit_Xc.setText(formatNum(self.Xc))
+        self.lineEdit_Yc.setText(formatNum(self.Yc))
+        self.lineEdit_Angle.setText(formatNum(self.angle))
+
+    def moveROIs(self):
+        self.moveROI()
+        self.moveROI2()
+        self.moveROI3()
 #----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to updating scan parameters from
@@ -570,9 +673,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         if isinstance(val,float):
             self.Xc = val
             self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
-            self.moveROI()
-            self.moveROI2()
-            self.moveROI3()
+            self.moveROIs()
         self.lineEdit_Xc.setText(formatNum(self.Xc))
         
     def updateYc(self):
@@ -581,9 +682,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         if isinstance(val,float):
             self.Yc = val
             self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
-            self.moveROI()
-            self.moveROI2()
-            self.moveROI3()
+            self.moveROIs()
         self.lineEdit_Yc.setText(formatNum(self.Yc))
         
     def updateAngle(self):
@@ -593,9 +692,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.angle = val
             self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
             self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
-            self.moveROI()
-            self.moveROI2()
-            self.moveROI3()
+            self.moveROIs()
         self.lineEdit_Angle.setText(formatNum(self.angle))
         
     def updateH(self):
@@ -609,9 +706,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.updateSpeed()
             self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
             self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
-            self.moveROI()
-            self.moveROI2()
-            self.moveROI3()
+            self.moveROIs()
         self.lineEdit_H.setText(formatNum(self.H))
             
     def updateW(self):
@@ -624,9 +719,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.lineEdit_H.setText(formatNum(self.H))
             self.x = self.Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
             self.y = self.Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
-            self.moveROI()
-            self.moveROI2()
-            self.moveROI3()
+            self.moveROIs()
             self.updateSpeed()
         self.lineEdit_W.setText(formatNum(self.W))
         
@@ -634,7 +727,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         if self.LinearSpeedLocked:
             self.lineTime = self.W / self.linearSpeed
             self.lineEdit_LineTime.setText(formatNum(self.lineTime))
-            self.FrameTime = self.lines * self.lineTime
+            self.FrameTime = 2*self.lines * self.lineTime
             self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
         else: 
             self.linearSpeed = self.W / self.lineTime
@@ -678,7 +771,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.FrameTime = self.lineTime * self.lines
             self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
         self.lineEdit_Linear.setText(formatNum(self.linearSpeed))
-        
+        self.updateScanParameters()
+
     def updateLineTime(self):
         new_LineTime = str(self.lineEdit_LineTime.text())
         val = readNum(new_LineTime)
@@ -689,15 +783,101 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.FrameTime = self.lineTime * self.lines
             self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
         self.lineEdit_LineTime.setText(formatNum(self.lineTime))
+        self.updateScanParameters()
+
+    def updateFileName(self):
+        self.fileName = str(self.lineEdit_FileName.text())
         
+    def updateXTilt(self):
+        val = readNum(str(self.lineEdit_XTilt.text()))
+        if isinstance(val,float):
+            self.x_tilt = val*np.pi / 180
+        self.lineEdit_XTilt.setText(formatNum(self.x_tilt))
+
+    def updateYTilt(self):
+        val = readNum(str(self.lineEdit_YTilt.text()))
+        if isinstance(val,float):
+            self.y_tilt = val*np.pi / 180
+        self.lineEdit_YTilt.setText(formatNum(self.y_tilt))
+
+    def updateScanMode(self, string):
+        if string == 'Constant Height':
+            self.scanMode = 'Constant Height'
+            self.lineEdit_XTilt.setEnabled(True)
+            self.lineEdit_YTilt.setEnabled(True)
+            if self.ConstantHeightReady:
+                self.push_scanModeSet.setStyleSheet("""#push_scanModeSet{
+                background: rgb(0, 170, 0);
+                border-radius: 5px;
+                }""")
+                self.push_Scan.setEnabled(True)
+            else:
+                self.push_scanModeSet.setStyleSheet("""#push_scanModeSet{
+                background: rgb(161, 0, 0);
+                border-radius: 5px;
+                }""")
+                self.push_Scan.setEnabled(False)
+        elif string == 'Feedback':
+            self.scanMode = 'Feedback'
+            self.lineEdit_XTilt.setEnabled(False)
+            self.lineEdit_YTilt.setEnabled(False)
+            if self.FeedbackReady:
+                self.push_scanModeSet.setStyleSheet("""#push_scanModeSet{
+                background: rgb(0, 170, 0);
+                border-radius: 5px;
+                }""")
+                self.push_Scan.setEnabled(True)
+            else:
+                self.push_scanModeSet.setStyleSheet("""#push_scanModeSet{
+                background: rgb(161, 0, 0);
+                border-radius: 5px;
+                }""")
+                self.push_Scan.setEnabled(False)
+
+    def updateFeedbackStatus(self, status):
+        if status:
+            self.FeedbackReady = True
+            if self.scanMode == 'Feedback':
+                self.push_scanModeSet.setStyleSheet("""#push_scanModeSet{
+                background: rgb(0, 170, 0);
+                border-radius: 5px;
+                }""")
+                self.push_Scan.setEnabled(True)
+        else:
+            self.FeedbackReady = False
+            if self.scanMode == 'Feedback':
+                self.push_scanModeSet.setStyleSheet("""#push_scanModeSet{
+                background: rgb(161, 0, 0);
+                border-radius: 5px;
+                }""")
+                self.push_Scan.setEnabled(False)
+
+    def updateConstantHeightStatus(self, status):
+        if status:
+            self.ConstantHeightReady = True
+            if self.scanMode == 'Constant Height':
+                self.push_scanModeSet.setStyleSheet("""#push_scanModeSet{
+                background: rgb(0, 170, 0);
+                border-radius: 5px;
+                }""")
+                self.push_Scan.setEnabled(True)
+        else:
+            self.ConstantHeightReady = False
+            if self.scanMode == 'Constant Height':
+                self.push_scanModeSet.setStyleSheet("""#push_scanModeSet{
+                background: rgb(161, 0, 0);
+                border-radius: 5px;
+                }""")
+                self.push_Scan.setEnabled(False)
 #----------------------------------------------------------------------------------------------#      
     """ The following section has scanning functions and live graph updating."""  
         
     def abortScan(self):
         self.scanning = False
-        
+
     def startScan(self):
         try:
+            print 'Starting Scan Protocol'
             #Set scan values
             self.currAngle = self.angle
             self.currXc = self.Xc
@@ -716,17 +896,33 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.moveROI3()
                 
             #Initialize empty data sets
-            pxsize = (self.lines,self.pixels)
+            pxsize = (2, self.lines,self.pixels)
             self.data = np.zeros(pxsize)
             self.data_retrace = np.zeros(pxsize)
-            self.plotData = np.zeros(pxsize)
-            self.plotData_retrace = np.zeros(pxsize)
-            
+            self.plotData = np.zeros(pxsize)[0]
+            self.plotData_retrace = np.zeros(pxsize)[0]
+            self.currLine = 0
+
             #Update graphs with empty data sets
             self.update_gph()
-                
+            
+            #Prevent you from editing most parameters mid scan. 
+            self.push_Scan.setEnabled(False)
+            self.lineEdit_Angle.setEnabled(False)
+            self.lineEdit_Xc.setEnabled(False)
+            self.lineEdit_Yc.setEnabled(False)
+            self.lineEdit_W.setEnabled(False)
+            self.lineEdit_H.setEnabled(False)
+            self.push_setView.setEnabled(False)
+            self.lineEdit_Lines.setEnabled(False)
+            self.lineEdit_Pixels.setEnabled(False)
+            self.lineEdit_XTilt.setEnabled(False)
+            self.lineEdit_YTilt.setEnabled(False)
+
             #Begin data gathering procedure
             self.scanning = True
+            self.push_Scan.setText('Scanning')
+            self.push_Scan.setEnabled(False)
             self.update_data()
         except Exception as inst:
             print "testUpdates: " + str(inst)
@@ -734,89 +930,108 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def update_data(self):
         try:
+            #Create data vault file with appropriate parameters
+            #Retrace index is 0 for trace, 1 for retrace
+            yield self.dv.new("nSOT Scan Data " + self.fileName, ['Retrace Index','X Pos. Index','Y Pos. Index','X Pos. Voltage', 'Y Pos. Voltage'],['Z Pos. Voltage','SSAA DC Voltage'])
+            print 'Created new DV file'
+            params = (('X Center', self.currXc), ('Y Center', self.currYc), ('Width', self.currW), ('Height',self.currH), ('Angle',self.currAngle), ('Speed',self.linearSpeed), ('Pixels',self.pixels), ('Lines', self.lines))
+            print params
+            #Avi - This line was throwing an error - I'm not sure why - I commented it out to test the scanning
+            #the version of data vault that is saved on this computer differs from that running on the mScope monitor 
+            #computer in exactly the function that was throwing an error - the save() function in the ini python file
+            #yield self.dv.add_parameters(params)
+            #Marec - Yes, we should update that computer to the latest version of datavault
+            print 'Added params'
+
+            self.updateScanParameters()
             #First, lets check that all the points are within range
-            #add this later
+            #ADD THIS LATER
             
             #For now, HARD CODED THAT using DAC out 2 (or 1 when zero indexed) for X 
             #and DAC out 3 (2 zeros indexed) for Y. 
+
+            if self.scanParameters['delta_x'] > 0 and self.scanning:
+                print 'Moving by: ' + str(self.scanParameters['delta_x']) + ' in the x direction to starting position.'
+                yield self.dac.ramp1(1, self.Atto_X_Voltage, self.scanParameters['x_start_voltage'], self.scanParameters['x_points'], self.scanParameters['delay_x'])
+                #ramp1 returns ramp completed before the ramp is completed. Add a sleep statement to make 
+                #make sure we don't continue too soon
+                yield self.sleep(self.scanParameters['x_points']*self.scanParameters['delay_x'] / (1e6))
+                
+            if self.scanParameters['delta_y'] > 0 and self.scanning:
+                print 'Moving by: ' + str(self.scanParameters['delta_y']) + ' in the y direction to starting position.'
+                yield self.dac.ramp1(2, self.Atto_Y_Voltage, self.scanParameters['y_start_voltage'], self.scanParameters['y_points'], self.scanParameters['delay_y'])
+                #ramp1 returns ramp completed before the ramp is completed. Add a sleep statement to make 
+                #make sure we don't continue too soon
+                yield self.sleep(self.scanParameters['y_points']*self.scanParameters['delay_y'] / (1e6))
             
-            #First go to nearest corner of the desired scan square. 
-            #For now for simplicity, will always go to the lower left corner
-            #Note that 0,0 corresponds to the middle of the scan range, which is 
-            #1.5V, 1.5V
-            x_start_voltage = self.curr_x * self.xy_volts_to_meters + 1.5
-            y_start_voltage = self.curr_y * self.xy_volts_to_meters + 1.5
+            if self.scanMode == 'Constant Height' and self.scanning and self.Atto_Z_Voltage != 0:
+                print 'Moving by: ' + str(self.Atto_Z_Voltage) + ' in the z direction to return to zero z offset.'
+                #By default ramps output 0 from the current z voltage back to 0 with 1000 points at 1 ms delay 
+                yield self.dac.ramp1(0, self.Atto_Z_Voltage, 0.0, 1000, 1000)
+                #Eventually initialize this in communication with the approach software
+                self.Atto_Z_Voltage = 0.0
             
-            delta_x = np.absolute(self.Atto_X_Voltage - x_start_voltage)
-            delta_y = np.absolute(self.Atto_Y_Voltage - y_start_voltage)
+            x_start_voltage = self.scanParameters['x_start_voltage']
+            y_start_voltage = self.scanParameters['y_start_voltage']
             
-            #Make sure we're always taking the minimum step size with the dac, which is 300 microvolts,
-            #such that the tip moves as smoothly as possible
-            x_points = int(delta_x / (300e-6))
-            y_points = int(delta_y / (300e-6))
-            
-            #next, choose the delay such that the speed is as chosen on the gui
-            #300e-6 / xy_volts_to_meters yields the distance per step. 
-            # dividing by linear speed gives time per step, ie the delay, in seconds
-            #1e6 converts to microseconds
-            
-            delay = int(np.absolute(1e6 * (300e-6 / (self.xy_volts_to_meters * self.linearSpeed))))
-            
-            if delta_x > 0 and self.scanning:
-                pass
-                #yield self.dac.ramp1(1, self.Atto_X_Voltage, x_start_voltage, points, delay)
-            if delta_y > 0 and self.scanning:
-                pass
-                #yield self.dac.ramp1(1, self.Atto_Y_Voltage, y_start_voltage, points, delay)
             self.Atto_X_Voltage = x_start_voltage
             self.Atto_Y_Voltage = y_start_voltage
-                     
-            print 'Current position: ' + str(self.curr_x) + ', '  + str(self.curr_y)
-            print 'Determined starting voltage for scan: ' + str(x_start_voltage) + ', '  + str(y_start_voltage)
-            print 'Number of points to get to starting voltage: ' + str(x_points) + ', '  + str(y_points)
-            print 'Delay: ' + str(delay)
             
-            #Calculate the speed, number of points, delta_x/delta_y for scanning a line
-            line_x = -self.currH * np.sin(np.pi*self.currAngle/180) * self.xy_volts_to_meters
-            line_y = self.currH * np.cos(np.pi*self.currAngle/180) * self.xy_volts_to_meters
-            
-            line_points = np.maximum(np.absolute(line_x / (300e-6)), np.absolute(line_y / (300e-6)))
-            line_delay = self.lineTime / line_points
-            
-            #Calculate the speed, number of points, and delta_x/delta_y for moving to the next line
-            pixel_x = self.currW * np.cos(np.pi*self.currAngle/180) * self.xy_volts_to_meters / (self.lines - 1)
-            pixel_y = self.currW * np.sin(np.pi*self.currAngle/180) * self.xy_volts_to_meters / (self.lines - 1)
-            
-            pixel_points = np.maximum(np.absolute(pixel_x / (300e-6)), np.absolute(pixel_y / (300e-6)))
-            pixel_delay = np.sqrt(pixel_x**2 + pixel_y**2) / (self.xy_volts_to_meters*self.linearSpeed*pixel_points)
-            
+            #DAC messes up with ramp commands and doesn't get fully read. This clears the buffer
+            #so that the first line of data is preserved correctly. 
+            a = yield self.dac.read()
+            while a != '':
+                print a
+                a = yield self.dac.read()
             
             for i in range(0,self.lines):
-            
+                print 'Starting sweep for line ' + str(i) + '.'
                 if not self.scanning:
                     break
-                    
-                #Get new trace data
+
+                #Get start and end positions for scan of a single line
                 startx = self.Atto_X_Voltage
                 starty = self.Atto_Y_Voltage
-                stopx = self.Atto_X_Voltage + line_x
-                stopy = self.Atto_Y_Voltage + line_y
-                #newData = yield self.dac.buffer_ramp([1,2],[1],[startx, starty],[stopx, stopy], line_points, line_delay)
-                #bin newData to appropriate number of pixels
-                #self.data[i,:] = self.bin_data(newData[0], self.pixels)
-                #Process data for plotting
-                #self.plotData[i,:] = processLineData(np.copy(self.data[i,:]), self.dataProcessing)
-                
-                yield self.sleep(self.lineTime)
-                newData = 0.01*np.random.rand(self.pixels) + 3 + 2*np.linspace(0,1,self.pixels) + 5*np.linspace(0,1,self.pixels)**2
-                self.data[i,:] = newData
-                self.plotData[i,:] = processLineData(np.copy(newData), self.dataProcessing)
-                
-                #Add to data vault
-                
+                stopx = self.Atto_X_Voltage + self.scanParameters['line_x']
+                stopy = self.Atto_Y_Voltage + self.scanParameters['line_y']
+
+                #Time for debugging
+                tzero = time.clock()
+                #Do buffer ramp
+                if self.scanMode == 'Feedback':
+                    newData = yield self.dac.buffer_ramp([1,2],[0,1],[startx, starty],[stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'])
+                elif self.scanMode == 'Constant Height':
+                    startz = self.Atto_Z_Voltage
+                    stopz = self.Atto_Z_Voltage + self.scanParameters['line_y']*np.tan(self.y_tilt) + self.scanParameters['line_x']*np.tan(self.x_tilt)
+                    newData = yield self.dac.buffer_ramp([0,1,2],[0,1],[startz,startx, starty],[stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'])
+                    self.Atto_Z_Voltage = stopz
+                    
                 self.Atto_X_Voltage = stopx
                 self.Atto_Y_Voltage = stopy
+
+                #bin newData to appropriate number of pixels
+                print 'Time taken for buffer ramp: ' + str(time.clock()-tzero)
+                tzero = time.clock()
+                #Add the binned Z data to the dataset
+                self.data[0][i,:] = self.bin_data(newData[0], self.pixels, 'trace')
+                #Add the binned magnetic field data to the dataset
+                self.data[1][i,:] = self.bin_data(newData[1], self.pixels, 'trace')
+                print 'Time taken to bin data: ' + str(time.clock()-tzero)
+                tzero = time.clock()
+                self.plotData[i,:] = processLineData(np.copy(self.data[self.channel][i,:]), self.dataProcessing)
+                print 'Time taken to process the line data: ' + str(time.clock()-tzero)
+                tzero = time.clock()
                 
+                #Reformat data and add to data vault
+                x_voltage = np.linspace(startx, stopx, self.pixels)
+                y_voltage = np.linspace(starty, stopy, self.pixels)
+                formated_data = []
+                for j in range(0, self.pixels):
+                    #Putting in 0 for SSAA voltage (last entry) because not yet being used/read
+                    formated_data.append((0, i, j, x_voltage[j], y_voltage[j], self.data[0][i,j], self.data[1][i,j]))
+                yield self.dv.add(formated_data)
+                print 'Time taken to add data to data vault: ' + str(time.clock()-tzero)
+
                 #------------------------------------#
                 
                 if not self.scanning:
@@ -825,23 +1040,36 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Get retrace data
                 startx = self.Atto_X_Voltage
                 starty = self.Atto_Y_Voltage
-                stopx = self.Atto_X_Voltage - line_x
-                stopy = self.Atto_Y_Voltage - line_y
-                #newData = yield self.dac.buffer_ramp([1,2],[1],[startx, starty],[stopx, stopy], line_points, line_delay)
-                #bin newData to appropriate number of pixels
-                #self.data[i,:] = self.bin_data(newData[0], self.pixels)
-                #Process data for plotting
-                #self.plotData[i,:] = processLineData(np.copy(self.data[i,:]), self.dataProcessing)
-                
-                yield self.sleep(self.lineTime)
-                newData = 0.01*np.random.rand(self.pixels) + 3 + 2*np.linspace(0,1,self.pixels) + 5*np.linspace(0,1,self.pixels)**2
-                self.data_retrace[i,:] = newData
-                self.plotData_retrace[i,:] = processLineData(np.copy(newData), self.dataProcessing)
-                
-                #add to data vault
-                
+                stopx = self.Atto_X_Voltage - self.scanParameters['line_x']
+                stopy = self.Atto_Y_Voltage - self.scanParameters['line_y']
+
+                if self.scanMode == 'Feedback':
+                    newData = yield self.dac.buffer_ramp([1,2],[0,1],[startx, starty],[stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'])
+                elif self.scanMode == 'Constant Height':
+                    startz = self.Atto_Z_Voltage
+                    stopz = self.Atto_Z_Voltage - self.scanParameters['line_y']*np.tan(self.y_tilt) - self.scanParameters['line_x']*np.tan(self.x_tilt)
+                    newData = yield self.dac.buffer_ramp([0,1,2],[0,1],[startz,startx, starty],[stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'])
+                    self.Atto_Z_Voltage = stopz
+                    
                 self.Atto_X_Voltage = stopx
                 self.Atto_Y_Voltage = stopy
+
+                #bin newData to appropriate number of pixels for Z data
+                self.data_retrace[0][i,:] = self.bin_data(newData[0], self.pixels,'retrace')
+                #bin newData to appropriate number of pixels for field data
+                self.data_retrace[1][i,:] = self.bin_data(newData[1], self.pixels,'retrace')
+                
+                #Process data for plotting
+                self.plotData_retrace[i,:] = processLineData(np.copy(self.data_retrace[self.channel][i,:]), self.dataProcessing)
+                
+                #Reformat data and add to data vault
+                x_voltage = np.linspace(startx, stopx, self.pixels)
+                y_voltage = np.linspace(starty, stopy, self.pixels)
+                formated_data = []
+                for j in range(0, self.pixels):
+                    #Putting in 0 for SSAA voltage (last entry) because not yet being used/read
+                    formated_data.append((1, i, j, x_voltage[::-1][j], y_voltage[::-1][j], self.data_retrace[0][i,j], self.data_retrace[1][i,j]))
+                yield self.dv.add(formated_data)
                 
                 #------------------------------------#
                 
@@ -851,22 +1079,50 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Move to position for next line
                 startx = self.Atto_X_Voltage
                 starty = self.Atto_Y_Voltage
-                stopx = self.Atto_X_Voltage + pixel_x
-                stopy = self.Atto_Y_Voltage + pixel_y
+                stopx = self.Atto_X_Voltage + self.scanParameters['pixel_x']
+                stopy = self.Atto_Y_Voltage + self.scanParameters['pixel_y']
+
+                tzero = time.clock()
+                if self.scanMode == 'Feedback':
+                    yield self.dac.buffer_ramp([1,2],[0],[startx, starty],[stopx, stopy], self.scanParameters['pixel_points'], self.scanParameters['pixel_delay'])
+                elif self.scanMode == 'Constant Height':
+                    startz = self.Atto_Z_Voltage
+                    stopz = self.Atto_Z_Voltage - self.scanParameters['pixel_y']*np.tan(self.y_tilt) - self.scanParameters['pixel_x']*np.tan(self.x_tilt)
+                    yield self.dac.buffer_ramp([0,1,2],[0],[startz,startx, starty],[stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'])
+                    self.Atto_Z_Voltage = stopz
                     
-                #yield self.dac.buffer_ramp([1,2],[1],[startx, starty],[stopx, stopy], line_points, line_delay)
-                #ramp to next y point
-                
                 self.Atto_X_Voltage = stopx
                 self.Atto_Y_Voltage = stopy
-                
+                #ramp to next y point
+                print 'Time taken to move to next line: ' + str(time.clock()-tzero)
+                tzero = time.clock()
+
                 #update graph
+                self.currLine = i
                 self.update_gph()
-                
+                print 'Time taken to update graphs: ' + str(time.clock()-tzero)
+            
+            #Successfully finished the scan!
+            self.scanning = False
+            self.push_Scan.setText('Scan')
+            self.push_Scan.setEnabled(True)
+            
+            self.push_Scan.setEnabled(True)
+            self.lineEdit_Angle.setEnabled(True)
+            self.lineEdit_Xc.setEnabled(True)
+            self.lineEdit_Yc.setEnabled(True)
+            self.lineEdit_W.setEnabled(True)
+            self.lineEdit_H.setEnabled(True)
+            self.push_setView.setEnabled(True)
+            self.lineEdit_Lines.setEnabled(True)
+            self.lineEdit_Pixels.setEnabled(True)
+            self.lineEdit_XTilt.setEnabled(True)
+            self.lineEdit_YTilt.setEnabled(True)
         except Exception as inst:
             print 'update_data: ' + str(inst)
                 
     def update_gph(self):
+        #Updates the trace, retrace, and mini plots with the plotData and plotData_retract images. 
         try:
             self.Plot2D.setImage(self.plotData, autoRange = False, autoLevels = False)
             self.Plot2D.imageItem.resetTransform()
@@ -895,36 +1151,179 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             tr = QtGui.QTransform(self.xscale * np.cos(angle * np.pi/180),self.xscale * np.sin(angle * np.pi/180),0,-self.yscale * np.sin(angle * np.pi/180),self.yscale * np.cos(angle * np.pi/180),0,0,0,1)
             self.MiniPlot2D.imageItem.setPos(self.curr_x,self.curr_y)
             self.MiniPlot2D.imageItem.setTransform(tr)
+
+            #Update line traces
+            pos = np.linspace(-self.currH/2, self.currH/2, self.pixels)
+            self.traceLinePlot.clear()
+            self.traceLinePlot.plot(pos, self.plotData[self.currLine,:])
+            self.retraceLinePlot.clear()
+            self.retraceLinePlot.plot(pos, self.plotData_retrace[self.currLine,:])
+
         except Exception as inst:
             print 'update_gph: ' + str(inst)
     
-    def bin_data(self, data, num_points):
+    def bin_data(self, data, num_points, trace):
         length = np.size(data)
         
         points = np.round(np.linspace(0,length-1,num_points)).astype(int)
-        
         binned_data = np.take(data,points)
-        
+        if trace == 'retrace':
+            length = len(binned_data)
+            binned_data = binned_data[::-1]
         return binned_data
         
+    def updateScanParameters(self):
+        
+        #-------------------------------------------------------------------------------------------------#
+        '''
+        Ramp to starting point calculations. 
+        '''
+        print 'Updating Scan Parameters'
+        
+        #Calculate the scan start voltage positions
+        x_start_voltage = self.curr_x * self.x_volts_to_meters + self.x_volts_max/2
+        y_start_voltage = self.curr_y * self.y_volts_to_meters + self.y_volts_max/2
+        
+        #Figure out how far we need to move from current position to get to starting position
+        delta_x = np.absolute(self.Atto_X_Voltage - x_start_voltage)
+        delta_y = np.absolute(self.Atto_Y_Voltage - y_start_voltage)
+        
+        #Make sure we're always taking the minimum step size with the dac, which is 300 microvolts,
+        #such that the tip moves as smoothly as possible
+        x_points = int(delta_x / (300e-6))
+        y_points = int(delta_y / (300e-6))
+        
+        #next, choose the delay such that the speed is as chosen on the gui
+        #300e-6 / xy_volts_to_meters yields the distance per step. 
+        # dividing by linear speed gives time per step, ie the delay, in seconds
+        #1e6 converts to microseconds
+        delay_x = int(np.absolute(1e6 * (300e-6 / (self.x_volts_to_meters * self.linearSpeed))))
+        delay_y = int(np.absolute(1e6 * (300e-6 / (self.y_volts_to_meters * self.linearSpeed))))
+        
+        #-------------------------------------------------------------------------------------------------#
+        '''
+        Single Line Scan Calculation
+        '''
+                 
+        #Calculate the speed, number of points, delta_x/delta_y for scanning a line
+        line_x = -self.currH * np.sin(np.pi*self.currAngle/180) * self.x_volts_to_meters
+        line_y = self.currH * np.cos(np.pi*self.currAngle/180) * self.y_volts_to_meters
+        
+        line_points = int(np.maximum(np.absolute(line_x / (300e-6)), np.absolute(line_y / (300e-6))))
+        line_delay = int(1e6 *self.lineTime / line_points)
+
+        #-------------------------------------------------------------------------------------------------#
+        '''
+        Move to next line scan calculation
+        '''
+        #Calculate the speed, number of points, and delta_x/delta_y for moving to the next line
+        pixel_x = self.currW * np.cos(np.pi*self.currAngle/180) * self.x_volts_to_meters / (self.lines - 1)
+        pixel_y = self.currW * np.sin(np.pi*self.currAngle/180) * self.y_volts_to_meters / (self.lines - 1)
+        
+        pixel_points = int(np.maximum(np.absolute(pixel_x / (300e-6)), np.absolute(pixel_y / (300e-6))))
+        pixel_delay = int(1e6 *self.currW / ((self.lines-1)*self.linearSpeed*pixel_points))
+
+        self.scanParameters = {
+            'x_start_voltage'            : x_start_voltage, #X position in volts where the scan starts
+            'y_start_voltage'            : y_start_voltage, #Y position in volts where the scan starts
+            'delta_x'                    : delta_x, #Absolute magnitude of volts needed to travel in X to get to the x starting point
+            'delta_y'                    : delta_y, #Absolute magnitude of volts needed to travel in Y to get to the y starting point
+            'x_points'                   : x_points, #Number of steps to be taken when ramping from current position to starting position to maximize use of spatial resolution
+            'y_points'                   : y_points, #Number of steps to be taken when ramping from current position to starting position to maximize use of spatial resolution
+            'delay_x'                    : delay_x, #delay in us between each point when ramping to starting point to achieve desired speed
+            'delay_y'                    : delay_y, #delay in us between each point when ramping to starting point to achieve desired speed
+            'line_x'                     : line_x, #volts that need to be moved in the x direction for the scan of a single line
+            'line_y'                     : line_y, #volts that need to be moved in the y direction for the scan of a single line
+            'line_points'                : line_points, #number of points that should be taken for minimum step resolution for a single line
+            'line_delay'                 : line_delay, #delay between points for a single line to ensure proper speed
+            'pixel_x'                    : pixel_x, #volts that need to be moved in the x direction to move from one line scan to the next
+            'pixel_y'                    : pixel_y, #volts that need to be moved in the y direction to move from one line scan to the next
+            'pixel_points'               : pixel_points, #number of points that should be taken for minimum step resolution for moving to next line
+            'pixel_delay'                : pixel_delay, #delay between points for a single line to ensure proper speed
+        }
+        print 'Scan parameters updated to: '
+        print self.scanParameters
+
 #----------------------------------------------------------------------------------------------#         
     """ The following section has generally useful functions."""
            
     def lockInterface(self):
-        pass
-        
+        self.push_Abort.setEnabled(False)
+        self.push_Scan.setEnabled(False)
+        self.push_DataLock.setEnabled(False)
+        self.push_FrameLock.setEnabled(False)
+        self.push_scanCoordinates.setEnabled(False)
+        self.push_aspectLocked.setEnabled(False)
+        self.push_SpeedLock.setEnabled(False)
+        self.push_setView.setEnabled(False)
+        self.push_apply2DFit.setEnabled(False)
+        self.push_autoLevel.setEnabled(False)
+        self.push_autoRange.setEnabled(False)
+
+        self.lineEdit_FileName.setEnabled(False)
+        self.lineEdit_Linear.setEnabled(False)
+        self.lineEdit_Xc.setEnabled(False)
+        self.lineEdit_Yc.setEnabled(False)
+        self.lineEdit_W.setEnabled(False)
+        self.lineEdit_H.setEnabled(False)
+        self.lineEdit_Angle.setEnabled(False)
+        self.lineEdit_Lines.setEnabled(False)
+        self.lineEdit_Pixels.setEnabled(False)
+        self.lineEdit_LineTime.setEnabled(False)
+        self.lineEdit_FrameTime.setEnabled(False)
+        self.lineEdit_ImageNum.setEnabled(False)
+        self.lineEdit_XTilt.setEnabled(False)
+        self.lineEdit_YTilt.setEnabled(False)
+
+        self.comboBox_Processing.setEnabled(False)
+        self.comboBox_PostProcessing.setEnabled(False)
+        self.comboBox_Channel.setEnabled(False)
+        self.comboBox_scanMode.setEnabled(False)
+
+        self.checkBox.setEnabled(False)
+
     def unlockInterface(self):
-        pass
-    
-    
+        self.push_Abort.setEnabled(True)
+        #Scan start gets enabled later when it's actually ready to start scanning
+        #self.push_Scan.setEnabled(True)
+        self.push_DataLock.setEnabled(True)
+        self.push_FrameLock.setEnabled(True)
+        self.push_scanCoordinates.setEnabled(True)
+        self.push_aspectLocked.setEnabled(True)
+        self.push_SpeedLock.setEnabled(True)
+        self.push_setView.setEnabled(True)
+        self.push_apply2DFit.setEnabled(True)
+        self.push_autoLevel.setEnabled(True)
+        self.push_autoRange.setEnabled(True)
+
+        self.lineEdit_FileName.setEnabled(True)
+        self.lineEdit_Linear.setEnabled(True)
+        self.lineEdit_Xc.setEnabled(True)
+        self.lineEdit_Yc.setEnabled(True)
+        self.lineEdit_W.setEnabled(True)
+        self.lineEdit_H.setEnabled(True)
+        self.lineEdit_Angle.setEnabled(True)
+        self.lineEdit_Lines.setEnabled(True)
+        self.lineEdit_Pixels.setEnabled(True)
+        self.lineEdit_LineTime.setEnabled(True)
+        self.lineEdit_FrameTime.setEnabled(True)
+        self.lineEdit_ImageNum.setEnabled(True)
+        self.lineEdit_XTilt.setEnabled(True)
+        self.lineEdit_YTilt.setEnabled(True)
+
+        self.comboBox_Processing.setEnabled(True)
+        self.comboBox_PostProcessing.setEnabled(True)
+        self.comboBox_Channel.setEnabled(True)
+        self.comboBox_scanMode.setEnabled(True)
+
+        self.checkBox.setEnabled(True)
+
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
         other operations to be done elsewhere while paused."""
         d = Deferred()
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
-        
-    
         
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):

@@ -89,9 +89,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_Servers.clicked.connect(self.showServersList)
         self.push_advancedSettings.clicked.connect(self.showAdvancedSettings)
         #Initialize all the labrad connections as none
-        self.cxn = None
-        self.dv = None
-        self.hf = None
+        self.cxn = False
+        self.dv = False
+        self.hf = False
         
         #Lock interface until appropriate LabRAD servers are connected
         self.lockInterface()
@@ -664,7 +664,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         return d
         
     def closeEvent(self, e):
-        if self.hf is not None:
+        if self.hf is not False:
             self.hf.clear_sweep()
         
 class serversList(QtGui.QDialog, Ui_ServerList):

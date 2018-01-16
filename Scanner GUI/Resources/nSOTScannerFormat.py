@@ -72,23 +72,26 @@ def readNum(string):
     try:
         val = float(string)
     except:
-        exp = string[-1]
-        if exp == 'm':
-            exp = 1e-3
-        if exp == 'u':
-            exp = 1e-6
-        if exp == 'n':
-            exp = 1e-9
-        if exp == 'k':
-            exp = 1e3
-        if exp == 'M':
-            exp = 1e6
-        if exp == 'G':
-            exp = 1e9
         try:
-            val = float(string[0:-1])*exp
-        except: 
-            return 'Incorrect Format'
+            exp = string[-1]
+            if exp == 'm':
+                exp = 1e-3
+            if exp == 'u':
+                exp = 1e-6
+            if exp == 'n':
+                exp = 1e-9
+            if exp == 'k':
+                exp = 1e3
+            if exp == 'M':
+                exp = 1e6
+            if exp == 'G':
+                exp = 1e9
+            try:
+                val = float(string[0:-1])*exp
+            except: 
+                return 'Incorrect Format'
+        except:
+            return 'Empty Input'
     return val
     
 def processLineData(lineData, process):
@@ -127,11 +130,16 @@ def processImageData(image, process):
     if process == 'Raw':
         return image
         
-    elif process == 'Subtract Average':
+    elif process == 'Subtract Image Average':
         avg = np.average(image)
         return image - avg
         
-    elif process == 'Subtract Plane':
+    elif process == 'Subtract Line Average':
+        for i in range(0,length):
+            image[i,:] = processLineData(image[i,:],'Subtract Average')
+        return image
+
+    elif process == 'Subtract Image Plane':
         A = np.array([X*0+1, X, Y]).T
         B = image.flatten()
 
@@ -141,8 +149,13 @@ def processImageData(image, process):
             for j in xrange(width):
                 image[i][j] = image[i][j] - np.dot(coeff, [1, x[j], y[i]])	
         return image
-        
-    elif process == 'Subtract Quadratic':
+   
+    elif process == 'Subtract Line Linear':
+        for i in range(0,length):
+            image[i,:] = processLineData(image[i,:],'Subtract Linear Fit')
+        return image
+
+    elif process == 'Subtract Image Quadratic':
         A = np.array([X*0+1, X, Y, X**2, Y**2, X*Y]).T
         B = image.flatten()
 
@@ -152,5 +165,10 @@ def processImageData(image, process):
             for j in xrange(width):
                 image[i][j] = image[i][j] - np.dot(coeff, [1, x[j], y[i], x[j]**2, y[i]**2, x[j]*y[i]])	
         
+        return image
+
+    elif process == 'Subtract Line Quadratic':
+        for i in range(0,length):
+            image[i,:] = processLineData(image[i,:],'Subtract Parabolic Fit')
         return image
 
