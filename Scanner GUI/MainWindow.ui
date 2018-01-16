@@ -242,6 +242,8 @@ background: black;
      <string>User Channels</string>
     </property>
     <addaction name="actionJPE_Coarse_Position_Control"/>
+    <addaction name="actionAttocube_Position_Calibration"/>
+    <addaction name="actionMagnetic_Field_Control"/>
    </widget>
    <widget class="QMenu" name="menuExeriments">
     <property name="title">
@@ -309,6 +311,16 @@ background: black;
   <action name="actionJPE_Coarse_Position_Control">
    <property name="text">
     <string>JPE Coarse Position Control</string>
+   </property>
+  </action>
+  <action name="actionAttocube_Position_Calibration">
+   <property name="text">
+    <string>Attocube Position Calibration</string>
+   </property>
+  </action>
+  <action name="actionMagnetic_Field_Control">
+   <property name="text">
+    <string>Magnetic Field Control</string>
    </property>
   </action>
  </widget>

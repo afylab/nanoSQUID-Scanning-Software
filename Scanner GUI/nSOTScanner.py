@@ -1,9 +1,10 @@
 import sys
 from PyQt4 import QtGui, QtCore, uic
-from twisted.internet.defer import inlineCallbacks
-import twisted
-import numpy as np
-import pyqtgraph as pg
+#from twisted.internet.defer import inlineCallbacks
+#import twisted
+#import numpy as np
+#import pyqtgraph as pg
+import time 
 
 path = sys.path[0]
 sys.path.append(path+'\Resources')
@@ -16,6 +17,7 @@ sys.path.append(path+'\TFCharacterizer')
 sys.path.append(path+'\ApproachModule')
 sys.path.append(path+'\PLLMonitor')
 sys.path.append(path+'\JPEPositionControl')
+sys.path.append(path+'\PositionCalibration')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -29,6 +31,7 @@ import TFCharacterizer
 import Approach
 import PLLMonitor
 import JPEControl
+import PositionCalibration
 
 import exceptions
 
@@ -56,16 +59,18 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Approach = Approach.Window(self.reactor, None)
         self.PLLMonitor = PLLMonitor.Window(self.reactor, None)
         self.JPEControl = JPEControl.Window(self.reactor, None)
+        self.PosCalibration = PositionCalibration.Window(self.reactor, None)
         
         #Connects all drop down menu button
         self.actionScan_Control.triggered.connect(self.openScanControlWindow)
         self.actionLabRAD_Connect.triggered.connect(self.openLabRADConnectWindow)
         self.actionnSOT_Characterizer.triggered.connect(self.opennSOTCharWindow)
-        self.actionData_Plotter.triggered.connect(self.openDataPlotter)
+        #self.actionData_Plotter.triggered.connect(self.openDataPlotter)
         self.actionTF_Characterizer.triggered.connect(self.openTFCharWindow)
         self.actionApproach_Control.triggered.connect(self.openApproachWindow)
         self.actionPLL_Monitor.triggered.connect(self.openPLLMonitorWindow)
         self.actionJPE_Coarse_Position_Control.triggered.connect(self.openJPEControlWindow)
+        self.actionAttocube_Position_Calibration.triggered.connect(self.openPosCalibrationWindow)
 
         #Connectors all layout buttons
         self.push_Layout1.clicked.connect(self.setLayout1)
@@ -74,20 +79,26 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.isRedEyes = False
         
         #Connect 
-        self.LabRAD.cxnSuccessful.connect(self.distributeLabRADConnections)
+        self.LabRAD.cxnLocal.connect(self.distributeLocalLabRADConnections)
+        self.LabRAD.cxnRemote.connect(self.distributeRemoteLabRADConnections)
         self.LabRAD.cxnDisconnected.connect(self.disconnectLabRADConnections)
         
         self.TFChar.workingPointSelected.connect(self.distributeWorkingPoint)
 
         self.Approach.newPLLData.connect(self.updatePLLMonitor)
-        
+        self.Approach.updateFeedbackStatus.connect(self.SC.updateFeedbackStatus)
+        self.Approach.updateConstantHeightStatus.connect(self.SC.updateConstantHeightStatus)
+        self.PosCalibration.newTemperatureCalibration.connect(self.setVoltageCalibration)
+
+        #Make sure default calibration is emitted 
+        self.PosCalibration.emitCalibration()
+
         #Open by default the LabRAD Connect Module
         self.openLabRADConnectWindow()
         
     def setupAdditionalUi(self):
         """Some UI elements would not set properly from Qt Designer. These initializations are done here."""
-        self.push_Layout1.setToolTip('Loads and repositions Scan Control and' +
-        'Main Window. Closes the rest.')
+        pass
         
     #----------------------------------------------------------------------------------------------#
             
@@ -144,11 +155,18 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.JPEControl.raise_()
         if self.JPEControl.isVisible() == False:
             self.JPEControl.show()
+
+    def openPosCalibrationWindow(self):
+        self.PosCalibration.moveDefault()
+        self.PosCalibration.raise_()
+        if self.PosCalibration.isVisible() == False:
+            self.PosCalibration.show()
 #----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to passing LabRAD connections."""
     
-    def distributeLabRADConnections(self,dict):
+    def distributeLocalLabRADConnections(self,dict):
+        print dict
         #self.Plot.connectLabRAD(dict)
         self.nSOTChar.connectLabRAD(dict)
         self.SC.connectLabRAD(dict)
@@ -156,7 +174,11 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Approach.connectLabRAD(dict)
         self.JPEControl.connectLabRAD(dict)
         
-    def disconnectLabRADConnections(self,dict):
+    def distributeRemoteLabRADConnections(self,dict):
+        print dict
+        #Call connectRemoteLabRAD functions for relevant modules
+        
+    def disconnectLabRADConnections(self):
         #self.Plot.disconnectLabRAD()
         self.nSOTChar.disconnectLabRAD()
         self.SC.disconnectLabRAD()
@@ -173,7 +195,12 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
 
     def updatePLLMonitor(self, deltaF, phaseError):
         self.PLLMonitor.updatePlots(deltaF, phaseError)
-        
+
+    def setVoltageCalibration(self,data):
+        print 'gotty heiht'
+        self.Approach.set_voltage_calibration(data)
+        self.SC.set_voltage_calibration(data)
+
 #----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to setting the default layouts."""
@@ -203,18 +230,29 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Approach.hide()
         self.PLLMonitor.hide()
         self.JPEControl.hide()
+        self.PosCalibration.hide()
             
     def closeEvent(self, e):
-        self.SC.close()
-        self.nSOTChar.close()
-        #self.Plot.close()
-        self.TFChar.close()
-        self.Approach.close()
-        self.LabRAD.disconnectLabRAD()
-        self.LabRAD.close()
-        self.PLLMonitor.close()
-        self.JPEControl.close()
-        
+        try:
+            self.SC.close()
+            self.nSOTChar.close()
+            #self.Plot.close()
+            self.TFChar.close()
+            self.Approach.close()
+            self.PLLMonitor.close()
+            self.JPEControl.close()
+            self.PosCalibration.close()
+            #Keep closing LABRAD last, so that everything has 
+            #the time to run the close event properly
+            time.sleep(1)
+            self.LabRAD.close()
+            print 'Stopping reactor'
+            self.reactor.stop()
+            print 'Didn\'t do nothing'
+        except Exception as inst:
+            print inst
+    
+            
 #----------------------------------------------------------------------------------------------#     
 """ The following runs the GUI"""
 
