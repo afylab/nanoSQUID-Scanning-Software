@@ -7,6 +7,7 @@ import exceptions
 import time
 import sys
 import dirExplorer
+import platform
 
 path = sys.path[0] + r"\LabRADConnect"
 LabRADConnectUI, QtBaseClass = uic.loadUiType(path + r"\LabRADConnect.ui")
@@ -422,7 +423,10 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         else: 
             cxn = self.connectionLocalDictionary['cxn']
             try:
-                ser_server = yield cxn.nanosquid_ws_serial_server
+                computerName = platform.node() # get computer name
+                serialServerName = computerName.lower().replace(' ','_').replace('-','_') + '_serial_server'
+                
+                ser_server = yield cxn.servers[serialServerName]
                 self.push_SerialServer.setStyleSheet("#push_SerialServer{" + 
                 "background: rgb(0,170,0);border-radius: 4px;}")
                 self.label_SerialServer_status.setText('Connected')
