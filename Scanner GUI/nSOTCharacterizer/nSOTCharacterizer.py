@@ -115,6 +115,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.ips = None
         self.serversConnected = False
 
+
         
     def moveDefault(self):
         self.move(550,10)
@@ -126,6 +127,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.dac = dict['dac_adc']
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
+            print 'green'
             self.serversConnected = True
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
@@ -136,8 +138,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.ips = dict['ips120_power_supply']
 
         except:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
+            pass
 
             
         if self.dv is None:
@@ -158,11 +159,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     def populateMagnetPower(self):
 
         if self.ips != None and self.serversConnected is True:
-            print 'one'#self.magnetPower.addItem('IPS 120-10')
-            #self.magnetPower.addItem('Toellner 8851')
+            self.magnetPower.addItem('IPS 120-10')
+            self.magnetPower.addItem('Toellner 8851')
             print self.serversConnected
         elif self.ips == None and self.serversConnected is True:
-            print 'two' #self.magnetPower.addItem('Toellner 8851')
+            self.magnetPower.addItem('Toellner 8851')
             print self.serversConnected
         else:
             print 'three'
@@ -500,7 +501,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.vSpeed = float(vSpeed)
         self.sweepMod = int(sweepMod)
         self.blinkMod = int(blinkMod)
-        magPower = self.magnetPower.currentIndex()
+        magPower = self.magnetPower.currentText()
         
         if bPoints != 0:
             tLatent = 5
@@ -700,7 +701,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.magnetPower.setEnabled(False)
         self.blink.setEnabled(False)
         self.biasSweepMode.setEnabled(False)
-        self.preliminarySweep.setEnabled(False)
+        self.prelim.setEnabled(False)
         self.fieldMinSetValue.setReadOnly(True)
         self.fieldMaxSetValue.setReadOnly(True)
         self.fieldPointsSetValue.setReadOnly(True)
@@ -720,9 +721,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.toggleTraceLineCut()
         self.plotNoPlot = 0
         self.abortFlag = False
-        if self.magnetPower.currentIndex() == 0:
+        if self.magnetPower.currentText() == 'IPS 120-10':
             self.ips_sweep()
-        elif self.magnetPower.currentIndex() == 1:
+        elif self.magnetPower.currentText() == 'Toellner 8851':
             self.toe_sweep()
         #self.sweep()
         #self.test_sweep()
@@ -913,13 +914,13 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [vVal], [0], int(vVal * 1000), 10000)
             else:
                 pass
-            self.sleep(1)
+            yield self.sleep(1)
             if bVal != 0:
                 yield sweep_field(bVal, 0, 0.1)
                 yield self.dac.set_voltage(DAC_set_volt, 0)
             else:
                 pass
-            
+
             self.startSweep.setEnabled(True)
             self.abortSweep.setEnabled(False)
             self.magnetPower.setEnabled(True)
@@ -934,6 +935,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.biasMaxSetValue.setReadOnly(False)
             self.biasPointsSetValue.setReadOnly(False)
             self.biasSpeedSetValue.setReadOnly(False)
+
 
 
         yield self.dv.new("nSOT vs. Bias Voltage and Field", ['B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
@@ -968,16 +970,16 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             for i in range(0, B_points):
                 
                 if i == 0:
-                    '''
+                    
                     if self.abortFlag == False:
                         pass
                     else:
                         yield toe_breakSweep(0, Vbias_min)
                         break
-                    '''
+                    
                     if B_space[0] != 0:
                         print 'Ramping field to ' + str(B_space[0])+'.'
-                        yield sweep_field(0, B_start, B_rate)
+                        yield sweep_field(0, B_space[0], B_rate)
                     else:
                         pass
                 else:
@@ -989,12 +991,12 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                     yield sweep_field(B_space[i-1], B_space[i], B_rate)
                     
                 print 'Starting sweep with magnetic field set to: ' + str(B_space[i])
-            
+                
                 print 'Blinking prior to sweep'
                 yield self.dac.set_voltage(DAC_blink, 5)
-                self.sleep(0.25)
+                yield self.sleep(0.25)
                 yield self.dac.set_voltage(DAC_blink, 0)
-                self.sleep(0.25)
+                yield self.sleep(0.25)
                 
                 if self.abortFlag == False:
                     pass
@@ -1048,23 +1050,28 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             
             #Go to zero field and set power supply voltage setpoint to zero.
             sweep_field(B_space[-1], 0, B_rate)
-            self.dac.set_voltage(DAC_set_volt, 0)
+            yield self.dac.set_voltage(DAC_set_volt, 0)
 
 
             self.startSweep.setEnabled(True)
             self.abortSweep.setEnabled(False)
             self.magnetPower.setEnabled(True)
             self.blink.setEnabled(True)
+
             self.biasSweepMode.setEnabled(True)
-            self.preliminarySweep.setEnabled(True)
+
+            self.prelim.setEnabled(True)
+
             self.fieldMinSetValue.setReadOnly(False)
             self.fieldMaxSetValue.setReadOnly(False)
+
             self.fieldPointsSetValue.setReadOnly(False)
             self.fieldSpeedSetValue.setReadOnly(False)
             self.biasMinSetValue.setReadOnly(False)
             self.biasMaxSetValue.setReadOnly(False)
             self.biasPointsSetValue.setReadOnly(False)
             self.biasSpeedSetValue.setReadOnly(False)
+
 
         #Zero to Minimum and Maximum Bias Voltage Sweep Mode
         elif self.sweepMod == 1:
@@ -1084,7 +1091,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if i == 0:
                     if B_space[0] != 0:
                         print 'Ramping field to ' + str(B_space[0])+'.'
-                        yield sweep_field(0, B_start, B_rate)
+                        yield sweep_field(0, B_space[0], B_rate)
                     else:
                         pass
                 else:
@@ -1101,12 +1108,12 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
                 #Set bias voltage to zero and blink
                 yield self.dac.set_voltage(DAC_out,0)
-
+                
                 yield self.dac.set_voltage(DAC_blink, 5)
-                self.sleep(0.25)
+                yield self.sleep(0.25)
                 yield self.dac.set_voltage(DAC_blink, 0)
-                self.sleep(0.25)
-
+                yield self.sleep(0.25)
+                
                 if self.abortFlag == False:
                     pass
                 else:
@@ -1144,11 +1151,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
                 #yield dv.add(formated_data)
                 #yield self.updatePlots(formated_data)
-    
+                
                 yield self.dac.set_voltage(DAC_blink, 5)
-                self.sleep(0.25)
+                yield self.sleep(0.25)
                 yield self.dac.set_voltage(DAC_blink, 0)
-                self.sleep(0.25)
+                yield self.sleep(0.25)
                 
                 if self.abortFlag == False:
                     pass
@@ -1214,7 +1221,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.magnetPower.setEnabled(True)
             self.blink.setEnabled(True)
             self.biasSweepMode.setEnabled(True)
-            self.preliminarySweep.setEnabled(True)
+            self.prelim.setEnabled(True)
             self.fieldMinSetValue.setReadOnly(False)
             self.fieldMaxSetValue.setReadOnly(False)
             self.fieldPointsSetValue.setReadOnly(False)
@@ -1223,6 +1230,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.biasMaxSetValue.setReadOnly(False)
             self.biasPointsSetValue.setReadOnly(False)
             self.biasSpeedSetValue.setReadOnly(False)
+
 
 
     @inlineCallbacks
@@ -1279,7 +1287,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [vVal], [0], int(vVal * 1000), 10000)
             else:
                 pass
-            self.sleep(1)
+            yield self.sleep(1)
             if bVal != 0:
                 #Go to 0 field
                 yield self.ips.set_targetfield(0)
@@ -1295,7 +1303,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.magnetPower.setEnabled(True)
             self.blink.setEnabled(True)
             self.biasSweepMode.setEnabled(True)
-            self.preliminarySweep.setEnabled(True)
+            self.prelim.setEnabled(True)
             self.fieldMinSetValue.setReadOnly(False)
             self.fieldMaxSetValue.setReadOnly(False)
             self.fieldPointsSetValue.setReadOnly(False)
@@ -1316,11 +1324,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         if self.sweepMod == 0:
         
             yield self.ips.set_control(3)
-            self.sleep(0.25)
+            yield self.sleep(0.25)
             yield self.ips.set_comm_protocol(6)
-            self.sleep(0.25)
+            yield self.sleep(0.25)
             yield self.ips.set_activity(1)
-            self.sleep(0.25)
+            yield self.sleep(0.25)
             yield self.ips.set_fieldsweep_rate(B_rate)
             
             yield self.dac.set_voltage(DAC_out, 0)
@@ -1355,16 +1363,16 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                     curr_field = yield self.ips.read_parameter(7)
                     if float(curr_field[1:]) <= B_space[i]+0.00001 and float(curr_field[1:]) >= B_space[i]-0.00001:
                         break
-                    self.sleep(0.25)
+                    yield self.sleep(0.25)
                     
                 print 'Starting sweep with magnetic field set to: ' + str(B_space[i])
-            
+                
                 print 'Blinking prior to sweep'
                 yield self.dac.set_voltage(DAC_blink, 5)
-                self.sleep(0.25)
+                yield self.sleep(0.25)
                 yield self.dac.set_voltage(DAC_blink, 0)
-                self.sleep(0.25)
-                    
+                yield self.sleep(0.25)
+                
                 if self.abortFlag == False:
                     pass
                 else:
@@ -1417,7 +1425,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 pass
     
             yield self.dac.set_voltage(DAC_out, 0)
-            self.sleep(0.25)
+            yield self.sleep(0.25)
             
             #Go to 0 field
             yield self.ips.set_targetfield(0)
@@ -1432,7 +1440,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.magnetPower.setEnabled(True)
             self.blink.setEnabled(True)
             self.biasSweepMode.setEnabled(True)
-            self.preliminarySweep.setEnabled(True)
+            self.prelim.setEnabled(True)
             self.fieldMinSetValue.setReadOnly(False)
             self.fieldMaxSetValue.setReadOnly(False)
             self.fieldPointsSetValue.setReadOnly(False)
@@ -1449,11 +1457,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             negative_points = bias_points - positive_points
             
             yield self.ips.set_control(3)
-            self.sleep(0.25)
+            yield self.sleep(0.25)
             yield self.ips.set_comm_protocol(6)
-            self.sleep(0.25)
+            yield self.sleep(0.25)
             yield self.ips.set_activity(1)
-            self.sleep(0.25)
+            yield self.sleep(0.25)
             yield self.ips.set_fieldsweep_rate(B_rate)
             
             '''       
@@ -1474,7 +1482,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                     curr_field = yield self.ips.read_parameter(7)
                     if float(curr_field[1:]) <= B_space[i]+0.00001 and float(curr_field[1:]) >= B_space[i]-0.00001:
                         break
-                    self.sleep(0.25)
+                    yield self.sleep(0.25)
                     
                     
                 if self.abortFlag == False:
@@ -1486,12 +1494,12 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
                 #Set bias voltage to zero and blink
                 yield self.dac.set_voltage(DAC_out,0)
-
+                
                 yield self.dac.set_voltage(DAC_blink, 5)
-                self.sleep(0.25)
+                yield self.sleep(0.25)
                 yield self.dac.set_voltage(DAC_blink, 0)
-                self.sleep(0.25)
-    
+                yield self.sleep(0.25)
+                
                 #Sweep from zero volts to maximum bias voltage
                 print 'Ramping up nSOT bias voltage from zero to ' + str(Vbias_max) + '.'
                 dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [Vbias_max], positive_points, delay)
@@ -1535,9 +1543,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
                 
                 yield self.dac.set_voltage(DAC_blink, 5)
-                self.sleep(0.25)
+                yield self.sleep(0.25)
                 yield self.dac.set_voltage(DAC_blink, 0)
-                self.sleep(0.25)
+                yield self.sleep(0.25)
                 
                 #Sweep from zero volts to minimum bias voltage
                 print 'Ramping down nSOT bias voltage from zero to ' + str(Vbias_min) + '.'
@@ -1604,7 +1612,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.magnetPower.setEnabled(True)
             self.blink.setEnabled(True)
             self.biasSweepMode.setEnabled(True)
-            self.preliminarySweep.setEnabled(True)
+            self.prelim.setEnabled(True)
             self.fieldMinSetValue.setReadOnly(False)
             self.fieldMaxSetValue.setReadOnly(False)
             self.fieldPointsSetValue.setReadOnly(False)
@@ -1709,6 +1717,7 @@ class DialogBox(QtGui.QDialog, Ui_DialogBox):
         self.window = parent
         self.setupUi(self)
         self.sweepParameters = sweepParameters
+        self.magnetPower = magPower
         
         self.fieldMinValue.setText(str(self.sweepParameters[0]))
         self.fieldMinValue.setStyleSheet("QLabel#fieldMinValue {color: rgb(168,168,168);}")
@@ -1728,10 +1737,10 @@ class DialogBox(QtGui.QDialog, Ui_DialogBox):
         self.biasSpeedValue.setText(str(self.sweepParameters[7]))
         self.biasSpeedValue.setStyleSheet("QLabel#biasSpeedValue {color: rgb(168,168,168);}")
         
-        if self.magnetPower == 0:
+        if self.magnetPower == 'IPS 120-10':
             self.magnetPowerSupply.setText('Oxford IPS 120-10 Magnet Power Supply')
             self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168);}")
-        elif self.magnetPower == 1:
+        elif self.magnetPower == 'Toellner 8851':
             self.magnetPowerSupply.setText('Toellner 8851 Power Supply')
             self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168);}")
         if self.sweepParameters[9] == 0:
@@ -1812,30 +1821,55 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         self.data = data
         xVals = [x[1] for x in self.data]
         yVals = [x[2] for x in self.data]
+        print yVals
         
         self.sweepPlot.plot(x = xVals, y = yVals, pen = 0.5)
         
+        absX = np.absolute(xVals)
+        zeroVolts = np.amin(absX)
+        zeroIndex = np.argmin(absX)
+        bigHalf = np.amax([len(xVals) - zeroIndex -1, zeroIndex])
+
+        
+        
         chi = 0
-        j = 5
-        while chi / (len(xVals) - 2) < 1e-5 and j<len(xVals):
-            p, chi, _, _, _ = np.polyfit(xVals[0:j], yVals[0:j], 1, full = True)
-            j += 1
-        p, chi, _, _, _ = np.polyfit(xVals[0:int(0.9 * j)], yVals[0:int(0.9 * j)], 1, full = True)
-        j = int(0.9 * j)
+        if bigHalf>zeroIndex:
+            j = zeroIndex + 5
+            while chi / (len(xVals) - 2) < 1e-5 and j<len(xVals):
+                p, chi, _, _, _ = np.polyfit(xVals[zeroIndex:j], yVals[zeroIndex:j], 1, full = True)
+                j += 1
+            j = int(0.9 * j)
+            p, chi, _, _, _ = np.polyfit(xVals[zeroIndex:j], yVals[zeroIndex:j], 1, full = True)
+
+                
+        else:
+            j = zeroIndex - 5
+            while chi / (len(xVals) - 2) < 1e-5 and j >= 0:
+                p, chi, _, _, _ = np.polyfit(xVals[j:zeroIndex], yVals[j:zeroIndex], 1, full = True)
+                j -= 1
+            j = int(0.9 * j)
+            p, chi, _, _, _ = np.polyfit(xVals[j:zeroIndex], yVals[j:zeroIndex], 1, full = True)
+
         biasRes = float(self.biasRes.value())*1000
         shuntRes = float(self.shuntRes.value())
         ssaaRes = float(self.ssaaRes.value())*1000
         winding = float(self.ssaaWinding.value())
 
         alpha = shuntRes / (shuntRes + biasRes)
-        deltaV_DAC = xVals[j] - xVals[0]
-        deltaV_F = yVals[j] - yVals[0]
+
+        print len(xVals)
+        print j, zeroIndex
+        deltaV_DAC = np.absolute(xVals[j] - xVals[zeroIndex])
+
+        deltaV_F = np.absolute(yVals[j] - yVals[zeroIndex])
+
         if deltaV_F == 0:
             pass
         else:
             ratio = np.absolute(deltaV_DAC / deltaV_F)
             r = np.round(alpha * (winding * ssaaRes * ratio - biasRes), decimals = 1)
             self.parRes.setText(str(r))
+
         
     def sleep(self, secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
@@ -1875,15 +1909,16 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         print 'DataVault setup complete'
         
         yield self.dac.set_voltage(DAC_out, 0)
-                
+        
         yield self.dac.set_voltage(DAC_blink, 5)
-        self.sleep(0.25)
+        yield self.sleep(0.25)
         yield self.dac.set_voltage(DAC_blink, 0)
-        self.sleep(.75)
+        yield self.sleep(.75)
+        
 
         if biasMin != 0:
             yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [0], [biasMin], int(biasMin * 1000), 1000)
-            self.sleep(1)
+            yield self.sleep(1)
         #Do sweep
         print 'Ramping up nSOT bias voltage from ' + str(biasMin) + ' to ' + str(biasMax) + '.'
         dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMin], [biasMax], biasPoints, delay)
@@ -1892,14 +1927,15 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         for j in range(0, biasPoints):
                 formatted_data.append((j, dac_read[0][j], dac_read[1][j], dac_read[2][j]))
         yield self.dv.add(formatted_data)
-        yield self.plotSweepData(formatted_data)
+
+        self.plotSweepData(formatted_data)
 
         #Return to zero voltage gently
         yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMax], [0], int(biasMax * 1000), 1000)
-        self.sleep(0.25)
+        yield self.sleep(0.25)
         yield self.dac.set_voltage(DAC_out, 0)
-        print 'helo'
-        yield self.newSweep.setEnabled(True)
+
+        self.newSweep.setEnabled(True)
 
 
 class serversList(QtGui.QDialog, Ui_ServerList):
