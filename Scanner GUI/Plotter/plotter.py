@@ -17,7 +17,7 @@ import threading
 import copy
 import time
 
-path = sys.path[0] 
+path = sys.path[0] + r"\Plotter"
 
 
 
@@ -95,7 +95,7 @@ class Sensitivity(QtGui.QDialog, Ui_SensitivityPrompt):
 
 
 class Plotter(QtGui.QMainWindow, Ui_Plotter):
-	def __init__(self, reactor):
+	def __init__(self, reactor, parent = None):
 		super(Plotter, self).__init__()
 		
 		self.reactor = reactor
@@ -171,7 +171,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.numPlots = 0
 		self.numZoomPlots = 0
 
-
+	def moveDefault(self):
+		self.move(550,10)
 		
 
 	def zoomArea(self):
@@ -443,9 +444,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
 	def browseDV(self):
 		self.refresh.setEnabled(False)
-		self.dvExplorer = dataVaultExplorer(self.dv, self.os_path, reactor)
+		self.dvExplorer = dataVaultExplorer(self.dv, self.os_path, self.reactor)
 		self.dvExplorer.show()
-		self.dvExplorer.accepted.connect(lambda: self.loadData(reactor))
+		self.dvExplorer.accepted.connect(lambda: self.loadData(self.reactor))
 		self.dvExplorer.rejected.connect(self.reenableRefresh)
 
 	def reenableRefresh(self):
@@ -728,10 +729,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		elif self.vhSelect.currentIndex() == 1:
 			pos = self.vLine.value()
 			self.XZPlotArea.lower()
-			self.updateYZPlot(pos)  
+			self.updateYZPlot(pos)	
 		elif self.vhSelect.currentIndex() ==2:
 			self.YZPlotArea.lower()
-			self.plotMaxSens()          
+			self.plotMaxSens()			
 
 	def changeVertLine(self):
 		pos = self.vCutPos.value()
@@ -981,7 +982,7 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
 
 	@inlineCallbacks
 	def selectDirFile(self, c):
-		self.file =  str(self.currentFile.text())
+		self.file =	 str(self.currentFile.text())
 		self.directory = yield self.dv.cd()
 		yield self.dv.open(self.file)
 		variables = yield self.dv.variables()
@@ -1473,7 +1474,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 			pos = self.vLine.value()
 			self.XZPlotArea.lower()
 			#self.YZPlotArea._raise()
-			self.updateYZPlot(pos)            
+			self.updateYZPlot(pos)			  
 
 	def changeVertLine(self):
 		pos = self.vCutPos.value()
@@ -1753,10 +1754,10 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		elif self.vhSelect.currentIndex() == 1:
 			pos = self.vLine.value()
 			self.XZPlotArea.lower()
-			self.updateYZPlot(pos)  
+			self.updateYZPlot(pos)	
 		elif self.vhSelect.currentIndex() ==2:
 			self.YZPlotArea.lower()
-			self.plotMaxSens()          
+			self.plotMaxSens()			
 
 	def changeVertLine(self):
 		pos = self.vCutPos.value()
