@@ -17,17 +17,18 @@ import threading
 import copy
 import time
 
+path = sys.path[0] 
 
 
 
 
-dirExplorerGUI = r"C:\Python27\Plotter\dvExplorer.ui"
-editDatasetInfoGUI = r"C:\Python27\Plotter\editDatasetInfo.ui"
-axesSelectGUI = r"C:\Python27\Plotter\axesSelect.ui"
-plotter = r"C:\Python27\Plotter\plotter.ui"
-sensitivityPrompt = r"C:\Python27\Plotter\sensitivityPrompt.ui"
-gradSettings = r"C:\Python27\Plotter\gradSettings.ui"
-zoomWindow = r"C:\Python27\Plotter\\zoomWindow.ui"
+dirExplorerGUI = path + r"\dvExplorer.ui"
+editDatasetInfoGUI = path + r"\editDatasetInfo.ui"
+axesSelectGUI = path + r"\axesSelect.ui"
+plotter = path + r"\plotter.ui"
+sensitivityPrompt = path + r"\sensitivityPrompt.ui"
+gradSettings = path + r"\gradSettings.ui"
+zoomWindow = path + r"\zoomWindow.ui"
 
 Ui_dvExplorer, QtBaseClass = uic.loadUiType(dirExplorerGUI)
 Ui_EditDataInfo, QtBaseClass = uic.loadUiType(editDatasetInfoGUI)

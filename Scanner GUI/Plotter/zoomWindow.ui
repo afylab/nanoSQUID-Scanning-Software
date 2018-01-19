@@ -1,45 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>zoomPlot</class>
+ <widget class="QDialog" name="zoomPlot">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>790</width>
+    <width>774</width>
     <height>741</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Plotter</string>
+   <string>Zoom Window</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#Dialog{
+   <string notr="true">#zoomPlot{
 	background-color: rgb(0, 0, 0);}</string>
   </property>
-  <widget class="QFrame" name="mainPlotArea">
+  <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>70</y>
-     <width>750</width>
-     <height>450</height>
+     <x>665</x>
+     <y>670</y>
+     <width>70</width>
+     <height>16</height>
     </rect>
    </property>
-   <property name="styleSheet">
-    <string notr="true">background-color: rgb(132, 132, 132);</string>
-   </property>
-   <property name="frameShape">
-    <enum>QFrame::StyledPanel</enum>
-   </property>
-   <property name="frameShadow">
-    <enum>QFrame::Raised</enum>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Display Plot:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QDoubleSpinBox" name="hCutPos">
    <property name="geometry">
     <rect>
-     <x>690</x>
+     <x>675</x>
      <y>630</y>
      <width>50</width>
      <height>22</height>
@@ -58,90 +52,10 @@
     <double>-99.000000000000000</double>
    </property>
   </widget>
-  <widget class="QFrame" name="XZPlotArea">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>530</y>
-     <width>635</width>
-     <height>200</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">background-color: rgb(132, 132, 132);</string>
-   </property>
-   <property name="frameShape">
-    <enum>QFrame::StyledPanel</enum>
-   </property>
-   <property name="frameShadow">
-    <enum>QFrame::Raised</enum>
-   </property>
-  </widget>
-  <widget class="QDoubleSpinBox" name="vCutPos">
-   <property name="geometry">
-    <rect>
-     <x>690</x>
-     <y>570</y>
-     <width>50</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::ClickFocus</enum>
-   </property>
-   <property name="styleSheet">
-    <string notr="true"/>
-   </property>
-   <property name="buttonSymbols">
-    <enum>QAbstractSpinBox::NoButtons</enum>
-   </property>
-   <property name="decimals">
-    <number>3</number>
-   </property>
-   <property name="minimum">
-    <double>-99.000000000000000</double>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="vhSelect">
-   <property name="geometry">
-    <rect>
-     <x>670</x>
-     <y>690</y>
-     <width>97</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
-   <item>
-    <property name="text">
-     <string>Horizontal</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Vertical</string>
-    </property>
-   </item>
-  </widget>
-  <widget class="QLabel" name="label_29">
-   <property name="geometry">
-    <rect>
-     <x>660</x>
-     <y>610</y>
-     <width>113</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Horizontal Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-  </widget>
   <widget class="QLabel" name="plotTitle">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>10</x>
      <y>10</y>
      <width>332</width>
      <height>18</height>
@@ -151,23 +65,10 @@
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; color:#ffffff;&quot;&gt;Plotter&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_27">
+  <widget class="QPushButton" name="gradient">
    <property name="geometry">
     <rect>
-     <x>670</x>
-     <y>550</y>
-     <width>99</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Vertical Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="addPlot">
-   <property name="geometry">
-    <rect>
-     <x>540</x>
+     <x>555</x>
      <y>40</y>
      <width>23</width>
      <height>23</height>
@@ -177,22 +78,19 @@
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="toolTip">
-    <string>Add Plot</string>
+    <string>Directional Gradient</string>
    </property>
    <property name="text">
     <string/>
    </property>
-   <property name="autoDefault">
-    <bool>false</bool>
-   </property>
   </widget>
-  <widget class="QFrame" name="YZPlotArea">
+  <widget class="QFrame" name="mainPlotArea">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>530</y>
-     <width>635</width>
-     <height>200</height>
+     <x>5</x>
+     <y>70</y>
+     <width>750</width>
+     <height>450</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -205,23 +103,10 @@
     <enum>QFrame::Raised</enum>
    </property>
   </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>680</x>
-     <y>670</y>
-     <width>70</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Display Plot:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="hideGrad">
    <property name="geometry">
     <rect>
-     <x>750</x>
+     <x>735</x>
      <y>40</y>
      <width>23</width>
      <height>23</height>
@@ -240,149 +125,29 @@
     <bool>false</bool>
    </property>
   </widget>
-  <widget class="QPushButton" name="showGrad">
+  <widget class="QFrame" name="XZPlotArea">
    <property name="geometry">
     <rect>
-     <x>630</x>
-     <y>40</y>
-     <width>20</width>
-     <height>23</height>
+     <x>5</x>
+     <y>530</y>
+     <width>635</width>
+     <height>200</height>
     </rect>
    </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(132, 132, 132);</string>
    </property>
-   <property name="toolTip">
-    <string>Show Color Bar</string>
+   <property name="frameShape">
+    <enum>QFrame::StyledPanel</enum>
    </property>
-   <property name="text">
-    <string>+</string>
-   </property>
-   <property name="autoDefault">
-    <bool>false</bool>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="diamCalc">
-   <property name="geometry">
-    <rect>
-     <x>595</x>
-     <y>40</y>
-     <width>23</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="toolTip">
-    <string>Estimate nSOT Diameter</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="browse">
-   <property name="geometry">
-    <rect>
-     <x>438</x>
-     <y>40</y>
-     <width>75</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="toolTip">
-    <string>Browse Data Vault</string>
-   </property>
-   <property name="text">
-    <string>Load Data</string>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="yAxis">
-   <property name="geometry">
-    <rect>
-     <x>195</x>
-     <y>40</y>
-     <width>69</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="zAxis">
-   <property name="geometry">
-    <rect>
-     <x>325</x>
-     <y>40</y>
-     <width>69</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="xAxis">
-   <property name="geometry">
-    <rect>
-     <x>65</x>
-     <y>40</y>
-     <width>69</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>40</y>
-     <width>36</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;X-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>150</x>
-     <y>40</y>
-     <width>36</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Y-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_4">
-   <property name="geometry">
-    <rect>
-     <x>280</x>
-     <y>40</y>
-     <width>36</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Z-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="refresh">
-   <property name="geometry">
-    <rect>
-     <x>400</x>
-     <y>40</y>
-     <width>23</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="toolTip">
-    <string>Refresh Plot</string>
-   </property>
-   <property name="text">
-    <string/>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
    </property>
   </widget>
   <widget class="QFrame" name="diamFrame">
    <property name="geometry">
     <rect>
-     <x>650</x>
+     <x>635</x>
      <y>70</y>
      <width>120</width>
      <height>450</height>
@@ -639,43 +404,110 @@
     </property>
    </widget>
   </widget>
-  <widget class="QPushButton" name="gradient">
+  <widget class="QDoubleSpinBox" name="vCutPos">
    <property name="geometry">
     <rect>
-     <x>570</x>
+     <x>675</x>
+     <y>570</y>
+     <width>50</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::ClickFocus</enum>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="buttonSymbols">
+    <enum>QAbstractSpinBox::NoButtons</enum>
+   </property>
+   <property name="decimals">
+    <number>3</number>
+   </property>
+   <property name="minimum">
+    <double>-99.000000000000000</double>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_27">
+   <property name="geometry">
+    <rect>
+     <x>655</x>
+     <y>550</y>
+     <width>99</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Vertical Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="diamCalc">
+   <property name="geometry">
+    <rect>
+     <x>580</x>
      <y>40</y>
      <width>23</width>
      <height>23</height>
     </rect>
    </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
+   </property>
    <property name="toolTip">
-    <string>Directional Gradient</string>
+    <string>Estimate nSOT Diameter</string>
    </property>
    <property name="text">
     <string/>
    </property>
   </widget>
-  <widget class="QLabel" name="plotType">
+  <widget class="QLabel" name="label_29">
    <property name="geometry">
     <rect>
-     <x>440</x>
-     <y>0</y>
-     <width>121</width>
-     <height>32</height>
+     <x>645</x>
+     <y>610</y>
+     <width>113</width>
+     <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string/>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Horizontal Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
+  </widget>
+  <widget class="QComboBox" name="vhSelect">
+   <property name="geometry">
+    <rect>
+     <x>655</x>
+     <y>690</y>
+     <width>97</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <item>
+    <property name="text">
+     <string>Horizontal</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Vertical</string>
+    </property>
+   </item>
   </widget>
   <widget class="QPushButton" name="subtract">
    <property name="geometry">
     <rect>
-     <x>570</x>
+     <x>555</x>
      <y>15</y>
      <width>23</width>
      <height>23</height>
     </rect>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
    </property>
    <property name="toolTip">
     <string>Subtract Fit</string>
@@ -690,11 +522,14 @@
   <widget class="QPushButton" name="sensitivity">
    <property name="geometry">
     <rect>
-     <x>595</x>
+     <x>580</x>
      <y>15</y>
      <width>23</width>
      <height>23</height>
     </rect>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
    </property>
    <property name="toolTip">
     <string>Compute Sensitivity</string>
@@ -703,54 +538,174 @@
     <string/>
    </property>
   </widget>
-  <widget class="QPushButton" name="zoom">
+  <widget class="QFrame" name="YZPlotArea">
    <property name="geometry">
     <rect>
-     <x>515</x>
+     <x>5</x>
+     <y>530</y>
+     <width>635</width>
+     <height>200</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(132, 132, 132);</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::StyledPanel</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="showGrad">
+   <property name="geometry">
+    <rect>
+     <x>615</x>
      <y>40</y>
-     <width>23</width>
+     <width>20</width>
      <height>23</height>
     </rect>
    </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
+   </property>
    <property name="toolTip">
-    <string>Zoom</string>
+    <string>Show Color Bar</string>
+   </property>
+   <property name="text">
+    <string>+</string>
+   </property>
+   <property name="autoDefault">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="plotType">
+   <property name="geometry">
+    <rect>
+     <x>425</x>
+     <y>20</y>
+     <width>121</width>
+     <height>32</height>
+    </rect>
    </property>
    <property name="text">
     <string/>
    </property>
   </widget>
+  <widget class="QPushButton" name="refresh">
+   <property name="geometry">
+    <rect>
+     <x>395</x>
+     <y>40</y>
+     <width>23</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip">
+    <string>Refresh Plot</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>40</y>
+     <width>36</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;X-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="yAxis">
+   <property name="geometry">
+    <rect>
+     <x>185</x>
+     <y>40</y>
+     <width>69</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>40</y>
+     <width>36</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Y-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_4">
+   <property name="geometry">
+    <rect>
+     <x>270</x>
+     <y>40</y>
+     <width>36</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Z-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="zAxis">
+   <property name="geometry">
+    <rect>
+     <x>315</x>
+     <y>40</y>
+     <width>69</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="xAxis">
+   <property name="geometry">
+    <rect>
+     <x>55</x>
+     <y>40</y>
+     <width>69</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
   <zorder>YZPlotArea</zorder>
-  <zorder>mainPlotArea</zorder>
-  <zorder>hCutPos</zorder>
-  <zorder>XZPlotArea</zorder>
-  <zorder>vCutPos</zorder>
-  <zorder>vhSelect</zorder>
-  <zorder>label_29</zorder>
-  <zorder>plotTitle</zorder>
-  <zorder>label_27</zorder>
-  <zorder>addPlot</zorder>
   <zorder>label</zorder>
-  <zorder>hideGrad</zorder>
-  <zorder>showGrad</zorder>
-  <zorder>diamCalc</zorder>
-  <zorder>browse</zorder>
-  <zorder>yAxis</zorder>
-  <zorder>zAxis</zorder>
-  <zorder>xAxis</zorder>
-  <zorder>label_2</zorder>
-  <zorder>label_3</zorder>
-  <zorder>label_4</zorder>
-  <zorder>refresh</zorder>
-  <zorder>diamFrame</zorder>
+  <zorder>hCutPos</zorder>
+  <zorder>plotTitle</zorder>
   <zorder>gradient</zorder>
-  <zorder>plotType</zorder>
+  <zorder>mainPlotArea</zorder>
+  <zorder>hideGrad</zorder>
+  <zorder>XZPlotArea</zorder>
+  <zorder>diamFrame</zorder>
+  <zorder>vCutPos</zorder>
+  <zorder>label_27</zorder>
+  <zorder>diamCalc</zorder>
+  <zorder>label_29</zorder>
+  <zorder>vhSelect</zorder>
   <zorder>subtract</zorder>
   <zorder>sensitivity</zorder>
-  <zorder>zoom</zorder>
+  <zorder>showGrad</zorder>
+  <zorder>plotType</zorder>
+  <zorder>refresh</zorder>
+  <zorder>label_2</zorder>
+  <zorder>yAxis</zorder>
+  <zorder>label_3</zorder>
+  <zorder>label_4</zorder>
+  <zorder>zAxis</zorder>
+  <zorder>xAxis</zorder>
  </widget>
- <tabstops>
-  <tabstop>addPlot</tabstop>
- </tabstops>
  <resources/>
  <connections/>
 </ui>
