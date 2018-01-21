@@ -20,5 +20,19 @@
     <file>Pictures/SQUIDRotated2.png</file>
     <file>Pictures/sunSQUID.png</file>
     <file>Pictures/unlock.png</file>
+	<file>Pictures/addPlotIcon.png</file>
+	<file>Pictures/inverseDiameter.png</file>
+	<file>Pictures/inverseNabla.png</file>
+	<file>Pictures/inverseRes.png</file>
+	<file>Pictures/inverseSigma.png</file>
+	<file>Pictures/inverseZoom.png</file>
+	<file>Pictures/nablaIcon.png</file>
+	<file>Pictures/nablaXIcon.png</file>
+	<file>Pictures/nablaYIcon.png</file>
+	<file>Pictures/resIcon.png</file>
+	<file>Pictures/sigmaIcon.png</file>
+	<file>Pictures/zoomIcon.png</file>
+	<file>Pictures/retraceIcon.png</file>
+	<file>Pictures/traceIcon.png</file>
   </qresource>
 </RCC>
