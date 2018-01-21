@@ -38,6 +38,9 @@ Ui_SensitivityPrompt, QtBaseClass = uic.loadUiType(sensitivityPrompt)
 Ui_GradSet, QtBaseClass = uic.loadUiType(gradSettings)
 Ui_ZoomWindow, QtBaseClass = uic.loadUiType(zoomWindow)
 
+sys.path.append(sys.path[0]+'\Resources')
+from nSOTScannerFormat import readNum, formatNum
+
 class gradSet(QtGui.QDialog, Ui_GradSet):
 	def __init__(self, reactor, dataPct):
 		super(gradSet, self).__init__()
@@ -103,6 +106,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
 		self.showGrad.hide()
 		self.diamFrame.hide()
+		self.trSelect.hide()
 
 		self.diamCalc.setIcon(QtGui.QIcon("diameter.png"))
 		self.refresh.setIcon(QtGui.QIcon("refreshIcon.png"))
@@ -150,6 +154,15 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.subtractMenu.addAction(subPlane)
 		self.subtractMenu.addAction(subQuad)
 		self.subtract.setMenu(self.subtractMenu)
+		
+		self.trSelectMenu = QtGui.QMenu()
+		showTrace = QtGui.QAction("Plot Trace", self)
+		showRetrace = QtGui.QAction("Plot Retrace", self)
+		self.trSelectMenu.addAction(showTrace)
+		self.trSelectMenu.addAction(showRetrace)
+		showTrace.triggered.connect(self.plotTrace)
+		showRetrace.triggered.connect(self.plotRetrace)
+		self.trSelect.setMenu(self.trSelectMenu)
 
 
 		self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
@@ -213,13 +226,15 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 				self.depZoomVars.append(self.zAxis.itemText(i))	
 			self.currentIndex = [self.xAxis.currentIndex(), self.yAxis.currentIndex(), self.zAxis.currentIndex()]		
 			self.zoomExtent = [bounds.x(), bounds.x() + bounds.width(), bounds.y(), bounds.y() + bounds.height(), self.xscale, self.yscale]
-			self.zoomPlot = zoomPlot(reactor, self.plotZoom, self.dataZoom, self.zoomExtent, self.indZoomVars, self.depZoomVars, self.currentIndex)
+			self.zoomPlot = zoomPlot(self.reactor, self.plotZoom, self.dataZoom, self.zoomExtent, self.indZoomVars, self.depZoomVars, self.currentIndex)
 			self.zoomPlot.show()
+			
+
 			
 
 
 	def promptSensitivity(self):
-		self.sensPrompt = Sensitivity(self.depVars, self.indVars, reactor)
+		self.sensPrompt = Sensitivity(self.depVars, self.indVars, self.reactor)
 		self.sensPrompt.show()
 		self.sensPrompt.accepted.connect(self.plotSens)
 		print 'great'
@@ -277,7 +292,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.vCutPos.setValue(self.xMin)
 		self.hCutPos.setValue(self.yMin)
 		self.plotType.setText('Plotted sensitivity.')			
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.sensitivity.setIcon(QtGui.QIcon('inverseSigma.png'))
 		self.clearPlots()
 
@@ -332,7 +347,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 	def xDeriv(self):
 		if self.plotData is None:
 			self.plotType.setText("Please plot data.")
-			self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+			self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 			self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
 		else:
 			self.gradient.setIcon(QtGui.QIcon("inverseNabla.png"))
@@ -342,7 +357,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			N = int(self.xPoints * self.datPct)
 			if N < 2:
 				self.plotType.setText("Lanczos window too \nsmall.")
-				self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+				self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 				self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
 			else:
 				for i in range(0, self.plotData.shape[1]):
@@ -350,7 +365,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 				self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 				print '1'
 				self.plotType.setText("Plotted gradient along \nx-axis.")
-				self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+				self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 				print '2'
 				self.clearPlots()
 	def yDeriv(self):
@@ -362,10 +377,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.plotData[i, :] = deriv(self.plotData[i,:], yVals, N, delta)	
 		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted gradient along \ny-axis.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def derivSettings(self):
-		self.gradSet = gradSet(reactor, self.datPct)
+		self.gradSet = gradSet(self.reactor, self.datPct)
 		self.gradSet.show()
 		self.gradSet.accepted.connect(self.setLancWindow)
 	def setLancWindow(self):
@@ -388,7 +403,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		avg = np.average(self.plotData)
 		self.plotData = self.plotData - avg
 		self.plotType.setText("Plotted offset \nsubtracted data.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractPlane(self):
 		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
@@ -406,7 +421,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.plotData[int(i[x]), int(i[y])] = self.plotData[int(i[x]), int(i[y])] - np.dot(C[0], [i[x+l], i[y+l], 1])		
 		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted plane \nsubtracted data.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractQuad(self):
 		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
@@ -422,7 +437,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.plotData[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l]**2, i[y+l]**2, i[l+x]*i[y+l], i[l+x], i[l+y], 1])		
 		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted quadratic \nsubtracted data.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 
 	@inlineCallbacks
@@ -463,8 +478,11 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.zAxis.clear()
 
 		self.plotType.setText("\nLoading data...")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
-
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+		#Initialized data set to none
+		self.Data = None
+		self.traceData = None
+		selfretraceData = None
 		result = self.dvExplorer.dataSetInfo()
 		print result
 		self.file = result[0]
@@ -473,8 +491,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		l = len(self.indVars)
 		self.depVars =result[2][1]
 		self.plotTitle.setText(str(self.file))
-		self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(255,255,255); font: 11pt;}")
+		self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
+		#Load a data set with no trace/retrace index
 		if l % 2 == 0:
+			self.dataFlag = None
 			for i in self.indVars[int(l / 2) : l]:
 				self.xAxis.addItem(i)
 				self.yAxis.addItem(i)
@@ -496,6 +516,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.gradient.setEnabled(True)
 			self.subtract.setEnabled(True)
 			self.sensitivity.setEnabled(True)
+			self.trSelect.hide()
 			self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
 			self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
 			self.sensitivity.setIcon(QtGui.QIcon('sigmaIcon.png'))
@@ -506,6 +527,58 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.zoom.setEnabled(False)
 			self.clearPlots()
 			self.plotType.clear()
+		#Load a data set with a trace/retrace index
+		elif l % 2 == 1 and self.indVars[0] == 'Trace Index':
+			self.indVars = self.indVars[1::]
+			for i in self.indVars[int(l / 2): l]:
+				self.xAxis.addItem(i)
+				self.yAxis.addItem(i)
+			for i in self.depVars:
+				self.zAxis.addItem(i)
+			t = time.time()
+			yield self.dv.open(self.file)
+			print 'opened set'
+			t1 = time.time()
+			print t1 - t
+			self.Data = yield self.dv.get()
+			self.Data = np.asarray(self.Data)
+			print 'got set'
+			t = time.time()
+			print t - t1
+			self.traceData = np.array([])
+			self.retraceData = np.array([])
+			#Separates trace and retrace according to the first index
+			for x in self.Data:
+				if  x[0] == 0:
+					if len(self.traceData) == 0:
+						self.traceData = x[1::]
+					else:
+						self.traceData = np.vstack((self.traceData,x[1::]))
+				elif x[0] == 1:
+					if len(self.retraceData) == 0:
+						self.retraceData = x[1::]
+					else:
+						self.retraceData = np.vstack((self.retraceData,x[1::]))
+			#Deletes the unsorted data set to free up memory
+			self.Data = self.traceData
+			self.dataFlag = 0
+			self.mainPlot.clear()
+			self.refresh.setEnabled(True)
+			self.diamCalc.setEnabled(True)
+			self.gradient.setEnabled(True)
+			self.subtract.setEnabled(True)
+			self.sensitivity.setEnabled(True)
+			self.trSelect.show()
+			self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
+			self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
+			self.sensitivity.setIcon(QtGui.QIcon('sigmaIcon.png'))
+			pt = self.mapToGlobal(QtCore.QPoint(410,-10))
+			self.plotType.setText("")
+			self.refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
+			QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
+			self.zoom.setEnabled(False)
+			self.clearPlots()
+			self.plotType.clear()			
 		else:
 			pt = self.mapToGlobal(QtCore.QPoint(410,-10))
 			QtGui.QToolTip.showText(pt, 'Data set format is incompatible with the plotter.')
@@ -546,9 +619,25 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		for i in self.Data:
 			self.plotData[int(i[x]), int(i[y])] = i[z]
 		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+		if self.dataFlag == 0:
+			title = self.file + " (Trace)"
+			self.plotTitle.setText(str(title))
+			self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
+		elif self.dataFlag == 1:
+			title = self.file + " (Retrace)"
+			self.plotTitle.setText(str(title))
+			self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
 		self.zoom.setEnabled(True)
 		self.clearPlots()
 		self.plotType.clear()
+	
+	def plotTrace(self):
+		self.Data = self.traceData
+		self.dataFlag = 0
+	
+	def plotRetrace(self):
+		self.Data = self.retraceData
+		self.dataFlag = 1
 
 	def clearPlots(self):
 		if self.plotData is None:
@@ -808,7 +897,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
 	def newPlot(self):
 		self.numPlots += 1
-		self.newPlot = subPlot(self.dv, self.os_path, self.numPlots, reactor)
+		self.newPlot = subPlot(self.dv, self.os_path, self.numPlots, self.reactor)
 		self.newPlot.show()
 
 	def closeEvent(self, e):
@@ -833,7 +922,7 @@ class editDataInfo(QtGui.QDialog, Ui_EditDataInfo):
 
 		self.name.setWordWrap(True)
 		self.currentComs.setReadOnly(True)
-		self.setupTags(reactor)
+		self.setupTags(self.reactor)
 
 	@inlineCallbacks
 	def setupTags(self, c):
@@ -898,7 +987,7 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
 		self.currentFile.setReadOnly(True)
 		self.curDir = ''
 
-		self.popDirs(reactor)
+		self.popDirs(self.reactor)
 
 		self.dirList.itemDoubleClicked.connect(self.updateDirs)
 		self.fileList.itemClicked.connect(self.fileSelect)
@@ -934,7 +1023,7 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
 		subdir = str(subdir.text())
 		self.curDir = subdir
 		yield self.dv.cd(subdir, False)
-		self.popDirs(reactor)
+		self.popDirs(self.reactor)
 
 	@inlineCallbacks
 	def backUp(self, c):
@@ -946,14 +1035,14 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
 			back = direct[0:-1]
 			self.curDir = back[-1]
 			yield self.dv.cd(back)
-			self.popDirs(reactor)
+			self.popDirs(self.reactor)
 
 	@inlineCallbacks
 	def goHome(self, c):
 		self.currentFile.clear()
 		yield self.dv.cd('')
 		self.curDir = ''
-		self.popDirs(reactor)
+		self.popDirs(self.reactor)
 
 
 	@inlineCallbacks
@@ -961,7 +1050,7 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
 		direct, ok = QtGui.QInputDialog.getText(self, "Make directory", "Directory Name: " )
 		if ok:
 			yield self.dv.mkdir(str(direct))
-			self.popDirs(reactor)
+			self.popDirs(self.reactor)
 
 	@inlineCallbacks
 	def displayInfo(self, c):
@@ -1074,7 +1163,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.directory = None
 
 	def promptSensitivity(self):
-		self.sensPrompt = Sensitivity(self.depVars, self.indVars, reactor)
+		self.sensPrompt = Sensitivity(self.depVars, self.indVars, self.reactor)
 		self.sensPrompt.show()
 		self.sensPrompt.accepted.connect(self.plotSens)
 		print 'great'
@@ -1126,7 +1215,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.vCutPos.setValue(self.xMin)
 		self.hCutPos.setValue(self.yMin)
 		self.plotType.setText('Plotted sensitivity.')			
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.sensitivity.setIcon(QtGui.QIcon('inverseSigma.png'))
 		self.clearPlots()
 
@@ -1142,7 +1231,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 			self.plotData[:, i] = deriv(self.plotData[:,i], xVals, N, delta)	
 		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted gradient along \nx-axis.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def yDeriv(self):
 		self.gradient.setIcon(QtGui.QIcon("inverseNabla.png"))
@@ -1153,10 +1242,10 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 			self.plotData[i, :] = deriv(self.plotData[i,:], yVals, N, delta)	
 		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted gradient along \ny-axis.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def derivSettings(self):
-		self.gradSet = gradSet(reactor, self.datPct)
+		self.gradSet = gradSet(self.reactor, self.datPct)
 		self.gradSet.show()
 		self.gradSet.accepted.connect(self.setLancWindow)
 	def setLancWindow(self):
@@ -1175,7 +1264,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.plotData = X - avg
 		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted offset \nsubtracted data.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractPlane(self):
 		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
@@ -1189,7 +1278,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 			self.plotData[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l], i[y+l], 1])		
 		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted plane \nsubtracted data.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractQuad(self):
 		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
@@ -1203,7 +1292,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 			self.plotData[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l]**2, i[y+l]**2, i[l+x]*i[y+l], i[l+x], i[l+y], 1])		
 		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted quadratic \nsubtracted data.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 
 
@@ -1211,7 +1300,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.refresh.setEnabled(False)
 		self.dvExplorer = dataVaultExplorer(self.dv, self.os_path, reactor)
 		self.dvExplorer.show()
-		self.dvExplorer.accepted.connect(lambda: self.loadData(reactor))
+		self.dvExplorer.accepted.connect(lambda: self.loadData(self.reactor))
 		self.dvExplorer.rejected.connect(self.reenableRefresh)
 
 	def reenableRefresh(self):
@@ -1228,7 +1317,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.zAxis.clear()
 
 		self.plotType.setText("\nLoading data...")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 
 		result = self.dvExplorer.dataSetInfo()
 		print result
@@ -1238,7 +1327,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		l = len(self.indVars)
 		self.depVars =result[2][1]
 		self.plotTitle.setText(str(self.file))
-		self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(255,255,255); font: 11pt;}")
+		self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
 		if l % 2 == 0:
 			for i in self.indVars[int(l / 2) : l]:
 				self.xAxis.addItem(i)
@@ -1526,7 +1615,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 
 	def newPlot(self):
 		self.numPlots += 1
-		self.newPlot = subPlot(self.dv, self.os_path, self.numPlots, reactor)
+		self.newPlot = subPlot(self.dv, self.os_path, self.numPlots, self.reactor)
 		self.newPlot.show()
 
 class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
@@ -1673,7 +1762,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 			self.zoomPlot[:, i] = deriv(self.zoomPlot[:,i], xVals, N, delta)	
 		self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted gradient along \nx-axis.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def yDeriv(self):
 		self.gradient.setIcon(QtGui.QIcon("inverseNabla.png"))
@@ -1684,10 +1773,10 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 			self.zoomPlot[i, :] = deriv(self.zoomPlot[i,:], yVals, N, delta)	
 		self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted gradient along \ny-axis.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def derivSettings(self):
-		self.gradSet = gradSet(reactor)
+		self.gradSet = gradSet(self.reactor)
 		self.gradSet.show()
 		self.gradSet.accepted.connect(self.setLancWindow)
 	def setLancWindow(self):
@@ -1698,7 +1787,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		avg = np.average(self.plotData)
 		self.plotData = self.plotData - avg
 		self.plotType.setText("Plotted offset \nsubtracted data.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractPlane(self):
 		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
@@ -1713,7 +1802,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 			self.plotData[int(i[x]), int(i[y])] = self.plotData[int(i[x]), int(i[y])] - np.dot(C[0], [i[x+l], i[y+l], 1])		
 		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted plane \nsubtracted data.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractQuad(self):
 		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
@@ -1728,7 +1817,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 			self.plotData[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l]**2, i[y+l]**2, i[l+x]*i[y+l], i[l+x], i[l+y], 1])		
 		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted quadratic \nsubtracted data.")
-		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(255,255,255); font: 9pt;}")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 
 

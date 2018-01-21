@@ -27,7 +27,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Select the percent of the total number of data points the &lt;br/&gt;Lancsoz differentiator uses to compute the gradient.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Default is 10%.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Select the percent of the total number of data points the &lt;br/&gt;Lancsoz differentiator uses to compute the gradient.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Default is 10%.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
@@ -40,7 +40,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Lancsoz Window:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Lancsoz Window:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QDoubleSpinBox" name="dataPercent">
@@ -72,7 +72,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;(percent)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;(percent)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QPushButton" name="okBtn">
@@ -83,6 +83,21 @@
      <width>75</width>
      <height>23</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:pressed#okBtn{
+color: rgb(0,0,0);
+background-color:rgb(131,131,131);
+border: 1px solid rgb(0,0,0);
+border-radius: 5px
+}
+
+QPushButton#okBtn{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string>OK</string>
@@ -96,6 +111,21 @@
      <width>75</width>
      <height>23</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:pressed#cancelBtn{
+color: rgb(0,0,0);
+background-color:rgb(131,131,131);
+border: 1px solid rgb(0,0,0);
+border-radius: 5px
+}
+
+QPushButton#cancelBtn{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string>Cancel</string>

@@ -26,6 +26,21 @@
      <height>23</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:pressed#select{
+color: rgb(0,0,0);
+background-color:rgb(131,131,131);
+border: 1px solid rgb(0,0,0);
+border-radius: 5px
+}
+
+QPushButton#select{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}</string>
+   </property>
    <property name="text">
     <string>Select</string>
    </property>
@@ -69,7 +84,18 @@
     <string>Go to Root</string>
    </property>
    <property name="styleSheet">
-    <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt;&quot;&gt;Hell &amp;#127968;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string notr="true">#home{
+image:url(:/nSOTScanner/Pictures/homeIcon.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#home{
+image:url(:/nSOTScanner/Pictures/homeIcon.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string/>
@@ -155,6 +181,20 @@
    <property name="toolTip">
     <string>Back</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">#back{
+image:url(:/nSOTScanner/Pictures/backIcon.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#back{
+image:url(:/nSOTScanner/Pictures/backIcon.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
+   </property>
    <property name="text">
     <string/>
    </property>
@@ -204,6 +244,21 @@
      <height>23</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:pressed#cancelSelect{
+color: rgb(0,0,0);
+background-color:rgb(131,131,131);
+border: 1px solid rgb(0,0,0);
+border-radius: 5px
+}
+
+QPushButton#cancelSelect{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}</string>
+   </property>
    <property name="text">
     <string>Cancel</string>
    </property>
@@ -220,8 +275,22 @@
    <property name="toolTip">
     <string>Add Directory</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">#addDir{
+image:url(:/nSOTScanner/Pictures/addPlotIcon.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#addDir{
+image:url(:/nSOTScanner/Pictures/addPlotIcon.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
+   </property>
    <property name="text">
-    <string>+</string>
+    <string/>
    </property>
   </widget>
   <widget class="QPushButton" name="refresh">
@@ -234,7 +303,21 @@
     </rect>
    </property>
    <property name="toolTip">
-    <string>Back</string>
+    <string>Refresh</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#refresh{
+image:url(:/nSOTScanner/Pictures/refreshIcon.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#refresh{
+image:url(:/nSOTScanner/Pictures/refreshIcon.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string/>

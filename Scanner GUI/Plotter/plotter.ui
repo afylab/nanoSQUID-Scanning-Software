@@ -135,7 +135,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Horizontal Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;Horizontal Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="plotTitle">
@@ -148,7 +148,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; color:#ffffff;&quot;&gt;Plotter&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; color:#838383;&quot;&gt;Plotter&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_27">
@@ -161,7 +161,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Vertical Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;Vertical Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QPushButton" name="addPlot">
@@ -178,6 +178,20 @@
    </property>
    <property name="toolTip">
     <string>Add Plot</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#addPlot{
+image:url(:/nSOTScanner/Pictures/addPlotIcon.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#addPlot{
+image:url(:/nSOTScanner/Pictures/addPlotIcon.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string/>
@@ -215,7 +229,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Display Plot:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;Display Plot:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QPushButton" name="hideGrad">
@@ -274,6 +288,20 @@
    <property name="toolTip">
     <string>Estimate nSOT Diameter</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">#diamCalc{
+image:url(:/nSOTScanner/Pictures/inverseDiameter.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#diamCalc{
+image:url(:/nSOTScanner/Pictures/inverseDiameter.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
+   </property>
    <property name="text">
     <string/>
    </property>
@@ -281,7 +309,7 @@
   <widget class="QPushButton" name="browse">
    <property name="geometry">
     <rect>
-     <x>438</x>
+     <x>430</x>
      <y>40</y>
      <width>75</width>
      <height>23</height>
@@ -289,6 +317,21 @@
    </property>
    <property name="toolTip">
     <string>Browse Data Vault</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:pressed#browse{
+color: rgb(0,0,0);
+background-color:rgb(131,131,131);
+border: 1px solid rgb(0,0,0);
+border-radius: 5px
+}
+
+QPushButton#browse{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string>Load Data</string>
@@ -334,7 +377,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;X-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;X-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
@@ -347,7 +390,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Y-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;Y-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_4">
@@ -360,7 +403,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#ffffff;&quot;&gt;Z-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;Z-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QPushButton" name="refresh">
@@ -374,6 +417,20 @@
    </property>
    <property name="toolTip">
     <string>Refresh Plot</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#refresh{
+image:url(:/nSOTScanner/Pictures/refreshIcon.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#refresh{
+image:url(:/nSOTScanner/Pictures/refreshIcon.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string/>
@@ -420,7 +477,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;Fourier Over ROI&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#838383;&quot;&gt;Fourier Over ROI&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QCheckBox" name="checkAvg">
@@ -446,7 +503,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;Manual Average&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#838383;&quot;&gt;Manual Average&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="fourierEst">
@@ -469,7 +526,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;(nm)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#838383;&quot;&gt;(nm)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_8">
@@ -482,17 +539,32 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;Diameter:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#838383;&quot;&gt;Diameter:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QPushButton" name="fourierCalc">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>25</x>
       <y>80</y>
       <width>75</width>
       <height>23</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#fourierCalc{
+color: rgb(0,0,0);
+background-color:rgb(131,131,131);
+border: 1px solid rgb(0,0,0);
+border-radius: 5px
+}
+
+QPushButton#fourierCalc{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}</string>
     </property>
     <property name="text">
      <string>Calculate</string>
@@ -501,37 +573,39 @@
    <widget class="QLabel" name="label_9">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>25</x>
       <y>35</y>
-      <width>86</width>
-      <height>14</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;Select ROI and &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_10">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>50</y>
       <width>83</width>
-      <height>14</height>
+      <height>28</height>
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;press calculate.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#838383;&quot;&gt;Select ROI and &lt;br/&gt;press calculate.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QPushButton" name="avgAddLine">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>25</x>
       <y>280</y>
       <width>75</width>
       <height>23</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#avgAddLine{
+color: rgb(0,0,0);
+background-color:rgb(131,131,131);
+border: 1px solid rgb(0,0,0);
+border-radius: 5px
+}
+
+QPushButton#avgAddLine{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}</string>
     </property>
     <property name="text">
      <string>Add Line</string>
@@ -547,7 +621,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;(nm)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#838383;&quot;&gt;(nm)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_18">
@@ -560,7 +634,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;Diameter:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#838383;&quot;&gt;Diameter:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="avgEst">
@@ -576,63 +650,39 @@
    <widget class="QLabel" name="label_19">
     <property name="geometry">
      <rect>
-      <x>30</x>
+      <x>25</x>
       <y>210</y>
-      <width>69</width>
-      <height>14</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;Add lines to &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_20">
-    <property name="geometry">
-     <rect>
-      <x>29</x>
-      <y>225</y>
-      <width>71</width>
-      <height>14</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;average over&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_21">
-    <property name="geometry">
-     <rect>
-      <x>22</x>
-      <y>240</y>
       <width>85</width>
-      <height>14</height>
+      <height>56</height>
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;desired number&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_22">
-    <property name="geometry">
-     <rect>
-      <x>35</x>
-      <y>255</y>
-      <width>58</width>
-      <height>14</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#ffffff;&quot;&gt;of periods.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt; color:#838383;&quot;&gt;Add lines to &lt;br/&gt;average over&lt;br/&gt;desired number&lt;br/&gt;of periods.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QPushButton" name="avgCalc">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>25</x>
       <y>310</y>
       <width>75</width>
       <height>23</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#avgCalc{
+color: rgb(0,0,0);
+background-color:rgb(131,131,131);
+border: 1px solid rgb(0,0,0);
+border-radius: 5px
+}
+
+QPushButton#avgCalc{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}</string>
     </property>
     <property name="text">
      <string>Calculate</string>
@@ -650,6 +700,20 @@
    </property>
    <property name="toolTip">
     <string>Directional Gradient</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#gradient{
+image:url(:/nSOTScanner/Pictures/inverseNabla.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#gradient{
+image:url(:/nSOTScanner/Pictures/inverseNabla.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string/>
@@ -681,7 +745,20 @@
     <string>Subtract Fit</string>
    </property>
    <property name="styleSheet">
-    <string notr="true">#subtract{menu-indicator:{image:none}}</string>
+    <string notr="true">#subtract{menu-indicator:{image:none}}
+
+#subtract{
+image:url(:/nSOTScanner/Pictures/inverseRes.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#subtract{
+image:url(:/nSOTScanner/Pictures/inverseRes.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string/>
@@ -699,6 +776,20 @@
    <property name="toolTip">
     <string>Compute Sensitivity</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">#sensitivity{
+image:url(:/nSOTScanner/Pictures/inverseSigma.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#sensitivity{
+image:url(:/nSOTScanner/Pictures/inverseSigma.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
+   </property>
    <property name="text">
     <string/>
    </property>
@@ -714,6 +805,50 @@
    </property>
    <property name="toolTip">
     <string>Zoom</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#zoom{
+image:url(:/nSOTScanner/Pictures/zoomIcon.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#zoom{
+image:url(:/nSOTScanner/Pictures/zoomIcon.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="trSelect">
+   <property name="geometry">
+    <rect>
+     <x>400</x>
+     <y>15</y>
+     <width>23</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Trace/Retrace Select</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#trSelect{
+image:url(:/nSOTScanner/Pictures/traceIcon.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#trSelect{
+image:url(:/nSOTScanner/Pictures/traceIcon.png);
+background: black;
+border: 2px solid white;
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string/>
@@ -747,6 +882,7 @@
   <zorder>subtract</zorder>
   <zorder>sensitivity</zorder>
   <zorder>zoom</zorder>
+  <zorder>trSelect</zorder>
  </widget>
  <tabstops>
   <tabstop>addPlot</tabstop>

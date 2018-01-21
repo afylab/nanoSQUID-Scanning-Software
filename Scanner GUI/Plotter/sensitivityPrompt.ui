@@ -47,7 +47,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Differentiate Along:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Differentiate Along:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
@@ -60,7 +60,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Noise:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Noise:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QPushButton" name="okBtn">
@@ -71,6 +71,21 @@
      <width>75</width>
      <height>23</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:pressed#okBtn{
+color: rgb(0,0,0);
+background-color:rgb(131,131,131);
+border: 1px solid rgb(0,0,0);
+border-radius: 5px
+}
+
+QPushButton#okBtn{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string>OK</string>
@@ -84,6 +99,21 @@
      <width>75</width>
      <height>23</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:pressed#cancelBtn{
+color: rgb(0,0,0);
+background-color:rgb(131,131,131);
+border: 1px solid rgb(0,0,0);
+border-radius: 5px
+}
+
+QPushButton#cancelBtn{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}</string>
    </property>
    <property name="text">
     <string>Cancel</string>
@@ -99,7 +129,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Please select the independent parameter you would like to&lt;br/&gt;differentiate with respect to, and the independent parameter &lt;br/&gt;you would like held fixed. Also indicate the dependent &lt;br/&gt;parameter whose sensitivity you want to plot, and the &lt;br/&gt;index of the noise measurement.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Please select the independent parameter you would like to&lt;br/&gt;differentiate with respect to, and the independent parameter &lt;br/&gt;you would like held fixed. Also indicate the dependent &lt;br/&gt;parameter whose sensitivity you want to plot, and the &lt;br/&gt;index of the noise measurement.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QComboBox" name="constIndex">
@@ -122,7 +152,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Keeping constant:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Keeping constant:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QComboBox" name="depIndex">
@@ -145,7 +175,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Dependent Parameter:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Dependent Parameter:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
  </widget>
