@@ -1035,6 +1035,32 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
 		if self.sweepMod == 0:
 			if self.plotNoPlot%2 == 1:
+				i = new_line[0][1]
+				new_curData = [(x[5] ) for x in new_line]
+				new_noiseData = [x[6] for x in new_line]
+				self.curRetraceData[i] = new_curData
+				self.noiseRetraceData[i] = new_noiseData
+				self.retracePlot.setImage(self.curRetraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+				self.noiseRetracePlot.setImage(self.noiseRetraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+				self.update_bottomRetracePlot(i)
+				self.plotNoPlot += 1
+
+			elif self.plotNoPlot%2 == 0:
+				i = new_line[0][1]
+				new_curData = [x[5]	 for x in new_line]
+				new_noiseData = [x[6] for x in new_line]
+				self.curTraceData[i] = new_curData
+				self.noiseTraceData[i] = new_noiseData
+				self.tracePlot.setImage(self.curTraceData, autoRange = False, autoLevels = True, pos=[self.x0,self.y0],scale=[self.xscale, self.yscale])
+				self.noiseTracePlot.setImage(self.noiseTraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+				self.update_bottomTracePlot(i)
+				self.plotNoPlot += 1
+
+		elif self.sweepMod == 1:
+			i = new_line[0][1]
+			new_curData = [x[5]	 for x in new_line]
+			new_noiseData = [x[6] for x in new_line]
+			if self.plotNoPlot%2 == 1:
 				i = new_line[0][0]
 				new_curData = [(x[5] ) for x in new_line]
 				new_noiseData = [x[6] for x in new_line]
@@ -1046,33 +1072,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 				self.plotNoPlot += 1
 
 			elif self.plotNoPlot%2 == 0:
-				i = new_line[0][0]
-				new_curData = [x[5]	 for x in new_line]
-				new_noiseData = [x[6] for x in new_line]
-				self.curTraceData[i] = new_curData
-				self.noiseTraceData[i] = new_noiseData
-				self.tracePlot.setImage(self.curTraceData, autoRange = False, autoLevels = True, pos=[self.x0,self.y0],scale=[self.xscale, self.yscale])
-				self.noiseTracePlot.setImage(self.noiseTraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-				self.update_bottomTracePlot(i)
-				self.plotNoPlot += 1
-
-		elif self.sweepMod == 1:
-			i = new_line[0][0]
-			new_curData = [x[5]	 for x in new_line]
-			new_noiseData = [x[6] for x in new_line]
-			if self.plotNoPlot%2 == 1:
-				i = new_line[0][0]
-				new_curData = [(x[4] ) for x in new_line]
-				new_noiseData = [x[5] for x in new_line]
-				self.curRetraceData[i] = new_curData
-				self.noiseRetraceData[i] = new_noiseData
-				self.retracePlot.setImage(self.curRetraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-				self.noiseRetracePlot.setImage(self.noiseRetraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-				self.update_bottomRetracePlot(i)
-				self.plotNoPlot += 1
-
-			elif self.plotNoPlot%2 == 0:
-				i = new_line[0][0]
+				i = new_line[0][1]
 				new_curData = [x[5]	 for x in new_line]
 				new_noiseData = [x[6] for x in new_line]
 				self.curTraceData[i] = new_curData
@@ -1214,7 +1214,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
 
 
-		yield self.dv.new("nSOT vs. Bias Voltage and Field", ['B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
+		yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
 		print 'DataVault setup complete'
 
 		B_space = np.linspace(B_min, B_max, B_points)
