@@ -11,18 +11,21 @@ import threading
 import copy
 
 path = sys.path[0] + r"\nSOTCharacterizer"
-characterGUI = path + "\character_GUI.ui"
-dialogBox = path + "\sweepCheck.ui"
+characterGUI = path + r"\character_GUI.ui"
+dialogBox = path + r"\sweepCheck.ui"
 dacSet = path + "\dacChannels.ui"
 acSet = path + r"\acSetting.ui"
-prelimSweep = path + "\preliminarySweep.ui"
+prelimSweep = path + r"\preliminarySweep.ui"
+toeReminder = path + r"\toeReminder.ui"
 serlist = path + r"\requiredServers.ui"
+
 
 Ui_MainWindow, QtBaseClass = uic.loadUiType(characterGUI)
 Ui_DialogBox, QtBaseClass = uic.loadUiType(dialogBox)
 Ui_dacSet, QtBaseClass = uic.loadUiType(dacSet)
 Ui_acSet, QtBaseClass = uic.loadUiType(acSet)
 Ui_prelimSweep, QtBaseClass = uic.loadUiType(prelimSweep)
+Ui_toeReminder, QtBaseClass = uic.loadUiType(toeReminder)
 Ui_ServerList, QtBaseClass = uic.loadUiType(serlist)
 
 class Window(QtGui.QMainWindow, Ui_MainWindow):
@@ -50,7 +53,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
 		self.fieldPos = 0
 
-		self.startSweep.clicked.connect(self.checkSweep)
+		self.startSweep.clicked.connect(self.toeCheck)
 		self.abortFlag = False
 		self.abortSweep.setEnabled(False)
 		self.abortSweep.clicked.connect(self.abortion)
@@ -293,24 +296,36 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 		self.showRetraceGrad.raise_()	 
 
 	def UpdateBMax(self):
-		if -1.25 <= float(self.fieldMaxSetValue.text()) <= 1.25:
-			self.reformat(self.fieldMaxSetValue.text(), self.fieldMaxSetValue)
+		if float(self.fieldMaxSetValue.text()) < 0 and self.magnetPower.currentText() == 'Toellner 8851':
+			self.fieldMaxSetValue.setText('0')
+			
+		elif -1.25 <= float(self.fieldMaxSetValue.text()) <= 1.25:
+			pass
 		elif float(self.fieldMaxSetValue.text()) >= 1.25:
 			self.fieldMaxSetValue.setText('1.25')
-			self.reformat(self.fieldMaxSetValue.text(), self.fieldMaxSetValue)
+
+
 		elif float(self.fieldMaxSetValue.text()) <= -1.25:
 			self.fieldMaxSetValue.setText('-1.25')
-			self.reformat(self.fieldMaxSetValue.text(), self.fieldMaxSetValue)
+		print 'here'			
+		self.reformat(self.fieldMaxSetValue.text(), self.fieldMaxSetValue)
+
 
 	def UpdateBMin(self):
-		if 1.25 >= float(self.fieldMinSetValue.text()) >= -1.25:
-			self.reformat(self.fieldMinSetValue.text(), self.fieldMinSetValue)
+		if float(self.fieldMinSetValue.text()) < 0 and self.magnetPower.currentText() == 'Toellner 8851':
+			self.fieldMinSetValue.setText('0')	
+	
+		elif 1.25 >= float(self.fieldMinSetValue.text()) >= -1.25:
+			pass
 		elif float(self.fieldMinSetValue.text()) >= 1.25:
-			self.fieldMinSetValue.setText('1.25')
-			self.reformat(self.fieldMinSetValue.text(), self.fieldMinSetValue)
+			self.fieldMinSetValue.setText('1.25')		
+			
 		elif float(self.fieldMinSetValue.text()) <= -1.25:
 			self.fieldMinSetValue.setText('-1.25')
-			self.reformat(self.fieldMinSetValue.text(), self.fieldMinSetValue)
+			print 'got ehre'
+		print 'here'
+		self.reformat(self.fieldMinSetValue.text(), self.fieldMinSetValue)
+
 
 
 	def UpdateVMax(self):
@@ -471,12 +486,21 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 		self.retracePlotNow = "bias"
 		self.traceNoiseNow = "bias"
 		self.retraceNoiseNow = "bias"
-
+	
+	def toeCheck(self):
+		self.checkToe = toellnerReminder()
+		self.startSweep.setEnabled(False)
+		if self.magnetPower.currentText() != 'Toellner 8851':
+			self.checkSweep()
+		else:
+			self.checkToe.show()
+			self.checkToe.accepted.connect(self.checkSweep)
+			self.checkToe.rejected.connect(self.decline)
 
 	def checkSweep(self):
-		self.startSweep.setEnabled(False)
 		sweepMod = self.biasSweepMode.currentIndex()
 		blinkMod = self.blink.currentIndex()
+		magPower = self.magnetPower.currentText()
 		bMin = float(self.fieldMinSetValue.text())
 		bMax = float(self.fieldMaxSetValue.text())
 		if self.fieldSIStat is True:
@@ -523,7 +547,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 		self.vSpeed = float(vSpeed)
 		self.sweepMod = int(sweepMod)
 		self.blinkMod = int(blinkMod)
-		magPower = self.magnetPower.currentText()
+		
 		
 		if bPoints != 0:
 			tLatent = 5
@@ -1939,6 +1963,29 @@ class acSettings(QtGui.QDialog, Ui_acSet):
 		self.window.acSetOpen.setEnabled(True)
 		self.close()
 
+#GUI Window for reminding user to turn Toellner output on
+class toellnerReminder(QtGui.QDialog, Ui_toeReminder):
+	def __init__(self, parent = None):
+		super(toellnerReminder, self).__init__(parent)
+		self.window = parent
+		self.setupUi(self)
+		
+		self.yes.clicked.connect(self.continueSweep)
+		self.no.clicked.connect(self.backUp)
+		
+	def continueSweep(self):
+		self.accept()
+		
+	def backUp(self):
+		self.reject()
+		
+	def closeEvent(self, e):
+		self.reject()
+
+		
+
+		
+		
 
 #GUI Window for finalizing sweep parameters, inherits the list of sweep parameters from the MainWindow checkSweep function
 class DialogBox(QtGui.QDialog, Ui_DialogBox):
