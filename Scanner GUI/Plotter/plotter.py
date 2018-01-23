@@ -108,13 +108,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.diamFrame.hide()
 		self.trSelect.hide()
 
-		self.diamCalc.setIcon(QtGui.QIcon("diameter.png"))
-		self.refresh.setIcon(QtGui.QIcon("refreshIcon.png"))
-		self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
-		self.sensitivity.setIcon(QtGui.QIcon("sigmaIcon.png"))
-		self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
-		self.addPlot.setIcon(QtGui.QIcon('addPlotIcon.png'))
-		self.zoom.setIcon(QtGui.QIcon('zoomIcon.png'))
 
 		self.setupPlots()
 		self.connect()
@@ -189,7 +182,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		
 
 	def zoomArea(self):
-		self.zoom.setIcon(QtGui.QIcon('inverseZoom.png'))
+		self.zoom.clicked.disconnect(self.zoomArea)
+		self.zoom.clicked.connect(self.rmvZoomArea)
 		xAxis = self.viewBig.getAxis('bottom')
 		yAxis = self.viewBig.getAxis('left')
 		a1, a2 = xAxis.range[0], xAxis.range[1]
@@ -199,9 +193,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.zoomRect.addScaleHandle((1,1), (.5,.5), lockAspect = False)
 		self.zoomRect.sigClicked.connect(self.QMouseEvent)
 		self.mainPlot.addItem(self.zoomRect)
+	def rmvZoomArea(self):
+		self.mainPlot.removeItem(self.zoomRect)
+		self.zoom.clicked.connect(self.zoomArea)
 	def QMouseEvent(self, thing, button):
 		button = int(str(button)[-2])
-		self.zoom.setIcon(QtGui.QIcon('zoomIcon.png'))
+
 		bounds = self.zoomRect.parentBounds()
 		x1 = int((bounds.x() - self.xMin) / self.xscale)
 		y1 = int((bounds.y() - self.yMin) / self.yscale)
@@ -211,8 +208,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.viewBig.setXRange(bounds.x(), bounds.x()+bounds.width())
 			self.viewBig.setYRange(bounds.y(),bounds.y() + bounds.height())			
 			self.mainPlot.removeItem(self.zoomRect)
+			self.zoom.clicked.connect(self.zoomArea)
 		elif button ==2:
 			self.mainPlot.removeItem(self.zoomRect)
+			self.zoom.clicked.connect(self.zoomArea)
 			self.plotZoom = self.plotData[x1:x2, y1:y2]
 			dataZoom = []
 			self.indZoomVars = []
@@ -241,14 +240,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 	def plotSens(self):
 		self.vhSelect.addItem('Maximum Sensitivity')
 		self.sensIndex = self.sensPrompt.sensIndicies()
-		print self.sensIndex
-		self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
-		self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
 		l = int(len(self.indVars) / 2)
 		x = self.sensIndex[0]
 		y = self.sensIndex[1]
 		z = self.sensIndex[2] + len(self.indVars) 
-		print x,y,z
 		self.xMax = np.amax(self.Data[::,l+x])
 		self.xMin = np.amin(self.Data[::,l+x])
 		self.yMax = np.amax(self.Data[::,l+y])
@@ -293,7 +288,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.hCutPos.setValue(self.yMin)
 		self.plotType.setText('Plotted sensitivity.')			
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-		self.sensitivity.setIcon(QtGui.QIcon('inverseSigma.png'))
 		self.clearPlots()
 
 	def plotMaxSens(self):
@@ -348,9 +342,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		if self.plotData is None:
 			self.plotType.setText("Please plot data.")
 			self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-			self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
 		else:
-			self.gradient.setIcon(QtGui.QIcon("inverseNabla.png"))
 			self.gradient.setFocusPolicy(QtCore.Qt.StrongFocus)
 			xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
 			delta = abs(self.xMax - self.xMin) / self.xPoints
@@ -358,7 +350,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			if N < 2:
 				self.plotType.setText("Lanczos window too \nsmall.")
 				self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-				self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
+
 			else:
 				for i in range(0, self.plotData.shape[1]):
 					self.plotData[:, i] = deriv(self.plotData[:,i], xVals, N, delta)	
@@ -369,7 +361,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 				print '2'
 				self.clearPlots()
 	def yDeriv(self):
-		self.gradient.setIcon(QtGui.QIcon("inverseNabla.png"))
 		yVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
 		delta = abs(self.yMax - self.yMin) / self.yPoints
 		N = int(self.yPoints * self.datPct)
@@ -387,7 +378,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.datPct = self.gradSet.dataPercent.value() / 100
 
 	def subtractAvg(self):
-		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
 		'''
 		l = int(len(self.indVars) / 2)
 		x = self.xAxis.currentIndex()
@@ -406,7 +396,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractPlane(self):
-		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
 		l = int(len(self.indVars) / 2)
 		x = self.xAxis.currentIndex()
 		y = self.yAxis.currentIndex()
@@ -424,7 +413,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractQuad(self):
-		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
 		l = int(len(self.indVars) / 2)
 		x = self.xAxis.currentIndex()
 		y = self.yAxis.currentIndex()
@@ -517,9 +505,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.subtract.setEnabled(True)
 			self.sensitivity.setEnabled(True)
 			self.trSelect.hide()
-			self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
-			self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
-			self.sensitivity.setIcon(QtGui.QIcon('sigmaIcon.png'))
+
 			pt = self.mapToGlobal(QtCore.QPoint(410,-10))
 			self.plotType.setText("")
 			self.refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
@@ -569,9 +555,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.subtract.setEnabled(True)
 			self.sensitivity.setEnabled(True)
 			self.trSelect.show()
-			self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
-			self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
-			self.sensitivity.setIcon(QtGui.QIcon('sigmaIcon.png'))
 			pt = self.mapToGlobal(QtCore.QPoint(410,-10))
 			self.plotType.setText("")
 			self.refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
@@ -587,9 +570,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
 
 	def refreshPlot(self):
-		self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
-		self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
-		self.sensitivity.setIcon(QtGui.QIcon('sigmaIcon.png'))
 		if self.vhSelect.count() > 2: 
 			for i in range(2, self.vhSelect.count()):
 				self.vhSelect.removeItem(i)
@@ -686,7 +666,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.YZPlot.showAxis('top', show = True)
 
 	def hideDiamFrame(self):
-		self.diamCalc.setIcon(QtGui.QIcon("diameter.png"))
 		self.diamFrame.hide()
 		self.diamCalc.clicked.connect(self.calculateDiam)
 		self.diamCalc.clicked.disconnect(self.hideDiamFrame)
@@ -705,7 +684,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.mainPlot.addItem(self.hLine)	
 
 	def calculateDiam(self):
-		self.diamCalc.setIcon(QtGui.QIcon("inverseDiameter.png"))
 		self.diamCalc.clicked.disconnect(self.calculateDiam)
 		self.diamCalc.clicked.connect(self.hideDiamFrame)
 		self.phi_0 = float(2.0678338e-15)
@@ -900,9 +878,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.newPlot = subPlot(self.dv, self.os_path, self.numPlots, self.reactor)
 		self.newPlot.show()
 
-	def closeEvent(self, e):
-		self.reactor.stop()
-		print 'Reactor shut down.'
 
 
 class editDataInfo(QtGui.QDialog, Ui_EditDataInfo):
@@ -980,9 +955,6 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
 		self.dv = dv 
 		self.os_path = os_path
 
-		self.home.setIcon(QtGui.QIcon("homeIcon.png"))
-		self.back.setIcon(QtGui.QIcon("backIcon.png"))
-		self.refresh.setIcon(QtGui.QIcon("refreshIcon.png"))
 		self.currentDir.setReadOnly(True)
 		self.currentFile.setReadOnly(True)
 		self.curDir = ''
@@ -1104,13 +1076,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.showGrad.hide()
 		self.diamFrame.hide()
 
-		self.diamCalc.setIcon(QtGui.QIcon("diameter.png"))
-		self.refresh.setIcon(QtGui.QIcon("refreshIcon.png"))
-		self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
-		self.sensitivity.setIcon(QtGui.QIcon("sigmaIcon.png"))
-		self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
-		self.addPlot.setIcon(QtGui.QIcon('addPlotIcon.png'))
-		self.zoom.setIcon(QtGui.QIcon('zoomIcon.png'))
+
 		self.setupPlots()
 
 		self.hideGrad.clicked.connect(self.shrink)
@@ -1170,8 +1136,6 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 	def plotSens(self):
 		self.sensIndex = self.sensPrompt.sensIndicies()
 		print self.sensIndex
-		self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
-		self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
 		l = int(len(self.indVars) / 2)
 		x = self.sensIndex[0]
 		y = self.sensIndex[1]
@@ -1216,13 +1180,12 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.hCutPos.setValue(self.yMin)
 		self.plotType.setText('Plotted sensitivity.')			
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-		self.sensitivity.setIcon(QtGui.QIcon('inverseSigma.png'))
 		self.clearPlots()
 
 
 
 	def xDeriv(self):
-		self.gradient.setIcon(QtGui.QIcon("inverseNabla.png"))
+
 		self.gradient.setFocusPolicy(QtCore.Qt.StrongFocus)
 		xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
 		delta = abs(self.xMax - self.xMin) / self.xPoints
@@ -1234,7 +1197,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def yDeriv(self):
-		self.gradient.setIcon(QtGui.QIcon("inverseNabla.png"))
+
 		yVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
 		delta = abs(self.yMax - self.yMin) / self.yPoints
 		N = int(self.yPoints * self.datPct)
@@ -1252,7 +1215,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.datPct = self.gradSet.dataPercent.value() / 100
 
 	def subtractAvg(self):
-		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
+
 		l = int(len(self.indVars) / 2)
 		x = self.xAxis.currentIndex()
 		y = self.yAxis.currentIndex()
@@ -1267,7 +1230,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractPlane(self):
-		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
+
 		l = int(len(self.indVars) / 2)
 		x = self.xAxis.currentIndex()
 		y = self.yAxis.currentIndex()
@@ -1281,7 +1244,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractQuad(self):
-		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
+
 		l = int(len(self.indVars) / 2)
 		x = self.xAxis.currentIndex()
 		y = self.yAxis.currentIndex()
@@ -1362,9 +1325,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 
 
 	def refreshPlot(self):
-		self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
-		self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
-		self.sensitivity.setIcon(QtGui.QIcon('sigmaIcon.png'))
+
 		l = int(len(self.indVars) / 2)
 		x = self.xAxis.currentIndex()
 		y = self.yAxis.currentIndex()
@@ -1437,7 +1398,6 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.YZPlot.showAxis('top', show = True)
 
 	def hideDiamFrame(self):
-		self.diamCalc.setIcon(QtGui.QIcon("diameter.png"))
 		self.diamFrame.hide()
 		self.diamCalc.clicked.connect(self.calculateDiam)
 		self.diamCalc.clicked.disconnect(self.hideDiamFrame)
@@ -1458,7 +1418,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 	def calculateDiam(self):
 		self.rect = pg.RectROI(((self.xMax + self.xMin) / 2, (self.yMax + self.yMin) / 2),((self.deltaX) / 2, (self.deltaY) / 2), movable = True)
 		self.rect.addScaleHandle((1,1), (.5,.5), lockAspect = False)
-		self.diamCalc.setIcon(QtGui.QIcon("inverseDiameter.png"))
+
 		self.diamCalc.clicked.disconnect(self.calculateDiam)
 		self.diamCalc.clicked.connect(self.hideDiamFrame)
 		self.phi_0 = float(2.0678338e-15)
@@ -1628,11 +1588,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		self.showGrad.hide()
 		self.diamFrame.hide()
 
-		self.diamCalc.setIcon(QtGui.QIcon("diameter.png"))
-		self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
-		self.sensitivity.setIcon(QtGui.QIcon("sigmaIcon.png"))
-		self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
-		self.refresh.setIcon(QtGui.QIcon("refreshIcon.png"))
+
 		
 		self.fullData = dataSubset
 		self.Data = plotSubset
@@ -1699,10 +1655,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		self.mainPlot.setImage(self.Data, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
 		self.clearPlots()
 		self.plotType.clear()
-		self.diamCalc.setIcon(QtGui.QIcon("diameter.png"))
-		self.gradient.setIcon(QtGui.QIcon("nablaIcon.png"))
-		self.sensitivity.setIcon(QtGui.QIcon("sigmaIcon.png"))
-		self.subtract.setIcon(QtGui.QIcon("resIcon.png"))
+
 
 
 	def clearPlots(self):
@@ -1754,7 +1707,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		self.YZPlot.showAxis('top', show = True)
 
 	def xDeriv(self):
-		self.gradient.setIcon(QtGui.QIcon("inverseNabla.png"))
+
 		xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
 		delta = abs(self.xMax - self.xMin) / self.xPoints
 		N = int(self.xPoints * self.datPct)
@@ -1765,7 +1718,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def yDeriv(self):
-		self.gradient.setIcon(QtGui.QIcon("inverseNabla.png"))
+
 		yVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
 		delta = abs(self.yMax - self.yMin) / self.yPoints
 		N = int(self.yPoints * self.datPct)
@@ -1783,14 +1736,14 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		self.datPct = self.gradSet.dataPercent.value() / 100
 
 	def subtractAvg(self):
-		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
+
 		avg = np.average(self.plotData)
 		self.plotData = self.plotData - avg
 		self.plotType.setText("Plotted offset \nsubtracted data.")
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractPlane(self):
-		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
+
 		l = int(len(self.indVars) / 2)
 		x = self.xAxis.currentIndex()
 		y = self.yAxis.currentIndex()
@@ -1805,7 +1758,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractQuad(self):
-		self.subtract.setIcon(QtGui.QIcon("inverseRes.png"))
+
 		l = int(len(self.indVars) / 2)
 		x = self.xAxis.currentIndex()
 		y = self.yAxis.currentIndex()
@@ -1899,8 +1852,6 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 				yVals = self.zoomPlot[p]
 				self.YZPlot.plot(x = xVals, y = yVals, pen = 0.5)
 
-	def closeEvent(self, e):
-		self.mainPlot.close()
 
 
 if __name__ == "__main__":
