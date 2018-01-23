@@ -110,7 +110,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
 
 		self.setupPlots()
-		self.connect()
+
 
 		self.hideGrad.clicked.connect(self.shrink)
 		self.showGrad.clicked.connect(self.enlarge)
@@ -170,8 +170,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
 		self.Data = None
 		self.plotData = None
-		self.dv = None
-		self.cxn = None
+		self.os_path = None
 		self.file = None
 		self.directory = None
 		self.numPlots = 0
@@ -428,22 +427,18 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 
-	@inlineCallbacks
-	def connect(self):
-		from labrad.wrappers import connectAsync
+	def connectLabRAD(self, dict):
 		try:
-			self.cxn  = yield connectAsync(name = 'name')
-			self.dv = yield self.cxn.data_vault
-			print 'connected'
+			self.cxn = dict['cxn']
+			self.dv = dict['dv']
+			self.serversConnected = True
 		except:
-			print 'Either no LabRad connection or DataVault connection.'
-		import labrad.util
-		nodename = labrad.util.getNodeName()		
-		self.reg = yield self.cxn.registry
-		name = yield self.dv.name
-		yield self.reg.cd('', 'Servers', name, 'Repository')
-		self.os_path = yield self.reg.get(nodename)
-		yield self.reg.cd('')
+
+			self.serversConnected = False
+	def disconnectLabRAD(self):
+		self.dv = None
+		self.cxn = None
+
 
 	def browseDV(self):
 		self.refresh.setEnabled(False)
@@ -461,6 +456,15 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
 	@inlineCallbacks
 	def loadData(self, c):
+		if self.os_path == None:
+			import labrad.util
+			nodename = labrad.util.getNodeName()		
+			self.reg = yield self.cxn.registry
+			name = yield self.dv.name
+			yield self.reg.cd('', 'Servers', name, 'Repository')
+			self.os_path = yield self.reg.get(nodename)
+			yield self.reg.cd('')
+	
 		self.xAxis.clear()
 		self.yAxis.clear()
 		self.zAxis.clear()
@@ -535,7 +539,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.retraceData = np.array([])
 			#Separates trace and retrace according to the first index
 			for x in self.Data:
-				if  x[0] == 0:
+				if	x[0] == 0:
 					if len(self.traceData) == 0:
 						self.traceData = x[1::]
 					else:
