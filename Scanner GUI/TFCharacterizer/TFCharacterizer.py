@@ -138,9 +138,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.unlockInterface()
         
     def disconnectLabRAD(self):
-        self.dv = None
-        self.cxn = None
-        self.hf = None
+        if self.hf is not False:
+            self.hf.clear_sweep()
+        self.dv = False
+        self.cxn = False
+        self.hf = False
         self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.lockInterface()
@@ -662,10 +664,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         d = Deferred()
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
-        
-    def closeEvent(self, e):
-        if self.hf is not False:
-            self.hf.clear_sweep()
         
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):

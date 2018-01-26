@@ -354,16 +354,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.y_volts_max = float(calibration[8])
         self.z_volts_max = float(calibration[9])
 
-        print self.x_volts_to_meters
-        print self.y_volts_to_meters
-        print self.z_volts_to_meters 
-        print self.x_meters_max 
-        print self.y_meters_max
-        print self.z_meters_max 
-        print self.x_volts_max
-        print self.y_volts_max 
-        print self.z_volts_max 
-        print 'ScanControl Set'
+        print 'ScanControl Voltage Calibration Set'
 
         #self.view2.setXRange(-self.x_meters_max/2 - 2.0e-7,self.x_meters_max/2,0)
         #self.view2.setYRange(-self.y_meters_max/2,self.y_meters_max/2 + 2.0e-7,0)

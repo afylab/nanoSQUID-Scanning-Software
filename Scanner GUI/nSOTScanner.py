@@ -12,12 +12,14 @@ sys.path.append(path+'\ScanControl')
 sys.path.append(path+'\LabRADConnect')
 sys.path.append(path+r'\nSOTCharacterizer')    
 sys.path.append(path+'\DataVaultBrowser')
-sys.path.append(path+'\Plotter')
+#sys.path.append(path+'\Plotter')
 sys.path.append(path+'\TFCharacterizer')
 sys.path.append(path+'\ApproachModule')
 sys.path.append(path+'\PLLMonitor')
 sys.path.append(path+'\JPEPositionControl')
 sys.path.append(path+'\PositionCalibration')
+sys.path.append(path+'\Field Control')
+sys.path.append(path+'\ScriptingModule')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -26,12 +28,14 @@ MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
 import ScanControl
 import LabRADConnect
 import nSOTCharacterizer
-import plotter
+#import plotter
 import TFCharacterizer
 import Approach
 import PLLMonitor
 import JPEControl
 import PositionCalibration
+import FieldControl
+import Scripting
 
 import exceptions
 
@@ -51,27 +55,35 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.moveDefault()
         
         #Intialize all widgets. 
-        self.SC = ScanControl.Window(self.reactor, None)
+        self.ScanControl = ScanControl.Window(self.reactor, None)
         self.LabRAD = LabRADConnect.Window(self.reactor, None)
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor, None)
-        self.Plot = plotter.Plotter(self.reactor, None)
+        #self.Plot = plotter.Plotter(self.reactor, None)
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
         self.Approach = Approach.Window(self.reactor, None)
         self.PLLMonitor = PLLMonitor.Window(self.reactor, None)
         self.JPEControl = JPEControl.Window(self.reactor, None)
         self.PosCalibration = PositionCalibration.Window(self.reactor, None)
+        self.FieldControl = FieldControl.Window(self.reactor, None)
+        
+        #This module should always be initialized last, and have the modules
+        #That are desired to be scriptable be input
+        self.Scripting = Scripting.Window(self.reactor, None, self.ScanControl, self.Approach, 
+                                          self.JPEControl, self.nSOTChar, self.FieldControl)
         
         #Connects all drop down menu button
         self.actionScan_Control.triggered.connect(self.openScanControlWindow)
         self.actionLabRAD_Connect.triggered.connect(self.openLabRADConnectWindow)
         self.actionnSOT_Characterizer.triggered.connect(self.opennSOTCharWindow)
-        self.actionData_Plotter.triggered.connect(self.openDataPlotter)
+        #self.actionData_Plotter.triggered.connect(self.openDataPlotter)
         self.actionTF_Characterizer.triggered.connect(self.openTFCharWindow)
         self.actionApproach_Control.triggered.connect(self.openApproachWindow)
         self.actionPLL_Monitor.triggered.connect(self.openPLLMonitorWindow)
         self.actionJPE_Coarse_Position_Control.triggered.connect(self.openJPEControlWindow)
         self.actionAttocube_Position_Calibration.triggered.connect(self.openPosCalibrationWindow)
-
+        self.actionMagnetic_Field_Control.triggered.connect(self.openFieldControlWindow)
+        self.actionRun_Scripts.triggered.connect(self.openScriptingModule)
+        
         #Connectors all layout buttons
         self.push_Layout1.clicked.connect(self.setLayout1)
         
@@ -86,8 +98,8 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.TFChar.workingPointSelected.connect(self.distributeWorkingPoint)
 
         self.Approach.newPLLData.connect(self.updatePLLMonitor)
-        self.Approach.updateFeedbackStatus.connect(self.SC.updateFeedbackStatus)
-        self.Approach.updateConstantHeightStatus.connect(self.SC.updateConstantHeightStatus)
+        self.Approach.updateFeedbackStatus.connect(self.ScanControl.updateFeedbackStatus)
+        self.Approach.updateConstantHeightStatus.connect(self.ScanControl.updateConstantHeightStatus)
         self.PosCalibration.newTemperatureCalibration.connect(self.setVoltageCalibration)
 
         #Make sure default calibration is emitted 
@@ -108,10 +120,10 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.move(10,10)
     
     def openScanControlWindow(self):
-        self.SC.moveDefault()
-        self.SC.raise_()
-        if self.SC.isVisible() == False:
-            self.SC.show()
+        self.ScanControl.moveDefault()
+        self.ScanControl.raise_()
+        if self.ScanControl.isVisible() == False:
+            self.ScanControl.show()
             
     def openLabRADConnectWindow(self):
         self.LabRAD.moveDefault()
@@ -127,10 +139,10 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
             
     def openDataPlotter(self):
         pass
-        self.Plot.moveDefault()
-        self.Plot.raise_()
-        if self.Plot.isVisible() == False:
-            self.Plot.show()
+        #self.Plot.moveDefault()
+        #self.Plot.raise_()
+        #if self.Plot.isVisible() == False:
+            #self.Plot.show()
             
     def openTFCharWindow(self):
         self.TFChar.moveDefault()
@@ -161,6 +173,19 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.PosCalibration.raise_()
         if self.PosCalibration.isVisible() == False:
             self.PosCalibration.show()
+            
+    def openFieldControlWindow(self):
+        self.FieldControl.moveDefault()
+        self.FieldControl.raise_()
+        if self.FieldControl.isVisible() == False:
+            self.FieldControl.show()
+            
+    def openScriptingModule(self):
+        self.Scripting.moveDefault()
+        self.Scripting.raise_()
+        if self.Scripting.isVisible() == False:
+            self.Scripting.show()
+            
 #----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to passing LabRAD connections."""
@@ -169,22 +194,27 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         print dict
         #self.Plot.connectLabRAD(dict)
         self.nSOTChar.connectLabRAD(dict)
-        self.SC.connectLabRAD(dict)
+        self.ScanControl.connectLabRAD(dict)
         self.TFChar.connectLabRAD(dict)
         self.Approach.connectLabRAD(dict)
         self.JPEControl.connectLabRAD(dict)
+        self.Scripting.connectRemoteLabRAD(dict)
         
     def distributeRemoteLabRADConnections(self,dict):
         print dict
+        self.FieldControl.connectRemoteLabRAD(dict)
+        self.Scripting.connectRemoteLabRAD(dict)
         #Call connectRemoteLabRAD functions for relevant modules
         
     def disconnectLabRADConnections(self):
         #self.Plot.disconnectLabRAD()
         self.nSOTChar.disconnectLabRAD()
-        self.SC.disconnectLabRAD()
+        self.ScanControl.disconnectLabRAD()
         self.TFChar.disconnectLabRAD()
         self.Approach.disconnectLabRAD()
         self.JPEControl.disconnectLabRAD()
+        self.FieldControl.disconnectLabRAD()
+        self.Scripting.disconnectLabRAD()
 
 #----------------------------------------------------------------------------------------------#
             
@@ -197,9 +227,8 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.PLLMonitor.updatePlots(deltaF, phaseError)
 
     def setVoltageCalibration(self,data):
-        print 'gotty heiht'
         self.Approach.set_voltage_calibration(data)
-        self.SC.set_voltage_calibration(data)
+        self.ScanControl.set_voltage_calibration(data)
 
 #----------------------------------------------------------------------------------------------#
             
@@ -222,7 +251,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
             self.isRedEyes = False
             
     def hideAllWindows(self):
-        self.SC.hide()
+        self.ScanControl.hide()
         self.LabRAD.hide()
         self.nSOTChar.hide()
         #self.Plot.hide()
@@ -234,21 +263,18 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
             
     def closeEvent(self, e):
         try:
-            self.SC.close()
+            self.disconnectLabRADConnections()
+            self.ScanControl.close()
             self.nSOTChar.close()
-            self.Plot.close()
+            #self.Plot.close()
             self.TFChar.close()
             self.Approach.close()
             self.PLLMonitor.close()
             self.JPEControl.close()
             self.PosCalibration.close()
-            #Keep closing LABRAD last, so that everything has 
-            #the time to run the close event properly
-            time.sleep(1)
+            self.Scripting.close()
+            self.FieldControl.close()
             self.LabRAD.close()
-            print 'Stopping reactor'
-            self.reactor.stop()
-            print 'Didn\'t do nothing'
         except Exception as inst:
             print inst
     

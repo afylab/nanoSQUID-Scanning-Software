@@ -247,13 +247,15 @@ background: black;
    </widget>
    <widget class="QMenu" name="menuExeriments">
     <property name="title">
-     <string>Exeriments</string>
+     <string>Experiments</string>
     </property>
+    <addaction name="actionRun_Scripts"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="actionYou_re_on_your_own_hahaha"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSystem"/>
@@ -321,6 +323,16 @@ background: black;
   <action name="actionMagnetic_Field_Control">
    <property name="text">
     <string>Magnetic Field Control</string>
+   </property>
+  </action>
+  <action name="actionYou_re_on_your_own_hahaha">
+   <property name="text">
+    <string>You're on your own hahaha</string>
+   </property>
+  </action>
+  <action name="actionRun_Scripts">
+   <property name="text">
+    <string>Run Scripts</string>
    </property>
   </action>
  </widget>

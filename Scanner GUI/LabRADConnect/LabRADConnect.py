@@ -668,7 +668,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                     self.push_IPS120.setStyleSheet("#push_IPS120{" + 
                     "background: rgb(0,170,0);border-radius: 4px;}")
                     self.label_IPS120_status.setText('Connected')
-                    self.connectionRemoteDictionary['IPS120'] = ips
+                    self.connectionRemoteDictionary['ips120'] = ips
                 except:
                     self.push_IPS120.setStyleSheet("#push_IPS120{" + 
                     "background: rgb(161,0,0);border-radius: 4px;}")
@@ -739,8 +739,6 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                     print inst.args
                     print inst
                     
-    def closeEvent(self, e):
-        self.disconnectLabRAD()
         
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows

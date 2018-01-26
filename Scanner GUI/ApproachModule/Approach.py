@@ -246,10 +246,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.monitorZ = False
             #Turn off the PLL 
             self.hf.set_pll_off(self.measurementSettings['pll_output'])
-        self.cxn = None
-        self.cpsc = None
-        self.dac = None
-        self.hf = None
+        self.cxn = False
+        self.cpsc = False
+        self.dac = False
+        self.hf = False
         self.lockInterface()
         self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -327,22 +327,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.y_volts_max = float(calibration[8])
         self.z_volts_max = float(calibration[9])
 
-        print self.x_volts_to_meters
-        print self.y_volts_to_meters
-        print self.z_volts_to_meters 
-        print self.x_meters_max 
-        print self.y_meters_max
-        print self.z_meters_max 
-        print self.x_volts_max
-        print self.y_volts_max 
-        print self.z_volts_max 
-        print 'Approach Window Set'
+        print 'Approach Window Voltage Calibration Set'
 
     def sendFakeSignals(self):
         self.updateConstantHeightStatus.emit(True)
         self.updateFeedbackStatus.emit(True)
-        print self.z_volts_max
-        print self.z_volts_to_meters
+        print 'Fake signals sent'
 
 #--------------------------------------------------------------------------------------------------------------------------#
             
@@ -1221,15 +1211,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         d = Deferred()
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
-
-    def closeEvent(self, e):
-        if self.hf is not False:
-            #Eventually stop zeroing outputs. 
-            self.zeroHF2LI_Aux_Out()
-            #Makes sure that stops sending signals to monitor Z voltage
-            self.monitorZ = False
-            #Turn off the PLL 
-            self.hf.set_pll_off(self.measurementSettings['pll_output'])
 
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
