@@ -17,7 +17,7 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = IPS 120_10 Superconducting Magnet Power Supply
+name = ips120_power_supply
 version = 1.0
 description =
 [startup]
@@ -131,6 +131,11 @@ class IPS120Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def dump_ram(self,nKbytes):
         ans = yield self.query("Z%i"%nKbytes)
+        returnValue(ans)
+        
+    @inlineCallbacks
+    def examine(self):
+        ans = yield self.query('X')
         returnValue(ans)
         
 
@@ -269,7 +274,14 @@ class IPS120Server(GPIBManagedServer):
         ans = yield dev.dump_ram(nKbytes)
         returnValue(ans)
 
-    
+    @setting(119, returns='s')
+    def examine(self, c):
+        '''Returns information about the magnet in the format: XmnAnCnHnMmnPmn
+        View ips120 manual for details.'''
+        dev = self.selectedDevice(c)
+        ans = yield dev.examine()
+        returnValue(ans)
+        
     @setting(9001,v='v')
     def do_nothing(self,c,v):
         pass
