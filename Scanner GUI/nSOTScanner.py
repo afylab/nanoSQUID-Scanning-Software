@@ -12,7 +12,7 @@ sys.path.append(path+'\ScanControl')
 sys.path.append(path+'\LabRADConnect')
 sys.path.append(path+r'\nSOTCharacterizer')    
 sys.path.append(path+'\DataVaultBrowser')
-#sys.path.append(path+'\Plotter')
+sys.path.append(path+'\Plotter')
 sys.path.append(path+'\TFCharacterizer')
 sys.path.append(path+'\ApproachModule')
 sys.path.append(path+'\PLLMonitor')
@@ -28,7 +28,7 @@ MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
 import ScanControl
 import LabRADConnect
 import nSOTCharacterizer
-#import plotter
+import plotter
 import TFCharacterizer
 import Approach
 import PLLMonitor
@@ -58,7 +58,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.ScanControl = ScanControl.Window(self.reactor, None)
         self.LabRAD = LabRADConnect.Window(self.reactor, None)
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor, None)
-        #self.Plot = plotter.Plotter(self.reactor, None)
+        self.Plot = plotter.Plotter(self.reactor, None)
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
         self.Approach = Approach.Window(self.reactor, None)
         self.PLLMonitor = PLLMonitor.Window(self.reactor, None)
@@ -75,7 +75,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.actionScan_Control.triggered.connect(self.openScanControlWindow)
         self.actionLabRAD_Connect.triggered.connect(self.openLabRADConnectWindow)
         self.actionnSOT_Characterizer.triggered.connect(self.opennSOTCharWindow)
-        #self.actionData_Plotter.triggered.connect(self.openDataPlotter)
+        self.actionData_Plotter.triggered.connect(self.openDataPlotter)
         self.actionTF_Characterizer.triggered.connect(self.openTFCharWindow)
         self.actionApproach_Control.triggered.connect(self.openApproachWindow)
         self.actionPLL_Monitor.triggered.connect(self.openPLLMonitorWindow)
@@ -138,11 +138,10 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
             self.nSOTChar.show()
             
     def openDataPlotter(self):
-        pass
-        #self.Plot.moveDefault()
-        #self.Plot.raise_()
-        #if self.Plot.isVisible() == False:
-            #self.Plot.show()
+        self.Plot.moveDefault()
+        self.Plot.raise_()
+        if self.Plot.isVisible() == False:
+            self.Plot.show()
             
     def openTFCharWindow(self):
         self.TFChar.moveDefault()
@@ -192,7 +191,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
     
     def distributeLocalLabRADConnections(self,dict):
         print dict
-        #self.Plot.connectLabRAD(dict)
+        self.Plot.connectLabRAD(dict)
         self.nSOTChar.connectLabRAD(dict)
         self.ScanControl.connectLabRAD(dict)
         self.TFChar.connectLabRAD(dict)
@@ -207,7 +206,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         #Call connectRemoteLabRAD functions for relevant modules
         
     def disconnectLabRADConnections(self):
-        #self.Plot.disconnectLabRAD()
+        self.Plot.disconnectLabRAD()
         self.nSOTChar.disconnectLabRAD()
         self.ScanControl.disconnectLabRAD()
         self.TFChar.disconnectLabRAD()
@@ -254,7 +253,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.ScanControl.hide()
         self.LabRAD.hide()
         self.nSOTChar.hide()
-        #self.Plot.hide()
+        self.Plot.hide()
         self.TFChar.hide()
         self.Approach.hide()
         self.PLLMonitor.hide()
@@ -266,7 +265,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
             self.disconnectLabRADConnections()
             self.ScanControl.close()
             self.nSOTChar.close()
-            #self.Plot.close()
+            self.Plot.close()
             self.TFChar.close()
             self.Approach.close()
             self.PLLMonitor.close()
