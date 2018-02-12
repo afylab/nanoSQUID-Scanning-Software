@@ -16,9 +16,17 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Zurich High Frequency Lock In (HF2LI) Server
+name = HF2LI Server
 version = 1.0
 description = Communicates with the Lock in, which has built in PLL / PID methods.  
+
+[startup]
+cmdline = %PYTHON% %FILE%
+timeout = 20
+
+[shutdown]
+message = 987654321
+timeout = 20
 ### END NODE INFO
 """
 
@@ -877,7 +885,7 @@ class HF2LIServer(LabradServer):
 
 #------------------------------------------------------------------------------------------------------------------------------------------#
     """
-    The following section of code has all of the commands relevant to modifing the PID module options. 
+    The following section of code has all of the commands relevant to modifing the auxiliary outputs. 
     """
 
     @setting(177, aux_out_index = 'i', signal_index = 'i', returns = '')
@@ -1001,6 +1009,13 @@ class HF2LIServer(LabradServer):
     def get_aux_output_value(self,c,aux_out_index):
         """Gets the Auxilary Output (1 through 4) latest output value."""
         setting = '/%s/auxouts/%d/value' % (self.dev_ID, aux_out_index-1)
+        val = yield self.daq.getDouble(setting)
+        returnValue(val)
+
+    @setting(1850,aux_in_index = 'i', returns = 'v[]')
+    def get_aux_input_value(self,c,aux_in_index):
+        """Gets the Auxilary Output (1 through 4) latest output value."""
+        setting = '/%s/auxins/0/values/%d' % (self.dev_ID, aux_in_index-1)
         val = yield self.daq.getDouble(setting)
         returnValue(val)
 
