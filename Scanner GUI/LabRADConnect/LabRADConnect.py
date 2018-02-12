@@ -31,6 +31,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         'dv'        : False,
         'ser_server': False,
         'dac_adc'   : False,
+        'dc_box'    : False,
         'hf2li'     : False,
         'cpsc'      : False,
         'gpib_server': False, 
@@ -223,6 +224,9 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.push_DACADC.setStyleSheet("#push_DACADC{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.label_DACADC_status.setText('Not connected')
+        self.push_DCBox.setStyleSheet("#push_DCBox{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_DCBox_status.setText('Not connected')
         self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.label_HF2LI_status.setText('Not connected')
@@ -413,6 +417,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
     def connectSerialDevices(self, c = None):
         yield self.connectSerialServer()
         self.connectDACADC()
+        self.connectDCBox()
 
     @inlineCallbacks
     def connectSerialServer(self, c = None):
@@ -463,6 +468,33 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_DACADC_status.setText('No device detected')
         self.cxnAttemptLocalDictionary['dac_adc'] = True
+        self.emitLocalConnectionDictionary()
+        
+    @inlineCallbacks
+    def connectDCBox(self, c = None):
+        if self.connectionLocalDictionary['ser_server'] is False:
+            self.push_DCBox.setStyleSheet("#push_DCBox{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+            self.label_DCBox_status.setText('Not connected')
+        else: 
+            cxn = self.connectionLocalDictionary['cxn']
+            try:
+                ad = yield cxn.ad5764_dcbox
+            except:
+                self.push_DCBox.setStyleSheet("#push_DCBox{" + 
+                "background: rgb(161,0,0);border-radius: 4px;}")
+                self.label_DCBox_status.setText('Connection Failed')
+            try: 
+                yield ad.select_device()
+                self.push_DCBox.setStyleSheet("#push_DCBox{" + 
+                "background: rgb(0,170,0);border-radius: 4px;}")
+                self.label_DCBox_status.setText('Connected')
+                self.connectionLocalDictionary['dc_box'] = ad
+            except:
+                self.push_DCBox.setStyleSheet("#push_DCBox{" + 
+                "background: rgb(161,0,0);border-radius: 4px;}")
+                self.label_DCBox_status.setText('No device detected')
+        self.cxnAttemptLocalDictionary['dc_box'] = True
         self.emitLocalConnectionDictionary()
 
 

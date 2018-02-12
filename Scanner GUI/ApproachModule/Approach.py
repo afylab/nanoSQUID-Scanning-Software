@@ -70,6 +70,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.cpsc = False
         self.dac = False
         self.hf = False
+        self.dcbox = False
 
         self.measuring = False
         self.approaching = False
@@ -130,10 +131,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 }
 
         '''
-        Below is the initialization of all the default Stepwise Approach Settings
+        Below is the initialization of all the default Stepwise Approach Settings (now called Feedback approach)
         '''
         self.stepwiseApproachSettings = {
-                'atto_z_output'              : 1,     #output that goes to Z of attocubes (either from DAC or HF2LI)
+                'atto_z_output'              : 1,     #output that goes to Z of attocubes from DAC ADC (1 indexed)
                 'atto_z_step_size'           : 5e-9,  #z step size in meters between measurement points (and/or scanning in xy)
                 'atto_z_step_points'         : 50,    #number of points to go through when ramping a single step 
                 'atto_z_step_points_delay'   : 10e-3,  #delay in seconds between each point
@@ -149,16 +150,17 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 'p'                    : 0,     #Proportional term of approch PID 
                 'i'                    : 1,     #Integral term of approch PID 
                 'd'                    : 0,     #Derivative term of approch PID 
-                'atto_z_output'        : 1,     #aux out channel index of output
-                'atto_retract_time'    : 15,  #time required in seconds for full atto retraction
+                'atto_z_output'        : 1,     #output that goes to Z of attocubes from HF2LI (1 indexed)
+                'atto_retract_time'    : 15,    #time required in seconds for full atto retraction
                 'atto_retract_dist'    : 24e-6, #distance retracted in meters by the attocube (eventually should update with temperature)
-                'atto_retract_speed'   : 1.6e-6, #retraction speed in m/s
+                'atto_retract_speed'   : 1.6e-6,#retraction speed in m/s
                 'jpe_tip_height'       : 24e-3, #Tip height from sample stage in meters. 
                 'jpe_module_address'   : 1,     #Pretty sure this is always 1 unless we add more modules to the JPE controller
-                'jpe_approach_steps'   : 500,  #Number of step forward in z direction taken by JPEs after attocube fully extend and retract
+                'jpe_approach_steps'   : 500,   #Number of step forward in z direction taken by JPEs after attocube fully extend and retract
                 'jpe_approach_size'    : 100,   #relative step size of jpe steps
-                'jpe_approach_freq'    : 250,   #Frequency of steps on JPE approach    
+                'jpe_approach_freq'    : 250,   #Frequency of steps on JPE approach
                 'jpe_temperature'      : 293,   #Temperature setting of the JPEs
+                'sumboard_toggle'      : 1,     #Output from the DC Box that toggles the summing amplifier (1 indexed)
                 }
 
         self.lineEdit_P.setText(formatNum(self.PIDApproachSettings['p'])) 
@@ -183,6 +185,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.hf = dict['hf2li']
             self.dac = dict['dac_adc']
             self.cpsc = dict['cpsc']
+            self.dcbox = dict['dc_box']
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
         except:
@@ -198,6 +201,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
         elif not self.dac:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+        elif not self.dcbox:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
         else:
@@ -249,6 +255,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.cxn = False
         self.cpsc = False
         self.dac = False
+        self.dcbox = False
         self.hf = False
         self.lockInterface()
         self.push_Servers.setStyleSheet("#push_Servers{" + 
@@ -597,6 +604,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Set the output range to be 0 to the max z voltage, which is specified by the temperture of operation. 
         yield self.setPIDOutputRange(self.z_volts_max)
 
+        #Toggle the sum board to be 1 to 1 
+        yield self.dcbox.set_voltage(self.PIDApproachSettings['sumboard_toggle']-1, 0)
+        
         yield self.hf.set_pid_on(self.PID_Index, True)
         i = 0
         while self.approaching:
@@ -917,6 +927,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             #The PID approach
             yield self.setHF2LI_PID_Settings()
             
+            #Toggle the sum board to be 10 to 1 
+            yield self.dcbox.set_voltage(self.PIDApproachSettings['sumboard_toggle']-1, 2.5)
+            
             #start PID approach sequence
             self.approaching = True
             yield self.hf.set_pid_on(self.PID_Index, True)
@@ -974,7 +987,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     #Take a step forward as specified by the stepwise approach advanced settings
                     #yield self.dac.ramp1(self.stepwiseApproachSettings['atto_z_output'],start_voltage,end_voltage,self.stepwiseApproachSettings['atto_z_points'], self.stepwiseApproachSettings['atto_z_points_delay'] * 1e6)
                     #For now hard coded to be output 0
-                    yield self.dac.ramp1(0,float(start_voltage),float(end_voltage),int(self.stepwiseApproachSettings['atto_z_step_points']), int(self.stepwiseApproachSettings['atto_z_step_points_delay'] * 1e6))
+                    yield self.dac.ramp1(self.stepwiseApproachSettings['atto_z_output']-1,float(start_voltage),float(end_voltage),int(self.stepwiseApproachSettings['atto_z_step_points']), int(self.stepwiseApproachSettings['atto_z_step_points_delay'] * 1e6))
                     #check to see if output voltage of the PID has dropped to below 8V 
 
                     self.Atto_Z_Voltage = end_voltage
@@ -1434,6 +1447,7 @@ class advancedPIDApproachSettings(QtGui.QDialog, Ui_advancedPIDApproachSettings)
         self.lineEdit_JPE_Approach_Size.editingFinished.connect(self.setJPE_Approach_Size)
         self.lineEdit_JPE_Approach_Freq.editingFinished.connect(self.setJPE_Approach_Freq)
         
+        self.comboBox_Sumboard_Toggle.currentIndexChanged.connect(self.setSumboard_toggle)
         '''
         self.lineEdit_JPE_Retract_Steps.editingFinished.connect(self.setJPE_Retract_Steps)
         self.lineEdit_JPE_Retract_Size.editingFinished.connect(self.setJPE_Retract_Size)
@@ -1458,6 +1472,8 @@ class advancedPIDApproachSettings(QtGui.QDialog, Ui_advancedPIDApproachSettings)
         self.lineEdit_JPE_Approach_Steps.setText(formatNum(self.PIDApproachSettings['jpe_approach_steps']))
         self.lineEdit_JPE_Approach_Size.setText(formatNum(self.PIDApproachSettings['jpe_approach_size']))
         self.lineEdit_JPE_Approach_Freq.setText(formatNum(self.PIDApproachSettings['jpe_approach_freq']))
+        
+        self.comboBox_Sumboard_Toggle.setCurrentIndex(self.PIDApproachSettings['sumboard_toggle']-1)
         
         '''
         self.lineEdit_JPE_Retract_Steps.setText(formatNum(self.PIDApproachSettings['jpe_retract_steps']))
@@ -1537,6 +1553,10 @@ class advancedPIDApproachSettings(QtGui.QDialog, Ui_advancedPIDApproachSettings)
         if isinstance(val,float):
             self.PIDApproachSettings['jpe_approach_freq'] = val
         self.lineEdit_JPE_Approach_Freq.setText(formatNum(self.PIDApproachSettings['jpe_approach_freq'] ))
+        
+    def setSumboard_toggle(self):
+        self.PIDApproachSettings['sumboard_toggle'] = self.comboBox_Sumboard_Toggle.currentIndex() + 1
+        
     '''
     def setJPE_Retract_Steps(self):
         val = readNum(str(self.lineEdit_JPE_Retract_Steps.text()))

@@ -1151,7 +1151,7 @@ border-radius: 4px;
       <x>5</x>
       <y>150</y>
       <width>241</width>
-      <height>61</height>
+      <height>81</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -1292,6 +1292,61 @@ qproperty-alignment: 'AlignVCenter | AlignCenter';
      </property>
      <property name="text">
       <string>Serial Servers</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_DCBox">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>60</y>
+       <width>15</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_DCBox
+{
+background: rgb(144, 140, 9);
+ border-radius: 4px;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_DCBox_status">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>60</y>
+       <width>121</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_DCBox_status{
+color:rgb(168,168,168);
+qproperty-alignment: 'AlignVCenter | AlignCenter';
+}</string>
+     </property>
+     <property name="text">
+      <string>Not connected.</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_DCBox">
+     <property name="geometry">
+      <rect>
+       <x>-10</x>
+       <y>60</y>
+       <width>80</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string>DC Box:</string>
      </property>
     </widget>
    </widget>

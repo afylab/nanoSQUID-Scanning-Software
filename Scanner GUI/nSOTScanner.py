@@ -197,7 +197,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.TFChar.connectLabRAD(dict)
         self.Approach.connectLabRAD(dict)
         self.JPEControl.connectLabRAD(dict)
-        self.Scripting.connectRemoteLabRAD(dict)
+        self.Scripting.connectLabRAD(dict)
         
     def distributeRemoteLabRADConnections(self,dict):
         print dict
