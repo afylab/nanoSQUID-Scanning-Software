@@ -101,7 +101,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.scanMode = 'Constant Height'
         self.FeedbackReady = False
         self.ConstantHeightReady = False
-
+        
+        #0 corresponds to no blinking, 1 before trace, 2 before trace and retrace
+        self.blinkMode = 0
+        #DC Box output for blinking (1 indexed)
+        self.blinkOutput = 2
+        
         #Channel 0 corresponds to height, and 1 to magnetic field
         self.channel = 0
                 
@@ -143,6 +148,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.comboBox_PostProcessing.activated[str].connect(self.selectPostProcessing)
         self.comboBox_scanMode.activated[str].connect(self.updateScanMode)
         self.comboBox_Channel.activated[str].connect(self.selectChannel)
+        self.comboBox_blinkMode.currentIndexChanged.connect(self.setBlinkMode)
         
         #ROI in trace plot
         self.ROI.sigRegionChanged.connect(self.updateROI)
@@ -158,8 +164,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.cxn = False
         self.dv = False
         self.dac = False
-        self.hf = False
-        self.ips = False
+        self.dcbox = False
         
         self.lockInterface()
         
@@ -171,6 +176,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.cxn = dict['cxn']
             self.dac = dict['dac_adc']
             self.dv = dict['dv']
+            self.dcbox = dict['dc_box']
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
         except:
@@ -183,6 +189,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
         elif not self.dv:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+        elif not self.dcbox:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
         else:
@@ -204,6 +213,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Initial read only configuration of line edits
         self.lineEdit_Linear.setReadOnly(False)
         self.lineEdit_LineTime.setReadOnly(True)
+        
+        self.comboBox_blinkMode.view().setMinimumWidth(130)
         
         #Have drop down view be wider than the real view to see all the entries
         self.comboBox_PostProcessing.view().setMinimumWidth(130)
@@ -311,6 +322,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.retraceLinePlot.showAxis('top', show = True)
         self.PlotArea_4.hide()
 
+        
     def setupScanningArea(self):
         #Testing stuff
         self.ROI = pg.RectROI((-2.5e-6,-2.5e-6),(5e-6,5e-6), movable = True)
@@ -450,6 +462,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         elif string == 'B (T)':
             self.channel = 1
         self.refreshPlotData()
+        
+    def setBlinkMode(self):
+        self.blinkMode = self.comboBox_blinkMode.currentIndex()
         
     def refreshPlotData(self):
         if self.dataProcessing == 'Raw':
@@ -862,6 +877,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.push_Scan.setEnabled(False)
 #----------------------------------------------------------------------------------------------#      
     """ The following section has scanning functions and live graph updating."""  
+    
+    @inlineCallbacks
+    def blink(self, c = None):
+        yield self.dcbox.set_voltage(self.blinkOutput, 5)
+        yield self.sleep(0.25)
+        yield self.dcbox.set_voltage(self.blinkOutput, 0)
+        yield self.sleep(0.25)
         
     def abortScan(self):
         self.scanning = False
@@ -939,7 +961,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             #ADD THIS LATER
             
             #For now, HARD CODED THAT using DAC out 2 (or 1 when zero indexed) for X 
-            #and DAC out 3 (2 zeros indexed) for Y. 
+            #and DAC out 3 (2 zeros indexed) for Y. 1 (or 0 when zero indexed) for Z. 
+            #DC box output 2 (1 when 0 indexed) is being used to blink (specified when
+            #initializing parameters)
 
             if self.scanParameters['delta_x'] > 0 and self.scanning:
                 print 'Moving by: ' + str(self.scanParameters['delta_x']) + ' in the x direction to starting position.'
@@ -986,6 +1010,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 stopx = self.Atto_X_Voltage + self.scanParameters['line_x']
                 stopy = self.Atto_Y_Voltage + self.scanParameters['line_y']
 
+                #Blink prior to trace if desired
+                if self.blinkMode == 1 or self.blinkMode == 2:
+                    yield self.blink()
                 #Time for debugging
                 tzero = time.clock()
                 #Do buffer ramp
@@ -1034,6 +1061,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 stopx = self.Atto_X_Voltage - self.scanParameters['line_x']
                 stopy = self.Atto_Y_Voltage - self.scanParameters['line_y']
 
+                #Blink before retrace if desired
+                if self.blinkMode == 2:
+                    yield self.blink()
+                
                 if self.scanMode == 'Feedback':
                     newData = yield self.dac.buffer_ramp([1,2],[0,1],[startx, starty],[stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'])
                 elif self.scanMode == 'Constant Height':
@@ -1270,6 +1301,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.comboBox_PostProcessing.setEnabled(False)
         self.comboBox_Channel.setEnabled(False)
         self.comboBox_scanMode.setEnabled(False)
+        self.comboBox_blinkMode.setEnabled(False)
 
         self.checkBox.setEnabled(False)
 
@@ -1306,7 +1338,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.comboBox_PostProcessing.setEnabled(True)
         self.comboBox_Channel.setEnabled(True)
         self.comboBox_scanMode.setEnabled(True)
-
+        self.comboBox_blinkMode.setEnabled(True)
+        
         self.checkBox.setEnabled(True)
 
     def sleep(self,secs):
