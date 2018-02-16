@@ -124,7 +124,7 @@
    <property name="geometry">
     <rect>
      <x>70</x>
-     <y>350</y>
+     <y>360</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -152,7 +152,7 @@ border-radius: 5px
    <property name="geometry">
     <rect>
      <x>190</x>
-     <y>350</y>
+     <y>360</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -202,24 +202,11 @@ border-radius: 5px
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; text-decoration: underline; color:#a8a8a8;&quot;&gt;DAC Channel Settings&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <widget class="QLabel" name="warning">
-   <property name="geometry">
-    <rect>
-     <x>180</x>
-     <y>270</y>
-     <width>151</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-  </widget>
   <widget class="QLabel" name="label_11">
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>220</y>
+     <y>250</y>
      <width>124</width>
      <height>16</height>
     </rect>
@@ -245,7 +232,7 @@ border-radius: 5px
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>280</y>
+     <y>310</y>
      <width>66</width>
      <height>16</height>
     </rect>
@@ -258,7 +245,7 @@ border-radius: 5px
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>250</y>
+     <y>280</y>
      <width>66</width>
      <height>16</height>
     </rect>
@@ -315,7 +302,7 @@ border-radius: 5px
    <property name="geometry">
     <rect>
      <x>100</x>
-     <y>280</y>
+     <y>310</y>
      <width>35</width>
      <height>22</height>
     </rect>
@@ -337,7 +324,7 @@ border-radius: 5px
    <property name="geometry">
     <rect>
      <x>100</x>
-     <y>250</y>
+     <y>280</y>
      <width>35</width>
      <height>22</height>
     </rect>
@@ -449,7 +436,7 @@ border-radius: 5px
      <x>155</x>
      <y>125</y>
      <width>3</width>
-     <height>190</height>
+     <height>217</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -468,7 +455,7 @@ border-radius: 5px
      <x>10</x>
      <y>125</y>
      <width>3</width>
-     <height>190</height>
+     <height>217</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -485,7 +472,7 @@ border-radius: 5px
    <property name="geometry">
     <rect>
      <x>11</x>
-     <y>313</y>
+     <y>340</y>
      <width>145</width>
      <height>3</height>
     </rect>
@@ -634,6 +621,21 @@ border-radius: 5px
    <property name="orientation">
     <enum>Qt::Vertical</enum>
    </property>
+  </widget>
+  <widget class="QComboBox" name="comboBox_blinkDevice">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>220</y>
+     <width>121</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>DAC ADC</string>
+    </property>
+   </item>
   </widget>
  </widget>
  <resources/>

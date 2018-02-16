@@ -203,6 +203,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         print dict
         self.FieldControl.connectRemoteLabRAD(dict)
         self.Scripting.connectRemoteLabRAD(dict)
+        self.nSOTChar.connectRemoteLabRAD(dict)
         #Call connectRemoteLabRAD functions for relevant modules
         
     def disconnectLabRADConnections(self):
