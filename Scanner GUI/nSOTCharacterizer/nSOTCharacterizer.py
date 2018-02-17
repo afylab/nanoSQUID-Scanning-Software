@@ -1569,6 +1569,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 pass
             yield self.sleep(1)
             if bVal != 0:
+                yield self.ips.set_control(3)
                 #Go to 0 field
                 yield self.ips.set_targetfield(0)
                 yield self.ips.set_activity(2)
@@ -1610,6 +1611,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.ips.set_activity(1)
             yield self.sleep(0.25)
             yield self.ips.set_fieldsweep_rate(B_rate)
+            yield self.ips.set_control(2)
             
             yield self.dac.set_voltage(DAC_out, 0)
 
@@ -1622,12 +1624,14 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
             
             for i in range(0, B_points):
-                
+                yield self.ips.set_control(3)
                 yield self.ips.set_targetfield(B_space[i])
-
+                yield self.ips.set_control(2)
                 #wait for field to be reached
                 while True:
+                    yield self.ips.set_control(3)
                     curr_field = yield self.ips.read_parameter(7)
+                    yield self.ips.set_control(2)
                     if float(curr_field[1:]) <= B_space[i]+0.00001 and float(curr_field[1:]) >= B_space[i]-0.00001:
                         break
                     yield self.sleep(0.25)
@@ -1692,6 +1696,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.sleep(0.25)
             
             #Go to 0 field
+            yield self.ips.set_control(3)
             yield self.ips.set_targetfield(0)
             yield self.ips.set_activity(2)
 
@@ -1727,15 +1732,17 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.ips.set_activity(1)
             yield self.sleep(0.25)
             yield self.ips.set_fieldsweep_rate(B_rate)
-            
+            yield self.ips.set_control(2)
            
             for i in range (0, B_points):
-            
+                yield self.ips.set_control(3)
                 yield self.ips.set_targetfield(B_space[i])
-
+                yield self.ips.set_control(2)
                 #wait for field to be reached
                 while True:
+                    yield self.ips.set_control(3)
                     curr_field = yield self.ips.read_parameter(7)
+                    yield self.ips.set_control(2)
                     if float(curr_field[1:]) <= B_space[i]+0.00001 and float(curr_field[1:]) >= B_space[i]-0.00001:
                         break
                     yield self.sleep(0.25)
@@ -1848,6 +1855,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.dac.set_voltage(DAC_out, 0)
             
             #Go to 0 field
+            yield self.ips.set_control(3)
             yield self.ips.set_targetfield(0)
             yield self.ips.set_activity(2)
 
