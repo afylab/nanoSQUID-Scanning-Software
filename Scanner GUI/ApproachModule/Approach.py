@@ -17,6 +17,8 @@ from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
     newPLLData = QtCore.pyqtSignal(float, float)
+    newFdbkDCData = QtCore.pyqtSignal(float)
+    newFdbkACData = QtCore.pyqtSignal(float)
     updateFeedbackStatus = QtCore.pyqtSignal(bool)
     updateConstantHeightStatus = QtCore.pyqtSignal(bool)
 
@@ -44,6 +46,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Connect incrementing buttons
         self.push_addFreq.clicked.connect(self.incrementFreqThresh)
         self.push_subFreq.clicked.connect(self.decrementFreqThresh)
+        self.push_addFeedback.clicked.connect(self.incrementFeedbackThresh)
+        self.push_subFeedback.clicked.connect(self.decrementFeedbackThresh)
 
         self.lineEdit_freqSet.editingFinished.connect(self.setFreqThresh)
 
@@ -75,26 +79,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.measuring = False
         self.approaching = False
         
-        
         #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's hard coded in
         self.PID_Index = 1
 
         self.Atto_Z_Voltage = 0.0 #Voltage being sent to Z of attocubes. Eventually should synchronize with the 
                                   #Scan module Atto Z voltage
         self.Temperature = 293 #in kelvin
-
-        '''
-        #The following should no longer be necessary anywhere
-        self.x_volts_to_meters = 3/ 50e-6 #50 microns corresponds to 3 volts, units of volts per meter. Default room temperature
-        self.y_volts_to_meters = 3/ 50e-6
-        self.z_volts_to_meters = 3/ 24e-6 #24 microns corresponds to 3 volts, units of volts per meter. Default room temperature
-        self.x_meters_max = 50e-6
-        self.y_meters_max = 50e-6
-        self.z_meters_max = 24e-6
-        self.x_volts_max = 3
-        self.y_volts_max = 3
-        self.z_volts_max = 3
-        '''
 
         self.withdrawDistance = 2e-6
         self.constantHeight = 100e-9
@@ -110,6 +100,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.PLL_Locked = 0 #PLL starts not locked
 
         self.measurementSettings = {
+                'meas_pll'            : False,
+                'meas_fdbk_dc'        : False,
+                'meas_fdbk_ac'        : False,
                 'pll_targetBW'        : 25,       #target bandwidth for pid advisor
                 'pll_advisemode'      : 2,         #advisor mode. 0 is just proportional term, 1 just integral, 2 is prop + int, and 3 is full PID
                 'pll_input'           : 1,         #hf2li input that has the signal for the pll
@@ -128,6 +121,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 'pll_rate'            : 1.842e+6,  #Sampling rate of the PLL. Cannot be changed, despite it being spit out by the pid advisor. Just... is what it is. 
                 'pll_output'          : 1,         #hf2li output to be used to completel PLL loop. 
                 'pll_output_amp'      : 0.01,      #output amplitude   
+                'fdbk_dc_input'       : 4,         # 1 indexed input of DAC ADC (5 and 6 correspond to Aux 1 and 2 from Zurich
+                'fdbk_dc_setpoint'    : 0,         # DC setpoint from which to determine the change in feebdack output
+                'fdbk_ac_input'       : 6,         # 1 indexed input of DAC ADC (5 and 6 correspond to Aux 1 and 2 from Zurich
+                'fdbk_ac_setpoint'    : 0,         # AC setpoint from which to determine the change in feebdack output
+                'z_mon_input'         : 1,         # Either 1 (aux in 1) or 2 (aux in 2) on the Zurich
                 }
 
         '''
@@ -173,6 +171,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Initialize values
         self.freqThreshold = 0.4
         self.setFreqThresh()
+        
+        self.feedbackThresh = 0.1
+        self.setFeedbackThresh()
+        
+        self.feedbackACThresh = 0.1
+        self.setFeedbackACThresh()
 
         self.lockInterface()
 
@@ -208,7 +212,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             "background: rgb(161, 0, 0);border-radius: 4px;}")
         else:
             self.unlockInterface()
-            self.push_StartControllers.setEnabled(False)
+            self.lockFreq()
+            self.lockFdbkDC()
+            self.lockFdbkAC()
             self.zeroHF2LI_Aux_Out()
             self.initializePID()
             self.monitorZ = True
@@ -284,6 +290,22 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         MeasSet = MeasurementSettings(self.reactor, self.measurementSettings, parent = self, server = self.hf)
         if MeasSet.exec_():
             self.measurementSettings = MeasSet.getValues()
+            
+            if self.measurementSettings['meas_pll']:
+                self.unlockFreq()
+            else:
+                self.lockFreq()
+                
+            if self.measurementSettings['meas_fdbk_dc']:
+                self.unlockFdbkDC()
+            else:
+                self.lockFdbkDC()
+                
+            if self.measurementSettings['meas_fdbk_ac']:
+                self.unlockFdbkAC()
+            else:
+                self.lockFdbkAC()
+            #TODO disable not selected measurements
         
     def setupAdditionalUi(self):
         self.freqSlider.close()
@@ -297,6 +319,30 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.freqSlider.lower()
         
         self.freqSlider.logValueChanged.connect(self.updateFreqThresh)
+        
+        self.feedbackSlider.close()
+        self.feedbackSlider = MySlider(parent = self.centralwidget)
+        self.feedbackSlider.setGeometry(120,135,260,70)
+        self.feedbackSlider.setMinimum(0)
+        self.feedbackSlider.setMaximum(1000000)
+        self.feedbackSlider.setStyleSheet("QSlider::groove:horizontal {border: 1px solid #bbb;background: white;height: 10px;border-radius: 4px;}QSlider::sub-page:horizontal {background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,    stop: 0 #66e, stop: 1 #bbf);background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,    stop: 0 #bbf, stop: 1 #55f);border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::add-page:horizontal {background: #fff;border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::handle:horizontal {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #eee, stop:1 #ccc);border: 1px solid #777;width: 13px;margin-top: -2px;margin-bottom: -2px;border-radius: 4px;}QSlider::handle:horizontal:hover {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #fff, stop:1 #ddd);border: 1px solid #444;border-radius: 4px;}QSlider::sub-page:horizontal:disabled {background: #bbb;border-color: #999;}QSlider::add-page:horizontal:disabled {background: #eee;border-color: #999;}QSlider::handle:horizontal:disabled {background: #eee;border: 1px solid #aaa;border-radius: 4px;}")
+        self.feedbackSlider.setTickPos([0.008, 0.01, 0.02, 0.04,0.06, 0.08, 0.1,0.2,0.4,0.6, 0.8,1, 2, 4, 6, 8, 10, 20])
+        self.feedbackSlider.setNumPos([0.01, 0.1,1,10])
+        self.feedbackSlider.lower()
+        
+        self.feedbackSlider.logValueChanged.connect(self.updateFeedbackThresh)
+        
+        self.feedbackACSlider.close()
+        self.feedbackACSlider = MySlider(parent = self.centralwidget)
+        self.feedbackACSlider.setGeometry(120,210,260,70)
+        self.feedbackACSlider.setMinimum(0)
+        self.feedbackACSlider.setMaximum(1000000)
+        self.feedbackACSlider.setStyleSheet("QSlider::groove:horizontal {border: 1px solid #bbb;background: white;height: 10px;border-radius: 4px;}QSlider::sub-page:horizontal {background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,    stop: 0 #66e, stop: 1 #bbf);background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,    stop: 0 #bbf, stop: 1 #55f);border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::add-page:horizontal {background: #fff;border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::handle:horizontal {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #eee, stop:1 #ccc);border: 1px solid #777;width: 13px;margin-top: -2px;margin-bottom: -2px;border-radius: 4px;}QSlider::handle:horizontal:hover {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #fff, stop:1 #ddd);border: 1px solid #444;border-radius: 4px;}QSlider::sub-page:horizontal:disabled {background: #bbb;border-color: #999;}QSlider::add-page:horizontal:disabled {background: #eee;border-color: #999;}QSlider::handle:horizontal:disabled {background: #eee;border: 1px solid #aaa;border-radius: 4px;}")
+        self.feedbackACSlider.setTickPos([0.008, 0.01, 0.02, 0.04,0.06, 0.08, 0.1,0.2,0.4,0.6, 0.8,1, 2, 4, 6, 8, 10, 20])
+        self.feedbackACSlider.setNumPos([0.01, 0.1,1,10])
+        self.feedbackACSlider.lower()
+        
+        self.feedbackACSlider.logValueChanged.connect(self.updateFeedbackACThresh)
 
     def set_p(self):
         val = readNum(str(self.lineEdit_P.text()))
@@ -381,7 +427,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         elif val > 20:
             val = 20
         self.updateFreqThresh(value = val)
-
         
     def decrementFreqThresh(self):
         val = self.freqThreshold * 0.99
@@ -390,56 +435,135 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         elif val > 20:
             val = 20
         self.updateFreqThresh(value = val)
+        
+    def updateFeedbackThresh(self, value = 0):
+        try:
+            self.feedbackThreshold = value
+            self.lineEdit_feedbackSet.setText(formatNum(self.feedbackThreshold))
+            self.feedbackSlider.setPosition(self.feedbackThreshold)
+        except Exception as inst:
+            print inst
+            
+    def setFeedbackThresh(self):
+        new_feedbackThresh = str(self.lineEdit_feedbackSet.text())
+        val = readNum(new_feedbackThresh)
+        if isinstance(val,float):
+            if val < 0.008:
+                val = 0.008
+            elif val > 20:
+                val = 20
+            self.updateFeedbackThresh(value = val)
+        else:
+            self.lineEdit_feedbackSet.setText(formatNum(self.feedbackThreshold))
+            
+    def incrementFeedbackThresh(self):
+        val = self.feedbackThreshold * 1.01
+        if val < 0.008:
+            val = 0.008
+        elif val > 20:
+            val = 20
+        self.updateFeedbackThresh(value = val)
+        
+    def decrementFeedbackThresh(self):
+        val = self.feedbackThreshold * 0.99
+        if val < 0.008:
+            val = 0.008
+        elif val > 20:
+            val = 20
+        self.updateFeedbackThresh(value = val)
+        
+    def updateFeedbackACThresh(self, value = 0):
+        try:
+            self.feedbackACThreshold = value
+            self.lineEdit_feedbackACSet.setText(formatNum(self.feedbackACThreshold))
+            self.feedbackACSlider.setPosition(self.feedbackACThreshold)
+        except Exception as inst:
+            print inst
+            
+    def setFeedbackACThresh(self):
+        new_feedbackACThresh = str(self.lineEdit_feedbackACSet.text())
+        val = readNum(new_feedbackACThresh)
+        if isinstance(val,float):
+            if val < 0.008:
+                val = 0.008
+            elif val > 20:
+                val = 20
+            self.updateFeedbackACThresh(value = val)
+        else:
+            self.lineEdit_feedbackACSet.setText(formatNum(self.feedbackACThreshold))
+            
+    def incrementFeedbackACThresh(self):
+        val = self.feedbackACThreshold * 1.01
+        if val < 0.008:
+            val = 0.008
+        elif val > 20:
+            val = 20
+        self.updateFeedbackACThresh(value = val)
+        
+    def decrementFeedbackACThresh(self):
+        val = self.feedbackACThreshold * 0.99
+        if val < 0.008:
+            val = 0.008
+        elif val > 20:
+            val = 20
+        self.updateFeedbackACThresh(value = val)
 #--------------------------------------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to toggling measurements."""
     @inlineCallbacks
     def toggleControllers(self, c = None):
-        if not self.measuring:
-            self.push_StartControllers.setText("Stop PLL")  
-            style = """ QPushButton#push_StartControllers{
-                    color: rgb(50,168,50);
-                    background-color:rgb(0,0,0);
-                    border: 1px solid rgb(50,168,50);
-                    border-radius: 5px
-                    }  
-                    QPushButton:pressed#push_StartControllers{
-                    color: rgb(168,168,168);
-                    background-color:rgb(95,107,166);
-                    border: 1px solid rgb(168,168,168);
-                    border-radius: 5px
-                    }
-                    """
-            self.push_StartControllers.setStyleSheet(style)
-            self.measuring = True
-            self.push_MeasurementSettings.setEnabled(False)
-            
-            yield self.setHF2LI_PLL_Settings()
-            yield self.startFrequencyMonitoring()
-        else: 
-            self.push_StartControllers.setText("Start PLL")
-            style = """ QPushButton#push_StartControllers{
-                    color: rgb(168,168,168);
-                    background-color:rgb(0,0,0);
-                    border: 1px solid rgb(168,168,168);
-                    border-radius: 5px
-                    }  
-                    QPushButton:pressed#push_StartControllers{
-                    color: rgb(168,168,168);
-                    background-color:rgb(95,107,166);
-                    border: 1px solid rgb(168,168,168);
-                    border-radius: 5px
-                    }
-                    """
-            self.push_StartControllers.setStyleSheet(style)
-            self.measuring = False
-            self.push_MeasurementSettings.setEnabled(True)
-            yield self.sleep(0.1)
-            self.PLL_Locked = 0
-            self.push_Locked.setStyleSheet("""#push_Locked{
-                    background: rgb(161, 0, 0);
-                    border-radius: 5px;
-                    }""")
+        try:
+            if not self.measuring:
+                self.push_StartControllers.setText("Stop Meas.")  
+                style = """ QPushButton#push_StartControllers{
+                        color: rgb(50,168,50);
+                        background-color:rgb(0,0,0);
+                        border: 1px solid rgb(50,168,50);
+                        border-radius: 5px
+                        }  
+                        QPushButton:pressed#push_StartControllers{
+                        color: rgb(168,168,168);
+                        background-color:rgb(95,107,166);
+                        border: 1px solid rgb(168,168,168);
+                        border-radius: 5px
+                        }
+                        """
+                self.push_StartControllers.setStyleSheet(style)
+                self.measuring = True
+                self.push_MeasurementSettings.setEnabled(False)
+                if self.measurementSettings['meas_pll']:
+                    yield self.setHF2LI_PLL_Settings()
+                    self.startFrequencyMonitoring()
+                if self.measurementSettings['meas_fdbk_dc']:
+                    self.startFdbkDCMonitoring()
+                if self.measurementSettings['meas_fdbk_ac']:
+                    self.startFdbkACMonitoring()
+            else: 
+                self.push_StartControllers.setText("Start Meas.")
+                style = """ QPushButton#push_StartControllers{
+                        color: rgb(168,168,168);
+                        background-color:rgb(0,0,0);
+                        border: 1px solid rgb(168,168,168);
+                        border-radius: 5px
+                        }  
+                        QPushButton:pressed#push_StartControllers{
+                        color: rgb(168,168,168);
+                        background-color:rgb(95,107,166);
+                        border: 1px solid rgb(168,168,168);
+                        border-radius: 5px
+                        }
+                        """
+                self.push_StartControllers.setStyleSheet(style)
+                self.measuring = False
+                self.push_MeasurementSettings.setEnabled(True)
+                yield self.sleep(0.1)
+                self.PLL_Locked = 0
+                self.push_Locked.setStyleSheet("""#push_Locked{
+                        background: rgb(161, 0, 0);
+                        border-radius: 5px;
+                        }""")
+        except Exception as inst:
+            print inst
             
     def setWorkingPoint(self, freq, phase, out, amp):
         #self.checkBox_Freq.setCheckable(True)
@@ -451,7 +575,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.measurementSettings['pll_phase_setpoint'] = phase
         self.measurementSettings['pll_output'] = out
         self.measurementSettings['pll_output_amp'] = amp
-        self.push_StartControllers.setEnabled(True)
+
         
     @inlineCallbacks
     def setHF2LI_PLL_Settings(self, c = None):
@@ -521,9 +645,37 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.hf.set_output(self.measurementSettings['pll_output'], False)
         except Exception as inst:
             print inst
-
+            
+    @inlineCallbacks
+    def startFdbkDCMonitoring(self, c = None):
+        measChnl = self.measurementSettings['fdbk_dc_input']
+        setpoint = self.measurementSettings['fdbk_dc_setpoint']
+        while self.measuring:
+            if measChnl <= 4:
+                data = yield self.dac.read_voltage(measChnl-1)
+            else:
+                data = yield self.hf.get_aux_input_value(measChnl - 4)
+                
+            data = data - setpoint
+            self.lineEdit_fdbkDC.setText(formatNum(data))
+            self.newFdbkDCData.emit(data)
+    
+    @inlineCallbacks
+    def startFdbkACMonitoring(self, c = None):
+        measChnl = self.measurementSettings['fdbk_ac_input']
+        setpoint = self.measurementSettings['fdbk_ac_setpoint']
+        while self.measuring:
+            if measChnl <= 4:
+                data = yield self.dac.read_voltage(measChnl-1)
+            else:
+                data = yield self.hf.get_aux_input_value(measChnl-4)
+            
+            data = data - setpoint
+            self.lineEdit_fdbkAC.setText(formatNum(data))
+            self.newFdbkACData.emit(data)
 #--------------------------------------------------------------------------------------------------------------------------#
-    """ The following section contains the stepwise approach sequence. Not in use anymore, so commented out. """
+    """ The following section contains the stepwise approach sequence. Not in use anymore, so commented out. 
+        About to be put back in use!"""
     """
     @inlineCallbacks
     def startApproachSequence(self, c = None):
@@ -1140,19 +1292,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_AdvancedPIDApproach.setEnabled(False)
         self.push_ApproachForFeedback.setEnabled(False)
         self.push_ApproachForConstant.setEnabled(False)
-        '''
-        self.push_addField.setEnabled(False)
-        self.push_subField.setEnabled(False)
-        self.push_addTemp.setEnabled(False)
-        self.push_subTemp.setEnabled(False)
-        '''
+        
         self.push_addFreq.setEnabled(False)
         self.push_subFreq.setEnabled(False)
+        self.push_addFeedback.setEnabled(False)
+        self.push_subFeedback.setEnabled(False)
+        self.push_addFeedbackAC.setEnabled(False)
+        self.push_subFeedbackAC.setEnabled(False)
         
         self.lineEdit_Withdraw.setDisabled(True)
-        #self.lineEdit_fieldSet.setDisabled(True)
-        #self.lineEdit_tempSet.setDisabled(True)
-        self.lineEdit_freqSet.setDisabled(True)
+
         self.lineEdit_FineZ.setDisabled(True)
         self.lineEdit_CoarseZ.setDisabled(True)
         self.lineEdit_constantHeight.setDisabled(True)
@@ -1160,17 +1309,23 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_I.setDisabled(True)
         self.lineEdit_D.setDisabled(True)
 
-        #self.fieldSlider.setEnabled(False)
-        #self.tempSlider.setEnabled(False)
+        self.lockFreq()
+        self.lockFdbkDC()
+        self.lockFdbkAC()
+
+    def lockFreq(self):
+        self.lineEdit_freqSet.setDisabled(True)
         self.freqSlider.setEnabled(False)
-
-        #self.checkBox_Freq.setEnabled(False)
-        #self.checkBox_Temp.setEnabled(False)
-        #self.checkBox_Field.setEnabled(False)
-        #self.checkBox_Scan.setEnabled(False)
-
         self.radioButton_plus.setEnabled(False)
         self.radioButton_minus.setEnabled(False)
+        
+    def lockFdbkDC(self):
+        self.feedbackSlider.setEnabled(False)
+        self.lineEdit_feedbackSet.setDisabled(True)
+        
+    def lockFdbkAC(self):
+        self.feedbackACSlider.setEnabled(False)
+        self.lineEdit_feedbackACSet.setDisabled(True)
         
     def unlockInterface(self):
         self.push_Home.setEnabled(True)
@@ -1180,19 +1335,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_ApproachForFeedback.setEnabled(True)
         self.push_ApproachForConstant.setEnabled(True)
 
-        '''
-        self.push_addField.setEnabled(True)
-        self.push_subField.setEnabled(True)
-        self.push_addTemp.setEnabled(True)
-        self.push_subTemp.setEnabled(True)
-        '''
         self.push_addFreq.setEnabled(True)
         self.push_subFreq.setEnabled(True)
+        self.push_addFeedback.setEnabled(True)
+        self.push_subFeedback.setEnabled(True)
+        self.push_addFeedbackAC.setEnabled(True)
+        self.push_subFeedbackAC.setEnabled(True)
 
         self.lineEdit_Withdraw.setDisabled(False)
-        #self.lineEdit_fieldSet.setDisabled(False)
-        #self.lineEdit_tempSet.setDisabled(False)
-        self.lineEdit_freqSet.setDisabled(False)
         self.lineEdit_FineZ.setDisabled(False)
         self.lineEdit_CoarseZ.setDisabled(False)
         self.lineEdit_constantHeight.setDisabled(False)
@@ -1200,23 +1350,29 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_I.setDisabled(False)
         self.lineEdit_D.setDisabled(False)
 
-        #self.fieldSlider.setEnabled(True)
-        #self.tempSlider.setEnabled(True)
-        self.freqSlider.setEnabled(True)
-
-        #self.checkBox_Freq.setEnabled(True)
-        #self.checkBox_Temp.setEnabled(True)
-        #self.checkBox_Field.setEnabled(True)
-
-        self.radioButton_plus.setEnabled(True)
-        self.radioButton_minus.setEnabled(True)
-
         self.push_PIDApproach.setEnabled(True)
         self.push_PIDApproach_Abort.setEnabled(True)
         self.push_AdvancedPIDApproach.setEnabled(True)
 
         self.push_AdvancedStepApproach.setEnabled(True)
 
+        self.unlockFdbkAC()
+        self.unlockFdbkDC()
+        self.unlockFreq()
+        
+    def unlockFreq(self):
+        self.lineEdit_freqSet.setDisabled(False)
+        self.freqSlider.setEnabled(True)
+        self.radioButton_plus.setEnabled(True)
+        self.radioButton_minus.setEnabled(True)
+        
+    def unlockFdbkDC(self):
+        self.feedbackSlider.setEnabled(True)
+        self.lineEdit_feedbackSet.setDisabled(False)
+        
+    def unlockFdbkAC(self):
+        self.feedbackACSlider.setEnabled(True)
+        self.lineEdit_feedbackACSet.setDisabled(False)
 
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
@@ -1597,6 +1753,10 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.measSettings = measSettings
 
         self.hf = server
+        
+        self.checkBox_pll.stateChanged.connect(self.setMeasPLL)
+        self.checkBox_fdbkDC.stateChanged.connect(self.setMeasFdbkDC)
+        self.checkBox_fdbkAC.stateChanged.connect(self.setMeasFdbkAC)
             
         self.lineEdit_TargetBW.editingFinished.connect(self.setPLL_TargetBW)
         self.lineEdit_PLL_Range.editingFinished.connect(self.setPLL_Range)
@@ -1610,28 +1770,15 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.comboBox_PLL_FilterOrder.currentIndexChanged.connect(self.setPLL_FilterOrder)
         self.comboBox_PLL_Harmonic.currentIndexChanged.connect(self.setPLL_Harmonic)
         self.comboBox_PLL_Input.currentIndexChanged.connect(self.setPLL_Input)
-        
-        '''
-        self.lineEdit_FT_Freq.editingFinished.connect(self.setFT_Freq)
-        self.lineEdit_FT_Amp.editingFinished.connect(self.setFT_Amp)
-        
-        self.comboBox_FT_Input.currentIndexChanged.connect(self.setFT_Input)
-        self.comboBox_FT_Output.currentIndexChanged.connect(self.setFT_Output)
-        
-        self.lineEdit_F_TC.editingFinished.connect(self.setF_TC)
-        
-        self.comboBox_F_Demod.currentIndexChanged.connect(self.setF_Demod)
-        self.comboBox_F_Harmonic.currentIndexChanged.connect(self.setF_Harmonic)
-        
-        self.lineEdit_T_TC.editingFinished.connect(self.setT_TC)
-        
-        self.comboBox_T_Demod.currentIndexChanged.connect(self.setT_Demod)
-        self.comboBox_T_Harmonic.currentIndexChanged.connect(self.setT_Harmonic)
-        '''
 
         self.lineEdit_PLL_Amplitude.editingFinished.connect(self.setPLL_Output_Amplitude)
         self.comboBox_PLL_Output.currentIndexChanged.connect(self.setPLL_Output)
 
+        self.comboBox_DC_Input.currentIndexChanged.connect(self.setFdbk_DC_Input)
+        self.lineEdit_DC_Setpoint.editingFinished.connect(self.setFdbk_DC_Setpoint)
+        self.comboBox_AC_Input.currentIndexChanged.connect(self.setFdbk_AC_Input)
+        self.lineEdit_AC_Setpoint.editingFinished.connect(self.setFdbk_AC_Setpoint)
+        
         self.loadValues()
         self.createLoadingColors()
 
@@ -1639,6 +1786,10 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.comboBox_PLL_Input.view().setMinimumWidth(100)
         
     def loadValues(self):
+        self.checkBox_pll.setChecked(self.measSettings['meas_pll'])
+        self.checkBox_fdbkDC.setChecked(self.measSettings['meas_fdbk_dc'])
+        self.checkBox_fdbkAC.setChecked(self.measSettings['meas_fdbk_ac'])
+    
         self.lineEdit_TargetBW.setText(formatNum(self.measSettings['pll_targetBW']))
         self.comboBox_PLL_Advise.setCurrentIndex(self.measSettings['pll_advisemode'])
         self.comboBox_PLL_Input.setCurrentIndex(self.measSettings['pll_input'] - 1)
@@ -1672,31 +1823,14 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.lineEdit_PLL_SimBW.setText(formatNum(self.measSettings['pll_simBW']))
         self.lineEdit_PLL_PM.setText(formatNum(self.measSettings['pll_pm']))
         self.lineEdit_PLL_Rate.setText(formatNum(self.measSettings['pll_rate']))
-        
-        '''
-        self.comboBox_FT_Input.setCurrentIndex(self.measSettings['ft_input']-1)
-        self.comboBox_FT_Output.setCurrentIndex(self.measSettings['ft_output']-1)
-        
-        self.lineEdit_FT_Freq.setText(formatNum(self.measSettings['ft_freq']))
-
-        if self.measSettings['ft_output'] == 3:
-            self.lineEdit_FT_Amp.setText('N/A')
-            self.lineEdit_FT_Amp.setEnabled(False)
-        else:
-            self.lineEdit_FT_Amp.setText(formatNum(self.measSettings['ft_amplitude']))
-            self.lineEdit_FT_Amp.setEnabled(True)
-            
-        self.comboBox_F_Demod.setCurrentIndex(self.measSettings['field_demod']-1)
-        self.comboBox_F_Harmonic.setCurrentIndex(self.measSettings['field_harmonic']-1)
-        self.lineEdit_F_TC.setText(formatNum(self.measSettings['field_tc']))
-        
-        self.comboBox_T_Demod.setCurrentIndex(self.measSettings['temp_demod']-1)
-        self.comboBox_T_Harmonic.setCurrentIndex(self.measSettings['temp_harmonic']-1)
-        self.lineEdit_T_TC.setText(formatNum(self.measSettings['temp_tc']))
-        '''
 
         self.lineEdit_PLL_Amplitude.setText(formatNum(self.measSettings['pll_output_amp']))
         self.comboBox_PLL_Output.setCurrentIndex(self.measSettings['pll_output'] - 1)
+        
+        self.comboBox_DC_Input.setCurrentIndex(self.measSettings['fdbk_dc_input']-1)
+        self.lineEdit_DC_Setpoint.setText(formatNum(self.measSettings['fdbk_dc_setpoint']))
+        self.comboBox_AC_Input.setCurrentIndex(self.measSettings['fdbk_ac_input']-1)
+        self.lineEdit_AC_Setpoint.setText(formatNum(self.measSettings['fdbk_ac_setpoint']))
         
     #Creates a list of stylesheets with a gradient of grey to black. This
     #will be used when the advisePID button is pressed to indicate that
@@ -1720,6 +1854,19 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             new_sheet = base_sheet.replace('210',str(new_border))
             new_sheet = new_sheet.replace('230',str(new_background))
             self.sheets.append(new_sheet)
+        
+    def setMeasPLL(self):
+        if self.measSettings['pll_centerfreq'] is not None:
+            self.measSettings['meas_pll'] = self.checkBox_pll.isChecked()
+        else:
+            print 'Get here!'
+            self.checkBox_pll.setChecked(False)
+        
+    def setMeasFdbkDC(self):
+        self.measSettings['meas_fdbk_dc'] = self.checkBox_fdbkDC.isChecked()
+        
+    def setMeasFdbkAC(self):
+        self.measSettings['meas_fdbk_ac'] = self.checkBox_fdbkAC.isChecked()
         
     def setPLL_TargetBW(self):
         new_target = str(self.lineEdit_TargetBW.text())
@@ -1817,57 +1964,6 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         
     def setPLL_AdviseMode(self):
         self.measSettings['pll_adivsemode'] = self.comboBox_PLL_Advise.currentIndex()
-        
-    '''
-    def setFT_Freq(self):
-        new_freq = str(self.lineEdit_FT_Freq.text())
-        val = readNum(new_freq)
-        if isinstance(val,float):
-            self.measSettings['ft_freq'] = val
-        self.lineEdit_FT_Freq.setText(formatNum(self.measSettings['ft_freq']))
-        
-    def setFT_Amp(self):
-        val = readNum(str(self.lineEdit_FT_Amp.text()))
-        if isinstance(val,float):
-            self.measSettings['ft_amplitude'] = val
-        self.lineEdit_FT_Amp.setText(formatNum(self.measSettings['ft_amplitude']))
-        
-    def setFT_Input(self):
-        self.measSettings['ft_input'] = self.comboBox_FT_Input.currentIndex() + 1
-        
-    def setFT_Output(self):
-        self.measSettings['ft_output'] = self.comboBox_FT_Output.currentIndex() + 1
-        if self.measSettings['ft_output'] == 3:
-            self.lineEdit_FT_Amp.setText('N/A')
-            self.lineEdit_FT_Amp.setEnabled(False)
-        else:
-            self.lineEdit_FT_Amp.setEnabled(True)
-            self.lineEdit_FT_Amp.setText(formatNum(self.measSettings['ft_amplitude']))
-            
-    def setF_Demod(self):
-        self.measSettings['field_demod'] = self.comboBox_F_Demod.currentIndex() + 1
-        
-    def setF_Harmonic(self):
-        self.measSettings['ft_harmonic'] = self.comboBox_F_Harmonic.currentIndex() + 1
-        
-    def setF_TC(self):
-        val = readNum(str(self.lineEdit_F_TC.text()))
-        if isinstance(val,float):
-            self.measSettings['field_tc'] = val
-        self.lineEdit_F_TC.setText(formatNum(self.measSettings['field_tc']))
-        
-    def setT_Demod(self):
-        self.measSettings['temp_demod'] = self.comboBox_T_Demod.currentIndex() + 1
-        
-    def setT_Harmonic(self):
-        self.measSettings['temp_harmonic'] = self.comboBox_T_Harmonic.currentIndex() + 1
-        
-    def setT_TC(self):
-        val = readNum(str(self.lineEdit_T_TC.text()))
-        if isinstance(val,float):
-            self.measSettings['temp_tc'] = val
-        self.lineEdit_T_TC.setText(formatNum(self.measSettings['temp_tc']))
-    '''
 
     @inlineCallbacks
     def updateSimulation(self):
@@ -1951,6 +2047,24 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.push_AdvisePID.setStyleSheet(self.sheets[0])
         except Exception as inst:
             print inst
+            
+    def setFdbk_DC_Input(self):
+        self.measSettings['fdbk_dc_input'] = self.comboBox_DC_Input.currentIndex() + 1
+    
+    def setFdbk_DC_Setpoint(self):
+        val = readNum(str(self.lineEdit_DC_Setpoint.text()))
+        if isinstance(val,float):
+            self.measSettings['fdbk_dc_setpoint'] = val
+        self.lineEdit_DC_Setpoint.setText(formatNum(self.measSettings['fdbk_dc_setpoint']))
+
+    def setFdbk_AC_Input(self):
+        self.measSettings['fdbk_ac_input'] = self.comboBox_AC_Input.currentIndex() + 1
+    
+    def setFdbk_AC_Setpoint(self):
+        val = readNum(str(self.lineEdit_AC_Setpoint.text()))
+        if isinstance(val,float):
+            self.measSettings['fdbk_ac_setpoint'] = val
+        self.lineEdit_AC_Setpoint.setText(formatNum(self.measSettings['fdbk_ac_setpoint']))
 
     def getValues(self):
         return self.measSettings

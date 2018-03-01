@@ -15,7 +15,7 @@ sys.path.append(path+'\DataVaultBrowser')
 sys.path.append(path+'\Plotter')
 sys.path.append(path+'\TFCharacterizer')
 sys.path.append(path+'\ApproachModule')
-sys.path.append(path+'\PLLMonitor')
+sys.path.append(path+'\ApproachMonitor')
 sys.path.append(path+'\JPEPositionControl')
 sys.path.append(path+'\PositionCalibration')
 sys.path.append(path+'\Field Control')
@@ -31,7 +31,7 @@ import nSOTCharacterizer
 import plotter
 import TFCharacterizer
 import Approach
-import PLLMonitor
+import ApproachMonitor
 import JPEControl
 import PositionCalibration
 import FieldControl
@@ -61,7 +61,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Plot = plotter.Plotter(self.reactor, None)
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
         self.Approach = Approach.Window(self.reactor, None)
-        self.PLLMonitor = PLLMonitor.Window(self.reactor, None)
+        self.ApproachMonitor = ApproachMonitor.Window(self.reactor, None)
         self.JPEControl = JPEControl.Window(self.reactor, None)
         self.PosCalibration = PositionCalibration.Window(self.reactor, None)
         self.FieldControl = FieldControl.Window(self.reactor, None)
@@ -78,7 +78,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.actionData_Plotter.triggered.connect(self.openDataPlotter)
         self.actionTF_Characterizer.triggered.connect(self.openTFCharWindow)
         self.actionApproach_Control.triggered.connect(self.openApproachWindow)
-        self.actionPLL_Monitor.triggered.connect(self.openPLLMonitorWindow)
+        self.actionApproach_Monitor.triggered.connect(self.openApproachMonitorWindow)
         self.actionJPE_Coarse_Position_Control.triggered.connect(self.openJPEControlWindow)
         self.actionAttocube_Position_Calibration.triggered.connect(self.openPosCalibrationWindow)
         self.actionMagnetic_Field_Control.triggered.connect(self.openFieldControlWindow)
@@ -97,7 +97,10 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         
         self.TFChar.workingPointSelected.connect(self.distributeWorkingPoint)
 
-        self.Approach.newPLLData.connect(self.updatePLLMonitor)
+        self.Approach.newPLLData.connect(self.updateMonitorPLL)
+        self.Approach.newFdbkDCData.connect(self.updateMonitorDC)
+        self.Approach.newFdbkACData.connect(self.updateMonitorAC)
+        
         self.Approach.updateFeedbackStatus.connect(self.ScanControl.updateFeedbackStatus)
         self.Approach.updateConstantHeightStatus.connect(self.ScanControl.updateConstantHeightStatus)
         self.PosCalibration.newTemperatureCalibration.connect(self.setVoltageCalibration)
@@ -155,11 +158,11 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         if self.Approach.isVisible() == False:
             self.Approach.show()
 
-    def openPLLMonitorWindow(self):
-        self.PLLMonitor.moveDefault()
-        self.PLLMonitor.raise_()
-        if self.PLLMonitor.isVisible() == False:
-            self.PLLMonitor.show()
+    def openApproachMonitorWindow(self):
+        self.ApproachMonitor.moveDefault()
+        self.ApproachMonitor.raise_()
+        if self.ApproachMonitor.isVisible() == False:
+            self.ApproachMonitor.show()
             
     def openJPEControlWindow(self):
         self.JPEControl.moveDefault()
@@ -219,13 +222,18 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
 #----------------------------------------------------------------------------------------------#
             
     """ The following section connects signals between various modules."""
-
     def distributeWorkingPoint(self,freq, phase, channel, amplitude):
         self.Approach.setWorkingPoint(freq, phase, channel, amplitude)
 
-    def updatePLLMonitor(self, deltaF, phaseError):
-        self.PLLMonitor.updatePlots(deltaF, phaseError)
+    def updateMonitorPLL(self, deltaF, phaseError):
+        self.ApproachMonitor.updatePLLPlots(deltaF, phaseError)
 
+    def updateMonitorDC(self, dc):
+        self.ApproachMonitor.updateFdbkDCPlot(dc)
+        
+    def updateMonitorAC(self, ac):
+        self.ApproachMonitor.updateFdbkACPlot(ac)
+        
     def setVoltageCalibration(self,data):
         self.Approach.set_voltage_calibration(data)
         self.ScanControl.set_voltage_calibration(data)
@@ -257,7 +265,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Plot.hide()
         self.TFChar.hide()
         self.Approach.hide()
-        self.PLLMonitor.hide()
+        self.ApproachMonitor.hide()
         self.JPEControl.hide()
         self.PosCalibration.hide()
             
@@ -269,7 +277,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
             self.Plot.close()
             self.TFChar.close()
             self.Approach.close()
-            self.PLLMonitor.close()
+            self.ApproachMonitor.close()
             self.JPEControl.close()
             self.PosCalibration.close()
             self.Scripting.close()

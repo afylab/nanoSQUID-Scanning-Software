@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>390</width>
-    <height>430</height>
+    <height>481</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,17 +19,17 @@
   <property name="minimumSize">
    <size>
     <width>380</width>
-    <height>430</height>
+    <height>481</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>500</width>
-    <height>430</height>
+    <height>481</height>
    </size>
   </property>
   <property name="windowTitle">
-   <string>PLL Settings</string>
+   <string>Measurement Settings</string>
   </property>
   <property name="styleSheet">
    <string notr="true">#Dialog{background-color: rgb(0,0,0);}
@@ -42,40 +42,1233 @@ QLineEdit{
 border: 1px solid rgb(100,100,100);
 background-color:rgb(230,230,230);
 }
-</string>
+
+QCheckBox{
+color: rgb(168,168,168)
+}</string>
   </property>
-  <widget class="QLabel" name="label_title">
+  <widget class="QTabWidget" name="tabWidget">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>46</y>
-     <width>121</width>
-     <height>20</height>
+     <x>0</x>
+     <y>40</y>
+     <width>390</width>
+     <height>411</height>
     </rect>
    </property>
-   <property name="font">
-    <font>
-     <pointsize>9</pointsize>
-     <underline>true</underline>
-    </font>
-   </property>
    <property name="styleSheet">
-    <string notr="true">#label_title{
+    <string notr="true">QTabWidget::pane { border: 0; }
+QTabBar::tab{background: black;
+color: rgb(168,168,168);
+}
+QTabBar::tab:selected {background: rgb(50,50,50);}</string>
+   </property>
+   <property name="tabShape">
+    <enum>QTabWidget::Rounded</enum>
+   </property>
+   <property name="currentIndex">
+    <number>0</number>
+   </property>
+   <widget class="QWidget" name="tab">
+    <property name="styleSheet">
+     <string notr="true">#tab{
+background: black
+}</string>
+    </property>
+    <attribute name="title">
+     <string>PLL Settings</string>
+    </attribute>
+    <widget class="QLabel" name="label_9">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>100</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>TC (s):</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_7">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>160</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Range (Hz):</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_D">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>290</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_FilterBW">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>130</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>false</bool>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox_PLL_Harmonic">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>70</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <item>
+      <property name="text">
+       <string>1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>3</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>4</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>5</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>6</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>7</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>8</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_phaseSetPoint">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>130</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#lineEdit_PLL_phaseSetPoint{
+background: rgb(168,168,168);
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox_PLL_Advise">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>10</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>2</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>P</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>I</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PI</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PID</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QComboBox" name="comboBox_PLL_FilterOrder">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>160</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>3</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>3</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>4</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>5</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>6</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>7</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>8</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label_2">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>290</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Derivative:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_title">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>40</y>
+       <width>121</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>9</pointsize>
+       <underline>true</underline>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_title{
 color:rgb(168,168,168)
 }</string>
-   </property>
-   <property name="text">
-    <string>PLL Input Settings</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-   </property>
+     </property>
+     <property name="text">
+      <string>PLL Input Settings</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_Amplitude">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>354</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>false</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_stability">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>204</y>
+       <width>16</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_stability{
+background: rgb(161, 0, 0);
+border-radius: 8px;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>230</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Proportional:</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox_PLL_Output">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>354</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>Sig Out 1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Sig Out 2</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_TargetBW">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>10</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_SimBW">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>260</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#lineEdit_PLL_SimBW{
+background: rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_PM">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>290</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#lineEdit_PLL_PM{
+background: rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_10">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>160</y>
+       <width>111</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Filter Order:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_Range">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>160</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_title_3">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>200</y>
+       <width>111</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>9</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
+       <underline>true</underline>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_title{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>PLL PID Settings</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_title_8">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>324</y>
+       <width>181</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_title{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>Tuning Fork Output Settings</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_P">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>230</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox_PLL_Input">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>70</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>Sig In 1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Sig In 2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Aux In 1 (&lt;20 kHz)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Aux In 2 (&lt;20 kHz)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DIO D0 (&lt;2 MHz)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DIO D1 (&lt;2 MHz)</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label_title_2">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>40</y>
+       <width>111</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>9</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
+       <underline>true</underline>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_title{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>Phase Detector</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_3">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>260</y>
+       <width>51</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Integral:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_CenterFreq">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>100</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#lineEdit_PLL_CenterFreq{
+background: rgb(168,168,168);
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="Line" name="line_5">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>319</y>
+       <width>405</width>
+       <height>3</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#line_5{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="lineWidth">
+      <number>1</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_27">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>354</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Amplitude (V):</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_23">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>130</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Setpoint (°):</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_12">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>230</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Rate (Hz):</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_11">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>260</y>
+       <width>91</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Simulated BW (Hz):</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_TC">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>100</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_5">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>130</y>
+       <width>111</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Filter BW (Hz):</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_26">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>354</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Output:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_8">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>70</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Harmonic:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_4">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>100</y>
+       <width>91</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Central Freq (Hz):</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_13">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>290</y>
+       <width>91</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Phase Margin (°):</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_AdvisePID">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>10</y>
+       <width>75</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_AdvisePID{
+background-color: rgb(230,230,230);
+border: 2px solid rgb(210,210,210);
+border-radius: 2px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Advise PID</string>
+     </property>
+     <property name="flat">
+      <bool>false</bool>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_I">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>260</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_6">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>70</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Input:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_24">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>10</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Target BW (Hz)</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_PLL_Rate">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>230</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#lineEdit_PLL_Rate{
+background: rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_2">
+    <property name="styleSheet">
+     <string notr="true">#tab_2{
+background: black
+}</string>
+    </property>
+    <attribute name="title">
+     <string>Feedback Settings</string>
+    </attribute>
+    <widget class="QLabel" name="label_25">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>50</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Setpoint (V):</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_DC_Setpoint">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>50</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#lineEdit_PLL_phaseSetPoint{
+background: rgb(168,168,168);
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>false</bool>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox_DC_Input">
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>50</y>
+       <width>121</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>3</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>DAC ADC Input 1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DAC ADC Input 2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DAC ADC Input 3</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DAC ADC Input 4</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Aux In 1 (&lt;20 kHz)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Aux In 2 (&lt;20 kHz)</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label_15">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>50</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Input:</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox_AC_Input">
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>140</y>
+       <width>121</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>5</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>DAC ADC Input 1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DAC ADC Input 2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DAC ADC Input 3</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DAC ADC Input 4</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Aux In 1 (&lt;20 kHz)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Aux In 2 (&lt;20 kHz)</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label_28">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>140</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Setpoint (V):</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_17">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>140</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Input:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_AC_Setpoint">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>140</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#lineEdit_PLL_phaseSetPoint{
+background: rgb(168,168,168);
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="readOnly">
+      <bool>false</bool>
+     </property>
+    </widget>
+    <widget class="Line" name="line_6">
+     <property name="geometry">
+      <rect>
+       <x>-10</x>
+       <y>90</y>
+       <width>405</width>
+       <height>3</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#line_6{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="lineWidth">
+      <number>1</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_title_9">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>110</y>
+       <width>140</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_title{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>Feedback AC Settings</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_title_10">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>20</y>
+       <width>140</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_title{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>Feedback DC Settings</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_4">
+    <property name="styleSheet">
+     <string notr="true">#tab_4{
+background: black
+}</string>
+    </property>
+    <attribute name="title">
+     <string>Z Monitor</string>
+    </attribute>
+    <widget class="QComboBox" name="comboBox_Monitor_Input">
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>20</y>
+       <width>121</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>Aux In 1 (&lt;20 kHz)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Aux In 2 (&lt;20 kHz)</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label_16">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>20</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Input:</string>
+     </property>
+    </widget>
+   </widget>
   </widget>
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
      <x>300</x>
-     <y>400</y>
+     <y>450</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -84,864 +1277,93 @@ color:rgb(168,168,168)
     <string>Accept </string>
    </property>
   </widget>
-  <widget class="QLabel" name="label">
+  <widget class="QLabel" name="label_14">
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>236</y>
-     <width>71</width>
-     <height>16</height>
+     <y>10</y>
+     <width>46</width>
+     <height>13</height>
     </rect>
    </property>
    <property name="text">
-    <string>Proportional:</string>
+    <string>Measure:</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_3">
+  <widget class="QCheckBox" name="checkBox_pll">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>266</y>
-     <width>51</width>
-     <height>16</height>
+     <x>80</x>
+     <y>10</y>
+     <width>70</width>
+     <height>17</height>
     </rect>
    </property>
    <property name="text">
-    <string>Integral:</string>
+    <string>PLL</string>
    </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>296</y>
-     <width>71</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Derivative:</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_4">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>106</y>
-     <width>91</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Central Freq (Hz):</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_5">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>136</y>
-     <width>111</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Filter BW (Hz):</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_6">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>76</y>
-     <width>71</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Input:</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_7">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>166</y>
-     <width>71</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Range (Hz):</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_title_2">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>46</y>
-     <width>111</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>9</pointsize>
-     <weight>50</weight>
-     <bold>false</bold>
-     <underline>true</underline>
-    </font>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-   </property>
-   <property name="text">
-    <string>Phase Detector</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_8">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>76</y>
-     <width>71</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Harmonic:</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_9">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>106</y>
-     <width>71</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>TC (s):</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_10">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>166</y>
-     <width>111</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Filter Order:</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_title_3">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>206</y>
-     <width>111</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>9</pointsize>
-     <weight>50</weight>
-     <bold>false</bold>
-     <underline>true</underline>
-    </font>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-   </property>
-   <property name="text">
-    <string>PLL PID Settings</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_11">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>266</y>
-     <width>91</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Simulated BW (Hz):</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_12">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>236</y>
-     <width>71</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Rate (Hz):</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_CenterFreq">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>106</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#lineEdit_PLL_CenterFreq{
-background: rgb(168,168,168);
-}</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_Range">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>166</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="comboBox_PLL_Input">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>76</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="currentIndex">
-    <number>0</number>
-   </property>
-   <item>
-    <property name="text">
-     <string>Sig In 1</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Sig In 2</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Aux In 1 (&lt;20 kHz)</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Aux In 2 (&lt;20 kHz)</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>DIO D0 (&lt;2 MHz)</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>DIO D1 (&lt;2 MHz)</string>
-    </property>
-   </item>
-  </widget>
-  <widget class="QComboBox" name="comboBox_PLL_Harmonic">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>76</y>
-     <width>71</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <item>
-    <property name="text">
-     <string>1</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>2</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>3</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>4</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>5</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>6</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>7</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>8</string>
-    </property>
-   </item>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_TC">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>106</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_FilterBW">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>136</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true"/>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-   <property name="readOnly">
+   <property name="checked">
     <bool>false</bool>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox_PLL_FilterOrder">
+  <widget class="QCheckBox" name="checkBox_fdbkDC">
    <property name="geometry">
     <rect>
-     <x>300</x>
-     <y>166</y>
-     <width>71</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="currentIndex">
-    <number>3</number>
-   </property>
-   <item>
-    <property name="text">
-     <string>1</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>2</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>3</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>4</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>5</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>6</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>7</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>8</string>
-    </property>
-   </item>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_I">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>266</y>
-     <width>71</width>
-     <height>20</height>
+     <x>170</x>
+     <y>10</y>
+     <width>70</width>
+     <height>17</height>
     </rect>
    </property>
    <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    <string>Fdbk. DC</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_P">
+  <widget class="QCheckBox" name="checkBox_fdbkAC">
    <property name="geometry">
     <rect>
-     <x>110</x>
-     <y>236</y>
-     <width>71</width>
-     <height>20</height>
+     <x>280</x>
+     <y>10</y>
+     <width>70</width>
+     <height>17</height>
     </rect>
    </property>
    <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_D">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>296</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_Rate">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>236</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#lineEdit_PLL_Rate{
-background: rgb(168,168,168)
-}</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_SimBW">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>266</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#lineEdit_PLL_SimBW{
-background: rgb(168,168,168)
-}</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_23">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>136</y>
-     <width>71</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Setpoint (°):</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_phaseSetPoint">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>136</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#lineEdit_PLL_phaseSetPoint{
-background: rgb(168,168,168);
-}</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_PM">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>296</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#lineEdit_PLL_PM{
-background: rgb(168,168,168)
-}</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_13">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>296</y>
-     <width>91</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Phase Margin (°):</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_TargetBW">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>16</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_24">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>16</y>
-     <width>91</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Target BW (Hz)</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="push_AdvisePID">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>16</y>
-     <width>75</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#push_AdvisePID{
-background-color: rgb(230,230,230);
-border: 2px solid rgb(210,210,210);
-border-radius: 2px;
-}</string>
-   </property>
-   <property name="text">
-    <string>Advise PID</string>
-   </property>
-   <property name="flat">
-    <bool>false</bool>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="comboBox_PLL_Advise">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>16</y>
-     <width>71</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="currentIndex">
-    <number>2</number>
-   </property>
-   <item>
-    <property name="text">
-     <string>P</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>I</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>PI</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>PID</string>
-    </property>
-   </item>
-  </widget>
-  <widget class="QPushButton" name="push_stability">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>210</y>
-     <width>16</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#push_stability{
-background: rgb(161, 0, 0);
-border-radius: 8px;
-}</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-  </widget>
-  <widget class="Line" name="line_5">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>325</y>
-     <width>405</width>
-     <height>3</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#line_5{
-color:rgb(168,168,168)
-}</string>
-   </property>
-   <property name="frameShadow">
-    <enum>QFrame::Plain</enum>
-   </property>
-   <property name="lineWidth">
-    <number>1</number>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_title_8">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>330</y>
-     <width>181</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-     <weight>75</weight>
-     <bold>true</bold>
-    </font>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-   </property>
-   <property name="text">
-    <string>Tuning Fork Output Settings</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="comboBox_PLL_Output">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>360</y>
-     <width>71</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="currentIndex">
-    <number>0</number>
-   </property>
-   <item>
-    <property name="text">
-     <string>Sig Out 1</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Sig Out 2</string>
-    </property>
-   </item>
-  </widget>
-  <widget class="QLabel" name="label_26">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>360</y>
-     <width>71</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Output:</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit_PLL_Amplitude">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>360</y>
-     <width>71</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true"/>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-   <property name="readOnly">
-    <bool>false</bool>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_27">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>360</y>
-     <width>71</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Amplitude (V):</string>
+    <string>Fdbk. AC</string>
    </property>
   </widget>
  </widget>
  <tabstops>
-  <tabstop>lineEdit_TargetBW</tabstop>
-  <tabstop>lineEdit_PLL_CenterFreq</tabstop>
-  <tabstop>lineEdit_PLL_phaseSetPoint</tabstop>
-  <tabstop>lineEdit_PLL_Range</tabstop>
-  <tabstop>lineEdit_PLL_TC</tabstop>
-  <tabstop>lineEdit_PLL_FilterBW</tabstop>
-  <tabstop>lineEdit_PLL_P</tabstop>
-  <tabstop>lineEdit_PLL_I</tabstop>
-  <tabstop>lineEdit_PLL_D</tabstop>
-  <tabstop>lineEdit_PLL_Rate</tabstop>
-  <tabstop>lineEdit_PLL_SimBW</tabstop>
-  <tabstop>lineEdit_PLL_PM</tabstop>
-  <tabstop>lineEdit_PLL_Amplitude</tabstop>
-  <tabstop>pushButton</tabstop>
-  <tabstop>comboBox_PLL_Harmonic</tabstop>
-  <tabstop>comboBox_PLL_Input</tabstop>
+  <tabstop>checkBox_pll</tabstop>
+  <tabstop>checkBox_fdbkDC</tabstop>
+  <tabstop>checkBox_fdbkAC</tabstop>
   <tabstop>push_AdvisePID</tabstop>
+  <tabstop>lineEdit_TargetBW</tabstop>
   <tabstop>comboBox_PLL_Advise</tabstop>
-  <tabstop>push_stability</tabstop>
-  <tabstop>comboBox_PLL_Output</tabstop>
+  <tabstop>comboBox_PLL_Input</tabstop>
+  <tabstop>comboBox_PLL_Harmonic</tabstop>
+  <tabstop>lineEdit_PLL_CenterFreq</tabstop>
+  <tabstop>lineEdit_PLL_TC</tabstop>
+  <tabstop>lineEdit_PLL_phaseSetPoint</tabstop>
+  <tabstop>lineEdit_PLL_FilterBW</tabstop>
+  <tabstop>lineEdit_PLL_Range</tabstop>
   <tabstop>comboBox_PLL_FilterOrder</tabstop>
+  <tabstop>push_stability</tabstop>
+  <tabstop>lineEdit_PLL_P</tabstop>
+  <tabstop>lineEdit_PLL_Rate</tabstop>
+  <tabstop>lineEdit_PLL_I</tabstop>
+  <tabstop>lineEdit_PLL_SimBW</tabstop>
+  <tabstop>lineEdit_PLL_D</tabstop>
+  <tabstop>lineEdit_PLL_PM</tabstop>
+  <tabstop>comboBox_PLL_Output</tabstop>
+  <tabstop>lineEdit_PLL_Amplitude</tabstop>
+  <tabstop>comboBox_DC_Input</tabstop>
+  <tabstop>lineEdit_DC_Setpoint</tabstop>
+  <tabstop>comboBox_AC_Input</tabstop>
+  <tabstop>lineEdit_AC_Setpoint</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>comboBox_Monitor_Input</tabstop>
+  <tabstop>pushButton</tabstop>
  </tabstops>
  <resources/>
  <connections/>
