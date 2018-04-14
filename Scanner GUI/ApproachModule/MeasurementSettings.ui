@@ -1299,6 +1299,9 @@ background: black
      <height>17</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>Setpoint must be selected</string>
+   </property>
    <property name="text">
     <string>PLL</string>
    </property>
