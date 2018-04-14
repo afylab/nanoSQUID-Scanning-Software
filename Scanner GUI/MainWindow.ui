@@ -226,7 +226,7 @@ background: black;
      <string>Graphs</string>
     </property>
     <addaction name="actionData_Plotter"/>
-    <addaction name="actionPLL_Monitor"/>
+    <addaction name="actionApproach_Monitor"/>
    </widget>
    <widget class="QMenu" name="menuModules">
     <property name="title">
@@ -333,6 +333,11 @@ background: black;
   <action name="actionRun_Scripts">
    <property name="text">
     <string>Run Scripts</string>
+   </property>
+  </action>
+  <action name="actionApproach_Monitor">
+   <property name="text">
+    <string>Approach Monitor</string>
    </property>
   </action>
  </widget>
