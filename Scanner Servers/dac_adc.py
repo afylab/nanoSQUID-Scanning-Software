@@ -17,8 +17,8 @@
 ### BEGIN NODE INFO
 [info]
 name = DAC-ADC
-version = 0.1
-description = DAC-ADC Box server: AD5764-AD7734
+version = 1.2.0
+description = DAC-ADC Box server: AD5764-AD7734, AD5780-AD7734, AD5791-AD7734
 [startup]
 cmdline = %PYTHON% %FILE%
 timeout = 20
@@ -93,8 +93,22 @@ class DAC_ADCWrapper(DeviceWrapper):
         returnValue(ans.read)
 
     @inlineCallbacks
+    def in_waiting(self):
+        p = self.packet()
+        p.in_waiting()
+        ans = yield p.send()
+        returnValue(ans.in_waiting)
+
+    @inlineCallbacks
+    def reset_input_buffer(self):
+        p = self.packet()
+        p.reset_input_buffer()
+        ans = yield p.send()
+        returnValue(ans.reset_input_buffer)
+
+    @inlineCallbacks
     def timeout(self, time):
-        yield p.self.packet().timeout(time)
+        yield self.packet().timeout(time).send()
 
     @inlineCallbacks
     def query(self, code):
@@ -207,20 +221,6 @@ class DAC_ADCServer(DeviceServer):
         self.sigInputRead([str(port),str(ans)])
         returnValue(float(ans))
 
-    @setting(8089,port='i',returns='v[]')
-    def get_v(self,c,port):
-        """
-        GET_DAC returns the voltage read by an input channel. 
-        """
-        dev=self.selectedDevice(c)
-        if not (port in range(4)):
-            returnValue("Error: invalid port number.")
-            return
-        yield dev.write("GET_DAC,%i\r"%port)
-        ans = yield dev.read()
-        self.sigInputRead([str(port),str(ans)])
-        returnValue(float(ans))
-
     @setting(105,port='i',ivoltage='v',fvoltage='v',steps='i',delay='i',returns='s')
     def ramp1(self,c,port,ivoltage,fvoltage,steps,delay):
         """
@@ -245,7 +245,7 @@ class DAC_ADCServer(DeviceServer):
         ans = yield dev.read()
         returnValue(ans)
 
-    @setting(107,dacPorts='*i', adcPorts='*i', ivoltages='*v[]', fvoltages='*v[]', steps='i',delay='v[]',nReadings='i',returns='b')#(*v[],*v[])')
+    @setting(107,dacPorts='*i', adcPorts='*i', ivoltages='*v[]', fvoltages='*v[]', steps='i',delay='v[]',nReadings='i',returns='**v[]')#(*v[],*v[])')
     def buffer_ramp(self,c,dacPorts,adcPorts,ivoltages,fvoltages,steps,delay,nReadings=1):
         """
         BUFFER_RAMP ramps the specified output channels from the initial voltages to the final voltages and reads the specified input channels in a synchronized manner. 
@@ -260,53 +260,131 @@ class DAC_ADCServer(DeviceServer):
 
 
         for x in xrange(dacN):
-        	sdacPorts = sdacPorts + str(dacPorts[x])
-        	sivoltages = sivoltages + str(ivoltages[x]) + "," 
-        	sfvoltages = sfvoltages + str(fvoltages[x]) + "," 
+            sdacPorts = sdacPorts + str(dacPorts[x])
+            sivoltages = sivoltages + str(ivoltages[x]) + ","
+            sfvoltages = sfvoltages + str(fvoltages[x]) + ","
 
         sivoltages = sivoltages[:-1]
         sfvoltages = sfvoltages[:-1]	
 
         for x in xrange(adcN):
-        	sadcPorts = sadcPorts + str(adcPorts[x])
+            sadcPorts = sadcPorts + str(adcPorts[x])
 
+        dev = self.selectedDevice(c)
+        yield dev.write("BUFFER_RAMP,%s,%s,%s,%s,%i,%i,%i\r" % (sdacPorts, sadcPorts, sivoltages, sfvoltages, steps, delay, nReadings))
+        self.sigBufferRampStarted([dacPorts, adcPorts, ivoltages, fvoltages, str(steps), str(delay), str(nReadings)])
 
-        dev=self.selectedDevice(c)
-        yield dev.write("BUFFER_RAMP,%s,%s,%s,%s,%i,%i,%i\r"%(sdacPorts,sadcPorts,sivoltages,sfvoltages,steps,delay,nReadings))
-        self.sigBufferRampStarted([dacPorts,adcPorts,ivoltages,fvoltages,str(steps),str(delay),str(nReadings)])
-        returnValue(True)
-        
-
-    @setting(1919, nPorts = 'i', steps ='i', returns = '**v[]' )
-    def serial_poll(self, c, nPorts, steps):
-    	'''
-    	SERIAL_POLL return the voltages read by the BUFFER_RAMP. The channels are returned in the same order that they were specified on the BUFFER_RAMP.
-    	'''
-        dev=self.selectedDevice(c)
-        voltages=[]
-        channels=[]
-        data = yield dev.readByte(steps*nPorts*2)
+        voltages = []
+        channels = []
+        data = ''
+        try:
+            nbytes = 0
+            totalbytes = steps * adcN * 2
+            while nbytes < totalbytes:
+                bytestoread = yield dev.in_waiting()
+                if bytestoread > 0:
+                    if nbytes + bytestoread > totalbytes:
+                        tmp = yield dev.readByte(totalbytes - nbytes)
+                        data = data + tmp
+                        nbytes = totalbytes
+                    else:
+                        tmp = yield dev.readByte(bytestoread)
+                        data = data + tmp
+                        nbytes = nbytes + bytestoread
+        except KeyboardInterrupt:
+            pass
         data = list(data)
 
-
-        for x in xrange(nPorts):
+        for x in xrange(adcN):
             channels.append([])
 
         for x in xrange(0, len(data), 2):
-            b1=int(data[x].encode('hex'),16)
-            b2=int(data[x+1].encode('hex'),16)
-            decimal = twoByteToInt(b1,b2)
-            voltage = map2(decimal,0,65536,-10.0,10.0)
+            b1 = int(data[x].encode('hex'), 16)
+            b2 = int(data[x + 1].encode('hex'), 16)
+            decimal = twoByteToInt(b1, b2)
+            voltage = map2(decimal, 0, 65536, -10.0, 10.0)
             voltages.append(voltage)
 
-        for x in xrange(0, steps*nPorts, nPorts):
-            for y in xrange(nPorts):
-                channels[y].append(voltages[x+y])
+        for x in xrange(0, steps * adcN, adcN):
+            for y in xrange(adcN):
+                channels[y].append(voltages[x + y])
 
         yield dev.read()
 
         returnValue(channels)
 
+    @setting(108,dacPorts='*i', adcPorts='*i', ivoltages='*v[]', fvoltages='*v[]', steps='i',delay='v[]',nReadings='i',adcSteps='i',returns='**v[]')#(*v[],*v[])')
+    def buffer_ramp_dis(self,c,dacPorts,adcPorts,ivoltages,fvoltages,steps,delay,adcSteps,nReadings=1):
+        """
+        BUFFER_RAMP ramps the specified output channels from the initial voltages to the final voltages and reads the specified input channels in a synchronized manner. 
+        It does it within an specified number steps and a delay (microseconds) between the update of the last output channel and the reading of the first input channel.
+        """
+        
+        if steps%adcSteps:
+            raise ValueError('Only factors of total steps allow for adcsteps.')
+
+        dacN = len(dacPorts)
+        adcN = len(adcPorts)
+        sdacPorts = ""
+        sadcPorts = ""
+        sivoltages = ""
+        sfvoltages = ""
+
+
+        for x in xrange(dacN):
+            sdacPorts = sdacPorts + str(dacPorts[x])
+            sivoltages = sivoltages + str(ivoltages[x]) + ","
+            sfvoltages = sfvoltages + str(fvoltages[x]) + ","
+
+        sivoltages = sivoltages[:-1]
+        sfvoltages = sfvoltages[:-1]    
+
+        for x in xrange(adcN):
+            sadcPorts = sadcPorts + str(adcPorts[x])
+
+        dev = self.selectedDevice(c)
+        yield dev.write("BUFFER_RAMP_DIS,%s,%s,%s,%s,%i,%i,%i,%i\r" % (sdacPorts, sadcPorts, sivoltages, sfvoltages, steps, delay, nReadings, adcSteps))
+        #self.sigBufferRampStarted([dacPorts, adcPorts, ivoltages, fvoltages, str(steps), str(delay), str(nReadings)])
+
+        voltages = []
+        channels = []
+        data = ''
+        try:
+            nbytes = 0
+            totalbytes = (steps/adcSteps+1) * adcN * 2
+            while nbytes < totalbytes:
+                bytestoread = yield dev.in_waiting()
+                if bytestoread > 0:
+                    if nbytes + bytestoread > totalbytes:
+                        tmp = yield dev.readByte(totalbytes - nbytes)
+                        data = data + tmp
+                        nbytes = totalbytes
+                    else:
+                        tmp = yield dev.readByte(bytestoread)
+                        data = data + tmp
+                        nbytes = nbytes + bytestoread
+            data = list(data)
+
+            for x in xrange(adcN):
+                channels.append([])
+
+            for x in xrange(0, len(data), 2):
+                b1 = int(data[x].encode('hex'), 16)
+                b2 = int(data[x + 1].encode('hex'), 16)
+                decimal = twoByteToInt(b1, b2)
+                voltage = map2(decimal, 0, 65536, -10.0, 10.0)
+                voltages.append(voltage)
+
+            for x in xrange(0, totalbytes/2, adcN):
+                for y in xrange(adcN):
+                    channels[y].append(voltages[x + y])
+
+        except KeyboardInterrupt:
+            print('Stopped')
+
+        yield dev.read()
+
+        returnValue(channels)
 
     @setting(109,channel='i',time='v[]',returns='v[]')
     def set_conversionTime(self,c,channel,time):
@@ -328,7 +406,7 @@ class DAC_ADCServer(DeviceServer):
     @setting(110,returns='s')
     def id(self,c):
         """
-        IDN? returns the string "DAC-ADC_AD5764-AD7734".
+        IDN? returns the string.
         """
         dev=self.selectedDevice(c)
         yield dev.write("*IDN?\r")
@@ -345,7 +423,106 @@ class DAC_ADCServer(DeviceServer):
         yield dev.write("*RDY?\r")
         ans = yield dev.read()
         returnValue(ans)
+
+    @setting(112, returns='w')
+    def in_waiting(self, c):
+        """
+        Return number of bytes in the input buffer.
+        """
+        dev = self.selectedDevice(c)
+        ans = yield dev.in_waiting()
+        returnValue(ans)
+
+    @setting(113)
+    def stop_ramp(self,c):
+        """
+        Stops buffer_ramp and dis_buffer_ramp only.
+        Discards all elements from input buffer.
+        """
+        dev=self.selectedDevice(c)
+        yield dev.write("STOP\r")
+        time.sleep(1)
+        bytestoread = yield dev.in_waiting()
+        yield dev.readByte(bytestoread)
+
+    @setting(114,returns='s')
+    def dac_ch_calibration(self,c):
+        """
+        Calibrates each DAC channel.
+
+        Connect each DAC to each ADC channel.
+        """
+        dev=self.selectedDevice(c)
+        yield dev.write("DAC_CH_CAL\r")
+        ans = yield dev.read()
+        returnValue(ans)
         
+    @setting(115,returns='s')
+    def adc_zero_sc_calibration(self,c):
+        """
+        Calibrates each DAC channel.
+
+        Connect each DAC to each ADC channel.
+        """
+        dev=self.selectedDevice(c)
+        yield dev.write("ADC_ZERO_SC_CAL\r")
+        ans = yield dev.read()
+        returnValue(ans)
+
+    @setting(116,returns='s')
+    def adc_ch_zero_sc_calibration(self,c):
+        """
+        Calibrates ADC Zero scale for each channel.
+
+        Connect a zero scale voltage to each channel.
+        """
+        dev=self.selectedDevice(c)
+        yield dev.write("ADC_CH_ZERO_SC_CAL\r")
+        ans = yield dev.read()
+        returnValue(ans)
+
+    @setting(117,returns='s')
+    def adc_ch_full_sc_calibration(self,c):
+        """
+        Calibrates ADC Full scale for each channel.
+
+        Connect a full scale voltage to each channel.
+        """
+        dev=self.selectedDevice(c)
+        yield dev.write("ADC_CH_FULL_SC_CAL\r")
+        ans = yield dev.read()
+        returnValue(ans)
+
+    @setting(118,returns='s')
+    def initialize(self,c):
+        """
+        Initializes DACs
+        """
+        dev=self.selectedDevice(c)
+        yield dev.write("INITIALIZE\r")
+        ans = yield dev.read()
+        returnValue(ans)
+
+    @setting(119,unit='i',returns='s')
+    def delay_unit(self,c,unit):
+        """
+        Sets delay unit. 0 = microseconds(default) 1 = miliseconds
+        """
+        dev=self.selectedDevice(c)
+        yield dev.write("SET_DUNIT,%i\r"%(unit))
+        ans = yield dev.read()
+        returnValue(ans)
+
+    @setting(120,voltage='v',returns='s')
+    def dac_full_scale(self,c,voltage):
+        """
+        Sets the dac full scale.
+        """
+        dev=self.selectedDevice(c)
+        yield dev.write("FULL_SCALE,%f\r"%(voltage))
+        ans = yield dev.read()
+        returnValue(ans)
+
     @setting(9002)
     def read(self,c):
         dev=self.selectedDevice(c)
