@@ -77,7 +77,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.monitor = True
             yield self.monitorField()
             
-            
     def disconnectLabRAD(self):
         self.monitor = False
         self.cxn = False
@@ -204,6 +203,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         yield self.ips.set_control(3)
         yield self.ips.set_activity(1)
         yield self.ips.set_control(2)
+        
     @inlineCallbacks
     def gotoZero(self, c = None):
         yield self.ips.set_control(3)
@@ -236,13 +236,15 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             if self.persist:
                 yield self.ips.set_control(3)
                 yield self.ips.set_switchheater(1)
-                yield self.ips.set_control(2)
+                yield self.sleep(0.25)
                 yield self.updateSwitchStatus()
+                yield self.ips.set_control(2)
             else:
                 yield self.ips.set_control(3)
                 yield self.ips.set_switchheater(0)
-                yield self.ips.set_control(2)
+                yield self.sleep(0.25)
                 yield self.updateSwitchStatus()
+                yield self.ips.set_control(2)
         except Exception as inst:
             print inst
             
