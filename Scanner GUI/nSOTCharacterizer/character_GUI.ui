@@ -405,6 +405,13 @@ border-radius: 5px
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QTabWidget::pane { border: 0; }
+QTabBar::tab{background: black;
+color: rgb(168,168,168);
+}
+QTabBar::tab:selected {background: rgb(50,50,50);}</string>
+    </property>
     <property name="currentIndex">
      <number>0</number>
     </property>
@@ -422,7 +429,7 @@ border-radius: 5px
        </rect>
       </property>
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(135, 135, 135);</string>
+       <string notr="true">background-color:black;</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
@@ -446,7 +453,7 @@ border-radius: 5px
        </rect>
       </property>
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(135, 135, 135);</string>
+       <string notr="true">background-color:black;</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
@@ -848,6 +855,13 @@ background-color: rgb(3, 3, 3);</string>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QTabWidget::pane { border: 0; }
+QTabBar::tab{background: black;
+color: rgb(168,168,168);
+}
+QTabBar::tab:selected {background: rgb(50,50,50);}</string>
+    </property>
     <property name="currentIndex">
      <number>0</number>
     </property>
@@ -865,7 +879,7 @@ background-color: rgb(3, 3, 3);</string>
        </rect>
       </property>
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(135, 135, 135);</string>
+       <string notr="true">background-color: black;</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
@@ -889,7 +903,7 @@ background-color: rgb(3, 3, 3);</string>
        </rect>
       </property>
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(135, 135, 135);</string>
+       <string notr="true">background-color: black;</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
@@ -1734,8 +1748,6 @@ border-radius: 5px
    <zorder>line_10</zorder>
    <zorder>line_8</zorder>
    <zorder>line_7</zorder>
-   <zorder>SQUID</zorder>
-   <zorder>SQUID</zorder>
    <zorder>line_11</zorder>
    <zorder>line_12</zorder>
    <zorder>line_13</zorder>

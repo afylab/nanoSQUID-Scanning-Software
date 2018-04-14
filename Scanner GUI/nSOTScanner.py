@@ -1,9 +1,5 @@
 import sys
 from PyQt4 import QtGui, QtCore, uic
-#from twisted.internet.defer import inlineCallbacks
-#import twisted
-#import numpy as np
-#import pyqtgraph as pg
 import time 
 
 path = sys.path[0]
@@ -286,7 +282,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         except Exception as inst:
             print inst
     
-            
 #----------------------------------------------------------------------------------------------#     
 """ The following runs the GUI"""
 

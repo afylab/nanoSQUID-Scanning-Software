@@ -108,7 +108,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         #Initialize to no data to avoid line cut error
         self.isData = False
         
-        #By fedault use dac_adc to blink
+        #By default use dac_adc to blink
         self.blinkDevice = 'DAC ADC'
         
         #Initialize the servers to False
@@ -1286,7 +1286,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 print 'Starting sweep with magnetic field set to: ' + str(B_space[i])
                 
                 print 'Blinking prior to sweep'
-                yield self.blink()
+                yield self.blinkFunc()
                 
                 if self.abortFlag == False:
                     pass
@@ -1385,7 +1385,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
                 #Set bias voltage to zero and blink
                 yield self.dac.set_voltage(DAC_out,0)
-                yield self.blink()
+                yield self.blinkFunc()
                 
                 if self.abortFlag == False:
                     pass
@@ -1424,7 +1424,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
                 #yield dv.add(formated_data)
                 #yield self.updatePlots(formated_data)
-                yield self.blink()
+                yield self.blinkFunc()
                 
                 if self.abortFlag == False:
                     pass
@@ -1501,7 +1501,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.biasSpeedSetValue.setReadOnly(False)
 
     @inlineCallbacks
-    def blink(self):
+    def blinkFunc(self):
         if self.blinkDevice == 'DAC ADC':
             yield self.dac.set_voltage(self.dacBlinkOutChan - 1, 5)
             yield self.sleep(0.25)
@@ -1639,7 +1639,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 print 'Starting sweep with magnetic field set to: ' + str(B_space[i])
                 
                 print 'Blinking prior to sweep'
-                yield self.blink()
+                yield self.blinkFunc()
                 
                 if self.abortFlag == False:
                     pass
@@ -1685,6 +1685,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                     yield ips_breakSweep(B_space[i],Vbias_min)
                     break
 
+                    
                 
             #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
             if Vbias_min != 0:
@@ -1757,7 +1758,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
                 #Set bias voltage to zero and blink
                 yield self.dac.set_voltage(DAC_out,0)
-                yield self.blink()
+                yield self.blinkFunc()
                 
                 #Sweep from zero volts to maximum bias voltage
                 print 'Ramping up nSOT bias voltage from zero to ' + str(Vbias_max) + '.'
@@ -1800,7 +1801,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                     yield ips_breakSweep(B_space[i], 0)
                     break
 
-                yield self.blink()
+                yield self.blinkFunc()
 
                 
                 #Sweep from zero volts to minimum bias voltage
@@ -2177,53 +2178,58 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
 
     @inlineCallbacks
     def sweep(self, c):
-        self.startSweep.setEnabled(False)
-        self.sweepPlot.clear()
-        
-        #Sets sweep parameters
-        biasMin = float(self.biasStart.value())
-        biasMax = float(self.biasEnd.value())
-        biasRange = abs(biasMax - biasMin)
-        
-        biasPoints = int(self.sweepPoints.value())
-        delay = int(self.delay.value() * 1000)
-        
-        #Sets DAC Channels
-        DAC_out = self.dacOutputs[0] - 1
-        DAC_blink = self.dacOutputs[1] - 1
-        
-        DAC_in_ref = self.dacInputs[0] - 1
-        DAC_in_sig = self.dacInputs[1] - 1
-        DAC_in_noise = self.dacInputs[3] - 1
-        
-        yield self.dv.new("nSOT Preliminary Sweep", ['Bias Voltage Index','Bias Voltage'],['DC SSAA Output','Noise'])
-        print 'DataVault setup complete'
-        
-        yield self.dac.set_voltage(DAC_out, 0)
-        
-        yield self.blink()
+        try:
+            self.startSweep.setEnabled(False)
+            self.sweepPlot.clear()
+            
+            #Sets sweep parameters
+            biasMin = float(self.biasStart.value())
+            biasMax = float(self.biasEnd.value())
+            biasRange = abs(biasMax - biasMin)
+            
+            biasPoints = int(self.sweepPoints.value())
+            delay = int(self.delay.value() * 1000)
+            
+            #Sets DAC Channels
+            DAC_out = self.dacOutputs[0] - 1
+            DAC_blink = self.dacOutputs[1] - 1
+            
+            DAC_in_ref = self.dacInputs[0] - 1
+            DAC_in_sig = self.dacInputs[1] - 1
+            DAC_in_noise = self.dacInputs[3] - 1
+            
+            yield self.dv.new("nSOT Preliminary Sweep", ['Bias Voltage Index','Bias Voltage'],['DC SSAA Output','Noise'])
+            print 'DataVault setup complete'
+            
+            yield self.dac.set_voltage(DAC_out, 0)
+            try:
+                yield self.window.blinkFunc()
+            except Exception as inst:
+                print inst
+                print 'Blinks the problem yo'
 
-        if biasMin != 0:
-            yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [0], [biasMin], int(biasMin * 1000), 1000)
-            yield self.sleep(1)
-        #Do sweep
-        print 'Ramping up nSOT bias voltage from ' + str(biasMin) + ' to ' + str(biasMax) + '.'
-        dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMin], [biasMax], biasPoints, delay)
+            if biasMin != 0:
+                yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [0], [biasMin], int(biasMin * 1000), 1000)
+                yield self.sleep(1)
+            #Do sweep
+            print 'Ramping up nSOT bias voltage from ' + str(biasMin) + ' to ' + str(biasMax) + '.'
+            dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMin], [biasMax], biasPoints, delay)
 
-        formatted_data = []
-        for j in range(0, biasPoints):
-                formatted_data.append((j, dac_read[0][j], dac_read[1][j], dac_read[2][j]))
-        yield self.dv.add(formatted_data)
+            formatted_data = []
+            for j in range(0, biasPoints):
+                    formatted_data.append((j, dac_read[0][j], dac_read[1][j], dac_read[2][j]))
+            yield self.dv.add(formatted_data)
 
-        self.plotSweepData(formatted_data)
+            self.plotSweepData(formatted_data)
 
-        #Return to zero voltage gently
-        yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMax], [0], int(biasMax * 1000), 1000)
-        yield self.sleep(0.25)
-        yield self.dac.set_voltage(DAC_out, 0)
+            #Return to zero voltage gently
+            yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMax], [0], int(biasMax * 1000), 1000)
+            yield self.sleep(0.25)
+            yield self.dac.set_voltage(DAC_out, 0)
 
-        self.newSweep.setEnabled(True)
-
+            self.newSweep.setEnabled(True)
+        except Exception as inst:
+            print inst
 
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
