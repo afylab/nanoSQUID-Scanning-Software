@@ -16,10 +16,17 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Cryo Positioning Systems Controller (CPSC) Server
+name = CPSC Server
 version = 1.0
-description = Communicates with the CPSC which controls the JPE piezo stacks. 
-Must be placed in the same directory as cacli.exe in order to work. 
+description = Communicates with the CPSC which controls the JPE piezo stacks. Must be placed in the same directory as cacli.exe in order to work. 
+
+[startup]
+cmdline = %PYTHON% %FILE%
+timeout = 20
+
+[shutdown]
+message = 987654321
+timeout = 20
 ### END NODE INFO
 """
 
@@ -113,8 +120,8 @@ class CPSCServer(LabradServer):
         returnValue(info)
         
     @setting(104, ADDR='i', CH = 'i', TYPE = 's', TEMP = 'i', DIR = 'i', FREQ = 'i',
-                REL = 'i', STEPS = 'i', returns='s')
-    def move(self, c, ADDR, CH, TYPE, TEMP, DIR, FREQ, REL, STEPS):
+                REL = 'i', STEPS = 'i', TORQUE = 'i', returns='s')
+    def move(self, c, ADDR, CH, TYPE, TEMP, DIR, FREQ, REL, STEPS, TORQUE = None):
         """Moves specified actuator with specified parameters. ADDR and CH specify the 
         module address (1 through 6) and channel (1 through 3). 
         TYPE specifies the cryo actuator model. TEMP is the nearest integer temperature
@@ -123,13 +130,19 @@ class CPSCServer(LabradServer):
         REL is the piezo step size parameter input. Value is a percentage (0-100%).
         STEPS is the number of actuation steps. Range is 0 to 50000, where 0 is used for
         infinite movement. 
+        TORQUE corresponds to an optional torque factor, between 1 and 30. Larger values
+        can be useful for unsticking the JPE. 
         """
         if self.device_detected == True:
             #Add input checks
-            resp = yield subprocess.check_output("cacli MOV "+str(ADDR) + " " + str(CH)
-             + " " + TYPE + " " + str(TEMP) + " " + str(DIR) + " " + str(FREQ) + " " +
-             str(REL) + " " + str(STEPS))
-            #print resp
+            if TORQUE == None:
+                resp = yield subprocess.check_output("cacli MOV "+str(ADDR) + " " + str(CH)
+                 + " " + TYPE + " " + str(TEMP) + " " + str(DIR) + " " + str(FREQ) + " " +
+                 str(REL) + " " + str(STEPS))
+            else:
+                resp = yield subprocess.check_output("cacli MOV "+str(ADDR) + " " + str(CH)
+                 + " " + TYPE + " " + str(TEMP) + " " + str(DIR) + " " + str(FREQ) + " " +
+                 str(REL) + " " + str(STEPS) + " " + str(TORQUE))
         else:
             resp = "Device not connected."
             print "Device not connected. "
@@ -180,8 +193,8 @@ class CPSCServer(LabradServer):
         #FIGURE OUT HOW TO DO THIS
         returnValue('Success!')
     
-    @setting(110, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', XYZ = '*v[]', returns = 's')
-    def move_xyz(self,c, ADDR, TEMP, FREQ, REL, XYZ):
+    @setting(110, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', XYZ = '*v[]', TORQUE = 'i', returns = 's')
+    def move_xyz(self,c, ADDR, TEMP, FREQ, REL, XYZ, TORQUE = None):
         """Request CADM move sample in the according to the arbitrary vector XYZ. XYZ should be a 3 element list 
         with the number of steps to be taken in the x, y, and z direction respectively. Intergers not necessary because
         the xyz coordinates need to be transformed into other coordinates first, after which they will be rounded. 
@@ -193,39 +206,39 @@ class CPSCServer(LabradServer):
         print VEC
         
         if VEC[0] > 0:
-            yield self.move(c, ADDR, 1, 'CA1801', TEMP, 1, FREQ, REL, VEC[0])
+            yield self.move(c, ADDR, 1, 'CA1801', TEMP, 1, FREQ, REL, VEC[0], TORQUE)
             print "Moving channel 1 by " + str(VEC[0])
             while True:
                 status = yield self.status(c,ADDR)
                 if status.startswith("STATUS : STOP"):
                     break
         elif VEC[0] < 0: 
-            yield self.move(c, ADDR, 1, 'CA1801', TEMP, 0, FREQ, REL, -VEC[0])
+            yield self.move(c, ADDR, 1, 'CA1801', TEMP, 0, FREQ, REL, -VEC[0], TORQUE)
             print "Moving channel 1 by " + str(VEC[0])
             yield self.pause_while_moving(c,ADDR)
             
         if VEC[1] > 0:
-            yield self.move(c, ADDR, 2, 'CA1801', TEMP, 1, FREQ, REL, VEC[1])
+            yield self.move(c, ADDR, 2, 'CA1801', TEMP, 1, FREQ, REL, VEC[1], TORQUE)
             print "Moving channel 2 by " + str(VEC[1])
             yield self.pause_while_moving(c,ADDR)
         elif VEC[1] < 0: 
-            yield self.move(c, ADDR, 2, 'CA1801', TEMP, 0, FREQ, REL, -VEC[1])
+            yield self.move(c, ADDR, 2, 'CA1801', TEMP, 0, FREQ, REL, -VEC[1], TORQUE)
             print "Moving channel 2 by " + str(VEC[1])
             yield self.pause_while_moving(c,ADDR)
             
         if VEC[2] > 0:
-            yield self.move(c, ADDR, 3, 'CA1801', TEMP, 1, FREQ, REL, VEC[2])
+            yield self.move(c, ADDR, 3, 'CA1801', TEMP, 1, FREQ, REL, VEC[2], TORQUE)
             print "Moving channel 3 by " + str(VEC[2])
             yield self.pause_while_moving(c,ADDR)
         elif VEC[2] < 0: 
-            yield self.move(c, ADDR, 3, 'CA1801', TEMP, 0, FREQ, REL, -VEC[2])
+            yield self.move(c, ADDR, 3, 'CA1801', TEMP, 0, FREQ, REL, -VEC[2], TORQUE)
             print "Moving channel 3 by " + str(VEC[2])
             yield self.pause_while_moving(c,ADDR)
         
         returnValue('Success!')
     
-    @setting(111, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', X = 'v[]', returns = 's')
-    def move_x(self,c, ADDR, TEMP, FREQ, REL, X):
+    @setting(111, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', X = 'v[]', TORQUE = 'i', returns = 's')
+    def move_x(self,c, ADDR, TEMP, FREQ, REL, X, TORQUE = None):
         """Request CADM move sample in the according to the arbitrary vector XYZ. XYZ should be a 3 element list 
         with the number of steps to be taken in the x, y, and z direction respectively. Intergers not necessary because
         the xyz coordinates need to be transformed into other coordinates first, after which they will be rounded. 
@@ -256,21 +269,21 @@ class CPSCServer(LabradServer):
             print "And a final cycle with the remainder of " + str(remainder) + " steps."
             
             for i in range (0,num_cycles):
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size)
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size)
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
             
             if remainder != 0:
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder)
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder)
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
             
         returnValue('Success!')
         
-    @setting(112, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', Y = 'v[]', returns = 's')
-    def move_y(self,c, ADDR, TEMP, FREQ, REL, Y):
+    @setting(112, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', Y = 'v[]', TORQUE = 'i', returns = 's')
+    def move_y(self,c, ADDR, TEMP, FREQ, REL, Y, TORQUE = None):
         """Request CADM move sample in the according to the arbitrary vector XYZ. XYZ should be a 3 element list 
         with the number of steps to be taken in the x, y, and z direction respectively. Intergers not necessary because
         the xyz coordinates need to be transformed into other coordinates first, after which they will be rounded. 
@@ -301,24 +314,24 @@ class CPSCServer(LabradServer):
             print "And a final cycle with the remainder of " + str(remainder) + " steps."
             
             for i in range (0,num_cycles):
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size)
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, 2*cycle_size)
+                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, 2*cycle_size, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size)
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
             if remainder != 0:
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder)
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, 2*remainder)
+                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, 2*remainder, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder)
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
             
         returnValue('Success!')
         
-    @setting(113, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', Z = 'v[]', returns = 's')
-    def move_z(self,c, ADDR, TEMP, FREQ, REL, Z):
+    @setting(113, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', Z = 'v[]', TORQUE = 'i', returns = 's')
+    def move_z(self,c, ADDR, TEMP, FREQ, REL, Z, TORQUE = None):
         """Request CADM move sample in the according to the arbitrary vector XYZ. XYZ should be a 3 element list 
         with the number of steps to be taken in the x, y, and z direction respectively. Intergers not necessary because
         the xyz coordinates need to be transformed into other coordinates first, after which they will be rounded. 
@@ -349,19 +362,19 @@ class CPSCServer(LabradServer):
             print "And a final cycle with the remainder of " + str(remainder) + " steps."
             
             for i in range (0,num_cycles):
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size)
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, cycle_size)
+                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, cycle_size, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size)
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
             
             if remainder != 0:
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder)
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, remainder)
+                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, remainder, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder)
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder, TORQUE)
                 yield self.pause_while_moving(c,ADDR)
             
         returnValue('Success!')
