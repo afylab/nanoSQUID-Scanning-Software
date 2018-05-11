@@ -16,6 +16,7 @@ import time
 import threading
 import copy
 import time
+import scipy.io as sio
 
 path = sys.path[0] + r"\Plotter"
 
@@ -70,9 +71,15 @@ class Sensitivity(QtGui.QDialog, Ui_SensitivityPrompt):
 		self.indVars = ind
 		self.reactor = reactor
 		self.setupUi(self)
+		
+		self.plotNoise.clicked.connect(self.toggleNS)
+		self.plotSens.clicked.connect(self.toggleSN)
 
 		self.okBtn.clicked.connect(self._ok)
 		self.cancelBtn.clicked.connect(self._cancel)
+		
+		
+		self.noiseSens = 0
 
 		l = len(self.indVars)
 		if l % 2 == 0:
@@ -82,10 +89,22 @@ class Sensitivity(QtGui.QDialog, Ui_SensitivityPrompt):
 			for i in self.depVars:
 				self.noiseIndex.addItem(i)
 				self.depIndex.addItem(i)
+	
+	def toggleNS(self):
+		self.plotSens.setChecked(False)
+		self.plotNoise.setChecked(True)
+		self.noiseSens = 0
+	def toggleSN(self):
+		self.plotSens.setChecked(True)
+		self.plotNoise.setChecked(False)
+		self.noiseSens = 1
 
 	def sensIndicies(self):
-		sensIndex = [self.difIndex.currentIndex(), self.constIndex.currentIndex(), self.depIndex.currentIndex(), self.noiseIndex.currentIndex()]
+		sensIndex = [self.difIndex.currentIndex(), self.constIndex.currentIndex(), self.depIndex.currentIndex(), self.noiseIndex.currentIndex(), self.noiseSens, int(self.convCheck.checkState())]
 		return sensIndex
+		
+	def sensConv(self):
+		return [self.gainVal.value(), self.bwVal.value()]
 
 	def _ok(self):
 		self.accept()
@@ -110,7 +129,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
 
 		self.setupPlots()
-
+		self.connect()
 
 		self.hideGrad.clicked.connect(self.shrink)
 		self.showGrad.clicked.connect(self.enlarge)
@@ -121,6 +140,17 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.subtract.setEnabled(False)
 		self.sensitivity.setEnabled(False)
 		self.zoom.setEnabled(False)
+		
+
+		
+		self.saveMenu = QtGui.QMenu()
+		twoDSave = QtGui.QAction("Save 2D plot", self)
+		oneDSave = QtGui.QAction("Save line cut", self)
+		oneDSave.triggered.connect(self.matLinePlot)
+		twoDSave.triggered.connect(self.matPlot)
+		self.saveMenu.addAction(twoDSave)
+		self.saveMenu.addAction(oneDSave)
+		self.savePlot.setMenu(self.saveMenu)
 
 
 		self.gradMenu = QtGui.QMenu()
@@ -167,14 +197,59 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.addPlot.clicked.connect(self.newPlot)
 		self.vCutPos.valueChanged.connect(self.changeVertLine)
 		self.hCutPos.valueChanged.connect(self.changeHorLine)
+		
+		self.showGrad.hide()
+		self.hideGrad.hide()
 
 		self.Data = None
 		self.plotData = None
-		self.os_path = None
+		self.dv = None
+		self.cxn = None
 		self.file = None
 		self.directory = None
 		self.numPlots = 0
 		self.numZoomPlots = 0
+		
+	def matLinePlot(self):
+		if not self.plotData is None:
+			fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
+			if fold:
+				self.genLineMatFile(fold)
+				
+	def genLineMatFile(self, fold):
+		yData = np.asarray(self.lineYVals)
+		xData = np.asarray(self.lineXVals)
+		
+		matData = np.transpose(np.vstack((xData, yData)))
+		savename = fold.split("/")[-1].split('.mat')[0]
+		print 'All data converted. Saving .mat file'
+		sio.savemat(fold,{savename:matData})
+		matData = None		
+
+		
+	def matPlot(self):
+		if not self.plotData is None:
+			fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
+			if fold:
+				self.genMatFile(fold)
+
+	def genMatFile(self, fold):
+		t = time.time()
+		xVals = np.linspace(self.xMin, self.xMax, int(self.xPoints))
+		yVals = np.linspace(self.yMin, self.yMax, int(self.yPoints))
+		xInd, yInd = np.linspace(0,  self.xPoints - 1,  int(self.xPoints)), np.linspace(0,  self.yPoints - 1, int(self.yPoints))
+
+		zX, zY, zXI, zYI = np.ones([1,int(self.yPoints)]), np.ones([1,int(self.xPoints)]), np.ones([1,int(self.yPoints)]), np.ones([1,int(self.xPoints)])
+		X, Y,  XI, YI = np.outer(xVals, zX), np.outer(zY, yVals), np.outer(xInd, zXI), np.outer(zYI, yInd)
+		XX, YY, XXI, YYI, ZZ = X.flatten(), Y.flatten(), XI.flatten(), YI.flatten(), self.plotData.flatten()
+		matData = np.transpose(np.vstack((XXI, YYI, XX, YY, ZZ)))
+		print time.time() - t
+		savename = fold.split("/")[-1].split('.mat')[0]
+		print savename
+		print 'All data converted. Saving .mat file'
+		sio.savemat(fold,{savename:matData})
+		matData = None
+
 
 	def moveDefault(self):
 		self.move(550,10)
@@ -212,19 +287,26 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.mainPlot.removeItem(self.zoomRect)
 			self.zoom.clicked.connect(self.zoomArea)
 			self.plotZoom = self.plotData[x1:x2, y1:y2]
-			dataZoom = []
+			self.dataZoom = np.asarray([])
 			self.indZoomVars = []
 			self.depZoomVars = []
 			for k in range(x1, x2):
-				dataZoom.append(self.Data[int(k*self.yPoints + y1) :int(k*self.yPoints + y2)])
-				self.dataZoom = np.asarray(dataZoom)
+				if len(self.dataZoom)==0:
+					self.dataZoom = self.Data[int(k*self.yPoints + y1) :int(k*self.yPoints + y2)]
+				else:
+					self.dataZoom = np.vstack((self.dataZoom, self.Data[int(k*self.yPoints + y1) :int(k*self.yPoints + y2)]))
+				
+			
 			for i in range(0, self.xAxis.count()):
 				self.indZoomVars.append(self.xAxis.itemText(i))
 			for i in range(0, self.zAxis.count()):
-				self.depZoomVars.append(self.zAxis.itemText(i))	
+				self.depZoomVars.append(self.zAxis.itemText(i))
+			title= str(self.plotTitle.text())
+			self.indXVar, self.indYVar, self.depVar = self.xAxis.currentText(), self.yAxis.currentText(), self.zAxis.currentText()
 			self.currentIndex = [self.xAxis.currentIndex(), self.yAxis.currentIndex(), self.zAxis.currentIndex()]		
 			self.zoomExtent = [bounds.x(), bounds.x() + bounds.width(), bounds.y(), bounds.y() + bounds.height(), self.xscale, self.yscale]
-			self.zoomPlot = zoomPlot(self.reactor, self.plotZoom, self.dataZoom, self.zoomExtent, self.indZoomVars, self.depZoomVars, self.currentIndex)
+			self.zoomPlot = zoomPlot(self.reactor, self.plotZoom, self.dataZoom, self.zoomExtent, self.indZoomVars, self.depZoomVars, self.currentIndex, title, self)
+			self.zoom.setEnabled(False)
 			self.zoomPlot.show()
 			
 
@@ -237,12 +319,14 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.sensPrompt.accepted.connect(self.plotSens)
 		print 'great'
 	def plotSens(self):
-		self.vhSelect.addItem('Maximum Sensitivity')
+
 		self.sensIndex = self.sensPrompt.sensIndicies()
 		l = int(len(self.indVars) / 2)
 		x = self.sensIndex[0]
 		y = self.sensIndex[1]
 		z = self.sensIndex[2] + len(self.indVars) 
+		self.NSselect = self.sensIndex[4]
+		self.unitSelect = self.sensIndex[5]
 		self.xMax = np.amax(self.Data[::,l+x])
 		self.xMin = np.amin(self.Data[::,l+x])
 		self.yMax = np.amax(self.Data[::,l+y])
@@ -259,45 +343,89 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.plotData = np.zeros([int(self.xPoints), int(self.yPoints)])
 		self.noiseData = np.zeros([int(self.xPoints), int(self.yPoints)])
 		for i in self.Data:
-			self.plotData[int(i[x]), int(i[y])] = i[z]
+			self.plotData[int(i[x]), int(i[y])] = float(i[z])
 			if i[n] != 0:
-				self.noiseData[int(i[x]), int(i[y])] = i[n]
+				self.noiseData[int(i[x]), int(i[y])] = float(i[n])
 			else:
 				self.noiseData[int(i[x]), int(i[y])] = 1e-5
 		xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
 		yVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
 		delta = abs(self.xMax - self.xMin) / self.xPoints
 		N = int(self.yPoints * self.datPct)
-		'''
-		for i in range(0, self.plotData.shape[0]):
-			self.plotData[i] = deriv(self.plotData[i], yVals, N, delta)
-		'''
+
+
 		for i in range(0, self.plotData.shape[1]):
 			self.plotData[:, i] = deriv(self.plotData[:, i], xVals, N, delta)
-			for j in range(0,self.plotData.shape[0]):
-				self.plotData[j, i] = np.absolute(self.plotData[j,i] / self.noiseData[j,i])
-			#self.plotData[:, i, 0] = np.absolute(self.plotData[:, i, 0] / self.plotData[:, i, 1])
-		#self.plotData = np.delete(self.plotData[:,:,1], np.s_[:0], 0)
-		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+
+		if self.NSselect == 1:
+			self.plotData = np.absolute(np.true_divide(self.plotData , self.noiseData))
+		else:
+			self.plotData = np.absolute(np.true_divide(self.noiseData , self.plotData ))
+			self.plotData = np.clip(self.plotData, 0, 1e3)
+
+			
+			if self.unitSelect == 2:
+				gain, bw = self.sensPrompt.sensConv()[0], self.sensPrompt.sensConv()[1]
+				self.plotData = np.true_divide(self.plotData, (gain * np.sqrt(1000 *bw)))
+				self.plotData = np.clip(self.plotData, 0, 1e3)
+				
+		avg = np.average(self.plotData)
+		std = np.std(self.plotData)
+
+		self.mainPlot.setImage(self.plotData, autoRange = True , levels = (avg - std, avg+std), autoHistogramRange = False, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.mainPlot.addItem(self.vLine)
 		self.mainPlot.addItem(self.hLine)
 		self.vLine.setValue(self.xMin)
 		self.hLine.setValue(self.yMin)	
 		self.vCutPos.setValue(self.xMin)
 		self.hCutPos.setValue(self.yMin)
-		self.plotType.setText('Plotted sensitivity.')			
+		if self.NSselect == 1:
+			self.plotType.setText('Plotted sensitivity.')
+			self.vhSelect.addItem('Maximum Sensitivity')
+		else:
+			self.plotType.setText('Plotted field noise.')	
+			self.vhSelect.addItem('Minimum Noise')
+			self.vhSelect.addItem('Optimal Bias')
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 
 	def plotMaxSens(self):
-		maxSens = np.array([])
+		if self.NSselect == 1:
+			maxSens = np.array([])
+			bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
+			self.XZPlot.clear()
+			for i in range(0, self.plotData.shape[0]):
+				maxSens = np.append(maxSens, np.amax(self.plotData[i]))
+			self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
+			self.XZPlot.setLabel('left', 'Maximum Relative Sensitivity')
+			self.XZPlot.plot(x = bVals, y = maxSens,pen = 0.5)
+			self.lineYVals = maxSens
+			self.lineXVals = bVals
+		else:
+			minNoise = np.array([])
+			bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
+			self.XZPlot.clear()
+			for i in range(0, self.plotData.shape[0]):
+				minNoise = np.append(minNoise, np.amin(self.plotData[i]))
+			self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
+			self.XZPlot.setLabel('left', 'Minimum field noise')
+			self.XZPlot.plot(x = bVals, y = minNoise,pen = 0.5)
+			self.lineYVals = minNoise
+			self.lineXVals = bVals
+			
+	def plotOptBias(self):	
+		minNoise = np.array([])
 		bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
+		vVals =np.linspace(self.yMin, self.yMax, self.yPoints)
 		self.XZPlot.clear()
 		for i in range(0, self.plotData.shape[0]):
-			maxSens = np.append(maxSens, np.amax(self.plotData[i]))
+			arg = np.argmin(self.plotData[i])
+			minNoise = np.append(minNoise, vVals[arg])
 		self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
-		self.XZPlot.setLabel('left', 'Maximum Relative Sensitivity')
-		self.XZPlot.plot(x = bVals, y = maxSens,pen = 0.5)
+		self.XZPlot.setLabel('left', 'Optimal Bias', units = 'V')
+		self.XZPlot.plot(x = bVals, y = minNoise,pen = 0.5)
+		self.lineYVals = minNoise
+		self.lineXVals = bVals
 
 	def Ic_ParaRes(self):
 		for i in self.Data:
@@ -377,18 +505,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.datPct = self.gradSet.dataPercent.value() / 100
 
 	def subtractAvg(self):
-		'''
-		l = int(len(self.indVars) / 2)
-		x = self.xAxis.currentIndex()
-		y = self.yAxis.currentIndex()
-		z = self.zAxis.currentIndex() + len(self.indVars) 
-		X = np.empty([int(self.xPoints), int(self.yPoints)])
-		for i in self.Data:
-			X[int(i[x]), int(i[y])] = i[z]
-		avg = np.average(X)
-		self.plotData = X - avg
-		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-		'''
 		avg = np.average(self.plotData)
 		self.plotData = self.plotData - avg
 		self.plotType.setText("Plotted offset \nsubtracted data.")
@@ -401,7 +517,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		z = self.zAxis.currentIndex() + len(self.indVars) 
 		X = np.c_[self.Data[::, l+x], self.Data[::,l+y], np.ones(self.Data.shape[0])]
 		Y = np.ndarray.flatten(self.plotData)
-		print len(self.Data), len(Y)
+		
 		#C = np.linalg.lstsq(X, self.Data[::,z])\
 		C = np.linalg.lstsq(X, Y)
 		for i in self.Data:
@@ -427,18 +543,22 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 
-	def connectLabRAD(self, dict):
+	@inlineCallbacks
+	def connect(self):
+		from labrad.wrappers import connectAsync
 		try:
-			self.cxn = dict['cxn']
-			self.dv = dict['dv']
-			self.serversConnected = True
+			self.cxn  = yield connectAsync(name = 'name')
+			self.dv = yield self.cxn.data_vault
+			print 'connected'
 		except:
-
-			self.serversConnected = False
-	def disconnectLabRAD(self):
-		self.dv = None
-		self.cxn = None
-
+			print 'Either no LabRad connection or DataVault connection.'
+		import labrad.util
+		nodename = labrad.util.getNodeName()		
+		self.reg = yield self.cxn.registry
+		name = yield self.dv.name
+		yield self.reg.cd('', 'Servers', name, 'Repository')
+		self.os_path = yield self.reg.get(nodename)
+		yield self.reg.cd('')
 
 	def browseDV(self):
 		self.refresh.setEnabled(False)
@@ -453,18 +573,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 		else:
 			self.refresh.setEnabled(True)
 
+	def split(self, arr, cond):
+	  return [arr[cond], arr[~cond]]
+
 
 	@inlineCallbacks
 	def loadData(self, c):
-		if self.os_path == None:
-			import labrad.util
-			nodename = labrad.util.getNodeName()		
-			self.reg = yield self.cxn.registry
-			name = yield self.dv.name
-			yield self.reg.cd('', 'Servers', name, 'Repository')
-			self.os_path = yield self.reg.get(nodename)
-			yield self.reg.cd('')
-	
 		self.xAxis.clear()
 		self.yAxis.clear()
 		self.zAxis.clear()
@@ -497,11 +611,109 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			print 'opened set'
 			t1 = time.time()
 			print t1 - t
-			self.Data = yield self.dv.get()
-			self.Data = np.asarray(self.Data)
+			#self.Data = yield self.dv.get()
+			#self.Data = np.asarray(self.Data)
+
+			getFlag = True
+			self.Data = np.array([])
+			while getFlag == True:
+				line = yield self.dv.get(1000L)
+
+				try:
+					if len(self.Data) != 0 and len(line) > 0:
+						self.Data = np.vstack((self.Data, line))						
+					elif len(self.Data) == 0 and len(line) > 0:
+						self.Data = np.asarray(line)
+					else:
+						getFlag = False
+				except:
+					getFlag = False
+			
 			print 'got set'
 			t = time.time()
 			print t - t1
+			'''
+			#---------------------------------------------------------------------------------
+			#SECTION USED TO GET RID OF SOME FRINGE HOPPING
+			#NOT FOR GENERAL USE!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			#---------------------------------------------------------------------------------
+			try:
+				self.xMax = np.amax(self.Data[::,2])
+				self.xMin = np.amin(self.Data[::,2])
+				self.yMax = np.amax(self.Data[::,3])
+				self.yMin = np.amin(self.Data[::,3])
+				deltaX = self.xMax - self.xMin
+				deltaY = self.yMax - self.yMin
+				self.x1, self.y1 = self.xMax, self.yMax
+				self.x0, self.y0 = self.xMin, self.yMin
+				self.extent = [self.xMin, self.xMax, self.yMin, self.yMax]
+				self.xPoints = np.amax(self.Data[::,0])+1
+				self.yPoints = np.amax(self.Data[::,1])+1
+				self.xscale, self.yscale = (self.xMax-self.xMin) / self.xPoints, (self.yMax-self.yMin) / self.yPoints
+				print '---------------------Info:----------------------------'
+				print self.xMax, self.xMin
+				print self.yMax, self.yMin
+				print self.xscale, self.yscale
+				print self.xPoints, self.yPoints
+				self.plotData = np.zeros([int(self.xPoints), int(self.yPoints)])
+				z = 4
+
+				self.noiseData = np.zeros([int(self.xPoints), int(self.yPoints)])
+				for i in self.Data:
+					self.plotData[int(i[0]), int(i[1])] = float(i[4])
+					if i[5] != 0:
+						self.noiseData[int(i[0]), int(i[1])] = float(i[5])
+					else:
+						self.noiseData[int(i[0]), int(i[1])] = 1e-5
+				for r in range(0, int(self.xPoints)):
+					if r % 100 == 0:
+						print self.plotData[r, 796]
+					if np.absolute(self.plotData[r, 796]) > 1:
+						self.plotData[r, ::] = self.plotData[r, ::] - self.plotData[r, 796]
+				print 'got all data'
+				#self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
+			except Exception as inst:
+				print 'Following error was thrown: '
+				print inst
+				print 'Error thrown on line: '
+				print sys.exc_traceback.tb_lineno
+			xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
+			yVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
+			delta = abs(self.xMax - self.xMin) / self.xPoints
+			N = int(self.yPoints * 0.01)
+
+
+			for i in range(0, self.plotData.shape[1]):
+				self.plotData[:, i] = deriv(self.plotData[:, i], xVals, N, delta)
+			#self.plotData = np.clip(self.plotData, 1e-8, 1e10)
+			print 'made deriv nice'
+			gain, bw = 500, 90
+			self.plotData = np.absolute(np.true_divide(self.noiseData , self.plotData ))
+			print 'divided noise and deriv'
+			self.plotData = np.true_divide(self.plotData, (gain * np.sqrt(1000 *bw)))
+			self.plotData = np.clip(self.plotData, 0, 1e3)
+				
+			avg = np.average(self.plotData)
+			std = np.std(self.plotData)
+
+			self.mainPlot.setImage(self.plotData, autoRange = True , levels = (avg - std, avg+std), autoHistogramRange = False, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+			print 'plotting min'
+			minNoise = np.array([])
+			bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
+			self.XZPlot.clear()
+			for i in range(0, self.plotData.shape[0]):
+				minNoise = np.append(minNoise, np.amin(self.plotData[i]))
+				print minNoise[-1]
+			self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
+			self.XZPlot.setLabel('left', 'Minimum field noise')
+			self.XZPlot.plot(x = bVals, y = minNoise,pen = 0.5)
+			self.lineYVals = minNoise
+			self.lineXVals = bVals
+			print 'this worked??'
+			#raw_input('................................')
+			#---------------------------------------------------------------------------------
+			#---------------------------------------------------------------------------------
+			'''
 			self.mainPlot.clear()
 			self.refresh.setEnabled(True)
 			self.diamCalc.setEnabled(True)
@@ -518,7 +730,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.clearPlots()
 			self.plotType.clear()
 		#Load a data set with a trace/retrace index
-		elif l % 2 == 1 and self.indVars[0] == 'Trace Index':
+		elif l % 2 == 1 and self.indVars[0] == 'Trace Index' or self.indVars[0] == 'Retrace Index':
 			self.indVars = self.indVars[1::]
 			for i in self.indVars[int(l / 2): l]:
 				self.xAxis.addItem(i)
@@ -535,20 +747,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			print 'got set'
 			t = time.time()
 			print t - t1
-			self.traceData = np.array([])
-			self.retraceData = np.array([])
-			#Separates trace and retrace according to the first index
-			for x in self.Data:
-				if	x[0] == 0:
-					if len(self.traceData) == 0:
-						self.traceData = x[1::]
-					else:
-						self.traceData = np.vstack((self.traceData,x[1::]))
-				elif x[0] == 1:
-					if len(self.retraceData) == 0:
-						self.retraceData = x[1::]
-					else:
-						self.retraceData = np.vstack((self.retraceData,x[1::]))
+			self.traceData, self.retraceData = self.split(self.Data, self.Data[:,0] == 1)
+			self.traceData = np.delete(self.traceData,0,1)
+			self.retraceData = np.delete(self.retraceData,0,1)
+
 			#Deletes the unsorted data set to free up memory
 			self.Data = self.traceData
 			self.dataFlag = 0
@@ -803,7 +1005,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 			self.updateYZPlot(pos)	
 		elif self.vhSelect.currentIndex() ==2:
 			self.YZPlotArea.lower()
-			self.plotMaxSens()			
+			self.plotMaxSens()
+		elif self.vhSelect.currentIndex() ==3:
+			self.YZPlotArea.lower()
+			self.plotOptBias()				
 
 	def changeVertLine(self):
 		pos = self.vCutPos.value()
@@ -837,6 +1042,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 				xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
 				yVals = self.plotData[:,p]
 				self.XZPlot.plot(x = xVals, y = yVals, pen = 0.5)
+				self.lineYVals = yVals
+				self.lineXVals = xVals
 
 
 	def updateYZPlot(self, pos):
@@ -852,30 +1059,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 				xVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
 				yVals = self.plotData[p]
 				self.YZPlot.plot(x = xVals, y = yVals, pen = 0.5)
-		p = int(abs((pos - self.x0)) / self.xscale)
-		xVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
-		yVals = self.plotData[p]
-		chi = 0
-		j = 5
-		while chi / (len(xVals) - 2) < 2e-6 and j<len(xVals):
-			p, chi, _, _, _ = np.polyfit(xVals[0:j], yVals[0:j], 1, full = True)
-			j += 1
-		print j, xVals[j], yVals[j]
-		'''
-		p, chi, _, _, _ = np.polyfit(xVals[0:int(0.9 * j)], yVals[0:int(0.9 * j)], 1, full = True)
-		j = int(0.9 * j)
-		print np.round(p[0], decimals = 3), j
-		shuntRes = 3
-		biasRes = 3743
-		ssaaRes = 1000
-		winding = 10.62
-		alpha = shuntRes / (shuntRes + biasRes)
-		deltaV_DAC = xVals[j] - xVals[0]
-		deltaV_F = yVals[j] - yVals[0]
-		ratio = np.absolute(deltaV_DAC / deltaV_F)
-		r = np.round(alpha * (winding * ssaaRes * ratio - biasRes), decimals = 1)
-		print r
-		'''
+				self.lineYVals = yVals
+				self.lineXVals = xVals
+
 
 	def newPlot(self):
 		self.numPlots += 1
@@ -1047,18 +1233,31 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
 
 	@inlineCallbacks
 	def selectDirFile(self, c):
-		self.file =	 str(self.currentFile.text())
+		print 'got here'
+		self.file = str(self.currentFile.text())
+		print 'got here1'
 		self.directory = yield self.dv.cd()
-		yield self.dv.open(self.file)
+		print 'got here2'
+		try:
+			yield self.dv.open(self.file)
+		except Exception as inst:
+			print 'Following error was thrown: '
+			print inst
+			print 'Error thrown on line: '
+			print sys.exc_traceback.tb_lineno
+		print 'got here3'
 		variables = yield self.dv.variables()
 		self.indVars = []
 		self.depVars = []
+		print 'got here4'
 		for i in variables[0]:
 			self.indVars.append(str(i[0]))
 		for i in variables[1]:
 			self.depVars.append(str(i[0]))
+		print 'got here5'
 		self.variables = [self.indVars, self.depVars]
 		print self.variables
+		
 		self.accept()
 
 
@@ -1583,24 +1782,33 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 		self.newPlot.show()
 
 class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
-	def __init__(self, reactor, plotSubset, dataSubset, zoomExtent, indVars, depVars, currentIndex):
-		super(zoomPlot, self).__init__()
+	def __init__(self, reactor, plotData, dataSubset, zoomExtent, indVars, depVars, currentIndex, title, parent = None):
+		super(zoomPlot, self).__init__(parent)
 		
 		self.reactor = reactor
 		self.setupUi(self)
+		self.window = parent
 
 		self.showGrad.hide()
 		self.diamFrame.hide()
 
 
-		
-		self.fullData = dataSubset
-		self.Data = plotSubset
+
+		self.Data = copy.copy(dataSubset)
+
+		indexOffsets = np.array([])
+		for ii in range(0, len(indVars)):
+			indexOffsets = np.append(indexOffsets, self.Data[0,ii])
+		while len(indexOffsets) != len(self.Data[0]):
+			indexOffsets = np.append(indexOffsets, 0)
+		self.Data = self.Data - indexOffsets
+		print np.amax(self.Data[::,0]), np.amax(self.Data[::,1])
+		self.oData = copy.copy(plotData)
 		self.extent = zoomExtent
 		self.xMin, self.xMax = self.extent[0], self.extent[1]
 		self.yMin, self.yMax = self.extent[2], self.extent[3]
 		self.xscale, self.yscale = self.extent[4], self.extent[5]
-		self.xPoints, self.yPoints = self.Data.shape[0], self.Data.shape[1]
+		self.xPoints, self.yPoints = self.oData.shape[0], self.oData.shape[1]
 		self.indVars = indVars
 		self.depVars = depVars
 
@@ -1615,10 +1823,16 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		self.zAxis.setCurrentIndex(self.initIndex[2])
 
 		self.setupPlots()
+		
+		self.back.clicked.connect(self.revert)
 
 		self.hideGrad.clicked.connect(self.shrink)
 		self.showGrad.clicked.connect(self.enlarge)
+		
+		self.plotTitle.setText(title)
+		self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
 
+		self.savePlot.clicked.connect(self.matPlot)
 		
 		self.gradMenu = QtGui.QMenu()
 		gradX = QtGui.QAction(QtGui.QIcon("nablaXIcon.png"), "Gradient along x-axis", self)
@@ -1632,33 +1846,63 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		self.gradMenu.addAction(lancSettings)
 		self.gradient.setMenu(self.gradMenu)
 		self.datPct = 0.1
-
 		
-		'''
-		self.subtractMenu = QtGui.QMenu()
-		subAvg = QtGui.QAction( "Subtract constant offset", self)
-		subPlane = QtGui.QAction( "Subtract planar fit", self)
-		subQuad = QtGui.QAction( "Subtract quadratic fit", self)
-		subAvg.triggered.connect(self.subtractAvg)
-		subPlane.triggered.connect(self.subtractPlane)
-		subQuad.triggered.connect(self.subtractQuad)
-		self.subtractMenu.addAction(subAvg)
-		self.subtractMenu.addAction(subPlane)
-		self.subtractMenu.addAction(subQuad)
-		self.subtract.setMenu(self.subtractMenu)
-		'''
+		self.saveMenu = QtGui.QMenu()
+		twoDSave = QtGui.QAction("Save 2D plot", self)
+		oneDSave = QtGui.QAction("Save line cut", self)
+		oneDSave.triggered.connect(self.matLinePlot)
+		twoDSave.triggered.connect(self.matPlot)
+		self.saveMenu.addAction(twoDSave)
+		self.saveMenu.addAction(oneDSave)
+		self.savePlot.setMenu(self.saveMenu)
+		
+		self.showGrad.hide()
+		self.hideGrad.hide()
 
 		self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
-		#self.diamCalc.clicked.connect(self.calculateDiam)
-		#self.sensitivity.clicked.connect(self.promptSensitivity)
+		self.sensitivity.clicked.connect(self.promptSensitivity)
 		self.refresh.clicked.connect(self.refreshPlot)
 		self.vCutPos.valueChanged.connect(self.changeVertLine)
 		self.hCutPos.valueChanged.connect(self.changeHorLine)
-
-	def refreshPlot(self):
-		self.mainPlot.setImage(self.Data, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
+		
+	def revert(self):
 		self.clearPlots()
 		self.plotType.clear()
+		self.zoomPlot = self.oData
+		self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
+		self.plotType.setText("Plotted original \ndata selection.")
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+		if self.vhSelect.count() > 2: 
+			while self.vhSelect.count()>2:
+				
+				self.vhSelect.removeItem(2)
+
+	def refreshPlot(self):
+		
+		if self.vhSelect.count() > 2: 
+			while self.vhSelect.count()>2:
+				
+				self.vhSelect.removeItem(2)
+		l = int(len(self.indVars) * 2)
+		x = self.xAxis.currentIndex()
+		y = self.yAxis.currentIndex()
+		z = self.zAxis.currentIndex() + l
+		self.xPoints, self.yPoints = int(np.amax(self.Data[::,x])) + 1, int(np.amax(self.Data[::,y])) + 1
+		self.viewBig.setLabel('left', text=self.yAxis.currentText())
+		self.viewBig.setLabel('bottom', text=self.xAxis.currentText())
+		self.XZPlot.setLabel('left', self.zAxis.currentText())
+		self.XZPlot.setLabel('bottom', self.xAxis.currentText())
+		self.YZPlot.setLabel('left', self.zAxis.currentText())
+		self.YZPlot.setLabel('bottom', self.yAxis.currentText())
+		self.zoomPlot = np.zeros([int(self.xPoints), int(self.yPoints)])
+		
+		for i in self.Data:
+			
+			self.zoomPlot[int(i[x]), int(i[y])] = i[z]
+		self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
+		self.clearPlots()
+		self.plotType.clear()	
+
 
 
 
@@ -1675,7 +1919,8 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 			
 
 	def setupPlots(self):
-		self.zoomPlot = copy.copy(self.Data)
+		self.zoomPlot = self.oData
+		
 
 
 		self.vLine = pg.InfiniteLine(pos = self.xMin, angle = 90, movable = True)
@@ -1691,7 +1936,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		self.mainPlot.ui.histogram.item.gradient.loadPreset('bipolar')
 		self.mainPlot.ui.roiBtn.hide()
 		self.mainPlot.ui.menuBtn.hide()
-		self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
+		self.mainPlot.setImage(self.oData, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
 		self.viewBig.setAspectLocked(False)
 		self.viewBig.invertY(False)
 
@@ -1709,6 +1954,44 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		self.YZPlot.setGeometry(QtCore.QRect(0, 0, 635, 200))
 		self.YZPlot.showAxis('right', show = True)
 		self.YZPlot.showAxis('top', show = True)
+		
+	def matLinePlot(self):
+		if not self.zoomPlot is None:
+			fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
+			if fold:
+				self.genLineMatFile(fold)
+				
+	def genLineMatFile(self, fold):
+		yData = np.asarray(self.lineYVals)
+		xData = np.asarray(self.lineXVals)
+		
+		matData = np.transpose(np.vstack((xData, yData)))
+		savename = fold.split("/")[-1].split('.mat')[0]
+		print 'All data converted. Saving .mat file'
+		sio.savemat(fold,{savename:matData})
+		matData = None		
+
+		
+	def matPlot(self):
+		if not self.zoomPlot is None:
+			fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
+			if fold:
+				self.genMatFile(fold)
+
+	def genMatFile(self, fold):
+		t = time.time()
+		xVals = np.linspace(self.xMin, self.xMax, int(self.xPoints))
+		yVals = np.linspace(self.yMin, self.yMax, int(self.yPoints))
+		xInd, yInd = np.linspace(0,  self.xPoints - 1,  int(self.xPoints)), np.linspace(0,  self.yPoints - 1, int(self.yPoints))
+
+		zX, zY, zXI, zYI = np.ones([1,int(self.yPoints)]), np.ones([1,int(self.xPoints)]), np.ones([1,int(self.yPoints)]), np.ones([1,int(self.xPoints)])
+		X, Y,  XI, YI = np.outer(xVals, zX), np.outer(zY, yVals), np.outer(xInd, zXI), np.outer(zYI, yInd)
+		XX, YY, XXI, YYI, ZZ = X.flatten(), Y.flatten(), XI.flatten(), YI.flatten(), self.zoomPlot.flatten()
+		matData = np.transpose(np.vstack((XXI, YYI, XX, YY, ZZ)))
+		savename = fold.split("/")[-1].split('.mat')[0]
+		print 'All data converted. Saving .mat file'
+		sio.savemat(fold,{savename:matData})
+		matData = None
 
 	def xDeriv(self):
 
@@ -1718,7 +2001,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		for i in range(0, self.zoomPlot.shape[1]):
 			self.zoomPlot[:, i] = deriv(self.zoomPlot[:,i], xVals, N, delta)	
 		self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
-		self.plotType.setText("Plotted gradient along \nx-axis.")
+		self.plotType.setText("Plotted gradient \nalong x-axis.")
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def yDeriv(self):
@@ -1729,9 +2012,10 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 		for i in range(0, self.zoomPlot.shape[0]):
 			self.zoomPlot[i, :] = deriv(self.zoomPlot[i,:], yVals, N, delta)	
 		self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
-		self.plotType.setText("Plotted gradient along \ny-axis.")
+		self.plotType.setText("Plotted gradient \nalong y-axis.")
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
+		
 	def derivSettings(self):
 		self.gradSet = gradSet(self.reactor)
 		self.gradSet.show()
@@ -1741,48 +2025,176 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 
 	def subtractAvg(self):
 
-		avg = np.average(self.plotData)
-		self.plotData = self.plotData - avg
+		avg = np.average(self.zoomPlot)
+		self.zoomPlot = self.zoomPlot - avg
+		self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted offset \nsubtracted data.")
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractPlane(self):
 
-		l = int(len(self.indVars) / 2)
+		l = int(len(self.indVars) * 2)
 		x = self.xAxis.currentIndex()
 		y = self.yAxis.currentIndex()
-		z = self.zAxis.currentIndex() + len(self.indVars) 
+		z = self.zAxis.currentIndex() + l
 		X = np.c_[self.Data[::, l+x], self.Data[::,l+y], np.ones(self.Data.shape[0])]
-		Y = np.ndarray.flatten(self.plotData)
+		Y = np.ndarray.flatten(self.zoomPlot)
 		C = np.linalg.lstsq(X, Y)
 		for i in self.Data:
-			self.plotData[int(i[x]), int(i[y])] = self.plotData[int(i[x]), int(i[y])] - np.dot(C[0], [i[x+l], i[y+l], 1])		
-		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+			self.zoomPlot[int(i[x]), int(i[y])] = self.zoomPlot[int(i[x]), int(i[y])] - np.dot(C[0], [i[x+l], i[y+l], 1])		
+		self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted plane \nsubtracted data.")
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
 	def subtractQuad(self):
 
-		l = int(len(self.indVars) / 2)
+		l = int(len(self.indVars) * 2)
 		x = self.xAxis.currentIndex()
 		y = self.yAxis.currentIndex()
-		z = self.zAxis.currentIndex() + len(self.indVars) 
+		z = self.zAxis.currentIndex() + l
 		X = np.c_[np.ones(self.Data.shape[0]), self.Data[::, [l+x, l+y]], np.prod(self.Data[::, [l+x, l+y]], axis = 1), self.Data[::, [l+x, l+y]]**2]
 		Y = np.ndarray.flatten(self.plotData)
 		C = np.linalg.lstsq(X, Y)
 		for i in self.Data:
-			self.plotData[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l]**2, i[y+l]**2, i[l+x]*i[y+l], i[l+x], i[l+y], 1])		
-		self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+			self.zoomPlot[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l]**2, i[y+l]**2, i[l+x]*i[y+l], i[l+x], i[l+y], 1])		
+		self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 		self.plotType.setText("Plotted quadratic \nsubtracted data.")
 		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 		self.clearPlots()
+		
+	def promptSensitivity(self):
+		ind = range(0,len(self.indVars)) + self.indVars
+		#deps = range(0,len(self.depVars)) + self.depVars
+		self.sensPrompt = Sensitivity(self.depVars, ind, self.reactor)
+		self.sensPrompt.show()
+		self.sensPrompt.accepted.connect(self.plotSens)
+		print 'great'
+		
+	def plotSens(self):
+
+		self.sensIndex = self.sensPrompt.sensIndicies()
+		l = int(len(self.indVars) * 2)
+		x = self.sensIndex[0]
+		y = self.sensIndex[1]
+		z = self.sensIndex[2] + l
+		self.NSselect = self.sensIndex[4]
+		self.unitSelect = self.sensIndex[5]
+		self.xMax = np.amax(self.Data[::,int(l/2) + x])
+		self.xMin = np.amin(self.Data[::,int(l/2) + x])
+		self.yMax = np.amax(self.Data[::,int(l/2) + y])
+		self.yMin = np.amin(self.Data[::,int(l/2) + y])
+		self.deltaX = self.xMax - self.xMin
+		self.deltaY = self.yMax - self.yMin
+		self.xPoints = np.amax(self.Data[::,x])+1
+		self.yPoints = np.amax(self.Data[::,y])+1
+		self.extent = [self.xMin, self.xMax, self.yMin, self.yMax]
+		self.x0, self.x1 = self.extent[0], self.extent[1]
+		self.y0, self.y1 = self.extent[2], self.extent[3]
+		self.xscale, self.yscale = float((self.x1-self.x0) / self.xPoints), float((self.y1-self.y0) / self.yPoints)
+		
+		n = self.sensIndex[3] + l
+		self.zoomPlot = np.zeros([int(self.xPoints), int(self.yPoints)])
+		self.noiseData = np.zeros([int(self.xPoints), int(self.yPoints)])
+		for i in self.Data:
+			self.zoomPlot[int(i[x]), int(i[y])] = float(i[z])
+			
+			if i[n] != 0:
+				self.noiseData[int(i[x]), int(i[y])] = float(i[n])
+			else:
+				self.noiseData[int(i[x]), int(i[y])] = 1e-3
+		xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
+		#print xVals
+		yVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
+		print 'xPoints: ', self.xPoints
+		print 'yPoints: ', self.yPoints
+		delta = abs(self.xMax - self.xMin) / self.xPoints
+		N = int(self.xPoints * self.datPct)
+
+		for i in range(0, self.zoomPlot.shape[1]):
+			self.zoomPlot[:, i] = deriv(self.zoomPlot[:, i], xVals, N, delta)
+			for pt in range(0, len(self.zoomPlot[:,i])):
+				if self.zoomPlot[pt,i] == 0:
+					
+					self.zoomPlot[pt,i] = 1e-3
+					
+		if self.NSselect == 1:
+			self.plotData = np.absolute(np.true_divide(self.zoomPlot , self.noiseData))
+		else:
+			self.zoomPlot = np.absolute(np.true_divide(self.noiseData , self.zoomPlot ))
+			self.zoomPlot = np.clip(self.zoomPlot, 0, 1e3)
+
+			
+			if self.unitSelect == 2:
+				gain, bw = self.sensPrompt.sensConv()[0], self.sensPrompt.sensConv()[1]
+				self.zoomPlot = np.true_divide(self.zoomPlot, (.364 * gain * np.sqrt(1000 *bw)))
+				self.zoomPlot = np.clip(self.zoomPlot, 0, 1e3)
+		'''
+		if self.NSselect == 1:
+			self.zoomPlot = np.minimum(np.absolute(np.divide(self.zoomPlot , self.noiseData)), 1e5)
+		else:
+			self.zoomPlot = np.minimum(np.absolute(np.divide(self.noiseData , self.zoomPlot )), 1e5)
+		'''
+
+		self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+		self.mainPlot.addItem(self.vLine)
+		self.mainPlot.addItem(self.hLine)
+		self.vLine.setValue(self.xMin)
+		self.hLine.setValue(self.yMin)	
+		self.vCutPos.setValue(self.xMin)
+		self.hCutPos.setValue(self.yMin)
+		if self.NSselect == 1:
+			self.plotType.setText('Plotted sensitivity.')
+			self.vhSelect.addItem('Maximum Sensitivity')
+		else:
+			self.plotType.setText('Plotted field noise.')	
+			self.vhSelect.addItem('Minimum Noise')
+			self.vhSelect.addItem('Optimal Bias')
+		self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")	
+		
+	def plotMaxSens(self):
+		if self.NSselect == 1:
+			maxSens = np.array([])
+			bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
+			self.XZPlot.clear()
+			for i in range(0, self.zoomPlot.shape[0]):
+				maxSens = np.append(maxSens, np.amax(self.zoomPlot[i]))
+			self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
+			self.XZPlot.setLabel('left', 'Maximum Relative Sensitivity')
+			self.XZPlot.plot(x = bVals, y = maxSens,pen = 0.5)
+			self.lineYVals = maxSens
+			self.lineXVals = bVals
+		else:
+			minNoise = np.array([])
+			bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
+			self.XZPlot.clear()
+			for i in range(0, self.zoomPlot.shape[0]):
+				minNoise = np.append(minNoise, np.amin(self.zoomPlot[i]))
+			self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
+			self.XZPlot.setLabel('left', 'Minimum field noise')
+			self.XZPlot.plot(x = bVals, y = minNoise,pen = 0.5)
+			self.lineYVals = minNoise
+			self.lineXVals = bVals
+	
+	def plotOptBias(self):	
+		minNoise = np.array([])
+		bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
+		vVals =np.linspace(self.yMin, self.yMax, self.yPoints)
+		self.XZPlot.clear()
+		for i in range(0, self.zoomPlot.shape[0]):
+			arg = np.argmin(self.zoomPlot[i])
+			minNoise = np.append(minNoise, vVals[arg])
+		self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
+		self.XZPlot.setLabel('left', 'Optimal Bias', units = 'V')
+		self.XZPlot.plot(x = bVals, y = minNoise,pen = 0.5)
+		self.lineYVals = minNoise
+		self.lineXVals = bVals
 
 
 
 
 
 	def shrink(self):
-		self.resize(650, 740)
+		self.resize(640, 740)
 		self.hideGrad.hide()
 		self.showGrad.show()
 	def enlarge(self):
@@ -1797,13 +2209,20 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 			pos = self.hLine.value()
 			self.YZPlotArea.lower()
 			self.updateXZPlot(pos)
+
 		elif self.vhSelect.currentIndex() == 1:
 			pos = self.vLine.value()
 			self.XZPlotArea.lower()
 			self.updateYZPlot(pos)	
+
 		elif self.vhSelect.currentIndex() ==2:
 			self.YZPlotArea.lower()
-			self.plotMaxSens()			
+			self.plotMaxSens()
+
+		elif self.vhSelect.currentIndex() ==3:
+			self.YZPlotArea.lower()
+			self.plotOptBias()
+			
 
 	def changeVertLine(self):
 		pos = self.vCutPos.value()
@@ -1839,6 +2258,8 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 				xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
 				yVals = self.zoomPlot[:,p]
 				self.XZPlot.plot(x = xVals, y = yVals, pen = 0.5)
+			self.lineYVals = yVals
+			self.lineXVals = xVals
 
 
 	def updateYZPlot(self, pos):
@@ -1855,6 +2276,11 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 				xVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
 				yVals = self.zoomPlot[p]
 				self.YZPlot.plot(x = xVals, y = yVals, pen = 0.5)
+			self.lineYVals = yVals
+			self.lineXVals = xVals
+				
+	def closeEvent(self, e):
+		self.window.zoom.setEnabled(True)
 
 
 
