@@ -167,7 +167,7 @@
   <widget class="QPushButton" name="addPlot">
    <property name="geometry">
     <rect>
-     <x>540</x>
+     <x>620</x>
      <y>40</y>
      <width>23</width>
      <height>23</height>
@@ -181,15 +181,15 @@
    </property>
    <property name="styleSheet">
     <string notr="true">#addPlot{
-image:url(:/nSOTScanner/Pictures/addPlotIcon.png);
+image:url(:/nSOTScanner/Pictures/add.png);
 background: black;
 border: 0px solid rgb(95,107,166);
 }
 
 QPushButton:pressed#addPlot{
-image:url(:/nSOTScanner/Pictures/addPlotIcon.png);
+image:url(:/nSOTScanner/Pictures/add.png);
 background: black;
-border: 2px solid white;
+border: 2px rgb(131,131,131);
 border-radius: 5px
 }</string>
    </property>
@@ -236,9 +236,9 @@ border-radius: 5px
    <property name="geometry">
     <rect>
      <x>750</x>
-     <y>40</y>
-     <width>23</width>
-     <height>23</height>
+     <y>45</y>
+     <width>20</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="focusPolicy">
@@ -258,9 +258,9 @@ border-radius: 5px
    <property name="geometry">
     <rect>
      <x>630</x>
-     <y>40</y>
+     <y>45</y>
      <width>20</width>
-     <height>23</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="focusPolicy">
@@ -298,7 +298,7 @@ border: 0px solid rgb(95,107,166);
 QPushButton:pressed#diamCalc{
 image:url(:/nSOTScanner/Pictures/inverseDiameter.png);
 background: black;
-border: 2px solid white;
+border: 2px rgb(131,131,131);
 border-radius: 5px
 }</string>
    </property>
@@ -420,15 +420,15 @@ border-radius: 5px
    </property>
    <property name="styleSheet">
     <string notr="true">#refresh{
-image:url(:/nSOTScanner/Pictures/refreshIcon.png);
+image:url(:/nSOTScanner/Pictures/refresh.png);
 background: black;
-border: 0px solid rgb(95,107,166);
+
 }
 
 QPushButton:pressed#refresh{
-image:url(:/nSOTScanner/Pictures/refreshIcon.png);
+image:url(:/nSOTScanner/Pictures/refresh.png);
 background: black;
-border: 2px solid white;
+border: 2px rgb(131,131,131);
 border-radius: 5px
 }</string>
    </property>
@@ -711,7 +711,7 @@ border: 0px solid rgb(95,107,166);
 QPushButton:pressed#gradient{
 image:url(:/nSOTScanner/Pictures/inverseNabla.png);
 background: black;
-border: 2px solid white;
+border: 2px rgb(131,131,131);
 border-radius: 5px
 }</string>
    </property>
@@ -756,7 +756,7 @@ border: 0px solid rgb(95,107,166);
 QPushButton:pressed#subtract{
 image:url(:/nSOTScanner/Pictures/inverseRes.png);
 background: black;
-border: 2px solid white;
+border: 2px rgb(131,131,131);
 border-radius: 5px
 }</string>
    </property>
@@ -786,7 +786,7 @@ border: 0px solid rgb(95,107,166);
 QPushButton:pressed#sensitivity{
 image:url(:/nSOTScanner/Pictures/inverseSigma.png);
 background: black;
-border: 2px solid white;
+border: 2px rgb(131,131,131);
 border-radius: 5px
 }</string>
    </property>
@@ -816,7 +816,7 @@ border: 0px solid rgb(95,107,166);
 QPushButton:pressed#zoom{
 image:url(:/nSOTScanner/Pictures/zoomIcon.png);
 background: black;
-border: 2px solid white;
+border: 2px rgb(131,131,131);
 border-radius: 5px
 }</string>
    </property>
@@ -846,7 +846,37 @@ border: 0px solid rgb(95,107,166);
 QPushButton:pressed#trSelect{
 image:url(:/nSOTScanner/Pictures/traceIcon.png);
 background: black;
-border: 2px solid white;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="savePlot">
+   <property name="geometry">
+    <rect>
+     <x>620</x>
+     <y>15</y>
+     <width>23</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Compute Sensitivity</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#savePlot{
+image:url(:/nSOTScanner/Pictures/save.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#savePlot{
+image:url(:/nSOTScanner/Pictures/save.png);
+background: black;
+border: 2px rgb(131,131,131);
 border-radius: 5px
 }</string>
    </property>
@@ -863,7 +893,6 @@ border-radius: 5px
   <zorder>label_29</zorder>
   <zorder>plotTitle</zorder>
   <zorder>label_27</zorder>
-  <zorder>addPlot</zorder>
   <zorder>label</zorder>
   <zorder>hideGrad</zorder>
   <zorder>showGrad</zorder>
@@ -883,10 +912,14 @@ border-radius: 5px
   <zorder>sensitivity</zorder>
   <zorder>zoom</zorder>
   <zorder>trSelect</zorder>
+  <zorder>savePlot</zorder>
+  <zorder>addPlot</zorder>
  </widget>
  <tabstops>
   <tabstop>addPlot</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../Resources/nSOTScannerResources.qrc"/>
+ </resources>
  <connections/>
 </ui>
