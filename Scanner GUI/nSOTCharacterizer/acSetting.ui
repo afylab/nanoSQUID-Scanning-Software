@@ -56,36 +56,10 @@
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Amplitude:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="acFreqValue">
-   <property name="geometry">
-    <rect>
-     <x>90</x>
-     <y>110</y>
-     <width>35</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>4.0</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="acAmpValue">
-   <property name="geometry">
-    <rect>
-     <x>260</x>
-     <y>110</y>
-     <width>35</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>2.0</string>
-   </property>
-  </widget>
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>130</x>
+     <x>135</x>
      <y>110</y>
      <width>30</width>
      <height>16</height>
@@ -98,7 +72,7 @@
   <widget class="QLabel" name="label_5">
    <property name="geometry">
     <rect>
-     <x>300</x>
+     <x>305</x>
      <y>110</y>
      <width>30</width>
      <height>16</height>
@@ -175,6 +149,44 @@ border-radius: 5px
    </property>
    <property name="text">
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; text-decoration: underline; color:#a8a8a8;&quot;&gt;AC Excitation Settings&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QDoubleSpinBox" name="acFreqValue">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>110</y>
+     <width>41</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="buttonSymbols">
+    <enum>QAbstractSpinBox::NoButtons</enum>
+   </property>
+   <property name="decimals">
+    <number>2</number>
+   </property>
+   <property name="value">
+    <double>4.000000000000000</double>
+   </property>
+  </widget>
+  <widget class="QDoubleSpinBox" name="acAmpValue">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>110</y>
+     <width>41</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="buttonSymbols">
+    <enum>QAbstractSpinBox::NoButtons</enum>
+   </property>
+   <property name="decimals">
+    <number>0</number>
+   </property>
+   <property name="value">
+    <double>2.000000000000000</double>
    </property>
   </widget>
  </widget>

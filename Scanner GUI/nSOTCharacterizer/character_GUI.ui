@@ -32,7 +32,7 @@
    <string>nSOT Characterization</string>
   </property>
   <property name="toolTip">
-   <string>Abort sweep</string>
+   <string/>
   </property>
   <property name="styleSheet">
    <string notr="true">QLabel{
@@ -68,7 +68,7 @@ background-color: rgb(0, 0, 0);
    <widget class="QLabel" name="MaxField">
     <property name="geometry">
      <rect>
-      <x>672</x>
+      <x>642</x>
       <y>64</y>
       <width>86</width>
       <height>16</height>
@@ -84,7 +84,7 @@ background-color: rgb(0, 0, 0);
    <widget class="QLineEdit" name="fieldPointsSetValue">
     <property name="geometry">
      <rect>
-      <x>791</x>
+      <x>761</x>
       <y>89</y>
       <width>45</width>
       <height>20</height>
@@ -124,6 +124,9 @@ background-color: rgb(0, 0, 0);
     <property name="buttonSymbols">
      <enum>QAbstractSpinBox::NoButtons</enum>
     </property>
+    <property name="decimals">
+     <number>3</number>
+    </property>
     <property name="minimum">
      <double>-99.000000000000000</double>
     </property>
@@ -150,14 +153,14 @@ background-color: rgb(0, 0, 0);
    <widget class="QLineEdit" name="fieldSpeedSetValue">
     <property name="geometry">
      <rect>
-      <x>791</x>
+      <x>761</x>
       <y>114</y>
       <width>45</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>0.10</string>
+     <string>0.100</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -169,7 +172,7 @@ background-color: rgb(0, 0, 0);
    <widget class="QLabel" name="FieldSet">
     <property name="geometry">
      <rect>
-      <x>691</x>
+      <x>661</x>
       <y>9</y>
       <width>147</width>
       <height>18</height>
@@ -208,14 +211,14 @@ background-color: rgb(0, 0, 0);
    <widget class="QLineEdit" name="biasSpeedSetValue">
     <property name="geometry">
      <rect>
-      <x>1085</x>
+      <x>1025</x>
       <y>114</y>
       <width>45</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>1.00</string>
+     <string>1</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -227,7 +230,7 @@ background-color: rgb(0, 0, 0);
    <widget class="QLabel" name="BiasInc">
     <property name="geometry">
      <rect>
-      <x>966</x>
+      <x>906</x>
       <y>89</y>
       <width>110</width>
       <height>16</height>
@@ -243,8 +246,8 @@ background-color: rgb(0, 0, 0);
    <widget class="QPushButton" name="abortSweep">
     <property name="geometry">
      <rect>
-      <x>1210</x>
-      <y>80</y>
+      <x>1130</x>
+      <y>50</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -277,8 +280,8 @@ border-radius: 5px
    <widget class="QPushButton" name="startSweep">
     <property name="geometry">
      <rect>
-      <x>1210</x>
-      <y>50</y>
+      <x>1130</x>
+      <y>20</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -357,7 +360,7 @@ border-radius: 5px
    <widget class="QLabel" name="label_14">
     <property name="geometry">
      <rect>
-      <x>846</x>
+      <x>816</x>
       <y>114</y>
       <width>44</width>
       <height>16</height>
@@ -503,7 +506,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
    <widget class="QLabel" name="VoltMin">
     <property name="geometry">
      <rect>
-      <x>966</x>
+      <x>906</x>
       <y>39</y>
       <width>99</width>
       <height>16</height>
@@ -519,7 +522,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
    <widget class="QLabel" name="VoltSet">
     <property name="geometry">
      <rect>
-      <x>982</x>
+      <x>922</x>
       <y>9</y>
       <width>135</width>
       <height>18</height>
@@ -532,7 +535,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
    <widget class="QLabel" name="label_12">
     <property name="geometry">
      <rect>
-      <x>846</x>
+      <x>816</x>
       <y>39</y>
       <width>18</width>
       <height>16</height>
@@ -548,14 +551,14 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
    <widget class="QLineEdit" name="biasMaxSetValue">
     <property name="geometry">
      <rect>
-      <x>1085</x>
+      <x>1025</x>
       <y>64</y>
       <width>45</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>1.00</string>
+     <string>1.000</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -567,14 +570,14 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
    <widget class="QLineEdit" name="fieldMaxSetValue">
     <property name="geometry">
      <rect>
-      <x>791</x>
+      <x>761</x>
       <y>64</y>
       <width>45</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>0.10</string>
+     <string>0.100</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -619,7 +622,7 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLabel" name="VoltMax">
     <property name="geometry">
      <rect>
-      <x>966</x>
+      <x>906</x>
       <y>64</y>
       <width>102</width>
       <height>16</height>
@@ -635,7 +638,7 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLabel" name="FieldInc">
     <property name="geometry">
      <rect>
-      <x>672</x>
+      <x>642</x>
       <y>89</y>
       <width>110</width>
       <height>16</height>
@@ -651,7 +654,7 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLabel" name="label_11">
     <property name="geometry">
      <rect>
-      <x>846</x>
+      <x>816</x>
       <y>64</y>
       <width>18</width>
       <height>16</height>
@@ -667,14 +670,14 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLineEdit" name="biasMinSetValue">
     <property name="geometry">
      <rect>
-      <x>1085</x>
+      <x>1025</x>
       <y>39</y>
       <width>45</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>0.00</string>
+     <string>0.000</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -686,7 +689,7 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLabel" name="label_37">
     <property name="geometry">
      <rect>
-      <x>672</x>
+      <x>642</x>
       <y>114</y>
       <width>110</width>
       <height>16</height>
@@ -702,7 +705,7 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLabel" name="label_38">
     <property name="geometry">
      <rect>
-      <x>966</x>
+      <x>906</x>
       <y>114</y>
       <width>61</width>
       <height>16</height>
@@ -731,14 +734,14 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLineEdit" name="fieldMinSetValue">
     <property name="geometry">
      <rect>
-      <x>791</x>
+      <x>761</x>
       <y>39</y>
       <width>45</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>0.00</string>
+     <string>0.000</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -750,7 +753,7 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLabel" name="MinField">
     <property name="geometry">
      <rect>
-      <x>672</x>
+      <x>642</x>
       <y>39</y>
       <width>83</width>
       <height>16</height>
@@ -766,7 +769,7 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>1140</x>
+      <x>1080</x>
       <y>39</y>
       <width>18</width>
       <height>16</height>
@@ -779,7 +782,7 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLabel" name="label_6">
     <property name="geometry">
      <rect>
-      <x>1140</x>
+      <x>1080</x>
       <y>64</y>
       <width>18</width>
       <height>16</height>
@@ -792,7 +795,7 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLabel" name="label_9">
     <property name="geometry">
      <rect>
-      <x>1140</x>
+      <x>1080</x>
       <y>114</y>
       <width>27</width>
       <height>16</height>
@@ -820,6 +823,9 @@ background-color: rgb(3, 3, 3);</string>
     <property name="buttonSymbols">
      <enum>QAbstractSpinBox::NoButtons</enum>
     </property>
+    <property name="decimals">
+     <number>3</number>
+    </property>
     <property name="minimum">
      <double>-99.000000000000000</double>
     </property>
@@ -827,7 +833,7 @@ background-color: rgb(3, 3, 3);</string>
    <widget class="QLineEdit" name="biasPointsSetValue">
     <property name="geometry">
      <rect>
-      <x>1085</x>
+      <x>1025</x>
       <y>89</y>
       <width>45</width>
       <height>20</height>
@@ -1000,6 +1006,9 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
     <property name="buttonSymbols">
      <enum>QAbstractSpinBox::NoButtons</enum>
     </property>
+    <property name="decimals">
+     <number>3</number>
+    </property>
     <property name="minimum">
      <double>-99.000000000000000</double>
     </property>
@@ -1018,6 +1027,9 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
     </property>
     <property name="buttonSymbols">
      <enum>QAbstractSpinBox::NoButtons</enum>
+    </property>
+    <property name="decimals">
+     <number>3</number>
     </property>
     <property name="minimum">
      <double>-99.000000000000000</double>
@@ -1133,8 +1145,8 @@ border-radius: 5px
    <widget class="QPushButton" name="dacSetOpen">
     <property name="geometry">
      <rect>
-      <x>1210</x>
-      <y>120</y>
+      <x>1170</x>
+      <y>90</y>
       <width>35</width>
       <height>23</height>
      </rect>
@@ -1243,7 +1255,7 @@ border-radius: 5px
    <widget class="QPushButton" name="fieldStepsInc">
     <property name="geometry">
      <rect>
-      <x>846</x>
+      <x>816</x>
       <y>89</y>
       <width>23</width>
       <height>23</height>
@@ -1262,7 +1274,7 @@ border-radius: 5px
    <widget class="QPushButton" name="biasStepsInc">
     <property name="geometry">
      <rect>
-      <x>1140</x>
+      <x>1080</x>
       <y>89</y>
       <width>23</width>
       <height>23</height>
@@ -1300,7 +1312,7 @@ background: rgb(144, 140, 9);
    <widget class="QPushButton" name="prelim">
     <property name="geometry">
      <rect>
-      <x>1210</x>
+      <x>1220</x>
       <y>20</y>
       <width>75</width>
       <height>23</height>
@@ -1364,8 +1376,8 @@ border-radius: 5px
    <widget class="QPushButton" name="acSetOpen">
     <property name="geometry">
      <rect>
-      <x>1250</x>
-      <y>120</y>
+      <x>1210</x>
+      <y>90</y>
       <width>35</width>
       <height>23</height>
      </rect>
@@ -1392,7 +1404,7 @@ border-radius: 5px
    <widget class="Line" name="line">
     <property name="geometry">
      <rect>
-      <x>952</x>
+      <x>892</x>
       <y>142</y>
       <width>223</width>
       <height>3</height>
@@ -1411,7 +1423,7 @@ border-radius: 5px
    <widget class="Line" name="line_2">
     <property name="geometry">
      <rect>
-      <x>951</x>
+      <x>891</x>
       <y>20</y>
       <width>3</width>
       <height>124</height>
@@ -1430,7 +1442,7 @@ border-radius: 5px
    <widget class="Line" name="line_3">
     <property name="geometry">
      <rect>
-      <x>1173</x>
+      <x>1113</x>
       <y>20</y>
       <width>3</width>
       <height>124</height>
@@ -1449,7 +1461,7 @@ border-radius: 5px
    <widget class="Line" name="line_4">
     <property name="geometry">
      <rect>
-      <x>952</x>
+      <x>892</x>
       <y>19</y>
       <width>20</width>
       <height>3</height>
@@ -1468,7 +1480,7 @@ border-radius: 5px
    <widget class="Line" name="line_5">
     <property name="geometry">
      <rect>
-      <x>1130</x>
+      <x>1070</x>
       <y>19</y>
       <width>44</width>
       <height>3</height>
@@ -1487,7 +1499,7 @@ border-radius: 5px
    <widget class="Line" name="line_9">
     <property name="geometry">
      <rect>
-      <x>851</x>
+      <x>821</x>
       <y>19</y>
       <width>54</width>
       <height>3</height>
@@ -1506,7 +1518,7 @@ border-radius: 5px
    <widget class="Line" name="line_6">
     <property name="geometry">
      <rect>
-      <x>661</x>
+      <x>631</x>
       <y>142</y>
       <width>245</width>
       <height>3</height>
@@ -1525,7 +1537,7 @@ border-radius: 5px
    <widget class="Line" name="line_10">
     <property name="geometry">
      <rect>
-      <x>661</x>
+      <x>631</x>
       <y>19</y>
       <width>20</width>
       <height>3</height>
@@ -1544,7 +1556,7 @@ border-radius: 5px
    <widget class="Line" name="line_8">
     <property name="geometry">
      <rect>
-      <x>904</x>
+      <x>874</x>
       <y>20</y>
       <width>3</width>
       <height>124</height>
@@ -1563,7 +1575,7 @@ border-radius: 5px
    <widget class="Line" name="line_7">
     <property name="geometry">
      <rect>
-      <x>660</x>
+      <x>630</x>
       <y>20</y>
       <width>3</width>
       <height>124</height>
@@ -1674,6 +1686,40 @@ border-radius: 5px
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
+   <widget class="QPushButton" name="gotoSetBtn">
+    <property name="geometry">
+     <rect>
+      <x>1220</x>
+      <y>50</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#gotoSetBtn{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#gotoSetBtn{
+color: rgb(216,83,25);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(216,83,25);
+border-radius: 5px
+}</string>
+    </property>
+    <property name="text">
+     <string>Go To Set</string>
+    </property>
+   </widget>
    <zorder>showRetraceGrad</zorder>
    <zorder>showTraceGrad</zorder>
    <zorder>hideTraceGrad</zorder>
@@ -1753,6 +1799,7 @@ border-radius: 5px
    <zorder>line_13</zorder>
    <zorder>line_14</zorder>
    <zorder>line_15</zorder>
+   <zorder>gotoSetBtn</zorder>
   </widget>
  </widget>
  <tabstops>
