@@ -17,6 +17,21 @@ VERT_DIVISIONS = 5.0
 HORZ_DIVISIONS = 10.0
 SCALES = []
 
+"""
+### BEGIN NODE INFO
+[info]
+name = MDO3024 Server
+version = 1.0
+description =
+[startup]
+cmdline = %PYTHON% %FILE%
+timeout = 20
+[shutdown]
+message = 987654321
+timeout = 20
+### END NODE INFO
+"""
+
 class MDO3024Wrapper(GPIBDeviceWrapper):
     pass
 

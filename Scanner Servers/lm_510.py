@@ -1,6 +1,4 @@
-"""
-NOTE: In order to operate the LM-510 via USB you must first enter remote mode sending the labrad.connect.LM510.remote() command. In addition,
-you must be on the units home screen (not the menu) to successfully enter remote mode.
+"""In addition, you must be on the units home screen (not the menu) to successfully enter remote mode.
 """
 
 
@@ -22,8 +20,6 @@ timeout = 20
 import platform
 global serial_server_name
 serial_server_name = (platform.node() + '_serial_server').replace('-','_').lower()
-
-
 
 from labrad.server import setting,Signal
 from labrad.devices import DeviceServer,DeviceWrapper
@@ -160,6 +156,17 @@ class lm_510Server(DeviceServer):
     def connect(self,c,server,port):
         dev=self.selectedDevice(c)
         yield dev.connect(server,port)
+        
+    @setting(2, 'Select Device',
+                key=[': Select first device',
+                     's: Select device by name',
+                     'w: Select device by ID'],
+                returns=['s: Name of the selected device'])
+    def select_device(self, c, key=0):
+        """Select a device for the current context."""
+        dev = self.selectDevice(c, key=key)
+        yield self.remote()
+        return dev.name
 
     @setting(201, mode = 's')
     def boost(self,c,mode):

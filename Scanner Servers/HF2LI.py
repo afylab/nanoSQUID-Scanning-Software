@@ -1014,7 +1014,7 @@ class HF2LIServer(LabradServer):
 
     @setting(1850,aux_in_index = 'i', returns = 'v[]')
     def get_aux_input_value(self,c,aux_in_index):
-        """Gets the Auxilary Output (1 through 4) latest output value."""
+        """Gets the Auxilary Input (1 through 4) latest input value."""
         setting = '/%s/auxins/0/values/%d' % (self.dev_ID, aux_in_index-1)
         val = yield self.daq.getDouble(setting)
         returnValue(val)

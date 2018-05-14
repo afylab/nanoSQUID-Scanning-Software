@@ -17,7 +17,7 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = IPS 120_10 Superconducting Magnet Power Supply
+name = CXA N9000 Spectrum Analyzer
 version = 1.0
 description =
 [startup]
