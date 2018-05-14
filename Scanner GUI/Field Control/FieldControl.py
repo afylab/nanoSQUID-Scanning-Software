@@ -55,11 +55,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def connectRemoteLabRAD(self, dict):
         try:
-            print 'Yatta!'
             self.cxn = dict['cxn']
             self.ips = dict['ips120']
-            print self.cxn
-            print self.ips
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
@@ -133,8 +130,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def updateSwitchStatus(self):
         status = yield self.ips.examine()
-        print status
-        print status[8]
+        #The 9th (index 8) character of the status string encodes whether or not
+        #the persistent switch is currently on
         if int(status[8]) == 0 or int(status[8]) == 2:
             style = '''#push_persistSwitch{
                         background: rgb(161, 0, 0);

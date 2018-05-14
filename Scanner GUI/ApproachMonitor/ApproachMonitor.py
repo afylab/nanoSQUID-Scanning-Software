@@ -30,6 +30,9 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.acTimeData = np.array([])
         self.acData = np.array([])
         
+        self.zTimeData = np.array([])
+        self.zData = np.array([])
+        
         self.plotTimeRange = 30
 
         self.push_zeroTime.clicked.connect(self.zeroTime)
@@ -44,24 +47,7 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
             
     def setupAdditionalUi(self):
         #Set up UI that isn't easily done from Qt Designer
-        '''
-        self.deltaFPlot = pg.PlotWidget(parent = self)
-        self.deltaFPlot.setGeometry(15,40,641,271)
-        self.deltaFPlot.setLabel('left', 'Delta F', units = 'Hz')
-        self.deltaFPlot.setLabel('bottom', 'Time', units = 's')
-        self.deltaFPlot.showAxis('right', show = True)
-        self.deltaFPlot.showAxis('top', show = True)
-        self.deltaFPlot.setTitle('PLL Delta F vs. Time (s)')
 
-        self.phaseErrorPlot = pg.PlotWidget(parent = self)
-        self.phaseErrorPlot.setGeometry(15,310,641,271)
-        self.phaseErrorPlot.setLabel('left', 'Phase Error', units = u'\N{DEGREE SIGN}')
-        self.phaseErrorPlot.setLabel('bottom', 'Time', units = 's')
-        self.phaseErrorPlot.showAxis('right', show = True)
-        self.phaseErrorPlot.showAxis('top', show = True)
-        self.phaseErrorPlot.setTitle('PLL Error vs. Time (s)')
-        '''
-        
         tab1 = QtGui.QWidget()
         
         self.deltaFPlot = pg.PlotWidget(parent = self)
@@ -112,7 +98,23 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         
         tab2.setLayout(vBoxlayout2)
         self.tabWidget.addTab(tab2,"Feedback Monitor")
-
+        
+        tab3 = QtGui.QWidget()
+        
+        self.zPlot = pg.PlotWidget(parent = self)
+        self.zPlot.setGeometry(15,40,641,271)
+        self.zPlot.setLabel('left', 'Attocube Z Extension', units = 'm')
+        self.zPlot.setLabel('bottom', 'Time', units = 's')
+        self.zPlot.showAxis('right', show = True)
+        self.zPlot.showAxis('top', show = True)
+        self.zPlot.setTitle('Attocube Z Extension (m) vs. Time (s)')
+        
+        vBoxlayout3 = QtGui.QVBoxLayout()
+        vBoxlayout3.addWidget(self.zPlot)
+        
+        tab3.setLayout(vBoxlayout3)
+        self.tabWidget.addTab(tab3,"Z Monitor")
+        
     def updatePLLPlots(self, deltaF, phaseError):
         if self.first_data_point:
             self.time_offset = time.clock()
@@ -147,10 +149,22 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.acData = np.append(self.acData, ac)
         self.plotFdbkAC()
         
+    def updateZPlot(self,z_meters):
+        if self.first_data_point:
+            self.time_offset = time.clock()
+            self.first_data_point = False
+
+        timepoint = time.clock() - self.time_offset
+        
+        self.zTimeData = np.append(self.zTimeData, timepoint)
+        self.zData = np.append(self.zData, z_meters)
+        self.plotZ()
+        
     def plotPlots(self):
         self.plotPLL()
         self.plotFdbkDC()
         self.plotFdbkAC()
+        self.plotZ()
         
     def plotPLL(self):
         length = len(self.pllTimeData)
@@ -188,6 +202,17 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
                 a = np.argmin(np.abs(self.acTimeData - (self.acTimeData[length-1] - self.plotTimeRange)))
                 self.fdbkACPlot.clear()
                 self.fdbkACPlot.plot(self.acTimeData[a:], self.acData[a:])
+                
+    def plotZ(self):
+        length = len(self.zTimeData)
+        if length > 1:
+            if (self.zTimeData[length-1] - self.zTimeData[0]) <= self.plotTimeRange:
+                self.zPlot.clear()
+                self.zPlot.plot(self.zTimeData, self.zData)
+            else:
+                a = np.argmin(np.abs(self.zTimeData - (self.zTimeData[length-1] - self.plotTimeRange)))
+                self.zPlot.clear()
+                self.zPlot.plot(self.zTimeData[a:], self.zData[a:])
     
     def zeroTime(self):
         self.time_offset = time.clock()
@@ -197,7 +222,8 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
             self.dcTimeData = self.dcTimeData - self.dcTimeData[-1]
         if len(self.acTimeData) > 0:
             self.acTimeData = self.acTimeData - self.acTimeData[-1]
-            
+        if len(self.zTimeData) > 0:
+            self.zTimeData = self.zTimeData - self.zTimeData[-1]
         self.plotPlots()
 
     def setPlotTime(self, num):

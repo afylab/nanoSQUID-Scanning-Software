@@ -167,9 +167,11 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.push_ConnectAll.setStyleSheet(self.sheets[i])
             yield self.sleep(0.025)
             i = (i+1)%81
+            '''
             if i == 0:
                 print self.cxnAttemptRemoteDictionary
                 print self.cxnAttemptLocalDictionary
+            '''
         self.push_ConnectAll.setStyleSheet(self.sheets[0])
         
     def allConnectionsAttmpted(self):
@@ -453,20 +455,21 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             cxn = self.connectionLocalDictionary['cxn']
             try:
                 dac = yield cxn.dac_adc
+                try: 
+                    yield dac.select_device()
+                    self.push_DACADC.setStyleSheet("#push_DACADC{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_DACADC_status.setText('Connected')
+                    self.connectionLocalDictionary['dac_adc'] = dac
+                except:
+                    self.push_DACADC.setStyleSheet("#push_DACADC{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_DACADC_status.setText('No device detected')
             except:
                 self.push_DACADC.setStyleSheet("#push_DACADC{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_DACADC_status.setText('Connection Failed')
-            try: 
-                yield dac.select_device()
-                self.push_DACADC.setStyleSheet("#push_DACADC{" + 
-                "background: rgb(0,170,0);border-radius: 4px;}")
-                self.label_DACADC_status.setText('Connected')
-                self.connectionLocalDictionary['dac_adc'] = dac
-            except:
-                self.push_DACADC.setStyleSheet("#push_DACADC{" + 
-                "background: rgb(161,0,0);border-radius: 4px;}")
-                self.label_DACADC_status.setText('No device detected')
+
         self.cxnAttemptLocalDictionary['dac_adc'] = True
         self.emitLocalConnectionDictionary()
         
@@ -480,20 +483,21 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             cxn = self.connectionLocalDictionary['cxn']
             try:
                 ad = yield cxn.ad5764_dcbox
+                try: 
+                    yield ad.select_device()
+                    self.push_DCBox.setStyleSheet("#push_DCBox{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_DCBox_status.setText('Connected')
+                    self.connectionLocalDictionary['dc_box'] = ad
+                except:
+                    self.push_DCBox.setStyleSheet("#push_DCBox{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_DCBox_status.setText('No device detected')
             except:
                 self.push_DCBox.setStyleSheet("#push_DCBox{" + 
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_DCBox_status.setText('Connection Failed')
-            try: 
-                yield ad.select_device()
-                self.push_DCBox.setStyleSheet("#push_DCBox{" + 
-                "background: rgb(0,170,0);border-radius: 4px;}")
-                self.label_DCBox_status.setText('Connected')
-                self.connectionLocalDictionary['dc_box'] = ad
-            except:
-                self.push_DCBox.setStyleSheet("#push_DCBox{" + 
-                "background: rgb(161,0,0);border-radius: 4px;}")
-                self.label_DCBox_status.setText('No device detected')
+
         self.cxnAttemptLocalDictionary['dc_box'] = True
         self.emitLocalConnectionDictionary()
 

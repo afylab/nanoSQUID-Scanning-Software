@@ -1053,6 +1053,16 @@ color:rgb(168,168,168)
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
+   <widget class="QLineEdit" name="lineEdit_Angle">
+    <property name="geometry">
+     <rect>
+      <x>225</x>
+      <y>233</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
  </widget>
  <tabstops>

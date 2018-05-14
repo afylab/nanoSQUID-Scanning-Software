@@ -1,3 +1,13 @@
+'''
+General Notes:
+
+Everywhere with something I realized I wanted done, I wrote a comment starting with
+TODO. Search for those for things to do :)
+
+TODO test how the DAC responds to having a voltage prompted while it's ramping or buffer ramping
+
+'''
+
 import sys
 from PyQt4 import QtGui, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
@@ -18,8 +28,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     newPLLData = QtCore.pyqtSignal(float, float)
     newFdbkDCData = QtCore.pyqtSignal(float)
     newFdbkACData = QtCore.pyqtSignal(float)
+    newZData = QtCore.pyqtSignal(float)
     updateFeedbackStatus = QtCore.pyqtSignal(bool)
-    updateConstantHeightStatus = QtCore.pyqtSignal(bool)
+    updateConstantHeightStatus = QtCore.pyqtSignal(bool, float)
+    updateApproachStatus = QtCore.pyqtSignal(bool)
 
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
@@ -47,6 +59,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_subFeedback.clicked.connect(self.decrementFeedbackThresh)
 
         self.lineEdit_freqSet.editingFinished.connect(self.setFreqThresh)
+        self.lineEdit_feedbackSet.editingFinished.connect(self.setFeedbackThresh)
+        self.lineEdit_feedbackACSet.editingFinished.connect(self.setFeedbackACThresh)
 
         self.lineEdit_P.editingFinished.connect(self.set_p)
         self.lineEdit_I.editingFinished.connect(self.set_i)
@@ -84,13 +98,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         self.measuring = False
         self.approaching = False
+        self.voltage1to10 = False #Variable to keep track of sum box status
+        self.JPEStepping = False
+        self.DACRamping = False
         
         #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's hard coded in
         self.PID_Index = 1
 
         self.Atto_Z_Voltage = 0.0 #Voltage being sent to Z of attocubes. Eventually should synchronize with the 
-                                  #Scan module Atto Z voltage
-        self.Temperature = 293 #in kelvin
+                                  #Scan module Atto Z voltage TODO
+        self.Temperature = 293    #in kelvin
 
         self.withdrawDistance = 2e-6
         self.constantHeight = 100e-9
@@ -160,7 +177,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         '''
         self.PIDApproachSettings = {
                 'p'                    : 0,     #Proportional term of approach PID 
-                'i'                    : 1,     #Integral term of approach PID 
+                'i'                    : 1e-7,  #Integral term of approach PID 
                 'd'                    : 0,     #Derivative term of approach PID 
                 'step_size'            : 10e-9, #Step size for feedback approach in meters
                 'step_speed'           : 10e-9, #Step speed for feedback approach in m/s
@@ -175,8 +192,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 'step_speed'           : 10e-9, #Step speed for feedback approach in m/s
                 'height'               : 100e-9,#Height for constant height scanning
         }
-        
-        #TODO represent PID parameters in terms of m/s per Hz instead of Volts / s per Hz
 
         self.lineEdit_P.setText(formatNum(self.PIDApproachSettings['p'])) 
         self.lineEdit_I.setText(formatNum(self.PIDApproachSettings['i'])) 
@@ -291,7 +306,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
 
-            
     def showServersList(self):
         serList = serversList(self.reactor, self)
         serList.exec_()
@@ -355,8 +369,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.feedbackSlider.setMinimum(0)
         self.feedbackSlider.setMaximum(1000000)
         self.feedbackSlider.setStyleSheet("QSlider::groove:horizontal {border: 1px solid #bbb;background: white;height: 10px;border-radius: 4px;}QSlider::sub-page:horizontal {background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,    stop: 0 #66e, stop: 1 #bbf);background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,    stop: 0 #bbf, stop: 1 #55f);border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::add-page:horizontal {background: #fff;border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::handle:horizontal {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #eee, stop:1 #ccc);border: 1px solid #777;width: 13px;margin-top: -2px;margin-bottom: -2px;border-radius: 4px;}QSlider::handle:horizontal:hover {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #fff, stop:1 #ddd);border: 1px solid #444;border-radius: 4px;}QSlider::sub-page:horizontal:disabled {background: #bbb;border-color: #999;}QSlider::add-page:horizontal:disabled {background: #eee;border-color: #999;}QSlider::handle:horizontal:disabled {background: #eee;border: 1px solid #aaa;border-radius: 4px;}")
-        self.feedbackSlider.setTickPos([0.008, 0.01, 0.02, 0.04,0.06, 0.08, 0.1,0.2,0.4,0.6, 0.8,1, 2, 4, 6, 8, 10, 20])
-        self.feedbackSlider.setNumPos([0.01, 0.1,1,10])
+        self.feedbackSlider.setTickPos([0.0008, 0.001, 0.002, 0.004,0.006, 0.008, 0.01,0.02,0.04,0.06, 0.08,0.1, 0.2, 0.4, 0.6, 0.8, 1, 2])
+        self.feedbackSlider.setNumPos([0.001, 0.01,0.1,1])
         self.feedbackSlider.lower()
         
         self.feedbackSlider.logValueChanged.connect(self.updateFeedbackThresh)
@@ -367,8 +381,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.feedbackACSlider.setMinimum(0)
         self.feedbackACSlider.setMaximum(1000000)
         self.feedbackACSlider.setStyleSheet("QSlider::groove:horizontal {border: 1px solid #bbb;background: white;height: 10px;border-radius: 4px;}QSlider::sub-page:horizontal {background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,    stop: 0 #66e, stop: 1 #bbf);background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,    stop: 0 #bbf, stop: 1 #55f);border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::add-page:horizontal {background: #fff;border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::handle:horizontal {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #eee, stop:1 #ccc);border: 1px solid #777;width: 13px;margin-top: -2px;margin-bottom: -2px;border-radius: 4px;}QSlider::handle:horizontal:hover {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #fff, stop:1 #ddd);border: 1px solid #444;border-radius: 4px;}QSlider::sub-page:horizontal:disabled {background: #bbb;border-color: #999;}QSlider::add-page:horizontal:disabled {background: #eee;border-color: #999;}QSlider::handle:horizontal:disabled {background: #eee;border: 1px solid #aaa;border-radius: 4px;}")
-        self.feedbackACSlider.setTickPos([0.008, 0.01, 0.02, 0.04,0.06, 0.08, 0.1,0.2,0.4,0.6, 0.8,1, 2, 4, 6, 8, 10, 20])
-        self.feedbackACSlider.setNumPos([0.01, 0.1,1,10])
+        self.feedbackACSlider.setTickPos([0.0008, 0.001, 0.002, 0.004,0.006, 0.008, 0.01,0.02,0.04,0.06, 0.08,0.1, 0.2, 0.4, 0.6, 0.8, 1, 2])
+        self.feedbackACSlider.setNumPos([0.001, 0.01,0.1,1])
         self.feedbackACSlider.lower()
         
         self.feedbackACSlider.logValueChanged.connect(self.updateFeedbackACThresh)
@@ -387,7 +401,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         if isinstance(val,float):
             if np.abs(val)> 1e-30:
                 self.PIDApproachSettings['i'] = val
-                print 'Setting PID parameters'
                 self.setPIDParameters()
         self.lineEdit_I.setText(formatNum(self.PIDApproachSettings['i']))
         
@@ -457,11 +470,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.generalSettings['pid_retract_time'] = self.z_meters_max / self.generalSettings['pid_retract_speed']
         self.generalSettings['step_retract_time'] = self.z_meters_max / self.generalSettings['step_retract_speed']
-
+        
+        if not not self.hf:
+            self.setPIDParameters()
+        
         print 'Approach Window Voltage Calibration Set'
 
     def sendFakeSignals(self):
-        self.updateConstantHeightStatus.emit(True)
+        self.updateConstantHeightStatus.emit(True, self.Atto_Z_Voltage)
         self.updateFeedbackStatus.emit(True)
         print 'Fake signals sent'
 
@@ -516,9 +532,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateFeedbackThresh(self, value = 0):
         try:
-            self.feedbackThreshold = value
-            self.lineEdit_feedbackSet.setText(formatNum(self.feedbackThreshold))
-            self.feedbackSlider.setPosition(self.feedbackThreshold)
+            self.feedbackThresh = value
+            self.lineEdit_feedbackSet.setText(formatNum(self.feedbackThresh))
+            self.feedbackSlider.setPosition(self.feedbackThresh)
         except Exception as inst:
             print inst
             
@@ -526,35 +542,35 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         new_feedbackThresh = str(self.lineEdit_feedbackSet.text())
         val = readNum(new_feedbackThresh)
         if isinstance(val,float):
-            if val < 0.008:
-                val = 0.008
-            elif val > 20:
-                val = 20
+            if val < 0.0008:
+                val = 0.0008
+            elif val > 2:
+                val = 2
             self.updateFeedbackThresh(value = val)
         else:
-            self.lineEdit_feedbackSet.setText(formatNum(self.feedbackThreshold))
+            self.lineEdit_feedbackSet.setText(formatNum(self.feedbackThresh))
             
     def incrementFeedbackThresh(self):
-        val = self.feedbackThreshold * 1.01
-        if val < 0.008:
-            val = 0.008
-        elif val > 20:
-            val = 20
+        val = self.feedbackThresh * 1.01
+        if val < 0.0008:
+            val = 0.0008
+        elif val > 2:
+            val = 2
         self.updateFeedbackThresh(value = val)
         
     def decrementFeedbackThresh(self):
-        val = self.feedbackThreshold * 0.99
-        if val < 0.008:
-            val = 0.008
-        elif val > 20:
-            val = 20
+        val = self.feedbackThresh * 0.99
+        if val < 0.0008:
+            val = 0.0008
+        elif val > 2:
+            val = 2
         self.updateFeedbackThresh(value = val)
         
     def updateFeedbackACThresh(self, value = 0):
         try:
-            self.feedbackACThreshold = value
-            self.lineEdit_feedbackACSet.setText(formatNum(self.feedbackACThreshold))
-            self.feedbackACSlider.setPosition(self.feedbackACThreshold)
+            self.feedbackACThresh = value
+            self.lineEdit_feedbackACSet.setText(formatNum(self.feedbackACThresh))
+            self.feedbackACSlider.setPosition(self.feedbackACThresh)
         except Exception as inst:
             print inst
             
@@ -562,28 +578,28 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         new_feedbackACThresh = str(self.lineEdit_feedbackACSet.text())
         val = readNum(new_feedbackACThresh)
         if isinstance(val,float):
-            if val < 0.008:
-                val = 0.008
-            elif val > 20:
-                val = 20
+            if val < 0.0008:
+                val = 0.0008
+            elif val > 2:
+                val = 2
             self.updateFeedbackACThresh(value = val)
         else:
-            self.lineEdit_feedbackACSet.setText(formatNum(self.feedbackACThreshold))
+            self.lineEdit_feedbackACSet.setText(formatNum(self.feedbackACThresh))
             
     def incrementFeedbackACThresh(self):
-        val = self.feedbackACThreshold * 1.01
-        if val < 0.008:
-            val = 0.008
-        elif val > 20:
-            val = 20
+        val = self.feedbackACThresh * 1.01
+        if val < 0.0008:
+            val = 0.0008
+        elif val > 2:
+            val = 2
         self.updateFeedbackACThresh(value = val)
         
     def decrementFeedbackACThresh(self):
-        val = self.feedbackACThreshold * 0.99
-        if val < 0.008:
-            val = 0.008
-        elif val > 20:
-            val = 20
+        val = self.feedbackACThresh * 0.99
+        if val < 0.0008:
+            val = 0.0008
+        elif val > 2:
+            val = 2
         self.updateFeedbackACThresh(value = val)
 #--------------------------------------------------------------------------------------------------------------------------#
             
@@ -701,8 +717,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 
                 #TODO: prevent adding data points if JPEs are stepping
                 #Add frequency data to list
-                self.deltafData.appendleft(deltaf)
-                self.deltafData.pop()
+                if not self.JPEStepping:
+                    self.deltafData.appendleft(deltaf)
+                    self.deltafData.pop()
 
                 self.newPLLData.emit(deltaf, phaseError)
 
@@ -732,13 +749,17 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             setpoint = self.measurementSettings['fdbk_dc_setpoint']
             while self.measuring:
                 if measChnl <= 4:
-                    data = yield self.dac.read_voltage(measChnl-1)
+                    if not self.DACRamping:
+                        data = yield self.dac.read_voltage(measChnl-1)
+                        data = data - setpoint
+                        self.lineEdit_fdbkDC.setText(formatNum(data))
+                        self.newFdbkDCData.emit(data)
                 else:
                     data = yield self.hf.get_aux_input_value(measChnl - 4)
-                    
-                data = data - setpoint
-                self.lineEdit_fdbkDC.setText(formatNum(data))
-                self.newFdbkDCData.emit(data)
+                    data = data - setpoint
+                    self.lineEdit_fdbkDC.setText(formatNum(data))
+                    self.newFdbkDCData.emit(data)
+                yield self.sleep(0.1)
         except Exception as inst:
             print inst
     
@@ -749,79 +770,148 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             setpoint = self.measurementSettings['fdbk_ac_setpoint']
             while self.measuring:
                 if measChnl <= 4:
-                    data = yield self.dac.read_voltage(measChnl-1)
+                    if not self.DACRamping:
+                        data = yield self.dac.read_voltage(measChnl-1)
+                        data = data - setpoint
+                        self.lineEdit_fdbkAC.setText(formatNum(data))
+                        self.newFdbkACData.emit(data)
                 else:
                     data = yield self.hf.get_aux_input_value(measChnl-4)
-                
-                data = data - setpoint
-                self.lineEdit_fdbkAC.setText(formatNum(data))
-                self.newFdbkACData.emit(data)
+                    data = data - setpoint
+                    self.lineEdit_fdbkAC.setText(formatNum(data))
+                    self.newFdbkACData.emit(data)
+                yield self.sleep(0.1)
         except Exception as inst:
             print inst
             
             
 #--------------------------------------------------------------------------------------------------------------------------#
     """ The following section contains the stepwise approach sequence."""
-    """
+    
     @inlineCallbacks
-    def startApproachSequence(self, c = None):
+    def startStepConstantHeightApproachSequence(self, c = None):
         '''
-        Function needs to be updated with new HF2LI Server subcribe / poll syntax.
-        
         General procedure: 
-            1. Measure deltaf, get average value. 
+            1. Measure all activate controllers.
             2. Compare to threshhold. If below, procedure to step 3. Otherwise, you're done!
             3. Attempt to step the z voltage by the specified step size. 
-               If this is possible (ie. z + z_step < z_max), return to step 1. 
+               If this is possible (ie. z + z_step < z_max),do so. Then return to step 1. 
                If not, proceed to step 4. 
             4. Set z voltage back to 0. 
             5. Step JPEs forward. Then return to step 1. 
         '''
+        #TODO make sure at least one controller is running 
         
-        self.approaching = True
-        
+        #TODO thing about tip height setting (not relevant for this module)
         #yield self.cpsc.set_height(self.JPE_Tip_Height*1000 + 33.9)
-        
-        while self.approaching:
-            yield self.sleep(0.25)
-            #data = yield self.hf.poll_pll(1, self.Approach_MeasTime, 500)
-            #df_avg = np.avg(data[0])
-            #if dv_avg > self.freqThreshold:
-            #    self.approaching = False
-            #    break
+        try:
+            self.approaching = True
+            self.updateApproachStatus.emit(True)
+            
+            #Make sure the zero the Zurich output voltage
+            z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+            if self.approaching and z_voltage >= 0.001:
+                retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
+                
+            while self.approaching:
+                self.label_stepApproachStatus.setText('Approaching!')
+                
+                #Measure the relevant controllers. If they're below the threshhold, keep going. Otherwise break
+                if self.measurementSettings['meas_pll']:
+                    deltaf = yield self.hf.get_pll_freqdelta(self.measurementSettings['pll_output'])
+                    if np.abs(deltaf) > self.freqThreshold:
+                        self.label_stepApproachStatus.setText('Met Frequency Threshhold')
+                        yield self.stepWithdrawForConstant()
+                        break
+                        
+                if self.measurementSettings['meas_fdbk_dc']:
+                    measChnl = self.measurementSettings['fdbk_dc_input']
+                    setpoint = self.measurementSettings['fdbk_dc_setpoint']
 
-            #Here need to compute conversion rate between voltage and step size
-            start_voltage = self.Atto_Z_Voltage
-            end_voltage = self.Atto_Z_Voltage + self.stepwiseApproachSettings['atto_z_step_size'] * self.z_volts_to_meters
+                    if measChnl <= 4:
+                        data = yield self.dac.read_voltage(measChnl-1)
+                        data = data - setpoint
+                        self.lineEdit_fdbkDC.setText(formatNum(data))
+                        self.newFdbkDCData.emit(data)
+                    else:
+                        data = yield self.hf.get_aux_input_value(measChnl - 4)
+                        data = data - setpoint
+                        self.lineEdit_fdbkDC.setText(formatNum(data))
+                        self.newFdbkDCData.emit(data)
+                    if np.abs(data) > self.feedbackThresh:
+                        self.label_stepApproachStatus.setText('Met DC Voltage Threshhold')
+                        yield self.stepWithdrawForConstant()
+                        break
+                
+                if self.measurementSettings['meas_fdbk_ac']:
+                    measChnl = self.measurementSettings['fdbk_ac_input']
+                    setpoint = self.measurementSettings['fdbk_ac_setpoint']
 
-            if end_voltage < 10 and self.approaching:
-                #yield self.dac.buffer_ramp([self.Atto_Z_DAC_Out],[],[start_voltage],[end_voltage], self.stepwiseApproachSettings['atto_z_points'], self.stepwiseApproachSettings['atto_z_points_delay'] * 1e6)
-                self.lineEdit_FineZ.setText(formatNum(end_voltage / self.z_volts_to_meters, 3))
-                self.Atto_Z_Voltage = end_voltage
-                self.progressBar.setValue(int(100*self.Atto_Z_Voltage))
-            elif self.approaching:
-                end_voltage = 0
-                self.Atto_Z_Voltage = end_voltage
-                self.progressBar.setValue(int(100*self.Atto_Z_Voltage))
-                #retract atto
-                #yield self.dac.buffer_ramp([self.Atto_Z_DAC_Out],[],[start_voltage],[end_voltage], self.stepwiseApproachSettings['atto_retract_points'], self.stepwiseApproachSettings['atto_retract_points_delay'] * 1e6)
-                self.lineEdit_FineZ.setText(formatNum(end_voltage / self.z_volts_to_meters))
-                #Do a coarse step forward
-                #yield self.cpsc.move_z(self.JPE_Module_Address, self.Temperature, , self.JPE_Approach_Freq, self.JPE_Approach_Size, self.JPE_Approach_Steps)
-            print 'Starting at voltage: ' + str(start_voltage) + '. Finishing at voltage: ' + str(end_voltage)
-    """
+                    if measChnl <= 4:
+                        data = yield self.dac.read_voltage(measChnl-1)
+                        data = data - setpoint
+                        self.lineEdit_fdbkAC.setText(formatNum(data))
+                        self.newFdbkACData.emit(data)
+                    else:
+                        data = yield self.hf.get_aux_input_value(measChnl - 4)
+                        data = data - setpoint
+                        self.lineEdit_fdbkAC.setText(formatNum(data))
+                        self.newFdbkACData.emit(data)
+                    if np.abs(data) > self.feedbackACThresh:
+                        self.label_stepApproachStatus.setText('Met AC Voltage Threshhold')
+                        yield self.stepWithdrawForConstant()
+                        break
+                    
+                #If no controllers are above the threshhold, then take a step forward
+                start = self.Atto_Z_Voltage
+                end = self.Atto_Z_Voltage + self.StepApproachSettings['step_size'] * self.z_volts_to_meters
+                
+                if end < self.z_volts_max and self.approaching:
+                    #If we are not stepping beyond the max z range of the attocubes take the step
+                    speed = self.StepApproachSettings['step_speed'] * self.z_volts_to_meters
+                    yield self.setDAC_Voltage(start, end, speed)
 
+                elif self.approaching:
+                    #Otherwise, retract then step the JPEs 
+                    speed = self.generalSettings['step_retract_speed'] * self.z_volts_to_meters
+                    yield self.setDAC_Voltage(start,0,speed)
+                    
+                    if self.approaching:
+                        self.label_stepApproachStatus.setText('Stepping JPEs')
+                        yield self.stepJPEs()
+            
+            self.approaching = False
+            self.updateApproachStatus.emit(False)
+        except Exception as inst:
+            print "Stepwise Approach Error:"
+            print inst
+            
+    @inlineCallbacks
+    def stepWithdrawForConstant(self):
+        start = self.Atto_Z_Voltage
+        end = self.Atto_Z_Voltage - self.StepApproachSettings['height'] * self.z_volts_to_meters
+        speed = self.generalSettings['step_retract_speed'] * self.z_volts_to_meters
+        yield self.setDAC_Voltage(start, end, speed)
+        self.updateConstantHeightStatus.emit(True, self.Atto_Z_Voltage)
+    
     def updateCoarseSteps(self):
         try:
             steps = 0
             for a in self.JPE_Steps:
                 steps = steps + a[4]
-            self.lineEdit_CoarseZ.setText(formatNum(np.abs(steps), 0))
+            self.lineEdit_CoarseZ.setText(formatNum(np.abs(steps), 3))
         except Exception as inst:
             print inst
 
     def abortApproachSequence(self):
         self.approaching = False
+        self.updateApproachStatus.emit(False)
+        #Turn off PID (just does nothing if it's already off)
+        self.hf.set_pid_on(self.PID_Index, False)
+
+        self.label_pidApproachStatus.setText('Idle')
+        self.label_stepApproachStatus.setText('Idle')
 
 #--------------------------------------------------------------------------------------------------------------------------#
     """ The following section contains the PID approach sequence and all related functions."""
@@ -830,60 +920,240 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def startPIDApproachSequence(self, c = None):
         '''
         General procedure: 
-            1. Describe this at some point
+            1. TODO Describe this at some point
         '''
-    
-        #Add checks that controllers are running and working properly
-        self.approaching = True
-        self.label_approachStatus.setText('Approaching with Zurich')
-        #Initializes all the PID settings
-        yield self.setHF2LI_PID_Settings()
-        
-        #Set the output range to be 0 to the max z voltage, which is specified by the temperture of operation. 
-        yield self.setPIDOutputRange(self.z_volts_max)
-
-        #Toggle the sum board to be 1 to 1 
-        yield self.dcbox.set_voltage(self.PIDApproachSettings['sumboard_toggle']-1, 0)
-        
-        yield self.hf.set_pid_on(self.PID_Index, True)
-        i = 0
-        while self.approaching:
-            '''
-            #Eventually figure out how to do this properly so it doesn't trigger during JPE steps. 
-            points_above_freq_thresh = 0
-            for deltaf in self.deltafData:
-                points_above_freq_thresh = points_above_freq_thresh + (deltaf > self.freqThreshold)
+        try:
+            #TODO Add checks that controllers are running and working properly
+            self.approaching = True
+            self.updateApproachStatus.emit(True)
+            
+            #Set PID off for initialization
+            yield self.hf.set_pid_on(self.PID_Index, False)
+            
+            #Make sure that the DAC output voltage is 0 from stepwise mode or approaching
+            #for feedback
+            if self.Atto_Z_Voltage >0:
+                self.label_pidApproachStatus.setText('Zeroing DAC Voltage')
+                speed = self.generalSettings['step_retract_speed']*self.z_volts_to_meters
+                yield self.setDAC_Voltage(self.Atto_Z_Voltage,0,speed)
                 
-            if points_above_freq_thresh > 10:
-                self.label_approachStatus.setText('Surface contacted')
-                #Maybe eventually add auto retract function
-            '''
-            z_voltage = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
-
-            if z_voltage >= (self.z_volts_max - 0.001) and self.approaching:
-                yield self.hf.set_pid_on(self.PID_Index, False)
-                self.label_approachStatus.setText('Retracting Attocubes')
+            #Toggle the sum board to be 1 to 1 
+            if self.voltage1to10 == True:
+                #Withdraw completely before switching to 1 to 1
                 #Find desired retract speed in volts per second
-                retract_speed = self.PIDApproachSettings['atto_retract_speed'] * self.z_volts_to_meters
+                retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
                 yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
                 
-                if self.approaching:
-                    self.label_approachStatus.setText('Stepping with JPEs')
-                    #Step JPE by specified amount in z direction
-                    yield self.cpsc.move_z(int(self.PIDApproachSettings['jpe_module_address']), int(self.PIDApproachSettings['jpe_temperature']), int(self.PIDApproachSettings['jpe_approach_freq']), int(self.PIDApproachSettings['jpe_approach_size']), -1.0*self.PIDApproachSettings['jpe_approach_steps'],30)
-                    self.JPE_Steps.append([int(self.PIDApproachSettings['jpe_module_address']), int(self.PIDApproachSettings['jpe_temperature']), int(self.PIDApproachSettings['jpe_approach_freq']), int(self.PIDApproachSettings['jpe_approach_size']), -1.0*self.PIDApproachSettings['jpe_approach_steps']])
-                    try:
-                        self.updateCoarseSteps()
-                    except Exception as inst:
-                        print inst
-                    
-                if self.approaching:
-                    #Turn back on
-                    yield self.hf.set_pid_on(self.PID_Index, True)
-                    self.label_approachStatus.setText('Approaching with Zurich')
+                yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
+                self.voltage1to10 = False
+                #TODO check that voltage is actually 1 to 1 if recently switched
                 
-        yield self.hf.set_pid_on(self.PID_Index, False)
-        self.label_approachStatus.setText('Idle')
+            self.label_pidApproachStatus.setText('Approaching with Zurich')
+            #Initializes all the PID settings
+            yield self.setHF2LI_PID_Settings()
+            
+            #Set the output range to be 0 to the max z voltage, which is specified by the temperture of operation. 
+            yield self.setPIDOutputRange(self.z_volts_max)
+            
+            #Turn on PID to start the approach
+            yield self.hf.set_pid_on(self.PID_Index, True)
+            
+            #Empty the deltafData array. This prevents the software from thinking it hit the surface because of 
+            #another approach
+            self.deltafData = deque([0]*self.deltaf_track_length)
+            
+            while self.approaching:
+                points_above_freq_thresh = 0
+                for deltaf in self.deltafData:
+                    points_above_freq_thresh = points_above_freq_thresh + (deltaf > self.freqThreshold)
+                    
+                if points_above_freq_thresh > 10:
+                    self.label_pidApproachStatus.setText('Surface contacted')
+                    #PID approach is finished as the surface has been found. 
+                    break
+
+                z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+
+                if z_voltage >= (self.z_volts_max - 0.001) and self.approaching:
+                    yield self.hf.set_pid_on(self.PID_Index, False)
+                    
+                    self.label_pidApproachStatus.setText('Retracting Attocubes')
+                    #Find desired retract speed in volts per second
+                    retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                    yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
+                    
+                    if self.approaching:
+                        self.label_pidApproachStatus.setText('Stepping with JPEs')
+                        yield self.stepJPEs()
+
+                    if self.approaching:
+                        #Turn back on
+                        yield self.hf.set_pid_on(self.PID_Index, True)
+                        self.label_pidApproachStatus.setText('Approaching with Zurich')
+        except Exception as inst:
+            print "Gen PID Approach Error:"
+            print inst
+            
+    @inlineCallbacks
+    def startFeedbackApproachSequence(self, c = None):
+            try:
+                #TODO improve function. View all TODOs and implement them. 
+            
+                #TODO make automated check to make sure that sum box is changing voltage
+                #mode appropriately. Probably toggle voltage, then go up to 1V output?
+                
+                #start PID approach sequence
+                self.approaching = True
+                self.updateApproachStatus.emit(True)
+                
+                #If the voltage is not yet in the divided by 10 mode, then we need to
+                #do the initial approach
+                if not self.voltage1to10:
+                    #Run feedback approach sequence with coarse steps (16 bit limited)
+                    #until it hits the surface 
+                    yield self.startPIDApproachSequence()
+                
+                    #TODO: take note of current surface position to make next step more efficient?
+                    
+                    if self.approaching:
+                        #Withdraw completely
+                        #Find desired retract speed in volts per second
+                        retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                        yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
+                        self.label_pidApproachStatus.setText('Withdrawing post contact')
+                
+                if self.approaching:
+                    #Make sure the PID is off
+                    pid_on = yield self.hf.get_pid_on(self.PID_Index)
+                    if pid_on:
+                        yield self.hf.set_pid_on(self.PID_Index, False)
+                        
+                    #Set range from 0 to 10 V. This voltage should be divided by 10, at room temperature
+                    #This corresponds to ~8 microns
+                    yield self.setPIDOutputRange(10)
+                    
+                    #Toggle the sum board to be 10 to 1 
+                    yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 2.5)
+                    self.voltage1to10 = True
+                    
+                    #Initializes all the PID settings. This is mostly to update the PID parameters
+                    # self.setPIDParameters() might be sufficent instead of all PID settings
+                    yield self.setHF2LI_PID_Settings()
+                    
+                    #start PID approach sequence
+                    yield self.hf.set_pid_on(self.PID_Index, True)
+                    self.label_pidApproachStatus.setText('Approaching with Zurich')
+                    
+                    #Empty the deltafData array. This prevents the software from thinking it hit the surface because of 
+                    #another approach
+                    self.deltafData = deque([0]*self.deltaf_track_length)
+                    
+                    #Set conditions to know when we're done approaching with the PID
+                    while self.approaching:
+                        z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+                        #if we've maxed out the PID voltage, we're done approaching with the PID
+                        if z_voltage >= 10:
+                            break
+                        #TODO reset self.deltafData to avoid triggering
+                        #Find the number of data points that are above the threshhold
+                        points_above_freq_thresh = 0
+                        for deltaf in self.deltafData:
+                            points_above_freq_thresh = points_above_freq_thresh + (deltaf > self.freqThreshold)
+                        #If more than 10 of the recent points are above the frequency threshhold, then
+                        #in contact and can break from approaching with the PID
+                        if points_above_freq_thresh > 10:
+                            break
+                            
+                    #Once PID maxes out, or we're in contact with the surface, step forward with the DAC adc
+                    #until we're in the middle of the Zurich output range, so that we can maintain feedback 
+                    #over a range of z voltages
+                    #TODO: make this better by retracting all the way, taking the appropriate step in with the DAC
+                    #then approaching again. Also use this to center the voltage better than at 8V
+                    self.label_pidApproachStatus.setText('Approaching with DAC')
+                    try:
+                        while self.approaching:
+                            #check to see if output voltage of the PID has dropped to below 8V 
+                            PID_output = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+                            #If we're midrange of the Zurich PID output, then we're in contact with good range
+                            #8 could be changed to 5 to really be in the middle eventually
+                            if PID_output < 8:
+                                print 'In feedback biotch'
+                                self.label_pidApproachStatus.setText('In Feedback')
+                                self.updateFeedbackStatus.emit(True)
+                                break
+                                
+                            #Atto_Z_Voltage corresponds to the DAC ADC output voltage. HF2LI PID voltage is 
+                            #always added in on top of this voltage. 
+                            start_voltage = self.Atto_Z_Voltage
+                            end_voltage = self.Atto_Z_Voltage + self.PIDApproachSettings['step_size'] * self.z_volts_to_meters
+                            
+                            #Check to see if we've reached the maximum z voltage. 
+                            #If so, stop the approach 
+                            if (end_voltage + PID_output/10) > self.z_volts_max:
+                                self.label_pidApproachStatus.setText('Feedback Approach Failed')
+                                
+                                #Fully withdraw DAC and Zurich
+                                speed = self.generalSettings['pid_retract_speed']*self.z_volts_to_meters*10
+                                yield self.setHF2LI_PID_Integrator(0, speed)
+                                
+                                speed = self.generalSettings['step_retract_speed']*self.z_volts_to_meters
+                                yield self.setDAC_Voltage(self.Atto_Z_Voltage, 0, speed)
+                                
+                                #Set mode to 1 to 1 again, so that if Approach for Feedback is reinitiated, it does a 
+                                #surface approach first
+                                yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
+                                self.voltage1to10 = False
+                                
+                                self.approaching = False
+                                self.updateApproachStatus.emit(False)
+                                break
+                                
+                            #Take a step forward as specified by the stepwise approach advanced settings
+                            speed = self.PIDApproachSettings['step_speed']*self.z_volts_to_meters
+                            yield self.setDAC_Voltage(start_voltage, end_voltage, speed)
+                                
+                        self.approaching = False
+                        self.updateApproachStatus.emit(False)
+                    except Exception as inst:
+                        print "Feedback Sequence 2 error:"
+                        print inst
+            except Exception as inst:
+                print "Feedback Sequence error:"
+                print inst
+   
+    @inlineCallbacks
+    def startPIDConstantHeightApproachSequence(self, c = None):
+        #Bring us to the surface
+        yield self.startPIDApproachSequence()
+        
+        if self.approaching:
+            #Read the voltage being output by the PID
+            z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+            
+            #Turn off the PID and back off by appropriate amount
+            yield self.hf.set_pid_on(self.PID_Index, False)
+            end_voltage = z_voltage - self.constantHeight * self.z_volts_to_meters
+            #Find desired retract speed in volts per second
+            retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+            yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
+                
+            #Set range such that maximally extended is at the proper distance from the surface. 
+            yield self.setPIDOutputRange(end_voltage)
+
+            #Turn PID back on so that if there's drift or the sample is taller than expected, 
+            #the PID will retract the tip
+            yield self.hf.set_pid_on(self.PID_Index, True)
+
+            #Emit that we can now scan in constant height mode
+            self.updateConstantHeightStatus.emit(True, self.Atto_Z_Voltage)
+            self.label_pidApproachStatus.setText('Constant Height')
+            self.approaching = False
+            self.updateApproachStatus.emit(False)
+                
+            #TODO:
+            #Start a monitor of whether or not still in constant height (ie, if no longer at 
+            #max voltage output, then probably not at constant height). Maybe give error when
+            #Hit surface
         
     @inlineCallbacks
     def initializePID(self, c = None):
@@ -898,7 +1168,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             if pid_on:
                 yield self.hf.set_pid_on(self.PID_Index, False)
 
-            #Set the output range to be 0 to 3 V, which is the required range for room temperature. 
+            #Set the output range to be what it needs to be
             yield self.setPIDOutputRange(self.z_volts_max)
 
             #Set integral term to 1, and 0 to the rest
@@ -951,14 +1221,15 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def setHF2LI_PID_Settings(self, c = None):
         try:
-            #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's hard coded in (initialized at start)
+            #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's
+            #hard coded in (initialized at start)
 
             #Set PID parameters
             yield self.setPIDParameters()
             #Sets the output signal type to be an auxiliary output offset
             yield self.hf.set_pid_output_signal(self.PID_Index, 3)
             #Sets the correct channel of the aux output
-            yield self.hf.set_pid_output_channel(self.PID_Index, self.PIDApproachSettings['atto_z_output'])
+            yield self.hf.set_pid_output_channel(self.PID_Index, self.generalSettings['pid_z_output'])
 
             #Sets the PID input signal to be the oscillator frequency
             yield self.hf.set_pid_input_signal(self.PID_Index, 10)
@@ -976,18 +1247,31 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
     @inlineCallbacks
     def setPIDOutputRange(self, max):
-        #Set the output range to be 0 to max V.
+        #Set the output range to be 0 to 'max' V.
         yield self.hf.set_pid_output_center(self.PID_Index, float(max)/2)
         yield self.hf.set_pid_output_range(self.PID_Index, float(max)/2)
         
     @inlineCallbacks
     def setPIDParameters(self):
-        print 'Yupperino'
+        print 'PID Parameters Set'
         #Sets PID parameters, noting that i cannot ever be 0, because otherwise this will lead to 
         #voltage jumps as it resets the integrator value. 
-        yield self.hf.set_pid_p(self.PID_Index, self.PIDApproachSettings['p'])
-        yield self.hf.set_pid_i(self.PID_Index, self.PIDApproachSettings['i'])
-        yield self.hf.set_pid_d(self.PID_Index, self.PIDApproachSettings['d'])
+        
+        #This also converts from m -> V, because the PID works off of volts, yet the input parameters
+        #are in meters. Also takes into account wether or not the system is currently in the voltage
+        #divided mode
+        try:
+            if not self.voltage1to10:
+                yield self.hf.set_pid_p(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['p'])
+                yield self.hf.set_pid_i(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['i'])
+                yield self.hf.set_pid_d(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['d'])
+            else:
+                yield self.hf.set_pid_p(self.PID_Index, 10*self.z_volts_to_meters*self.PIDApproachSettings['p'])
+                yield self.hf.set_pid_i(self.PID_Index, 10*self.z_volts_to_meters*self.PIDApproachSettings['i'])
+                yield self.hf.set_pid_d(self.PID_Index, 10*self.z_volts_to_meters*self.PIDApproachSettings['d'])
+        except Exception as inst:
+            print "PID errror:"
+            print inst
             
     @inlineCallbacks
     def setHF2LI_PID_Integrator(self, val = 0, speed = 1):
@@ -998,7 +1282,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         '''
         #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's hard coded in (initialized at start)
         try:
-            curr_val = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
+            curr_val = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
 
             if 0 <= val and val <= curr_val:
                 #Make sure the pid is off when setting up the integrator changing
@@ -1020,17 +1304,20 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Sets the output signal type to be an auxiliary output offset
                 yield self.hf.set_pid_output_signal(self.PID_Index, 3)
                 #Sets the correct channel of the aux output
-                yield self.hf.set_pid_output_channel(self.PID_Index, self.PIDApproachSettings['atto_z_output'])
-
+                yield self.hf.set_pid_output_channel(self.PID_Index, self.generalSettings['pid_z_output'])
+                
                 yield self.hf.set_pid_setpoint(self.PID_Index, -speed)
-                #Sets the setpoint to be -10V. The input signal (aux output 4), is always left as 0 Volt output. 
+                #Sets the setpoint to be -speed volts. The input signal (aux output 4), is always left as 0 Volt output. 
                 #This means that the rate at which the voltage changes is this setpoint (-'speed') times the integrator
                 # value (1 /s). So, this changes the voltage at a rate of 'speed' V/s.
-
+                
                 expected_time = (curr_val - val)/speed
 
                 #Turn on PID
                 yield self.hf.set_pid_on(self.PID_Index, True)
+                #Wait the appropriate amount of time. This is not completely accurate, and so some offsets were 
+                #added that seem to help. TODO find a better way to terminate in the future. For now works well
+                #enough
                 if expected_time - 0.05 > 0:
                     yield self.sleep(expected_time - 0.05)
                 else:
@@ -1043,62 +1330,135 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except Exception as inst:
             print "Set integrator error" + str(inst)
 
+    '''
+    Function to smoothly ramp between two voltage points are the desired speed provided in volts/s
+    '''
+    @inlineCallbacks
+    def setDAC_Voltage(self, start, end, speed):
+        if float(start) != float(end) and end >=0:
+            #points required to make smooth ramp of 300 microvolt steps (the limit of 16 bit dac)
+            points = np.abs(int((start-end) / (300e-6)))
+            #delay in microseconds between each point to get the right speed
+            delay = int(300 / speed)
+            '''
+            print "Desired withdraw speed:"
+            print speed
+            print "Calculated withdraw points:"
+            print points
+            print "Calculated withdraw delay:"
+            print delay
+            '''
+            self.DACRamping = True
+            yield self.dac.ramp1(self.generalSettings['step_z_output'] - 1, float(start), float(end), points, delay)
+            yield self.sleep(points * delay / 1e6)
+            self.DACRamping = False
+            self.Atto_Z_Voltage = float(end)
+            
+    @inlineCallbacks
+    def stepJPEs(self):
+        self.JPEStepping = True
+        #Step JPE by specified amount in z direction (30 at the end ensures that we move w/ high torque)
+        yield self.cpsc.move_z(int(self.generalSettings['jpe_module_address']), int(self.generalSettings['jpe_temperature']), int(self.generalSettings['jpe_freq']), int(self.generalSettings['jpe_size']), -1.0*self.generalSettings['jpe_steps'],30)
+        #Add to list of steps taken with auto approach
+        self.JPE_Steps.append([int(self.generalSettings['jpe_module_address']), int(self.generalSettings['jpe_temperature']), int(self.generalSettings['jpe_freq']), int(self.generalSettings['jpe_size']), -1.0*self.generalSettings['jpe_steps']])
+        try:
+            self.updateCoarseSteps()
+        except Exception as inst:
+            print inst
+            
+        #Give time to make sure that deltaf settles back to true value from violent JPE steps
+        #Might be unnecessary
+        yield self.sleep(0.5)
+        self.JPEStepping = False
+            
     @inlineCallbacks
     def withdrawSpecifiedDistance(self, c = None):
         try:          
-            #Eventually add a way to make sure that the DAC / JPEs are no longer moving anything before sending the retract command
-            self.approaching = False
-            self.updateConstantHeightStatus.emit(False)
+            #Abort all approach efforts
+            yield self.abortApproachSequence()
+            #Signal that no longer in constant height or in feedback
+            self.updateConstantHeightStatus.emit(False, self.Atto_Z_Voltage)
             self.updateFeedbackStatus.emit(False)
-            
+        
+            #Disable buttons for insane button clickers like Charles Tschirhart <3
             self.push_Withdraw.setEnabled(False)
-            self.push_PIDApproach.setEnabled(False)
+            self.push_StepApproachForConstant.setEnabled(False)
             self.push_ApproachForFeedback.setEnabled(False)
-            self.push_ApproachForConstant.setEnabled(False)
+            self.push_PIDApproachForConstant.setEnabled(False)
             
             #Turn PID off
             yield self.hf.set_pid_on(self.PID_Index, False)
-            z_voltage = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
+            #Get Zurich voltage output
+            z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
             
-            self.label_approachStatus.setText('Withdrawing')
-            self.label_feedbackStatus.setText('Withdrawing')
-            self.label_constHeightStatus.setText('Withdrawing')
+            self.label_stepApproachStatus.setText('Withdrawing')
+            self.label_pidApproachStatus.setText('Withdrawing')
             
-            #eventually replace with a proper condition identifying that the DAC ADC is connected instead of connected 
-            #via aux out of the hf2li pid. Also, know when 10 divider is being used so appropriate multiplier is set. 
+            #Keep track of how much distance still needs to be withdrawn after each step
+            withdrawDistance = self.withdrawDistance
             
             if z_voltage >= 0.001: 
                 #Find desired end voltage
-                end_voltage = z_voltage - self.withdrawDistance * self.z_volts_to_meters
+                end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters     
+                if self.voltage1to10:
+                    end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters * 10
+                    
+                print 'Zurich start voltage: '
+                print z_voltage
+                print 'Zurich end voltage: '
+                print end_voltage
 
                 if end_voltage < 0:
                     end_voltage = 0
-
+                    #Remaining withdraw distance
+                    if self.voltage1to10:
+                        withdrawDistance = withdrawDistance - z_voltage / (self.z_volts_to_meters*10)
+                    else:
+                        withdrawDistance = withdrawDistance - z_voltage / self.z_volts_to_meters
+                else:
+                    #Remaining withdraw distance
+                    withdrawDistance = 0
+                    
+                print 'Zurich distance remaning: '
+                print withdrawDistance
+                    
                 #Find desired retract speed in volts per second
-                retract_speed = self.PIDApproachSettings['atto_retract_speed'] * self.z_volts_to_meters
+                retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                
+                #If output voltage is being divided by 10, multiply by 10 to compensate
+                if self.voltage1to10:
+                    retract_speed = 10*retract_speed
+                    
                 yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
             
-            elif self.Atto_Z_Voltage > 0:
+            if self.Atto_Z_Voltage > 0 and withdrawDistance > 0:
                 start_voltage = self.Atto_Z_Voltage
-                end_voltage = self.Atto_Z_Voltage - self.withdrawDistance * self.z_volts_to_meters
+                end_voltage = self.Atto_Z_Voltage - withdrawDistance * self.z_volts_to_meters
                 
-                #eventually send message saying can't withdraw distance without coarse movement
+                print 'DACADC start voltage: '
+                print start_voltage
+                print 'DACADC end voltage: '
+                print end_voltage
+                
                 if end_voltage < 0:
                     end_voltage = 0
-                #hard coded to be the first output, output 0. Generalize later
-                print self.feedbackApproachSettings['atto_retract_points']
-                print self.feedbackApproachSettings['atto_retract_points_delay']
-                yield self.dac.ramp1(0, float(start_voltage), float(end_voltage), int(self.feedbackApproachSettings['atto_retract_points']), int(1e6*self.feedbackApproachSettings['atto_retract_points_delay']))
-                self.Atto_Z_Voltage = end_voltage
+                    #distance being withdrawn by DAC
+                    withdrawDistance = start_voltage / self.z_volts_to_meters
+                
+                print 'DACADC withdraw distance: '
+                print withdrawDistance
+                
+                #speed in volts / second
+                speed = self.generalSettings['step_retract_speed']*self.z_volts_to_meters
+                yield self.setDAC_Voltage(start_voltage, end_voltage, speed)
                 
             self.push_Withdraw.setEnabled(True)
-            self.push_PIDApproach.setEnabled(True)
+            self.push_StepApproachForConstant.setEnabled(True)
             self.push_ApproachForFeedback.setEnabled(True)
-            self.push_ApproachForConstant.setEnabled(True)
+            self.push_PIDApproachForConstant.setEnabled(True)
             
-            self.label_approachStatus.setText('Idle')
-            self.label_feedbackStatus.setText('Idle')
-            self.label_constHeightStatus.setText('Idle')
+            self.label_stepApproachStatus.setText('Idle')
+            self.label_pidApproachStatus.setText('Idle')
             
         except Exception as inst:
             print inst
@@ -1106,22 +1466,17 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def returnToHomePosition(self, c = None):
         try:
-            #Stop you from being able to reapproach while the 
-            #PID is taking you home
-            pidapproach_enabled = False
-            if self.push_PIDApproach.isEnabled():
-                pidapproach_enabled = True
-                self.push_PIDApproach.setEnabled(False)
-            '''
-            stepapproach_enabled = False
-            if self.push_Approach.isEnabled():
-                stepapproach_enabled = True
-                self.push_Approach.setEnabled(False)
-            '''
-            #note retract speed is divided by 10 when in the divide by 10 mode
+            #TODO add functionality to have this function stop you from doing other things while moving home
+
             #This retracts the attocubes voltage contribution from the HF2LI
-            retract_speed = self.PIDApproachSettings['atto_retract_speed'] * self.z_volts_to_meters
+            retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+            if self.voltage1to10:
+                retract_speed = retract_speed*10
             yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
+            
+            #This retracts the attocubes voltage contribution from the DAC
+            retract_speed = self.generalSettings['step_retract_speed'] * self.z_volts_to_meters
+            yield self.setDAC_Voltage(self.Atto_Z_Voltage, 0, retract_speed)
             
             length = len(self.JPE_Steps)
             for i in range (0,length):
@@ -1132,215 +1487,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.updateCoarseSteps()
             self.JPE_Steps = []
 
-            if pidapproach_enabled:
-                self.push_PIDApproach.setEnabled(True)
-            '''
-            if stepapproach_enabled:
-                self.push_Approach.setEnabled(True)
-            '''
         except Exception as inst:
             print "Return home error" + str(inst)
-
-    @inlineCallbacks
-    def startFeedbackApproachSequence(self, c = None):
-        msgBox = QtGui.QMessageBox(self)
-        msgBox.setIcon(QtGui.QMessageBox.Information)
-        msgBox.setWindowTitle('MAKE SURE IN DIVIDE BY 10 MODE')
-        msgBox.setText("\r\n MAKE SURE HF2LI OUTPUT IS BEING DIVIDED BY 10, OTHERWISE CATASTROPHE.")
-        msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
-        msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
-        if msgBox.exec_():
-            #Make sure the PID is off
-            pid_on = yield self.hf.get_pid_on(self.PID_Index)
-            if pid_on:
-                yield self.hf.set_pid_on(self.PID_Index, False)
-                
-            #Set range from 0 to 10 V. This voltage should be divided by 10, at room temperature
-            #This corresponds to ~8 microns
-            yield self.setPIDOutputRange(10)
-            
-            #Initializes all the PID settings. Note: for now this uses the same settings as
-            #The PID approach
-            yield self.setHF2LI_PID_Settings()
-            
-            #Toggle the sum board to be 10 to 1 
-            yield self.dcbox.set_voltage(self.PIDApproachSettings['sumboard_toggle']-1, 2.5)
-            
-            #start PID approach sequence
-            self.approaching = True
-            yield self.hf.set_pid_on(self.PID_Index, True)
-            self.label_feedbackStatus.setText('Approaching with Zurich')
-
-            #Lets add conditions to know when we're done approaching with the PID
-            while self.approaching:
-                z_voltage = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
-                #if we've maxed out the PID voltage, we're done approaching with the PID
-                if z_voltage >= 10:
-                    break
-                
-                #Find the number of data points that are above the threshhold
-                points_above_freq_thresh = 0
-                for deltaf in self.deltafData:
-                    points_above_freq_thresh = points_above_freq_thresh + (deltaf > self.freqThreshold)
-                #If more than 10 of the recent points are above the frequency threshhold, then probably
-                #in contact and can break from approaching with the PID
-                if points_above_freq_thresh > 10:
-                    break
-                    
-            #Once PID maxes out, or we're in contact with the surface, step forward with the DAC adc
-            #until we're in the middle of the Zurich output range, so that we can maintain feedback 
-            #over a range of z voltages
-            self.label_feedbackStatus.setText('Approaching with DAC')
-            try:
-                while self.approaching:
-                    PID_output = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
-                    #If we're midrange of the Zurich PID output, then we're in contact with good range
-                    #8 could be changed to 5 to really be in the middle eventually
-                    if PID_output < 8:
-                        print 'In feedback biotch'
-                        self.label_feedbackStatus.setText('In Feedback')
-                        self.updateFeedbackStatus.emit(True)
-                        break
-                        
-                    #Atto_Z_Voltage corresponds to the DAC ADC output voltage. HF2LI PID voltage is 
-                    #always added in on top of this voltage. 
-                    start_voltage = self.Atto_Z_Voltage
-                    end_voltage = self.Atto_Z_Voltage + self.feedbackApproachSettings['atto_z_step_size'] * self.z_volts_to_meters
-                    
-                    #Check to see if we've reached the maximum z voltage. If so, break loop. 
-                    if (end_voltage + 1) > self.z_volts_max:
-                        #Withdraw sequence
-                        self.approaching = False
-                        msgBox = QtGui.QMessageBox(self)
-                        msgBox.setIcon(QtGui.QMessageBox.Information)
-                        msgBox.setWindowTitle('Feedback Approach Failure')
-                        msgBox.setText("\r\n Failed to reach the surface without coarse stepping. Make sure that you're already close to the surface" + 
-                                       " before attempting to engage in feedback scanning mode.")
-                        msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
-                        msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
-                        
-                        break
-                    #Take a step forward as specified by the stepwise approach advanced settings
-                    #yield self.dac.ramp1(self.feedbackApproachSettings['atto_z_output'],start_voltage,end_voltage,self.feedbackApproachSettings['atto_z_points'], self.feedbackApproachSettings['atto_z_points_delay'] * 1e6)
-                    #For now hard coded to be output 0
-                    yield self.dac.ramp1(self.feedbackApproachSettings['atto_z_output']-1,float(start_voltage),float(end_voltage),int(self.feedbackApproachSettings['atto_z_step_points']), int(self.feedbackApproachSettings['atto_z_step_points_delay'] * 1e6))
-                    #check to see if output voltage of the PID has dropped to below 8V 
-
-                    self.Atto_Z_Voltage = end_voltage
-                        
-                self.approaching = False
-            except Exception as inst:
-                print inst
-            
-            #Add checks that controllers are running and working properly
-            
-    @inlineCallbacks
-    def startPIDConstantHeightApproachSequence(self, c = None):
-        #If the DAC voltage is not 0, don't approach with constant height
-        #Probably no longer necessary (well, only necessary if we have non-zero voltage
-        #and are toggled to the +10V thing
-        if self.Atto_Z_Voltage != 0:
-            msgBox = QtGui.QMessageBox(self)
-            msgBox.setIcon(QtGui.QMessageBox.Information)
-            msgBox.setWindowTitle('Make sure fully retracted')
-            msgBox.setText("\r\n Make sure DAC ADC is outputting 0 volts (equivalently, start fully retracted)")
-            msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
-            msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
-            msgBox.exec_()
-        else: 
-            msgBox = QtGui.QMessageBox(self)
-            msgBox.setIcon(QtGui.QMessageBox.Information)
-            msgBox.setWindowTitle('Make sure fully retracted')
-            msgBox.setText("\r\n Make sure switch is set to be 1 to 1 voltage.")
-            msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
-            msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
-            if msgBox.exec_():
-                self.approaching = True
-                self.label_constHeightStatus.setText('Approaching with Zurich')
-                #Initializes all the PID settings
-                yield self.setHF2LI_PID_Settings()
-                
-                #Set the output range to be 0 to the maximum voltage. This is 3V at room temp.
-                yield self.setPIDOutputRange(self.z_volts_max)
-                
-                #Toggle the sum board to be 1 to 1 
-                yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
-                
-                #Turn on PID to start approaching
-                yield self.hf.set_pid_on(self.PID_Index, True)
-
-                while self.approaching:
-                    #Read the voltage being output by the PID
-                    z_voltage = yield self.hf.get_aux_output_value(self.PIDApproachSettings['atto_z_output'])
-                    
-                    #Find the number of data points that are above the threshhold
-                    #TODO: figure out how to do this properly so it doesn't trigger during JPE steps. 
-                    points_above_freq_thresh = 0
-                    for deltaf in self.deltafData:
-                        points_above_freq_thresh = points_above_freq_thresh + (deltaf > self.freqThreshold)
-
-                    #If the voltage being output is equal to (or somehow larger than) the maximum voltage,
-                    #we have reached the end of the range
-                    if z_voltage >= (self.z_volts_max - 0.001) and self.approaching:
-                        #Turn off the PID
-                        yield self.hf.set_pid_on(self.PID_Index, False)
-                        
-                        #Withdraw attocubes completely 
-                        self.label_constHeightStatus.setText('Withdrawing')
-                        retract_speed = self.PIDApproachSettings['atto_retract_speed'] * self.z_volts_to_meters
-                        yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
-                        
-                        if self.approaching:
-                            self.label_constHeightStatus.setText('Stepping with JPEs')
-                            #Step JPE by specified amount in z direction
-                            yield self.cpsc.move_z(int(self.generalSettings['jpe_module_address']), int(self.generalSettings['jpe_temperature']), int(self.generalSettings['jpe_freq']), int(self.generalSettings['jpe_approach_size']), -1.0*self.generalSettings['jpe_steps'],30)
-                            self.JPE_Steps.append([int(self.generalSettings['jpe_module_address']), int(self.generalSettings['jpe_temperature']), int(self.generalSettings['jpe_freq']), int(self.generalSettings['jpe_approach_size']), -1.0*self.generalSettings['jpe_steps']])
-                            try:
-                                self.updateCoarseSteps()
-                            except Exception as inst:
-                                print inst
-                            
-                        if self.approaching:
-                            #Turn back on
-                            yield self.hf.set_pid_on(self.PID_Index, True)
-                            self.label_constHeightStatus.setText('Approaching with Zurich')
-
-                    #If we see that more than 10 points were above the frequency threshhold, then we probably
-                    #have found the surface
-                    elif points_above_freq_thresh > 10 and self.approaching:
-                        self.label_constHeightStatus.setText('Surface Detected')
-                        #Turn off the PID and back off by appropriate amount
-                        yield self.hf.set_pid_on(self.PID_Index, False)
-                        end_voltage = z_voltage - self.constantHeight * self.z_volts_to_meters
-                        #Find desired retract speed in volts per second
-                        retract_speed = self.PIDApproachSettings['atto_retract_speed'] * self.z_volts_to_meters
-                        yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
-                        
-                        #Set range such that maximally extended is at the proper distance from the surface. 
-                        yield self.setPIDOutputRange(end_voltage)
-
-                        #Turn PID back on so that if there's drift or the sample is taller than expected, 
-                        #the PID will retract the tip
-                        yield self.hf.set_pid_on(self.PID_Index, True)
-
-                        #Emit that we can now scan in constant height mode
-                        self.updateConstantHeightStatus.emit(True)
-                        self.label_constHeightStatus.setText('Constant Height')
-                        self.approaching = False
-                        
-                        #TODO:
-                        #Start a monitor of whether or not still in constant height (ie, if no longer at 
-                        #max voltage output, then probably not at constant height). Maybe give error when
-                        #Hit surface
-            
-                yield self.hf.set_pid_on(self.PID_Index, False)
-                self.label_approachStatus.setText('Idle')
-                        
-                        
-    @inlineCallbacks
-    def startStepConstantHeightApproachSequence(self, c = None):
-        pass
-    
     
     def setWithdrawDistance(self):
         val = readNum(str(self.lineEdit_Withdraw.text()))
@@ -1354,11 +1502,19 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
     @inlineCallbacks
     def monitorZVoltage(self):
+        #Sleep 2 seconds before starting monitoring to allow everything else to start up properly
+        yield self.sleep(2)
         while self.monitorZ:
             try:
-                z_voltage = yield self.hf.get_aux_input_value(1)
-                self.progressBar.setValue(int(1000*(z_voltage/self.z_volts_max)))
-                self.lineEdit_FineZ.setText(formatNum(z_voltage / self.z_volts_to_meters, 3))
+                z_voltage = yield self.hf.get_aux_input_value(self.measurementSettings['z_mon_input'])
+                if z_voltage >= 0:
+                    self.progressBar.setValue(int(1000*(z_voltage/self.z_volts_max)))
+                else:
+                    self.progressBar.setValue(0)
+                z_meters = z_voltage / self.z_volts_to_meters
+                self.lineEdit_FineZ.setText(formatNum(z_meters, 3))
+                self.newZData.emit(z_meters)
+                
                 yield self.sleep(0.1)
             except Exception as inst:
                 print 'monitor error: ' + str(inst)
@@ -1474,6 +1630,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.feedbackACSlider.setEnabled(True)
         self.lineEdit_feedbackACSet.setDisabled(False)
 
+    def updateScanningStatus(self, status):
+        print "Scanning status in approach window updated to: "
+        print status
+        self.DACRamping = status
+        
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
         other operations to be done elsewhere while paused."""
@@ -1657,6 +1818,8 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.comboBox_AC_Input.currentIndexChanged.connect(self.setFdbk_AC_Input)
         self.lineEdit_AC_Setpoint.editingFinished.connect(self.setFdbk_AC_Setpoint)
         
+        self.comboBox_ZMonitor_Input.currentIndexChanged.connect(self.setZMonitor_Input)
+        
         self.loadValues()
         self.createLoadingColors()
 
@@ -1710,6 +1873,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.comboBox_AC_Input.setCurrentIndex(self.measSettings['fdbk_ac_input']-1)
         self.lineEdit_AC_Setpoint.setText(formatNum(self.measSettings['fdbk_ac_setpoint']))
         
+        self.comboBox_ZMonitor_Input.setCurrentIndex(self.measSettings['z_mon_input']-1)
     #Creates a list of stylesheets with a gradient of grey to black. This
     #will be used when the advisePID button is pressed to indicate that
     #it is processing. 
@@ -1944,6 +2108,9 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.measSettings['fdbk_ac_setpoint'] = val
         self.lineEdit_AC_Setpoint.setText(formatNum(self.measSettings['fdbk_ac_setpoint']))
 
+    def setZMonitor_Input(self):
+        self.measSettings['z_mon_input'] = self.comboBox_ZMonitor_Input.currentIndex() + 1
+        
     def getValues(self):
         return self.measSettings
         

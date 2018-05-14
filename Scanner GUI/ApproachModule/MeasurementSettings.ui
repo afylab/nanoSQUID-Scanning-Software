@@ -1226,7 +1226,7 @@ background: black
     <attribute name="title">
      <string>Z Monitor</string>
     </attribute>
-    <widget class="QComboBox" name="comboBox_Monitor_Input">
+    <widget class="QComboBox" name="comboBox_ZMonitor_Input">
      <property name="geometry">
       <rect>
        <x>70</x>
@@ -1365,7 +1365,7 @@ background: black
   <tabstop>comboBox_AC_Input</tabstop>
   <tabstop>lineEdit_AC_Setpoint</tabstop>
   <tabstop>tabWidget</tabstop>
-  <tabstop>comboBox_Monitor_Input</tabstop>
+  <tabstop>comboBox_ZMonitor_Input</tabstop>
   <tabstop>pushButton</tabstop>
  </tabstops>
  <resources/>

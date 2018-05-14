@@ -177,6 +177,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.cpsc.move_z(self.module_address, self.temperature, self.freq, self.size, -self.steps)
         self.unlockInterface()
 
+    def updateApproachStatus(self, status):
+        if status:
+            self.lockInterface()
+        else:
+            self.unlockInterface()
+        
     def showServersList(self):
         serList = serversList(self.reactor, self)
         serList.exec_()
