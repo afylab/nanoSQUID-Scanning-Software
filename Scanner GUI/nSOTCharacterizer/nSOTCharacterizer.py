@@ -292,8 +292,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 		self.dcbox = False
 		
 		self.lockInterface()
-		self.magnetPower.addItem('Toellner 8851')
-		self.magnetPower.addItem('IPS 120-10')
+
 		
 	def initGotoSetFunc(self):
 		if self.sweepParamDict['mag power'] == 'ips':
@@ -2851,7 +2850,7 @@ class dacSettings(QtGui.QDialog, Ui_dacSet):
 
 		self.cancelDAC.clicked.connect(self._close)
 		self.okDAC.clicked.connect(self._ok)
-		self.comboBox_blinkDevice.addItem('DC BOX')
+
 		
 	def updateVals(self):
 			self.biasInChannel.setValue(self.dcInDict['bias ref'])
