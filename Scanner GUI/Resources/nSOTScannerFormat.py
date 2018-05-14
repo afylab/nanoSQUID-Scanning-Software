@@ -136,7 +136,7 @@ def processImageData(image, process):
         
     elif process == 'Subtract Line Average':
         for i in range(0,length):
-            image[i,:] = processLineData(image[i,:],'Subtract Average')
+            image[:,i] = processLineData(image[:,i],'Subtract Average')
         return image
 
     elif process == 'Subtract Image Plane':
@@ -152,7 +152,7 @@ def processImageData(image, process):
    
     elif process == 'Subtract Line Linear':
         for i in range(0,length):
-            image[i,:] = processLineData(image[i,:],'Subtract Linear Fit')
+            image[:,i] = processLineData(image[:,i],'Subtract Linear Fit')
         return image
 
     elif process == 'Subtract Image Quadratic':
@@ -169,6 +169,6 @@ def processImageData(image, process):
 
     elif process == 'Subtract Line Quadratic':
         for i in range(0,length):
-            image[i,:] = processLineData(image[i,:],'Subtract Parabolic Fit')
+            image[:,i] = processLineData(image[:,i],'Subtract Parabolic Fit')
         return image
 

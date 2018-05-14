@@ -229,11 +229,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def ampMinChanged(self,item):
         self.minFreqLine2.setPos(item.pos())
         self.startFreq = item.pos().x()
+        self.points = int(np.abs(self.startFreq-self.stopFreq)/self.freqStep)
         self.lineEdit_MinFreq.setText(formatNum(self.startFreq, 4))
         
     def ampMaxChanged(self,item):
         self.maxFreqLine2.setPos(item.pos())
         self.stopFreq = item.pos().x()
+        self.points = int(np.abs(self.startFreq-self.stopFreq)/self.freqStep)
         self.lineEdit_MaxFreq.setText(formatNum(self.stopFreq, 4))
         
     def ampSelectChanged(self,item):
@@ -244,11 +246,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def phaseMinChanged(self,item):
         self.minFreqLine.setPos(item.pos())
         self.startFreq = item.pos().x()
+        self.points = int(np.abs(self.startFreq-self.stopFreq)/self.freqStep)
         self.lineEdit_MinFreq.setText(formatNum(self.startFreq, 4))
         
     def phaseMaxChanged(self,item):
         self.maxFreqLine.setPos(item.pos())
         self.stopFreq = item.pos().x()
+        self.points = int(np.abs(self.startFreq-self.stopFreq)/self.freqStep)
         self.lineEdit_MaxFreq.setText(formatNum(self.stopFreq, 4))
         
     def phaseSelectChanged(self,item):
@@ -259,12 +263,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def ampRangeChanged(self,item):
         range = item.getPlotItem().getViewBox().viewRange()
         self.phasePlot.setXRange(range[0][0], range[0][1], padding = 0, update = False)
-        #self.phasePlot.setYRange(range[1][0], range[1][1], padding = 0, update = False)
         
     def phaseRangeChanged(self,item):
         range = item.getPlotItem().getViewBox().viewRange()
         self.ampPlot.setXRange(range[0][0], range[0][1], padding = 0, update = False)
-        #self.ampPlot.setYRange(range[1][0], range[1][1], padding = 0, update = False)
         
 #----------------------------------------------------------------------------------------------#         
     """ The following section connects actions related to buttons on the TF window."""

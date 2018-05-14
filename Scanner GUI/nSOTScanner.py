@@ -93,13 +93,18 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         
         self.TFChar.workingPointSelected.connect(self.distributeWorkingPoint)
 
-        self.Approach.newPLLData.connect(self.updateMonitorPLL)
-        self.Approach.newFdbkDCData.connect(self.updateMonitorDC)
-        self.Approach.newFdbkACData.connect(self.updateMonitorAC)
+        self.Approach.newPLLData.connect(self.ApproachMonitor.updatePLLPlots)
+        self.Approach.newFdbkDCData.connect(self.ApproachMonitor.updateFdbkDCPlot)
+        self.Approach.newFdbkACData.connect(self.ApproachMonitor.updateFdbkACPlot)
+        self.Approach.newZData.connect(self.ApproachMonitor.updateZPlot)
         
         self.Approach.updateFeedbackStatus.connect(self.ScanControl.updateFeedbackStatus)
         self.Approach.updateConstantHeightStatus.connect(self.ScanControl.updateConstantHeightStatus)
+        self.Approach.updateApproachStatus.connect(self.JPEControl.updateApproachStatus)
+        
         self.PosCalibration.newTemperatureCalibration.connect(self.setVoltageCalibration)
+        
+        self.ScanControl.updateScanningStatus.connect(self.Approach.updateScanningStatus)
 
         #Make sure default calibration is emitted 
         self.PosCalibration.emitCalibration()
@@ -189,7 +194,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
     """ The following section connects actions related to passing LabRAD connections."""
     
     def distributeLocalLabRADConnections(self,dict):
-        print dict
+        #print dict
         self.Plot.connectLabRAD(dict)
         self.nSOTChar.connectLabRAD(dict)
         self.ScanControl.connectLabRAD(dict)
@@ -199,7 +204,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Scripting.connectLabRAD(dict)
         
     def distributeRemoteLabRADConnections(self,dict):
-        print dict
+        #print dict
         self.FieldControl.connectRemoteLabRAD(dict)
         self.Scripting.connectRemoteLabRAD(dict)
         self.nSOTChar.connectRemoteLabRAD(dict)
@@ -220,15 +225,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
     """ The following section connects signals between various modules."""
     def distributeWorkingPoint(self,freq, phase, channel, amplitude):
         self.Approach.setWorkingPoint(freq, phase, channel, amplitude)
-
-    def updateMonitorPLL(self, deltaF, phaseError):
-        self.ApproachMonitor.updatePLLPlots(deltaF, phaseError)
-
-    def updateMonitorDC(self, dc):
-        self.ApproachMonitor.updateFdbkDCPlot(dc)
-        
-    def updateMonitorAC(self, ac):
-        self.ApproachMonitor.updateFdbkACPlot(ac)
         
     def setVoltageCalibration(self,data):
         self.Approach.set_voltage_calibration(data)
