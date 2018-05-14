@@ -85,6 +85,7 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
 		self.currBiasLbl.setText('Current Bias: '+ str(curr_bias) + 'V')
 		self.currBiasLbl.setStyleSheet("QLabel#currFieldLbl{color: rgb(168,168,168); font:bold 10pt;}")
 
+
 	@inlineCallbacks
 	def ipsGoToFieldFunc(self, field, rate, c = None):
 		B_latent = 60 * np.absolute(self.setpointDict['field'] - field) / rate
@@ -122,33 +123,63 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
 	@inlineCallbacks
 	def zeroFieldFunc(self, c = None):
 		if self.magPowerStr == 'ips':
-			rate = float(self.fieldRampRateLine.text())
-			yield self.ipsGotoFieldFunc(0, rate, self.reactor)
+			try:
+				rate = float(self.window.siFormat(self.fieldRampRateLine.text(), 3))
+				yield self.ipsGotoFieldFunc(0, rate, self.reactor)
+			except:
+				yield self.ipsGotoFieldFunc(0, 0.1, self.reactor)
 
 			
 	@inlineCallbacks
 	def zeroBiasFunc(self, c = None):
-		curr_bias = float(self.baisSetpntLine.text())
+		curr_bias = float(self.setpointDict['bias'])
 		steps = curr_bias * 1000
 		delay = 2000
 		tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [0], steps, delay)
 
 	@inlineCallbacks
 	def gotoFieldFunc(self, c = None):
+
+		flag = False
 		if self.magPowerStr == 'ips':
-			field = float(self.fieldSetpntLine.text())
-			rate = float(self.fieldRampRateLine.text())
-			yield self.ipsGotoFieldFunc(field, rate, self.reactor)
+			
+			try:
+				field = float(self.window.siFormat(self.fieldSetpntLine.text(), 3))
+			except:
+				self.fieldSetpntLine.setText('FORMAT')
+				flag = True
+			try:
+				rate = float(self.fieldRampRateLine.text())
+			except:
+				self.fieldRampRateLine.setText('FORMAT')
+				flag = True
+			if flag == False:
+				yield self.ipsGotoFieldFunc(field, rate, self.reactor)
 		
 	@inlineCallbacks
 	def gotoBiasFunc(self, c = None):
-		new_bias = float(self.baisSetpntLine.text())
-		steps = int(self.biasPntsLine.text())
-		delay = int(self.biasDelayLine.text())
-		tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [self.setpointDict['bias']], [new_bias], steps, delay)
-		self.setpointDict['bias'] = new_bias
-		self.currBiasLbl.setText('Current Bias: '+ str(new_bias) + 'V')
-		self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
+		flag = False
+		try:
+			new_bias = float(self.window.siFormat(self.baisSetpntLine.text()))
+		except:
+			self.baisSetpntLine.setText('FORAMT')
+			flag = True
+		try:
+			steps = int(self.biasPntsLine.text())
+		except:
+			self.biasPntsLine.setText('FORMAT')
+			flag = True
+		try:
+			delay = int(self.biasDelayLine.text())
+		except:
+			self.biasDelayLine.setText('FORMAT')
+			flag = True
+		print self.setpointDict
+		if flag == False:
+			tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [self.setpointDict['bias']], [new_bias], steps, delay)
+			self.setpointDict['bias'] = new_bias
+			self.currBiasLbl.setText('Current Bias: '+ str(new_bias) + 'V')
+			self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
 
 		
 	@inlineCallbacks	
@@ -175,12 +206,9 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
 		self.window.prelim.setEnabled(True)
 	@inlineCallbacks
 	def exitFunc(self, c = None):
-		try:
-			yield self.zeroBiasFunc()
-			if self.zeroFieldChk.checkState() == 2:
-				yield self.zeroFieldFunc()
-		except:
-			pass
+		yield self.zeroBiasFunc()
+		if self.zeroFieldChk.checkState() == 2:
+			yield self.zeroFieldFunc()
 		self.window.startSweep.setEnabled(True)
 		self.window.prelim.setEnabled(True)		
 		self.close()
@@ -296,9 +324,10 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 		
 	def initGotoSetFunc(self):
 		if self.sweepParamDict['mag power'] == 'ips':
-			magPower = 'ips'#self.ips
+			magPower = self.ips
 		elif self.sweepParamDict['mag power'] == 'toe':
 			magPower = self.dac
+
 		if self.blinkDevice == 'DAC ADC':
 			blinkDev = self.dac
 		elif self.blinkDevice == 'DC BOX':
@@ -307,9 +336,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 		self.startSweep.setEnabled(False)
 		self.prelim.setEnabled(False)
 
-		#This is the full version, test verios below
+
 		self.initGotoSetWin = gotoSetWindow(self.reactor, magPower, self.dac, blinkDev, self.sweepParamDict, self.dcOutputsDict, self.dcInputsDict, self)
-		#self.initGotoSetWin = gotoSetWindow(self.reactor, self.sweepParamDict, self.dcOutputsDict, self)
+
 		self.initGotoSetWin.show()
 
 	def updateMagPower(self):
@@ -2931,7 +2960,6 @@ class dacSettings(QtGui.QDialog, Ui_dacSet):
 		if self.comboBox_blinkDevice.currentText() == 'DC BOX':
 			outputChans.pop(0)
 
-		print inputChans, outputChans
 		dif_in = [inputChans[i] - inputChans[j] for i in range(0,4) for j in range(i+1,4) ]
 		dif_out = [outputChans[i] - outputChans[j] for i in range(0,len(outputChans)) for j in range(i+1,len(outputChans)) ]
 		if 0 in dif_out:
