@@ -736,35 +736,6 @@ Bias</string>
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600; color:#a8a8a8;&quot;&gt;Current Bias:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="zeroFieldChk">
-   <property name="geometry">
-    <rect>
-     <x>25</x>
-     <y>157</y>
-     <width>13</width>
-     <height>13</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_39">
-   <property name="geometry">
-    <rect>
-     <x>50</x>
-     <y>155</y>
-     <width>99</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Zero Field on Exit&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignCenter</set>
-   </property>
-  </widget>
  </widget>
  <resources/>
  <connections/>

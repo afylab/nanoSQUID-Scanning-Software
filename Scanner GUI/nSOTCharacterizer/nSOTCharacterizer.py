@@ -84,35 +84,34 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
         
         self.currBiasLbl.setText('Current Bias: '+ str(curr_bias) + 'V')
         self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
+		self.currStatusLbl.setText('Status: Idle')
+		self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
 
 
     @inlineCallbacks
     def ipsGoToFieldFunc(self, field, rate, c = None):
-        print 'got to func, rate is ', rate
-        B_latent = 60 * np.absolute(self.setpointDict['field'] - field) / rate
-        try:
-            yield self.magDev.set_control(3)
-            yield self.sleep(0.25)
-            yield self.magDev.set_comm_protocol(6)
-            yield self.sleep(0.25)
-            yield self.magDev.set_activity(1)
-            yield self.sleep(0.25)
-            yield self.magDev.set_fieldsweep_rate(rate)
-            yield self.magDev.set_control(2)
-            print 'set control'
-            t0 = time.time()
-            yield self.magDev.set_control(3)
-            yield self.magDev.set_targetfield(float(field))
-            yield self.magDev.set_control(2)
-        except Exception as inst:
-            print inst
+		yield self.magDev.set_control(3)
+		yield self.sleep(0.25)
+		yield self.magDev.set_comm_protocol(6)
+		yield self.sleep(0.25)
+		yield self.magDev.set_activity(1)
+		yield self.sleep(0.25)
+		yield self.magDev.set_fieldsweep_rate(rate)
+		yield self.magDev.set_control(2)
+		print 'set control'
+		t0 = time.time()
+		yield self.magDev.set_control(3)
+		yield self.magDev.set_targetfield(field)
+		yield self.magDev.set_control(2)
+		self.currStatusLbl.setText('Status: Ramping Field')
+		self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
         while True:
             yield self.magDev.set_control(3)
             curr_field = yield self.magDev.read_parameter(7)
             yield self.magDev.set_control(2)
             if float(curr_field[1:]) <= field + 0.00001 and float(curr_field[1:]) >= field -0.00001:
                 break
-            if time.time() - t0 > B_latent:
+            if time.time() - t0 > 1:
                 yield self.magDev.set_control(3)
                 yield self.magDev.set_targetfield(float(field))
                 yield self.magDev.set_control(2)
@@ -122,12 +121,13 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
         self.setpointDict['field'] = field
         self.currFieldLbl.setText('Current Field: '+ str(field) + 'T')
         self.currFieldLbl.setStyleSheet("QLabel#currFieldLbl{color: rgb(168,168,168); font:bold 10pt;}")
+		self.currStatusLbl.setText('Status: Idle')
+		self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
 
     @inlineCallbacks
     def zeroFieldFunc(self, c = None):
         if self.magPowerStr == 'ips':
             try:
-
                 rate = float(self.fieldRampRateLine.text())
                 yield self.ipsGoToFieldFunc(0, rate, self.reactor)
             except:
@@ -136,11 +136,9 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
             
     @inlineCallbacks
     def zeroBiasFunc(self, c = None):
-    
-        curr_bias = float(self.setpointDict['bias'])
+         curr_bias = float(self.setpointDict['bias'])
         steps = int(np.absolute(curr_bias) * 1000)
         delay = 2000
-        print curr_bias, steps, delay
         tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [0], steps, delay)
         self.setpointDict['bias'] = 0
         new_bias = yield self.dac.read_voltage(self.biasRefChan)
@@ -150,54 +148,48 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
 
     @inlineCallbacks
     def gotoFieldFunc(self, c = None):
-
         flag = False
         if self.magPowerStr == 'ips':
-            print 'checking format for ips'
             try:
-                print self.fieldSetpntLine.text()
-                field = float(self.fieldSetpntLine.text())
-                print 'field', field
-
+                field = float(self.window.siFormat(self.fieldSetpntLine.text(), 3))
             except:
-                print 'here on field'
                 self.fieldSetpntLine.setText('FORMAT')
                 flag = True
             try:
-                print self.fieldRampRateLine.text()
-                rate = float(self.fieldRampRateLine.text())
-                print 'rate ', rate
-
+                rate = np.absolute(float(self.window.siFormat(self.fieldRampRateLine.text(), 3)))
             except:
-                print 'here on rate'
                 self.fieldRampRateLine.setText('FORMAT')
                 flag = True
+			if np.absolute(field) > 5:
+				field  = 5 * (field / np.absolute(field))
             if flag == False:
-                print 'here'
                 yield self.ipsGoToFieldFunc(field, rate)
         
     @inlineCallbacks
     def gotoBiasFunc(self, c = None):
         flag = False
         try:
-            new_bias = float(self.biasSetpntLine.text())
+            new_bias = float(self.window.siFormat(self.biasSetpntLine.text(), 3))
         except:
-            print 'caught on bias'
+
             self.baisSetpntLine.setText('FORAMT')
             flag = True
         try:
-            steps = np.absolute(int(self.biasPntsLine.text()))
+            steps = np.absolute(int(self.window.siFormat(self.biasPntsLine.text(), 3)))
         except:
-            print 'caught on pnts'
             self.biasPntsLine.setText('FORMAT')
             flag = True
         try:
-            delay = int(self.biasDelayLine.text())*1000
+            delay = np.abolute(int(self.window.siFormat(self.biasDelayLine.text(), 3)))*1000
         except:
-            print 'caught on delay'
+
             self.biasDelayLine.setText('FORMAT')
             flag = True
         print self.setpointDict
+		if np.absolute(new_bias) > 10:
+			new_bias = 10 * (new_bias / np.absolute(new_bias))
+			self.biasSetpntLine.setText(str(new_bias))
+			
         if flag == False:
             tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [self.setpointDict['bias']], [new_bias], steps, delay)
             self.setpointDict['bias'] = new_bias
@@ -227,13 +219,14 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
     def closeEvent(self, e):
         self.window.startSweep.setEnabled(True)
         self.window.prelim.setEnabled(True)
+		self.window.gotoSetBtn.setEnabled(True)
+		self.window.setpntDict = self.setpointDict
 
     def exitFunc(self):
-        #yield self.zeroBiasFunc()
-        #if self.zeroFieldChk.checkState() == 2:
-        #    yield self.zeroFieldFunc()
         self.window.startSweep.setEnabled(True)
         self.window.prelim.setEnabled(True)     
+		self.window.gotoSetBtn.setEnabled(True)
+		self.window.setpntDict = self.setpointDict
         self.close()
 
 class Window(QtGui.QMainWindow, Ui_MainWindow):
@@ -254,18 +247,8 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.dcInputsDict = {'bias ref' : 1, 'feedback' : 2, 'noise' : 3, 'lockin' : 4}
         self.acSettingsDict = {'freq' : 4.0, 'amp' : 2.0}
         self.sweepParamDict = {'B_min' : 0, 'B_max' : 0.1, 'B_pnts' : 100, 'B_rate' : 0.1, 'V_min' : 0, 'V_max' : 1, 'V_pnts' : 500, 'delay' : 1,'volt mode' : 'min/max', 'blink mode' : 'on', 'mag power' : None}
-        self.setpointDict = {'Field' : 0, 'Bias' : 0}
+        self.setpntDict = {'field' : 0, 'bias' : 0}
         self.atSetpoint = False
-        
-        '''
-        self.dacBiasOutChan, self.dacBlinkOutChan, self.voltsOutChan, self.currentOutChan = 1, 2, 4, 3
-        self.dacBiasInChan, self.dacDCInChan, self.dacACInChan, self.dacNoiseInChan = 1, 2 ,3 ,4
-        self.dacOutputChannels = [self.dacBiasOutChan, self.dacBlinkOutChan, self.voltsOutChan, self.currentOutChan]
-        self.dacInputChannels = [self.dacBiasInChan, self.dacDCInChan, self.dacACInChan, self.dacNoiseInChan]
-        self.dacChannelList = [self.dacInputChannels, self.dacOutputChannels]
-        self.acFreq, self.acAmp = 4.0, 2.0
-        '''
-
         self.fieldPos = 0
         
         self.gotoSetBtn.clicked.connect(self.initGotoSetFunc)
@@ -359,7 +342,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             
         self.startSweep.setEnabled(False)
         self.prelim.setEnabled(False)
-
+		self.gotoSetBtn.setEnabled(False)
 
         self.initGotoSetWin = gotoSetWindow(self.reactor, magPower, self.dac, blinkDev, self.sweepParamDict, self.dcOutputsDict, self.dcInputsDict, self)
 
@@ -1645,6 +1628,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.sleep(0.25)
             yield self.ips.set_fieldsweep_rate(B_rate)
             yield self.ips.set_control(2)
+			
+			#ramp voltage to zero if still at setpoint
+			if np.abolute(self.setpntDict['bias']) > 0.01:
+				step = int(np.abolute(self.setpntDict['bias'])) * 1000
+				tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [self.setpntDict['bias']], [0], step, 2000)
             
             yield self.dac.set_voltage(DAC_out, 0)
         
@@ -1795,6 +1783,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         dIdV_out = self.dcInputsDict['lockin'] - 1
         #DAC in channel to read noise measurement
         noise = self.dcInputsDict['noise'] - 1
+		
+		#ramp voltage to zero if still at setpoint
+		if np.abolute(self.setpntDict['bias']) > 0.01:
+			step = int(np.abolute(self.setpntDict['bias'])) * 1000
+			tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [self.setpntDict['bias']], [0], step, 2000)
 
 
         #AC excitation information for quasi dI/dV measurement. Frequency should be larger than 
@@ -1924,7 +1917,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.dac.set_voltage(DAC_set_volt, 0)
         
         elif magpower == 'ips': 
-            B_latent = 60 * (np.absolute(B_space[1] - B_space[0])/ B_rate)
             yield self.ips.set_control(3)
             yield self.sleep(0.25)
             yield self.ips.set_comm_protocol(6)
@@ -1946,7 +1938,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                     yield self.ips.set_control(2)
                     if float(curr_field[1:]) <= B_space[i]+0.00001 and float(curr_field[1:]) >= B_space[i]-0.00001:
                         break
-                    if time.time() - t0 > B_latent:
+                    if time.time() - t0 > 1:
                         yield self.ips.set_control(3)
                         yield self.ips.set_targetfield(B_space[i])
                         yield self.ips.set_control(2)
@@ -1971,23 +1963,16 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_max], positive_points, delay)
     
                 #Reform data and add to data vault
-                #formated_data = []
                 data_uptrace = []
                 for j in range(0, positive_points):
                     data_uptrace.append((0, i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-
-                #yield dv.add(formated_data)
-                #yield self.updatePlots(formated_data)
-                
-                    
+              
                 if self.abortFlag == False:
                     pass
                 else:
                     yield self.abortSweepFunc('ips', B_space[i], V_max)
                     break
-
-                
-                
+       
                 #Sweep from maximum bias voltage to zero volts and blink
                 print 'Ramping nSOT bias voltage back down from ' + str(V_max) + ' to zero.'
                 dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_max], [0], positive_points, delay)
@@ -1997,10 +1982,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 for j in range(0, positive_points):
                     data_upretrace.append((1, i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
 
-                #yield dv.add(formated_data)
-                #yield self.updatePlots(formated_data)
-
-                    
                 if self.abortFlag == False:
                     pass
                 else:
@@ -2015,14 +1996,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_min], negative_points, delay)
     
                 #Reform data and add to data vault
-                #formated_data = []
+
                 data_downtrace = []
                 for j in range(0, negative_points):
                     data_downtrace.append((0, i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
 
-                
-                #yield dv.add(formated_data)
-                #yield self.updatePlots(formated_data)
                 
                     
                 if self.abortFlag == False:
@@ -2036,7 +2014,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_min], [0], negative_points, delay)
 
                 #Reform data and add to data vault
-                #formated_data = []
+
                 data_downretrace = []
                 for j in range(0, negative_points):
                     data_downretrace.append((1, i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
