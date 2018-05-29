@@ -3239,7 +3239,7 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         deltaV_F = np.absolute(yVals[j] - yVals[zeroIndex])
 
         if deltaV_F == 0:
-            pass
+            self.parRes.setText('Nan')
         else:
             ratio = np.absolute(deltaV_DAC / deltaV_F)
             r = np.round(alpha * (winding * ssaaRes * ratio - biasRes), decimals = 1)
