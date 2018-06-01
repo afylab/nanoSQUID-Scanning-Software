@@ -117,8 +117,8 @@ def processLineData(lineData, process):
 def processImageData(image, process):
     shape = np.shape(image)
     
-    width = int(shape[1])
-    length = int(shape[0])
+    width = int(shape[0])
+    length = int(shape[1])
     
     x = np.linspace(0, 1, width)
     y = np.linspace(0, 1, length)
@@ -141,13 +141,17 @@ def processImageData(image, process):
 
     elif process == 'Subtract Image Plane':
         A = np.array([X*0+1, X, Y]).T
-        B = image.flatten()
+        B = image.flatten('F')
+        
+        print "Print A: ", A
+        print "Print B: ", B
 
         coeff, r, rank, s = np.linalg.lstsq(A, B)
-
+        print "Print coeff: ", coeff
+        
         for i in xrange(length):
             for j in xrange(width):
-                image[i][j] = image[i][j] - np.dot(coeff, [1, x[j], y[i]])	
+                image[j][i] = image[j][i] - np.dot(coeff, [1, x[j], y[i]])
         return image
    
     elif process == 'Subtract Line Linear':
@@ -157,13 +161,13 @@ def processImageData(image, process):
 
     elif process == 'Subtract Image Quadratic':
         A = np.array([X*0+1, X, Y, X**2, Y**2, X*Y]).T
-        B = image.flatten()
+        B = image.flatten('F')
 
         coeff, r, rank, s = np.linalg.lstsq(A, B)
 
         for i in xrange(length):
             for j in xrange(width):
-                image[i][j] = image[i][j] - np.dot(coeff, [1, x[j], y[i], x[j]**2, y[i]**2, x[j]*y[i]])	
+                image[j][i] = image[j][i] - np.dot(coeff, [1, x[j], y[i], x[j]**2, y[i]**2, x[j]*y[i]])	
         
         return image
 

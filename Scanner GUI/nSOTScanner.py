@@ -90,6 +90,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.LabRAD.cxnLocal.connect(self.distributeLocalLabRADConnections)
         self.LabRAD.cxnRemote.connect(self.distributeRemoteLabRADConnections)
         self.LabRAD.cxnDisconnected.connect(self.disconnectLabRADConnections)
+        self.LabRAD.newSessionFolder.connect(self.distributeSessionFolder)
         
         self.TFChar.workingPointSelected.connect(self.distributeWorkingPoint)
 
@@ -106,8 +107,13 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         
         self.ScanControl.updateScanningStatus.connect(self.Approach.updateScanningStatus)
 
+        self.JPEControl.newJPESettings.connect(self.Approach.updateJPESettings)
+        
         #Make sure default calibration is emitted 
         self.PosCalibration.emitCalibration()
+        
+        #Make sure default session flder is emitted
+        self.LabRAD.newSessionFolder.emit(self.LabRAD.session_2)
 
         #Open by default the LabRAD Connect Module
         self.openLabRADConnectWindow()
@@ -219,6 +225,11 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.JPEControl.disconnectLabRAD()
         self.FieldControl.disconnectLabRAD()
         self.Scripting.disconnectLabRAD()
+        
+    def distributeSessionFolder(self, folder):
+        self.TFChar.setSessionFolder(folder)
+        self.ScanControl.setSessionFolder(folder)
+        self.nSOTChar.setSessionFolder(folder)
 
 #----------------------------------------------------------------------------------------------#
             

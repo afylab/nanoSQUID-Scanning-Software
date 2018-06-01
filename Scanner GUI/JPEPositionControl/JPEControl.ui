@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>328</height>
+    <height>469</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,13 +19,13 @@
   <property name="minimumSize">
    <size>
     <width>0</width>
-    <height>0</height>
+    <height>469</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>1000</width>
-    <height>750</height>
+    <height>469</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -383,7 +383,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>50</x>
-      <y>228</y>
+      <y>365</y>
       <width>45</width>
       <height>31</height>
      </rect>
@@ -409,7 +409,7 @@ border: 1px solid rgb(95,107,166);
     <property name="geometry">
      <rect>
       <x>106</x>
-      <y>173</y>
+      <y>310</y>
       <width>31</width>
       <height>45</height>
      </rect>
@@ -435,7 +435,7 @@ border: 1px solid rgb(95,107,166);
     <property name="geometry">
      <rect>
       <x>106</x>
-      <y>269</y>
+      <y>406</y>
       <width>31</width>
       <height>45</height>
      </rect>
@@ -461,7 +461,7 @@ border: 1px solid rgb(95,107,166);
     <property name="geometry">
      <rect>
       <x>146</x>
-      <y>228</y>
+      <y>365</y>
       <width>45</width>
       <height>31</height>
      </rect>
@@ -487,7 +487,7 @@ border: 1px solid rgb(95,107,166);
     <property name="geometry">
      <rect>
       <x>310</x>
-      <y>174</y>
+      <y>311</y>
       <width>31</width>
       <height>45</height>
      </rect>
@@ -513,7 +513,7 @@ border: 1px solid rgb(95,107,166);
     <property name="geometry">
      <rect>
       <x>310</x>
-      <y>270</y>
+      <y>407</y>
       <width>31</width>
       <height>45</height>
      </rect>
@@ -539,7 +539,7 @@ border: 1px solid rgb(95,107,166);
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>174</y>
+      <y>311</y>
       <width>151</width>
       <height>141</height>
      </rect>
@@ -560,7 +560,7 @@ image:url(:/nSOTScanner/Pictures/Tip-Sample.png);
     <property name="geometry">
      <rect>
       <x>49</x>
-      <y>150</y>
+      <y>287</y>
       <width>71</width>
       <height>17</height>
      </rect>
@@ -579,7 +579,7 @@ image:url(:/nSOTScanner/Pictures/Tip-Sample.png);
     <property name="geometry">
      <rect>
       <x>315</x>
-      <y>150</y>
+      <y>287</y>
       <width>61</width>
       <height>17</height>
      </rect>
@@ -598,7 +598,7 @@ image:url(:/nSOTScanner/Pictures/Tip-Sample.png);
     <property name="geometry">
      <rect>
       <x>119</x>
-      <y>158</y>
+      <y>295</y>
       <width>102</width>
       <height>3</height>
      </rect>
@@ -619,7 +619,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>219</x>
-      <y>159</y>
+      <y>296</y>
       <width>3</width>
       <height>161</height>
      </rect>
@@ -640,7 +640,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>319</y>
+      <y>456</y>
       <width>201</width>
       <height>3</height>
      </rect>
@@ -661,7 +661,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>19</x>
-      <y>159</y>
+      <y>296</y>
       <width>3</width>
       <height>162</height>
      </rect>
@@ -682,7 +682,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>158</y>
+      <y>295</y>
       <width>22</width>
       <height>3</height>
      </rect>
@@ -703,7 +703,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>380</x>
-      <y>158</y>
+      <y>295</y>
       <width>102</width>
       <height>3</height>
      </rect>
@@ -724,7 +724,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>480</x>
-      <y>160</y>
+      <y>297</y>
       <width>3</width>
       <height>161</height>
      </rect>
@@ -745,7 +745,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>279</x>
-      <y>160</y>
+      <y>297</y>
       <width>3</width>
       <height>162</height>
      </rect>
@@ -766,7 +766,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>158</y>
+      <y>295</y>
       <width>22</width>
       <height>3</height>
      </rect>
@@ -787,7 +787,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>320</y>
+      <y>457</y>
       <width>202</width>
       <height>3</height>
      </rect>
@@ -1057,10 +1057,396 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>225</x>
-      <y>233</y>
+      <y>370</y>
       <width>51</width>
       <height>20</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_weight_for_A">
+    <property name="geometry">
+     <rect>
+      <x>100</x>
+      <y>190</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>One step at 100% step size might correspond to approximately 25 nm. </string>
+    </property>
+    <property name="text">
+     <string>1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_weight_for_C">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>190</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_weight_for_B">
+    <property name="geometry">
+     <rect>
+      <x>245</x>
+      <y>190</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="Line" name="line_22">
+    <property name="geometry">
+     <rect>
+      <x>21</x>
+      <y>270</y>
+      <width>460</width>
+      <height>3</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_22{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>1</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_23">
+    <property name="geometry">
+     <rect>
+      <x>21</x>
+      <y>159</y>
+      <width>20</width>
+      <height>3</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_23{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>1</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_24">
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>159</y>
+      <width>300</width>
+      <height>3</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_24{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>1</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_25">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>160</y>
+      <width>3</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_25{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_title_6">
+    <property name="geometry">
+     <rect>
+      <x>51</x>
+      <y>150</y>
+      <width>311</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_title{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Relative Step Sizes</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="Line" name="line_26">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>160</y>
+      <width>3</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_26{
+color:rgb(168,168,168)
+}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_15">
+    <property name="geometry">
+     <rect>
+      <x>35</x>
+      <y>190</y>
+      <width>61</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Channel A:</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_16">
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>190</y>
+      <width>61</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Channel B:</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_17">
+    <property name="geometry">
+     <rect>
+      <x>325</x>
+      <y>190</y>
+      <width>61</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Channel C:</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_18">
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>240</y>
+      <width>61</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Channel B:</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_weight_back_B">
+    <property name="geometry">
+     <rect>
+      <x>245</x>
+      <y>240</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_weight_back_C">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>240</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_19">
+    <property name="geometry">
+     <rect>
+      <x>325</x>
+      <y>240</y>
+      <width>61</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Channel C:</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_weight_back_A">
+    <property name="geometry">
+     <rect>
+      <x>100</x>
+      <y>240</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>One step at 100% step size might correspond to approximately 25 nm. </string>
+    </property>
+    <property name="text">
+     <string>1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_20">
+    <property name="geometry">
+     <rect>
+      <x>35</x>
+      <y>240</y>
+      <width>61</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Channel A:</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_22">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>215</y>
+      <width>91</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Backwards:</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_23">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>165</y>
+      <width>61</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Forwards:</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
   </widget>
@@ -1072,12 +1458,20 @@ color:rgb(168,168,168)
   <tabstop>lineEdit_JPE_Approach_Steps</tabstop>
   <tabstop>lineEdit_JPE_Approach_Size</tabstop>
   <tabstop>lineEdit_JPE_Approach_Freq</tabstop>
+  <tabstop>lineEdit_weight_for_A</tabstop>
+  <tabstop>lineEdit_weight_for_B</tabstop>
+  <tabstop>lineEdit_weight_for_C</tabstop>
+  <tabstop>lineEdit_weight_back_A</tabstop>
+  <tabstop>lineEdit_weight_back_B</tabstop>
+  <tabstop>lineEdit_weight_back_C</tabstop>
+  <tabstop>lineEdit_Angle</tabstop>
   <tabstop>push_movePosY</tabstop>
   <tabstop>push_moveNegX</tabstop>
-  <tabstop>push_movePosX</tabstop>
   <tabstop>push_moveNegY</tabstop>
+  <tabstop>push_movePosX</tabstop>
   <tabstop>push_movePosZ</tabstop>
   <tabstop>push_moveNegZ</tabstop>
+  <tabstop>checkBox_Torque</tabstop>
   <tabstop>push_Servers</tabstop>
  </tabstops>
  <resources>
