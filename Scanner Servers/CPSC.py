@@ -39,6 +39,7 @@ import labrad.units as units
 from labrad.types import Value
 import time
 import numpy as np
+from math import floor
 
 import sys
 import os
@@ -57,7 +58,15 @@ class CPSCServer(LabradServer):
         #radius given in mm. This value should be constant.
         self.R = 15.0
         
-        #Matrix T1 goes from xyz coordinates to channel 1, 2, 3 coordinates. 
+        #The relative step sizes of each of the knobs with everything else held constant
+        #1 everywhere means everything is stepping the same
+        #0.5 means that it steps half the distance
+        #2 means it steps twice the distance
+        #Forward is moving in direction 0, backwards is moving in direction 1
+        self.weight_for =[1,1,1]
+        self.weight_back =[1,1,1]
+        
+        #Matrix T1 goes from xyz coordinates to channel 1, 2, 3 coordinates. This does not take into account the relative weight of steps
         self.T1 = [[-self.R * np.sqrt(3) / (2*self.h), self.R / (2*self.h), 1],[0,-self.R/(self.h),1],[self.R * np.sqrt(3) / (2*self.h), self.R / (2*self.h), 1]]
         
         #Matrix T2 goes from channel coordinates back to xyz coordinates. Apparently never implemented
@@ -191,6 +200,7 @@ class CPSCServer(LabradServer):
         """Centers the piezos specified by ADDR in order to keep track of position. This will run the piezos through their
         full movement range. Make sure this is only called with no sensitive sample and be destroyed."""
         #FIGURE OUT HOW TO DO THIS
+        #Actually pretty sure this is impossible to do from software
         returnValue('Success!')
     
     @setting(110, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', XYZ = '*v[]', TORQUE = 'i', returns = 's')
@@ -202,6 +212,7 @@ class CPSCServer(LabradServer):
         (not necessarily equal), and the number of steps taken in radial directions."""
         
         VEC = np.dot(self.T1,XYZ)
+        VEC = self.adjustForWeight(VEC)
         VEC = [round(x) for x in VEC]
         print VEC
         
@@ -246,40 +257,56 @@ class CPSCServer(LabradServer):
         (not necessarily equal), and the number of steps taken in radial directions."""
         
         VEC = np.dot(self.T1,[X,0,0])
-        VEC = [round(x) for x in VEC]
+        VEC = self.adjustForWeight(VEC)
         print VEC
-        
+        print 'Knob 2 should always need to move 0 for this. If it is not showing 0, then something went werd'
         #have each cycle take ~1 second
         cycle_size = int(FREQ/2)
         
-        if VEC[0] == -VEC[2] and VEC[1] == 0:
-            if VEC[0] >1:
-                dir_chn_1 = 1
-                dir_chn_3 = 0
-            else:
-                dir_chn_1 = 0
-                dir_chn_3 = 1           
-            
-            num_steps = int(np.abs(VEC[0]))            
-            num_cycles  = num_steps / cycle_size
-            remainder  = num_steps % cycle_size
-            
-            print "Taking " + str(num_steps) +  " steps in channels 1 and 3."
-            print "This will be done over " + str(num_cycles) + " cycles of " + str(cycle_size) + " steps."
-            print "And a final cycle with the remainder of " + str(remainder) + " steps."
-            
-            for i in range (0,num_cycles):
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size, TORQUE)
+        #TODO, just implement these cycles into the move XYZ general command
+        #Direction should just be positive is 1, negative is 0
+        if VEC[0] > 0:
+            dir_chn_1 = 1
+            dir_chn_3 = 0
+        else:
+            dir_chn_1 = 0
+            dir_chn_3 = 1
+        
+        #Find the largest number of steps that need to be taken
+        max = np.max(np.abs(VEC))
+        #Determine the number of cycles based on the max number of step taken in a cycle (cycle_size)
+        num_cycles  = floor(max / cycle_size)
+        #Determine the amount to move each cycle in each channel 
+        VEC_cycle = [int(x) for x in np.multiply(VEC, cycle_size / max)]
+        remainder  = [int(x) for x in np.subtract(VEC, np.multiply(VEC_cycle, num_cycles))]
+        
+        print "Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively."
+        print "This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps."
+        print "And a final cycle with the remainder of " + str(remainder) + " steps."
+        
+        VEC_cycle = np.abs(VEC_cycle)
+        remainder = np.abs(remainder)
+        
+        for i in range (0,int(num_cycles)):
+            if VEC_cycle[0] > 0:
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, VEC_cycle[0], TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size, TORQUE)
+            if VEC_cycle[2] > 0:
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, VEC_cycle[2], TORQUE)
                 yield self.pause_while_moving(c,ADDR)
             
-            if remainder != 0:
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder, TORQUE)
-                yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder, TORQUE)
-                yield self.pause_while_moving(c,ADDR)
+        tot_remain = 0
+        for rem in remainder:
+            tot_remain = tot_remain + rem
             
+        if tot_remain != 0:
+            if remainder[0] > 0:
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder[0], TORQUE)
+                yield self.pause_while_moving(c,ADDR)
+            if remainder[2] > 0:
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder[2], TORQUE)
+                yield self.pause_while_moving(c,ADDR)
+        
         returnValue('Success!')
         
     @setting(112, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', Y = 'v[]', TORQUE = 'i', returns = 's')
@@ -291,43 +318,63 @@ class CPSCServer(LabradServer):
         (not necessarily equal), and the number of steps taken in radial directions."""
         
         VEC = np.dot(self.T1,[0,Y,0])
+        VEC = self.adjustForWeight(VEC)
+        print VEC
+        
+        #Have each cycle take ~1.5 seconds
         cycle_size = int(FREQ/2)
         
-        if VEC[0] == VEC[2] and VEC[1] == -2*VEC[0]:
-            VEC = [round(x) for x in VEC]
-            print VEC
-            if VEC[0] >1:
-                dir_chn_1 = 1
-                dir_chn_2 = 0
-                dir_chn_3 = 1
-            else:
-                dir_chn_1 = 0
-                dir_chn_2 = 1
-                dir_chn_3 = 0            
+        #Determine the direction
+        if VEC[0] >0:
+            dir_chn_1 = 1
+            dir_chn_2 = 0
+            dir_chn_3 = 1
+        else:
+            dir_chn_1 = 0
+            dir_chn_2 = 1
+            dir_chn_3 = 0
+        
+        #Find the largest number of steps that need to be taken
+        max = np.max(np.abs(VEC))
+        #Determine the number of cycles based on the max number of step taken in a cycle (cycle_size)
+        num_cycles  = floor(max / cycle_size)
+        #Determine the amount to move each cycle in each channel 
+        VEC_cycle = [int(x) for x in np.multiply(VEC, cycle_size / max)]
+        remainder  = [int(x) for x in np.subtract(VEC, np.multiply(VEC_cycle, num_cycles))]
+        
+        print "Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively."
+        print "This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps."
+        print "And a final cycle with the remainder of " + str(remainder) + " steps."
+
+        VEC_cycle = np.abs(VEC_cycle)
+        remainder = np.abs(remainder)
+        
+        for i in range (0,int(num_cycles)):
+            if VEC_cycle[0] > 0:
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, VEC_cycle[0], TORQUE)
+                yield self.pause_while_moving(c,ADDR)
+            if VEC_cycle[1] > 0:
+                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, VEC_cycle[1], TORQUE)
+                yield self.pause_while_moving(c,ADDR)
+            if VEC_cycle[2] > 0:
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, VEC_cycle[2], TORQUE)
+                yield self.pause_while_moving(c,ADDR)
+        
+        tot_remain = 0
+        for rem in remainder:
+            tot_remain = tot_remain + rem
             
-            num_steps = int(np.abs(VEC[0]))            
-            num_cycles  = num_steps / cycle_size
-            remainder  = num_steps % cycle_size
-            
-            print "Taking " + str(num_steps) +  " steps in channels 1 and 3."
-            print "This will be done over " + str(num_cycles) + " cycles of " + str(cycle_size) + " steps."
-            print "And a final cycle with the remainder of " + str(remainder) + " steps."
-            
-            for i in range (0,num_cycles):
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size, TORQUE)
+        if tot_remain != 0:
+            if remainder[0] > 0:
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder[0], TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, 2*cycle_size, TORQUE)
+            if remainder[1] > 0:
+                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, remainder[1], TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size, TORQUE)
+            if remainder[2] > 0:
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder[2], TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-            if remainder != 0:
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder, TORQUE)
-                yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, 2*remainder, TORQUE)
-                yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder, TORQUE)
-                yield self.pause_while_moving(c,ADDR)
-            
+        
         returnValue('Success!')
         
     @setting(113, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', Z = 'v[]', TORQUE = 'i', returns = 's')
@@ -338,45 +385,65 @@ class CPSCServer(LabradServer):
         Output not yet implememnted. Output returns the true number of steps taken in the x, y, and z directions 
         (not necessarily equal), and the number of steps taken in radial directions."""
         
-        VEC = np.dot(self.T1,[0,0,Z])
-        cycle_size = int(FREQ/2)
+        #Calculate steps in knobs 1 2 and 3
+        VEC = np.dot(self.T1,[0.0,0.0,Z])
+        VEC = self.adjustForWeight(VEC)
+        print VEC
         
-        if VEC[0] == VEC[2] and VEC[1] == VEC[0]:
-            VEC = [round(x) for x in VEC]
-            print VEC
-            if VEC[0] >1:
-                dir_chn_1 = 1
-                dir_chn_2 = 1
-                dir_chn_3 = 1
-            else:
-                dir_chn_1 = 0
-                dir_chn_2 = 0
-                dir_chn_3 = 0            
+        #Have each cycle take ~1.5 seconds
+        cycle_size = float(FREQ/2)
+                
+        #Determine the direction
+        if VEC[0] >0:
+            dir_chn_1 = 1
+            dir_chn_2 = 1
+            dir_chn_3 = 1
+        else:
+            dir_chn_1 = 0
+            dir_chn_2 = 0
+            dir_chn_3 = 0
+        
+        #Find the largest number of steps that need to be taken
+        max = np.max(np.abs(VEC))
+        #Determine the number of cycles based on the max number of step taken in a cycle (cycle_size)
+        num_cycles  = floor(max / cycle_size)
+        #Determine the amount to move each cycle in each channel 
+        VEC_cycle = [int(x) for x in np.multiply(VEC, cycle_size / max)]
+        remainder  = [int(x) for x in np.subtract(VEC, np.multiply(VEC_cycle, num_cycles))]
+        
+        print "Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively."
+        print "This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps."
+        print "And a final cycle with the remainder of " + str(remainder) + " steps."
+        
+        VEC_cycle = np.abs(VEC_cycle)
+        remainder = np.abs(remainder)
+        
+        for i in range (0,int(num_cycles)):
+            if VEC_cycle[0] > 0:
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, VEC_cycle[0], TORQUE)
+                yield self.pause_while_moving(c,ADDR)
+            if VEC_cycle[1] > 0:
+                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, VEC_cycle[1], TORQUE)
+                yield self.pause_while_moving(c,ADDR)
+            if VEC_cycle[2] > 0:
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, VEC_cycle[2], TORQUE)
+                yield self.pause_while_moving(c,ADDR)
+        
+        tot_remain = 0
+        for rem in remainder:
+            tot_remain = tot_remain + rem
             
-            num_steps = int(np.abs(VEC[0]))            
-            num_cycles  = num_steps / cycle_size
-            remainder  = num_steps % cycle_size
-            
-            print "Taking " + str(num_steps) +  " steps in channels 1, 2 and 3."
-            print "This will be done over " + str(num_cycles) + " cycles of " + str(cycle_size) + " steps."
-            print "And a final cycle with the remainder of " + str(remainder) + " steps."
-            
-            for i in range (0,num_cycles):
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, cycle_size, TORQUE)
+        if tot_remain != 0:
+            if remainder[0] > 0:
+                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder[0], TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, cycle_size, TORQUE)
+            if remainder[1] > 0:
+                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, remainder[1], TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, cycle_size, TORQUE)
+            if remainder[2] > 0:
+                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder[2], TORQUE)
                 yield self.pause_while_moving(c,ADDR)
-            
-            if remainder != 0:
-                yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder, TORQUE)
-                yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, remainder, TORQUE)
-                yield self.pause_while_moving(c,ADDR)
-                yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder, TORQUE)
-                yield self.pause_while_moving(c,ADDR)
-            
+        
         returnValue('Success!')
         
     @setting(114, ADDR = 'i', returns = 's')
@@ -390,6 +457,23 @@ class CPSCServer(LabradServer):
             if status.startswith("STATUS : STOP"):
                 break
         returnValue('Success!')
+        
+    @setting(115, Weight_for = '*v[]',Weight_back = '*v[]')
+    def setRelativeStepSize(self, c, Weight_for, Weight_back):
+        #Direction 0 is forward
+        self.weight_for  = Weight_for
+        #Direction 1 is backwards
+        self.weight_back = Weight_back
+        
+    def adjustForWeight(self, vec):
+        #Vec value greater than 0 corresponds to direction 1, which is moving "backward" (the tip moves away from the sample)
+        #vec values less than 0 corresponds to direction 0, which is moving "forward" (the tip moves closer to the sample)
+        for i in range(0,3):
+            if vec[i] > 0:
+                vec[i] = vec[i] / self.weight_back[i]
+            elif vec[i] < 0:
+                vec[i] = vec[i] / self.weight_for[i]
+        return vec
         
     def find_between(self, s, start, end):
         try:
