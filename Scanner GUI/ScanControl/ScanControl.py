@@ -80,9 +80,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Initial attocube position
         self.Atto_X_Voltage = 0.0
         self.Atto_Y_Voltage = 0.0
-        
-        self.updatePosition()
-        
         self.Atto_Z_Voltage = 0.0
         #Offset to the Z voltage if use in the approach. All movement around Z will be centered around this point. 
         #After each scan, Atto_Z_Voltage should end up back at 0, ie being centered around the Atto_Z_Voltage_Offset
@@ -114,8 +111,29 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #DC Box output for blinking (1 indexed)
         self.blinkOutput = 2
         
-        #Channel 0 corresponds to height, and 1 to magnetic field
+        #Channel 0 corresponds to height, and 1 to input 1, and 2 to input 2
         self.channel = 0
+                
+        self.inputs = {
+                'Z in'                : 1,         # 1 Indexed DAC input into which the voltage corresponding to the Z atto motion 
+                'Z conversion'        : 1,         # Conversion from volts to Z Units specified below. Should be units = Volts / conversion_factor
+                'Z units'             : 'm',       # Units 
+                'Input 1 name'        : 'Input 1', # String with the name of Input 1
+                'Input 1 in'          : 2,         # 1 Indexed DAC input for Input 1
+                'Input 1 conversion'  : 1,         # Conversion from volts to Input 1 units specified below. Should be units = Volts / conversion_factor
+                'Input 1 unit'        : 'V',       # Units of input 1. Default of nothing shows Volts
+                'Input 2 name'        : 'Input 2', # String with the name of Input 2
+                'Input 2 in'          : 3,         # 1 Indexed DAC input for Input 2
+                'Input 2 conversion'  : 1,         # Conversion from volts to Input 2 units specified below. Should be units = Volts / conversion_factor
+                'Input 2 unit'        : 'V',       # Units of input 2
+                }
+                
+        self.outputs = {
+                'z out'               : 1,         # 1 indexed DAC output that goes to constant gain on Z 
+                'x out'               : 2,         # 1 indexed DAC output that goes to X
+                'y out'               : 3,          # 1 indexed DAC output that goes to Y
+                'blink out'           : 2,         # 1 indexed DC Box output that goes to blinking
+        }
                 
         #Set up rest of UI (must be done after initializing default values)
         self.setupAdditionalUi()
@@ -152,15 +170,28 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_YTilt.editingFinished.connect(self.updateYTilt)
         self.lineEdit_Xset.editingFinished.connect(self.updateXset)
         self.lineEdit_Yset.editingFinished.connect(self.updateYset)
-        
+        self.lineEdit_Input1Name.editingFinished.connect(self.setInput1Name)
+        self.lineEdit_Input2Name.editingFinished.connect(self.setInput2Name)
+        self.lineEdit_Input1Conversion.editingFinished.connect(self.setInput1Conversion)
+        self.lineEdit_Input2Conversion.editingFinished.connect(self.setInput2Conversion)
+        self.lineEdit_Input1Unit.editingFinished.connect(self.setInput1Unit)
+        self.lineEdit_Input2Unit.editingFinished.connect(self.setInput2Unit)
         
         self.checkBox.toggled.connect(self.toggleROIVisibility)
                 
         self.comboBox_Processing.activated[str].connect(self.selectProcessing)
         self.comboBox_PostProcessing.activated[str].connect(self.selectPostProcessing)
         self.comboBox_scanMode.activated[str].connect(self.updateScanMode)
-        self.comboBox_Channel.activated[str].connect(self.selectChannel)
+        self.comboBox_Channel.currentIndexChanged.connect(self.selectChannel)
         self.comboBox_blinkMode.currentIndexChanged.connect(self.setBlinkMode)
+        self.comboBox_ZInput.currentIndexChanged.connect(self.setZInput)
+        self.comboBox_Input1.currentIndexChanged.connect(self.setInput1)
+        self.comboBox_Input2.currentIndexChanged.connect(self.setInput2)
+        
+        self.comboBox_ZOutput.currentIndexChanged.connect(self.setZOutput)
+        self.comboBox_XOutput.currentIndexChanged.connect(self.setXOutput)
+        self.comboBox_YOutput.currentIndexChanged.connect(self.setYOutput)
+        self.comboBox_BlinkOutput.currentIndexChanged.connect(self.setBlinkOutput)
         
         #ROI in trace plot
         self.ROI.sigRegionChanged.connect(self.updateROI)
@@ -181,7 +212,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.dac = False
         self.dcbox = False
         
-        #self.lockInterface()
+        self.lockInterface()
         
     def moveDefault(self):
         self.move(10,170)
@@ -213,10 +244,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.unlockInterface()
             
     def disconnectLabRAD(self):
-        self.dv = False
         self.cxn = False
-        self.ips = False
         self.dac = False
+        self.dv = False
+        self.dc_box = False
+
+        self.lockInterface()
+        
         self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             
@@ -338,7 +372,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.PlotArea_4.hide()
         
     def setupScanningArea(self):
-        #Testing stuff
+        #ROI and ROI3 and the trace, and retrace ROIs
+        #ROI2 is the minimap ROI
         self.ROI = pg.RectROI((-2.5e-6,-2.5e-6),(5e-6,5e-6), movable = True)
         self.ROI2 = pg.RectROI((-2.5e-6,-2.5e-6),(5e-6,5e-6), movable = True)
         self.ROI3 = pg.RectROI((-2.5e-6,-2.5e-6),(5e-6,5e-6), movable = True)
@@ -383,6 +418,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         self.view2.setXRange(-self.x_meters_max/2 - 2.0e-7,self.x_meters_max/2,0)
         self.view2.setYRange(-self.y_meters_max/2,self.y_meters_max/2 + 2.0e-7,0)
+        
+        self.lineEdit_ZConversion.setText(formatNum(self.z_volts_to_meters))
+        
+        self.updatePosition()
 
 #----------------------------------------------------------------------------------------------#         
     """ The following section connects actions related to buttons on the Scan Control window."""
@@ -394,16 +433,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.FrameLocked = False
             self.ROI.removeHandle(1)
             self.ROI.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = False)
-            self.ROI2.removeHandle(1)
-            self.ROI2.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = False)
+            self.ROI3.removeHandle(1)
+            self.ROI3.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = False)
         else:
             self.push_FrameLock.setStyleSheet("#push_FrameLock{"+
             "image:url(:/nSOTScanner/Pictures/lock.png);background: black;}")
             self.FrameLocked = True
             self.ROI.removeHandle(1)
             self.ROI.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = True)
-            self.ROI2.removeHandle(1)
-            self.ROI2.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = True)
+            self.ROI3.removeHandle(1)
+            self.ROI3.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = True)
             
     def toggleSpeedLock(self):
         if self.LinearSpeedLocked == False:
@@ -467,11 +506,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def selectPostProcessing(self, string):
         self.dataPostProcessing = string
         
-    def selectChannel(self,string):
-        if string == 'Z (V)':
-            self.channel = 0
-        elif string == 'B (T)':
-            self.channel = 1
+    def selectChannel(self):
+        self.channel = self.comboBox_Channel.currentIndex()
         self.refreshPlotData()
         
     def setBlinkMode(self):
@@ -853,7 +889,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def updateLinearSpeed(self):
         new_LinearSpeed = str(self.lineEdit_Linear.text())
         val = readNum(new_LinearSpeed)
-        if isinstance(val,float):
+        if isinstance(val,float) and val > 0:
             self.linearSpeed = val
             self.lineTime = self.W/self.linearSpeed
             self.lineEdit_LineTime.setText(formatNum(self.lineTime))
@@ -986,6 +1022,61 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.lineEdit_Xcurr.setText(formatNum(xpos))
         self.lineEdit_Ycurr.setText(formatNum(ypos))
+        
+    def setZInput(self):
+        self.inputs['Z in'] = self.comboBox_ZInput.currentIndex()+1
+        print self.inputs
+        
+    def setInput1(self):
+        self.inputs['Input 1 in'] = self.comboBox_Input1.currentIndex()+1
+        print self.inputs
+        
+    def setInput2(self):
+        self.inputs['Input 2 in'] = self.comboBox_Input2.currentIndex()+1
+        print self.inputs
+        
+    def setInput1Name(self):
+        self.inputs['Input 1 name'] = str(self.lineEdit_Input1Name.text())
+        self.comboBox_Channel.setItemText(1, self.lineEdit_Input1Name.text())
+        print self.inputs
+        
+    def setInput2Name(self):
+        self.inputs['Input 2 name'] = str(self.lineEdit_Input2Name.text())
+        self.comboBox_Channel.setItemText(2, self.lineEdit_Input2Name.text())
+        print self.inputs
+        
+    def setInput1Conversion(self):
+        text = str(self.lineEdit_Input1Conversion.text())
+        val = readNum(text)
+        if isinstance(val,float):
+            self.inputs['Input 1 conversion'] = val
+        self.lineEdit_Input1Conversion.setText(formatNum(self.inputs['Input 1 conversion']))
+    
+    def setInput2Conversion(self):
+        text = str(self.lineEdit_Input2Conversion.text())
+        val = readNum(text)
+        if isinstance(val,float):
+            self.inputs['Input 2 conversion'] = val
+        self.lineEdit_Input2Conversion.setText(formatNum(self.inputs['Input 2 conversion']))
+    
+    def setInput1Unit(self):
+        self.inputs['Input 1 unit'] = self.lineEdit_Input1Unit.text()
+    
+    def setInput2Unit(self):
+        self.inputs['Input 2 unit'] = self.lineEdit_Input2Unit.text()
+        
+    def setZOutput(self):
+        self.outputs['z out'] = self.comboBox_ZOutput.currentIndex()+1
+
+    def setXOutput(self):
+        self.outputs['x out'] = self.comboBox_XOutput.currentIndex()+1
+        
+    def setYOutput(self):
+        self.outputs['y out'] = self.comboBox_YOutput.currentIndex()+1
+        
+    def setBlinkOutput(self):
+        self.outputs['blink out'] = self.comboBox_BlinkOutput.currentIndex()+1
+        
 #----------------------------------------------------------------------------------------------#      
     """ The following section has scanning functions and live graph updating."""  
     
@@ -1044,7 +1135,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def setPosition(self, c = None):
         yield self.abortScan()
         try:
-            Xset_volts = self.Xset* self.x_volts_to_meters
+            Xset_volts = self.Xset* self.x_volts_to_meters + self.x_volts_max/2
             xpoints = int(np.absolute((self.Atto_X_Voltage - Xset_volts) / (300e-6)))
             xdelay = int(np.absolute(1e6 * (300e-6 / (self.x_volts_to_meters * self.linearSpeed))))
             
@@ -1056,7 +1147,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.Atto_X_Voltage = Xset_volts
             self.updatePosition()
             
-            Yset_volts = self.Yset* self.y_volts_to_meters
+            Yset_volts = self.Yset* self.y_volts_to_meters + self.y_volts_max/2
             ypoints = int(np.absolute((self.Atto_Y_Voltage- Yset_volts)/ (300e-6)))
             ydelay = int(np.absolute(1e6 * (300e-6 / (self.y_volts_to_meters * self.linearSpeed))))
                 
@@ -1090,7 +1181,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.curr_y = self.y
             
             #Determine plot scales
-            self.xscale, self.yscale = self.currW / self.lines, self.currH / self.pixels
+            self.xscale, self.yscale = self.currW / self.pixels, self.currH / self.lines
             
             #If necessary, update ROIs
             if self.scanCoordinates:
@@ -1098,7 +1189,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.moveROI3()
                 
             #Initialize empty data sets
-            pxsize = (2, self.pixels, self.lines)
+            pxsize = (3, self.pixels, self.lines)
             self.data = np.zeros(pxsize)
             self.data_retrace = np.zeros(pxsize)
             self.plotData = np.zeros(pxsize)[0]
@@ -1121,6 +1212,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.lineEdit_XTilt.setEnabled(False)
             self.lineEdit_YTilt.setEnabled(False)
 
+            self.push_Zero.setEnabled(False)
+            self.push_Set.setEnabled(False)
+            
             #Begin data gathering procedure
             self.scanning = True
             self.updateScanningStatus.emit(True)
@@ -1136,8 +1230,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         try:
             #Create data vault file with appropriate parameters
             #Retrace index is 0 for trace, 1 for retrace
-            file_info = yield self.dv.new("nSOT Scan Data " + self.fileName, ['Retrace Index','X Pos. Index','Y Pos. Index','X Pos. Voltage', 'Y Pos. Voltage'],['Z Pos. Voltage','SSAA DC Voltage'])
+            file_info = yield self.dv.new("nSOT Scan Data " + self.fileName, ['Retrace Index','X Pos. Index','Y Pos. Index','X Pos. Voltage', 'Y Pos. Voltage'],['Z Position',self.inputs['Input 1 name'], self.inputs['Input 2 name']])
+            self.dvFileName = file_info[1]
             self.lineEdit_ImageNum.setText(file_info[1][0:5])
+            session  = ''
+            for folder in file_info[0][1:]:
+                session = session + '\\' + folder
+            self.lineEdit_ImageDir.setText(r'\.datavault' + session)
             print 'Created new DV file'
             params = (('X Center', self.currXc), ('Y Center', self.currYc), ('Width', self.currW), ('Height',self.currH), ('Angle',self.currAngle), ('Speed',self.linearSpeed), ('Pixels',self.pixels), ('Lines', self.lines))
             print params
@@ -1147,7 +1246,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             #yield self.dv.add_parameters(params)
             #Marec - Yes, we should update that computer to the latest version of datavault
             print 'Added params'
-
+            #TODO Fix parameters so that scan info properly saved. Get all info needed 
+            
             self.updateScanParameters()
             
             #For now, HARD CODED THAT using DAC out 2 (or 1 when zero indexed) for X 
@@ -1161,7 +1261,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             #Move to appropriate starting position
             if self.scanParameters['delta_x'] > 0 and self.scanning:
                 print 'Moving by: ' + str(self.scanParameters['delta_x']) + ' in the x direction to starting position.'
-                yield self.dac.ramp1(1, self.Atto_X_Voltage, self.scanParameters['x_start_voltage'], self.scanParameters['x_points'], self.scanParameters['delay_x'])
+                yield self.dac.ramp1(self.outputs['x out']-1, self.Atto_X_Voltage, self.scanParameters['x_start_voltage'], self.scanParameters['x_points'], self.scanParameters['delay_x'])
                 #ramp1 returns ramp completed before the ramp is completed. Add a sleep statement to make 
                 #make sure we don't continue too soon
                 yield self.sleep(self.scanParameters['x_points']*self.scanParameters['delay_x'] / (1e6))
@@ -1170,7 +1270,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 
             if self.scanParameters['delta_y'] > 0 and self.scanning:
                 print 'Moving by: ' + str(self.scanParameters['delta_y']) + ' in the y direction to starting position.'
-                yield self.dac.ramp1(2, self.Atto_Y_Voltage, self.scanParameters['y_start_voltage'], self.scanParameters['y_points'], self.scanParameters['delay_y'])
+                yield self.dac.ramp1(self.outputs['y out']-1, self.Atto_Y_Voltage, self.scanParameters['y_start_voltage'], self.scanParameters['y_points'], self.scanParameters['delay_y'])
                 #ramp1 returns ramp completed before the ramp is completed. Add a sleep statement to make 
                 #make sure we don't continue too soon
                 yield self.sleep(self.scanParameters['y_points']*self.scanParameters['delay_y'] / (1e6))
@@ -1207,17 +1307,23 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Do buffer ramp
                 if self.scanMode == 'Feedback': 
                     self.ramping = True
-                    newData = yield self.dac.buffer_ramp_dis([1,2],[0,1],[startx, starty],[stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
+                    out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
+                    in_list = [self.inputs['Z in']-1,self.inputs['Input 1 in']-1,self.inputs['Input 2 in']-1]
+                    print "X and Y outputs: ", out_list, "Z, Input 1, Input 2: ", in_list
+                    newData = yield self.dac.buffer_ramp_dis(out_list,in_list,[startx, starty],[stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     self.ramping = False
                 elif self.scanMode == 'Constant Height': 
-                    print 'Scanning in constant height'
+                    
                     startz = self.Atto_Z_Voltage + self.Atto_Z_Voltage_Offset
                     stopz = startz + self.scanParameters['line_y']*np.tan(self.y_tilt) + self.scanParameters['line_x']*np.tan(self.x_tilt)
+                    
                     print startz, stopz
-                    #junk = yield self.dac.read()
-                    #print 'Junk ', junk
+                    
+                    out_list = [self.outputs['z out']-1, self.outputs['x out']-1,self.outputs['y out']-1]
+                    in_list = [self.inputs['Z in']-1,self.inputs['Input 1 in']-1,self.inputs['Input 2 in']-1]
+                    print "Z, X and Y outputs: ", out_list, "Z, Input 1, Input 2: ", in_list
                     self.ramping = True
-                    newData = yield self.dac.buffer_ramp_dis([0,1,2], [0,1], [startz, startx, starty], [stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
+                    newData = yield self.dac.buffer_ramp_dis(out_list, in_list, [startz, startx, starty], [stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     self.ramping = False
                     print 'Got new data'
                     self.Atto_Z_Voltage = stopz - self.Atto_Z_Voltage_Offset
@@ -1232,8 +1338,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Add the binned Z data to the dataset. Note that right now, newData is the same length as self.pixels, 
                 #and the binning does nothing except flip the order of the data for retraces
                 self.data[0][:,i] = self.bin_data(newData[0]/self.z_volts_to_meters, self.pixels, 'trace')
-                #Add the binned magnetic field data to the dataset
-                self.data[1][:,i] = self.bin_data(newData[1], self.pixels, 'trace')
+                #Add the binned input 1 data to the dataset
+                self.data[1][:,i] = self.bin_data(newData[1]/self.inputs['Input 1 conversion'], self.pixels, 'trace')
+                #Add the binned input 2 data to the dataset
+                self.data[2][:,i] = self.bin_data(newData[2]/self.inputs['Input 2 conversion'], self.pixels, 'trace')
+                
                 print 'Time taken to bin data: ' + str(time.clock()-tzero)
                 tzero = time.clock()
                 self.plotData[:,i] = processLineData(np.copy(self.data[self.channel][:,i]), self.dataProcessing)
@@ -1245,7 +1354,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 y_voltage = np.linspace(starty, stopy, self.pixels)
                 formated_data = []
                 for j in range(0, self.pixels):
-                    formated_data.append((0, i, j, x_voltage[j], y_voltage[j], self.data[0][j,i], self.data[1][j,i]))
+                    formated_data.append((0, i, j, x_voltage[j], y_voltage[j], self.data[0][j,i], self.data[1][j,i],self.data[2][j,i]))
                 yield self.dv.add(formated_data)
                 print 'Time taken to add data to data vault: ' + str(time.clock()-tzero)
 
@@ -1269,16 +1378,22 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     
                 if self.scanMode == 'Feedback':
                     self.ramping = True
-                    newData = yield self.dac.buffer_ramp_dis([1,2],[0,1],[startx, starty],[stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
+                    out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
+                    in_list = [self.inputs['Z in']-1,self.inputs['Input 1 in']-1,self.inputs['Input 2 in']-1]
+                    print "X and Y outputs: ", out_list, "Z, Input 1, Input 2: ", in_list
+                    newData = yield self.dac.buffer_ramp_dis(out_list,in_list,[startx, starty],[stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     self.ramping = False
                 elif self.scanMode == 'Constant Height':
                     startz = self.Atto_Z_Voltage + self.Atto_Z_Voltage_Offset
                     stopz = startz - self.scanParameters['line_y']*np.tan(self.y_tilt) - self.scanParameters['line_x']*np.tan(self.x_tilt)
                     
-                    #junk = yield self.dac.read()
-                    #print 'Junk 2', junk
+                    out_list = [self.outputs['z out']-1, self.outputs['x out']-1,self.outputs['y out']-1]
+                    in_list = [self.inputs['Z in']-1,self.inputs['Input 1 in']-1,self.inputs['Input 2 in']-1]
+                    
+                    print "Z, X and Y outputs: ", out_list, "Z, Input 1, Input 2: ", in_list
+                    
                     self.ramping = True
-                    newData = yield self.dac.buffer_ramp_dis([0,1,2],[0,1],[startz,startx, starty],[stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
+                    newData = yield self.dac.buffer_ramp_dis(out_list,in_list,[startz,startx, starty],[stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     self.ramping = False
                     self.Atto_Z_Voltage = stopz - self.Atto_Z_Voltage_Offset
                     
@@ -1288,8 +1403,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 
                 #bin newData to appropriate number of pixels for Z data
                 self.data_retrace[0][:,i] = self.bin_data(newData[0]/self.z_volts_to_meters, self.pixels,'retrace')
-                #bin newData to appropriate number of pixels for field data
-                self.data_retrace[1][:,i] = self.bin_data(newData[1], self.pixels,'retrace')
+                #bin newData to appropriate number of pixels for input 1
+                self.data_retrace[1][:,i] = self.bin_data(newData[1]/self.inputs['Input 1 conversion'], self.pixels,'retrace')
+                #bin newData to appropriate number of pixels for input 2
+                self.data_retrace[2][:,i] = self.bin_data(newData[2]/self.inputs['Input 2 conversion'], self.pixels,'retrace')
                 
                 #Process data for plotting
                 self.plotData_retrace[:,i] = processLineData(np.copy(self.data_retrace[self.channel][:,i]), self.dataProcessing)
@@ -1300,7 +1417,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 formated_data = []
                 for j in range(0, self.pixels):
                     #Putting in 0 for SSAA voltage (last entry) because not yet being used/read
-                    formated_data.append((1, i, j, x_voltage[::-1][j], y_voltage[::-1][j], self.data_retrace[0][j,i], self.data_retrace[1][j,i]))
+                    formated_data.append((1, i, j, x_voltage[::-1][j], y_voltage[::-1][j], self.data_retrace[0][j,i], self.data_retrace[1][j,i], self.data_retrace[2][j,i]))
                 yield self.dv.add(formated_data)
                 
                 #------------------------------------#
@@ -1308,33 +1425,39 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 if not self.scanning:
                     break
                     
-                #Move to position for next line
-                startx = self.Atto_X_Voltage
-                starty = self.Atto_Y_Voltage
-                stopx = self.Atto_X_Voltage + self.scanParameters['pixel_x']
-                stopy = self.Atto_Y_Voltage + self.scanParameters['pixel_y']
-                
-                #I think buffer ramp is being used here to ramp 1 and 2, or 0,1,2 at the same time
-                #Read values are not being used for anything
-                tzero = time.clock()
-                if self.scanMode == 'Feedback':
-                    self.ramping = True
-                    yield self.dac.buffer_ramp_dis([1,2],[0],[startx, starty],[stopx, stopy], self.scanParameters['pixel_points'], self.scanParameters['pixel_delay'],5)
-                    self.ramping = False
-                elif self.scanMode == 'Constant Height':
-                    startz = self.Atto_Z_Voltage + self.Atto_Z_Voltage_Offset
-                    stopz = startz + self.scanParameters['pixel_y']*np.tan(self.y_tilt) + self.scanParameters['pixel_x']*np.tan(self.x_tilt)
-                    self.ramping = True
-                    newLine = yield self.dac.buffer_ramp_dis([0,1,2],[0],[startz,startx, starty],[stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'],5)
-                    self.ramping = False
-                    self.Atto_Z_Voltage = stopz - self.Atto_Z_Voltage_Offset
+                #if we are not on the last line
+                if i < self.lines - 1:
+                    #Move to position for next line
+                    startx = self.Atto_X_Voltage
+                    starty = self.Atto_Y_Voltage
+                    stopx = self.Atto_X_Voltage + self.scanParameters['pixel_x']
+                    stopy = self.Atto_Y_Voltage + self.scanParameters['pixel_y']
                     
-                self.Atto_X_Voltage = stopx
-                self.Atto_Y_Voltage = stopy
-                self.updatePosition()
-                #ramp to next y point
-                print 'Time taken to move to next line: ' + str(time.clock()-tzero)
-                tzero = time.clock()
+                    #Buffer ramp is being used here to ramp 1 and 2, or 0,1,2 at the same time
+                    #Read values are not being used for anything (but are being read to avoid
+                    #bugs related to having 0 read values)
+                    tzero = time.clock()
+                    if self.scanMode == 'Feedback':
+                        out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
+                        print "X and Y outputs: ", out_list
+                        self.ramping = True
+                        yield self.dac.buffer_ramp_dis(out_list,[0],[startx, starty],[stopx, stopy], self.scanParameters['pixel_points'], self.scanParameters['pixel_delay'],1)
+                        self.ramping = False
+                    elif self.scanMode == 'Constant Height':
+                        startz = self.Atto_Z_Voltage + self.Atto_Z_Voltage_Offset
+                        stopz = startz + self.scanParameters['pixel_y']*np.tan(self.y_tilt) + self.scanParameters['pixel_x']*np.tan(self.x_tilt)
+                        out_list = [self.outputs['z out']-1, self.outputs['x out']-1,self.outputs['y out']-1]
+                        self.ramping = True
+                        newLine = yield self.dac.buffer_ramp_dis(out_list,[0],[startz,startx, starty],[stopz, stopx, stopy], self.scanParameters['pixel_points'], self.scanParameters['pixel_delay'],1)
+                        self.ramping = False
+                        self.Atto_Z_Voltage = stopz - self.Atto_Z_Voltage_Offset
+                    
+                        self.Atto_X_Voltage = stopx
+                        self.Atto_Y_Voltage = stopy
+                        self.updatePosition()
+                        #ramp to next y point
+                        print 'Time taken to move to next line: ' + str(time.clock()-tzero)
+                        tzero = time.clock()
 
                 #update graph
                 self.currLine = i
@@ -1345,30 +1468,39 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             if self.Atto_Z_Voltage != 0:
                 print 'Moving by: ' + str(self.Atto_Z_Voltage) + ' in the z direction to return to zero z offset.'
                 #By default ramps output 0 from the current z voltage back to 0 with 1000 points at 1 ms delay 
-                yield self.dac.ramp1(0, self.Atto_Z_Voltage + self.Atto_Z_Voltage_Offset, self.Atto_Z_Voltage_Offset, 1000, 1000)
+                yield self.dac.ramp1(self.outputs['z out']-1, self.Atto_Z_Voltage + self.Atto_Z_Voltage_Offset, self.Atto_Z_Voltage_Offset, 1000, 1000)
                 self.Atto_Z_Voltage = 0.0
-            
-            #Successfully finished the scan!
-            self.scanning = False
-            self.updateScanningStatus.emit(False)
-            
-            self.push_Scan.setText('Scan')
-            self.push_Scan.setEnabled(True)
-            
-            self.push_Scan.setEnabled(True)
-            self.lineEdit_Angle.setEnabled(True)
-            self.lineEdit_Xc.setEnabled(True)
-            self.lineEdit_Yc.setEnabled(True)
-            self.lineEdit_W.setEnabled(True)
-            self.lineEdit_H.setEnabled(True)
-            self.push_setView.setEnabled(True)
-            self.lineEdit_Lines.setEnabled(True)
-            self.lineEdit_Pixels.setEnabled(True)
-            self.lineEdit_XTilt.setEnabled(True)
-            self.lineEdit_YTilt.setEnabled(True)
+           
         except Exception as inst:
-            print 'update_data: ' + str(inst)
-                
+            print 'update_data error: ', str(inst)
+            print 'on line: ', sys.exc_traceback.tb_lineno
+            
+        #Successfully or not finished the scan!
+        self.scanning = False
+        self.updateScanningStatus.emit(False)
+        
+        self.push_Scan.setText('Scan')
+        self.push_Scan.setEnabled(True)
+        
+        self.push_Scan.setEnabled(True)
+        self.lineEdit_Angle.setEnabled(True)
+        self.lineEdit_Xc.setEnabled(True)
+        self.lineEdit_Yc.setEnabled(True)
+        self.lineEdit_W.setEnabled(True)
+        self.lineEdit_H.setEnabled(True)
+        self.push_setView.setEnabled(True)
+        self.lineEdit_Lines.setEnabled(True)
+        self.lineEdit_Pixels.setEnabled(True)
+        self.lineEdit_XTilt.setEnabled(True)
+        self.lineEdit_YTilt.setEnabled(True)
+        
+        self.push_Zero.setEnabled(True)
+        self.push_Set.setEnabled(True)
+        
+        #Wait until all plots are appropriately updated before saving screenshot
+        yield self.sleep(0.25)
+        self.saveDataToSessionFolder()
+        
     def update_gph(self):
         #Updates the trace, retrace, and mini plots with the plotData and plotData_retract images. 
         try:
@@ -1546,11 +1678,24 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def startScanTimer(self, c = None):
         t_zero = time.clock()
         while self.scanning:
-            t = time.clock - t_zero
+            t = time.clock() - t_zero
             self.lineEdit_TimeElapsed.setText(formatNum(t))
             yield self.sleep(0.25)
-          
-#----------------------------------------------------------------------------------------------#         
+        
+    def setSessionFolder(self, folder):
+        self.sessionFolder = folder
+        
+    def saveDataToSessionFolder(self):
+        try:
+            p = QtGui.QPixmap.grabWindow(self.winId())
+            a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
+            if not a:
+                print "Error saving Scan data picture"
+        except Exception as inst:
+            print 'Scan error: ', inst
+            print 'on line: ', sys.exc_traceback.tb_lineno
+        
+#----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""
            
     def lockInterface(self):
@@ -1566,6 +1711,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_autoLevel.setEnabled(False)
         self.push_autoRange.setEnabled(False)
         self.push_Zero.setEnabled(False)
+        self.push_Set.setEnabled(False)
         
         self.lineEdit_FileName.setEnabled(False)
         self.lineEdit_Linear.setEnabled(False)
@@ -1587,7 +1733,25 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.comboBox_Channel.setEnabled(False)
         self.comboBox_scanMode.setEnabled(False)
         self.comboBox_blinkMode.setEnabled(False)
+        
+        self.comboBox_ZInput.setEnabled(False)
+        self.comboBox_Input1.setEnabled(False)
+        self.comboBox_Input2.setEnabled(False)
 
+        self.comboBox_ZOutput.setEnabled(False)
+        self.comboBox_XOutput.setEnabled(False)
+        self.comboBox_YOutput.setEnabled(False)
+        self.comboBox_BlinkOutput.setEnabled(False)
+        
+        self.lineEdit_Input1Name.setEnabled(False)
+        self.lineEdit_Input2Name.setEnabled(False)
+        
+        self.lineEdit_Input1Conversion.setEnabled(False)
+        self.lineEdit_Input2Conversion.setEnabled(False)
+        
+        self.lineEdit_Input1Unit.setEnabled(False)
+        self.lineEdit_Input2Unit.setEnabled(False)
+        
         self.checkBox.setEnabled(False)
 
     def unlockInterface(self):
@@ -1604,6 +1768,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_autoLevel.setEnabled(True)
         self.push_autoRange.setEnabled(True)
         self.push_Zero.setEnabled(True)
+        self.push_Set.setEnabled(True)
         
         self.lineEdit_FileName.setEnabled(True)
         self.lineEdit_Linear.setEnabled(True)
@@ -1625,6 +1790,24 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.comboBox_Channel.setEnabled(True)
         self.comboBox_scanMode.setEnabled(True)
         self.comboBox_blinkMode.setEnabled(True)
+        
+        self.comboBox_ZInput.setEnabled(True)
+        self.comboBox_Input1.setEnabled(True)
+        self.comboBox_Input2.setEnabled(True)
+
+        self.comboBox_ZOutput.setEnabled(True)
+        self.comboBox_XOutput.setEnabled(True)
+        self.comboBox_YOutput.setEnabled(True)
+        self.comboBox_BlinkOutput.setEnabled(True)
+        
+        self.lineEdit_Input1Name.setEnabled(True)
+        self.lineEdit_Input2Name.setEnabled(True)
+        
+        self.lineEdit_Input1Conversion.setEnabled(True)
+        self.lineEdit_Input2Conversion.setEnabled(True)
+        
+        self.lineEdit_Input1Unit.setEnabled(True)
+        self.lineEdit_Input2Unit.setEnabled(True)
         
         self.checkBox.setEnabled(True)
 

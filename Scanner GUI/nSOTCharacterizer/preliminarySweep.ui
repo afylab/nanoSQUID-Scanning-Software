@@ -891,6 +891,98 @@ border-radius: 5px
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
+  <widget class="QLineEdit" name="lineEdit_ImageNum">
+   <property name="geometry">
+    <rect>
+     <x>250</x>
+     <y>15</y>
+     <width>51</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Updates when scan starts</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#lineEdit_ImageNum{
+background: rgb(181, 181, 181);
+border: grey;
+}</string>
+   </property>
+   <property name="text">
+    <string>N/A</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_ImageNum">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>15</y>
+     <width>51</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#label_ImageNum{
+color: rgb(168, 168, 168)
+}</string>
+   </property>
+   <property name="text">
+    <string>Image #</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_ImageDir">
+   <property name="geometry">
+    <rect>
+     <x>360</x>
+     <y>15</y>
+     <width>101</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Updates when scan starts</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#lineEdit_ImageDir{
+background: rgb(181, 181, 181);
+border: grey;
+}</string>
+   </property>
+   <property name="text">
+    <string>N/A</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_ImageDir">
+   <property name="geometry">
+    <rect>
+     <x>310</x>
+     <y>15</y>
+     <width>51</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#label_ImageDir{
+color: rgb(168, 168, 168)
+}</string>
+   </property>
+   <property name="text">
+    <string>Image Dir</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

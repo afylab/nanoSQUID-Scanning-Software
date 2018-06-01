@@ -65,46 +65,48 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
 
     @inlineCallbacks
     def readInitVals(self, c = None):
-        if self.magPowerStr == 'ips':
-            yield self.magDev.set_control(3)
-            curr_field = yield self.magDev.read_parameter(7)
-            yield self.magDev.set_control(2)
-            curr_field =float(curr_field[1:])
+        try:
+            if self.magPowerStr == 'ips':
+                yield self.magDev.set_control(3)
+                curr_field = yield self.magDev.read_parameter(7)
+                yield self.magDev.set_control(2)
+                curr_field =float(curr_field[1:])
 
-            self.setpointDict['field'] = curr_field
-            self.currFieldLbl.setText('Current Field: ' + str(curr_field) + 'T')
-            self.currFieldLbl.setStyleSheet("QLabel#currFieldLbl{color: rgb(168,168,168); font:bold 10pt;}")
+                self.setpointDict['field'] = curr_field
+                self.currFieldLbl.setText('Current Field: ' + str(curr_field) + 'T')
+                self.currFieldLbl.setStyleSheet("QLabel#currFieldLbl{color: rgb(168,168,168); font:bold 10pt;}")
+                
+            else:
+                self.currFieldLbl.setText('Current Field: 0T')
+                self.currFieldLbl.setStyleSheet("QLabel#currFieldLbl{color: rgb(168,168,168); font:bold 10pt;}")
             
-        else:
-            self.currFieldLbl.setText('Current Field: 0T')
-            self.currFieldLbl.setStyleSheet("QLabel#currFieldLbl{color: rgb(168,168,168); font:bold 10pt;}")
-        
-        curr_bias = yield self.dac.read_voltage(self.biasRefChan)
-        self.setpointDict['bias'] = float(curr_bias)
-        
-        self.currBiasLbl.setText('Current Bias: '+ str(curr_bias) + 'V')
-        self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
-		self.currStatusLbl.setText('Status: Idle')
-		self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
-
+            curr_bias = yield self.dac.read_voltage(self.biasRefChan)
+            self.setpointDict['bias'] = float(curr_bias)
+            
+            self.currBiasLbl.setText('Current Bias: '+ str(curr_bias) + 'V')
+            self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
+            self.currStatusLbl.setText('Status: Idle')
+            self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
+        except Exception as inst:
+            print "readInitVals Error: ", inst
 
     @inlineCallbacks
     def ipsGoToFieldFunc(self, field, rate, c = None):
-		yield self.magDev.set_control(3)
-		yield self.sleep(0.25)
-		yield self.magDev.set_comm_protocol(6)
-		yield self.sleep(0.25)
-		yield self.magDev.set_activity(1)
-		yield self.sleep(0.25)
-		yield self.magDev.set_fieldsweep_rate(rate)
-		yield self.magDev.set_control(2)
-		print 'set control'
-		t0 = time.time()
-		yield self.magDev.set_control(3)
-		yield self.magDev.set_targetfield(field)
-		yield self.magDev.set_control(2)
-		self.currStatusLbl.setText('Status: Ramping Field')
-		self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
+        yield self.magDev.set_control(3)
+        yield self.sleep(0.25)
+        yield self.magDev.set_comm_protocol(6)
+        yield self.sleep(0.25)
+        yield self.magDev.set_activity(1)
+        yield self.sleep(0.25)
+        yield self.magDev.set_fieldsweep_rate(rate)
+        yield self.magDev.set_control(2)
+        
+        t0 = time.time()
+        yield self.magDev.set_control(3)
+        yield self.magDev.set_targetfield(field)
+        yield self.magDev.set_control(2)
+        self.currStatusLbl.setText('Status: Ramping Field')
+        self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
         while True:
             yield self.magDev.set_control(3)
             curr_field = yield self.magDev.read_parameter(7)
@@ -121,8 +123,8 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
         self.setpointDict['field'] = field
         self.currFieldLbl.setText('Current Field: '+ str(field) + 'T')
         self.currFieldLbl.setStyleSheet("QLabel#currFieldLbl{color: rgb(168,168,168); font:bold 10pt;}")
-		self.currStatusLbl.setText('Status: Idle')
-		self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
+        self.currStatusLbl.setText('Status: Idle')
+        self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
 
     @inlineCallbacks
     def zeroFieldFunc(self, c = None):
@@ -136,7 +138,7 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
             
     @inlineCallbacks
     def zeroBiasFunc(self, c = None):
-         curr_bias = float(self.setpointDict['bias'])
+        curr_bias = float(self.setpointDict['bias'])
         steps = int(np.absolute(curr_bias) * 1000)
         delay = 2000
         tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [0], steps, delay)
@@ -160,8 +162,8 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
             except:
                 self.fieldRampRateLine.setText('FORMAT')
                 flag = True
-			if np.absolute(field) > 5:
-				field  = 5 * (field / np.absolute(field))
+            if np.absolute(field) > 5:
+                field  = 5 * (field / np.absolute(field))
             if flag == False:
                 yield self.ipsGoToFieldFunc(field, rate)
         
@@ -170,26 +172,29 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
         flag = False
         try:
             new_bias = float(self.window.siFormat(self.biasSetpntLine.text(), 3))
+            
         except:
 
             self.baisSetpntLine.setText('FORAMT')
             flag = True
         try:
             steps = np.absolute(int(self.window.siFormat(self.biasPntsLine.text(), 3)))
+            
         except:
             self.biasPntsLine.setText('FORMAT')
             flag = True
         try:
-            delay = np.abolute(int(self.window.siFormat(self.biasDelayLine.text(), 3)))*1000
+            delay = np.absolute(int(self.window.siFormat(self.biasDelayLine.text(), 3))) * 1000
+            
         except:
-
+            
             self.biasDelayLine.setText('FORMAT')
             flag = True
         print self.setpointDict
-		if np.absolute(new_bias) > 10:
-			new_bias = 10 * (new_bias / np.absolute(new_bias))
-			self.biasSetpntLine.setText(str(new_bias))
-			
+        if np.absolute(new_bias) > 10:
+            new_bias = 10 * (new_bias / np.absolute(new_bias))
+            self.biasSetpntLine.setText(str(new_bias))
+            
         if flag == False:
             tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [self.setpointDict['bias']], [new_bias], steps, delay)
             self.setpointDict['bias'] = new_bias
@@ -219,14 +224,14 @@ class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
     def closeEvent(self, e):
         self.window.startSweep.setEnabled(True)
         self.window.prelim.setEnabled(True)
-		self.window.gotoSetBtn.setEnabled(True)
-		self.window.setpntDict = self.setpointDict
+        self.window.gotoSetBtn.setEnabled(True)
+        self.window.setpntDict = self.setpointDict
 
     def exitFunc(self):
         self.window.startSweep.setEnabled(True)
         self.window.prelim.setEnabled(True)     
-		self.window.gotoSetBtn.setEnabled(True)
-		self.window.setpntDict = self.setpointDict
+        self.window.gotoSetBtn.setEnabled(True)
+        self.window.setpntDict = self.setpointDict
         self.close()
 
 class Window(QtGui.QMainWindow, Ui_MainWindow):
@@ -342,7 +347,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             
         self.startSweep.setEnabled(False)
         self.prelim.setEnabled(False)
-		self.gotoSetBtn.setEnabled(False)
+        self.gotoSetBtn.setEnabled(False)
 
         self.initGotoSetWin = gotoSetWindow(self.reactor, magPower, self.dac, blinkDev, self.sweepParamDict, self.dcOutputsDict, self.dcInputsDict, self)
 
@@ -1520,9 +1525,13 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         #Frequency in kilohertz
         frequency = self.acSettingsDict['freq']
         
-        
-        
-        yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
+        file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
+        self.dvFileName = file_info[1]
+        self.lineEdit_ImageNum.setText(file_info[1][0:5])
+        session  = ''
+        for folder in file_info[0][1:]:
+            session = session + '\\' + folder
+        self.lineEdit_ImageDir.setText(r'\.datavault' + session)
         print 'DataVault setup complete'
 
         if magpower == 'toellner':
@@ -1628,12 +1637,12 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.sleep(0.25)
             yield self.ips.set_fieldsweep_rate(B_rate)
             yield self.ips.set_control(2)
-			
-			#ramp voltage to zero if still at setpoint
-			if np.abolute(self.setpntDict['bias']) > 0.01:
-				step = int(np.abolute(self.setpntDict['bias'])) * 1000
-				tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [self.setpntDict['bias']], [0], step, 2000)
             
+            #ramp voltage to zero if still at setpoint
+            if np.absolute(self.setpntDict['bias']) > 0.01:
+                step = int(np.absolute(self.setpntDict['bias'])) * 1000
+                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [self.setpntDict['bias']], [0], step, 2000)
+                
             yield self.dac.set_voltage(DAC_out, 0)
         
             #If minimum bias voltage is not zero, sweep bias to minimum value, 1mV per step with a reasonably short delay
@@ -1708,7 +1717,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc(B_space[i],V_min)
+                    yield self.abortSweepFunc('ips', B_space[i],V_min)
                     break
             
             #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
@@ -1747,6 +1756,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.ips.set_control(2)
         print 'Sweep complete'
         self.refreshInterface()
+        #Wait until all plots are appropriately updated before saving screenshot
+        yield self.sleep(0.25)
+        self.saveDataToSessionFolder()
         
     @inlineCallbacks
     def sweepFromZero(self, magpower, c = None):
@@ -1783,11 +1795,12 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         dIdV_out = self.dcInputsDict['lockin'] - 1
         #DAC in channel to read noise measurement
         noise = self.dcInputsDict['noise'] - 1
-		
-		#ramp voltage to zero if still at setpoint
-		if np.abolute(self.setpntDict['bias']) > 0.01:
-			step = int(np.abolute(self.setpntDict['bias'])) * 1000
-			tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [self.setpntDict['bias']], [0], step, 2000)
+        
+        #ramp voltage to zero if still at setpoint
+        if np.absolute(self.setpntDict['bias']) > 0.01:
+            step = int(np.absolute(self.setpntDict['bias'])) * 1000
+            tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [self.setpntDict['bias']], [0], step, 2000)
+            
 
 
         #AC excitation information for quasi dI/dV measurement. Frequency should be larger than 
@@ -1797,9 +1810,14 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         vac_amp = self.acSettingsDict['amp']
         #Frequency in kilohertz
         frequency = self.acSettingsDict['freq']
-        yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
+        file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
+        self.dvFileName = file_info[1]
+        self.lineEdit_ImageNum.setText(file_info[1][0:5])
+        session  = ''
+        for folder in file_info[0][1:]:
+            session = session + '\\' + folder
+        self.lineEdit_ImageDir.setText(r'\.datavault' + session)
         print 'DataVault setup complete'
-        
         
         if magpower == 'toellner':
             for i in range (0, B_pnts):
@@ -2045,6 +2063,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.ips.set_control(2)   
         
         self.refreshInterface()
+        #Wait until all plots are appropriately updated before saving screenshot
+        yield self.sleep(0.25)
+        self.saveDataToSessionFolder()
     
     @inlineCallbacks
     def blinkFunc(self, c = None):
@@ -2241,13 +2262,16 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.biasPointsSetValue.setReadOnly(False)
             self.biasSpeedSetValue.setReadOnly(False)
 
-
-
-        yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
+        file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
+        self.dvFileName = file_info[1]
+        self.lineEdit_ImageNum.setText(file_info[1][0:5])
+        session  = ''
+        for folder in file_info[0][1:]:
+            session = session + '\\' + folder
+        self.lineEdit_ImageDir.setText(r'\.datavault' + session)
         print 'DataVault setup complete'
 
         B_space = np.linspace(B_min, B_max, B_points)
-        
         
         #Minimum Bias to Maximum Bias Sweep Mode sweepMod = 0
         if self.sweepMod == 0:
@@ -2259,7 +2283,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             else:
                 pass
 
-            
             for i in range(0, B_points):
                 
                 if i == 0:
@@ -2342,7 +2365,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             sweep_field(B_space[-1], 0, B_rate)
             yield self.dac.set_voltage(DAC_set_volt, 0)
 
-
             self.startSweep.setEnabled(True)
             self.abortSweep.setEnabled(False)
             self.magnetPower.setEnabled(True)
@@ -2368,7 +2390,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         
             positive_points = int((bias_points * Vbias_max) / V_range)
             negative_points = bias_points - positive_points
-
             
             for i in range (0, B_points):
             
@@ -2484,7 +2505,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             sweep_field(B_space[-1], 0, B_rate)
             yield self.dac.set_voltage(DAC_set_volt, 0)
                 
-
             self.startSweep.setEnabled(True)
             self.abortSweep.setEnabled(False)
             self.magnetPower.setEnabled(True)
@@ -2499,7 +2519,10 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.biasMaxSetValue.setReadOnly(False)
             self.biasPointsSetValue.setReadOnly(False)
             self.biasSpeedSetValue.setReadOnly(False)
-
+        #Wait until all plots are appropriately updated before saving screenshot
+        yield self.sleep(0.25)
+        self.saveDataToSessionFolder()
+        
     @inlineCallbacks
     def ips_sweep(self):
         #Set all relevant parameters here. Code starts below
@@ -2526,7 +2549,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         #DAC channel that sets the current setpoint for the Toellner power supply
         DAC_set_current = self.currentOutChan - 1
         
-        
         #DAC INPUTS
         blinkDev = self.blinkDevice
         #DAC in channel that reads DC bias (1 through 4)
@@ -2537,7 +2559,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         dIdV_out = self.dacACInChan - 1
         #DAC in channel to read noise measurement
         noise = self.dacNoiseInChan - 1
-
 
         #AC excitation information for quasi dI/dV measurement. Frequency should be larger than 
         # ~2 kHz to avoid being filtered out by the lock in AC coupling high pass filter.  
@@ -2582,7 +2603,13 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.biasSpeedSetValue.setReadOnly(False)
 
 
-        yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
+        file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
+        self.dvFileName = file_info[1]
+        self.lineEdit_ImageNum.setText(file_info[1][0:5])
+        session  = ''
+        for folder in file_info[0][1:]:
+            session = session + '\\' + folder
+        self.lineEdit_ImageDir.setText(r'\.datavault' + session)
         print 'DataVault setup complete'
 
         B_space = np.linspace(B_min,B_max,B_points)
@@ -2601,7 +2628,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.ips.set_control(2)
             
             yield self.dac.set_voltage(DAC_out, 0)
-
             
             #If minimum bias voltage is not zero, sweep bias to minimum value, 1mV per step with a reasonably short delay
             if Vbias_min != 0:
@@ -2865,11 +2891,15 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.biasMaxSetValue.setReadOnly(False)
             self.biasPointsSetValue.setReadOnly(False)
             self.biasSpeedSetValue.setReadOnly(False)
-
+        #Wait until all plots are appropriately updated before saving screenshot
+        yield self.sleep(0.25)
+        self.saveDataToSessionFolder()
+            
     def reformat(self, number, lineEdit):
         number = float(number)
         reformatted = '{:.3f}'.format(number)
-        lineEdit.setText(reformatted)   
+        lineEdit.setText(reformatted)
+        
     def UpdateVMax(self):
         if -10 <= float(self.biasMaxSetValue.text()) <= 10:
             self.reformat(self.biasMaxSetValue.text(), self.biasMaxSetValue)
@@ -2879,6 +2909,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         elif float(self.biasMaxSetValue.text()) <= -10:
             self.biasMaxSetValue.setText('-10.00')
             self.reformat(self.biasMaxSetValue.text(), self.biasMaxSetValue)
+            
     def UpdateVMin(self):
         if 10 >= float(self.biasMinSetValue.text()) >= -10.00:
             self.reformat(self.biasMinSetValue.text(), self.biasMinSetValue)
@@ -2890,6 +2921,19 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.reformat(self.biasMinSetValue.text(), self.biasMinSetValue)
 
 #################################################################   
+            
+    def setSessionFolder(self, folder):
+        self.sessionFolder = folder
+            
+    def saveDataToSessionFolder(self):
+        try:
+            p = QtGui.QPixmap.grabWindow(self.winId())
+            a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
+            if not a:
+                print "Error saving nSOT data picture"
+        except Exception as inst:
+            print 'nSOTChar error: ', inst
+            print 'on line: ', sys.exc_traceback.tb_lineno
             
     def lockInterface(self):
         #TODO Fill in
@@ -2920,7 +2964,7 @@ class dacSettings(QtGui.QDialog, Ui_dacSet):
         
 
         if not not self.window.dcbox:
-            print 'added dc box'
+            
             self.comboBox_blinkDevice.addItem('DC BOX')
             if self.window.blinkDevice == 'DC BOX':
                 self.comboBox_blinkDevice.setCurrentIndex(1)
@@ -3165,7 +3209,7 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         
         self.dcOutDict = dcOut
         self.dcInDict = dcIn
-
+        
         self.critCurr.setReadOnly(True)
         self.parRes.setReadOnly(True)
         #self.newSweep.setEnabled(False)
@@ -3174,8 +3218,6 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         self.btnAction = 'sweep'
         #self.newSweep.clicked.connect(self.refreshSweep)
         self.closeWin.clicked.connect(self._close)
-
-
 
     def refreshSweep(self):
         self.startSweep.setEnabled(True)
@@ -3197,7 +3239,6 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         xVals = [x[1] for x in self.data]
         yVals = [x[2] for x in self.data]
 
-        
         self.sweepPlot.plot(x = xVals, y = yVals, pen = 0.5)
         
         absX = np.absolute(xVals)
@@ -3205,8 +3246,6 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         zeroIndex = np.argmin(absX)
         bigHalf = np.amax([len(xVals) - zeroIndex -1, zeroIndex])
 
-        
-        
         chi = 0
         if bigHalf>zeroIndex:
             j = zeroIndex + 5
@@ -3216,7 +3255,6 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
             j = int(0.9 * j)
             p, chi, _, _, _ = np.polyfit(xVals[zeroIndex:j], yVals[zeroIndex:j], 1, full = True)
 
-                
         else:
             j = zeroIndex - 5
             while chi / (len(xVals) - 2) < 1e-5 and j >= 0:
@@ -3239,13 +3277,12 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         deltaV_F = np.absolute(yVals[j] - yVals[zeroIndex])
 
         if deltaV_F == 0:
-            self.parRes.setText('Nan')
+            pass
         else:
             ratio = np.absolute(deltaV_DAC / deltaV_F)
             r = np.round(alpha * (winding * ssaaRes * ratio - biasRes), decimals = 1)
             self.parRes.setText(str(r))
-
-        
+            
     def sleep(self, secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
         other operations to be done elsewhere while paused."""
@@ -3290,7 +3327,6 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                 #y = np.linspace(2,3, 100)
                 #self.plotSweepData(np.transpose([x,y]))
                 
-                
                 #Sets sweep parameters
                 biasMin = float(self.biasStart.value())
                 biasMax = float(self.biasEnd.value())
@@ -3308,20 +3344,27 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                 DAC_in_noise = self.dcInDict['noise'] - 1
                 print DAC_in_sig, DAC_in_ref
                 
-                yield self.dv.new("nSOT Preliminary Sweep", ['Bias Voltage Index','Bias Voltage'],['DC SSAA Output','Noise'])
+                file_info = yield self.dv.new("nSOT Preliminary Sweep", ['Bias Voltage Index','Bias Voltage'],['DC SSAA Output','Noise'])
+                self.dvFileName = file_info[1]
+                self.lineEdit_ImageNum.setText(file_info[1][0:5])
+                session  = ''
+                for folder in file_info[0][1:]:
+                    session = session + '\\' + folder
+                self.lineEdit_ImageDir.setText(r'\.datavault' + session)
+                        
                 print 'DataVault setup complete'
                 
                 yield self.dac.set_voltage(DAC_out, 0)
-
-
-                if biasMin != 0:
-                    yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [0], [biasMin], int(biasMin * 1000), 1000)
-                    yield self.sleep(1)
                 try:
                     yield self.window.blinkFunc()
                 except Exception as inst:
                     print inst
                     print 'Blinks the problem yo'
+
+                if biasMin != 0:
+                    yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [0], [biasMin], int(biasMin * 1000), 1000)
+                    yield self.sleep(1)
+
                 #Do sweep
                 print 'Ramping up nSOT bias voltage from ' + str(biasMin) + ' to ' + str(biasMax) + '.'
                 dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMin], [biasMax], biasPoints, delay)
@@ -3331,8 +3374,11 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                         formatted_data.append((j, dac_read[0][j], dac_read[1][j], dac_read[2][j]))
                 yield self.dv.add(formatted_data)
 
-                self.plotSweepData(formatted_data)
-
+                yield self.plotSweepData(formatted_data)
+                
+                yield self.sleep(0.25)
+                self.saveDataToSessionFolder()
+                
                 #Return to zero voltage gently
                 yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMax], [0], int(biasMax * 1000), 1000)
                 yield self.sleep(0.25)
@@ -3343,7 +3389,18 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                 print inst
         elif self.btnAction == 'reset':
             self.toggleStartBtn('sweep')
-
+            
+    def saveDataToSessionFolder(self):
+        try:
+            p = QtGui.QPixmap.grabWindow(self.winId())
+            #grab the sessionFolder name from the main window
+            a = p.save(self.window.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
+            if not a:
+                print "Error saving nSOT Prelim data picture"
+        except Exception as inst:
+            print 'nSOTChar Prelim error: ', inst
+            print 'on line: ', sys.exc_traceback.tb_lineno
+            
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)

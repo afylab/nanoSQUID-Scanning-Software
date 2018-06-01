@@ -1019,9 +1019,9 @@ color:rgb(168, 168, 168)
    <widget class="QLineEdit" name="lineEdit_fileName">
     <property name="geometry">
      <rect>
-      <x>1070</x>
+      <x>820</x>
       <y>20</y>
-      <width>211</width>
+      <width>120</width>
       <height>20</height>
      </rect>
     </property>
@@ -1035,7 +1035,7 @@ color:rgb(168, 168, 168)
    <widget class="QLabel" name="label_fileName">
     <property name="geometry">
      <rect>
-      <x>1000</x>
+      <x>760</x>
       <y>20</y>
       <width>91</width>
       <height>20</height>
@@ -1047,7 +1047,7 @@ color: rgb(168, 168, 168)
 }</string>
     </property>
     <property name="text">
-     <string>File Name</string>
+     <string>Basename</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="lineEdit_PhaseQFactor">
@@ -1471,6 +1471,98 @@ color:rgb(168, 168, 168)
     </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_ImageNum">
+    <property name="geometry">
+     <rect>
+      <x>1010</x>
+      <y>20</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Updates when scan starts</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#lineEdit_ImageNum{
+background: rgb(181, 181, 181);
+border: grey;
+}</string>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_ImageNum">
+    <property name="geometry">
+     <rect>
+      <x>960</x>
+      <y>20</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_ImageNum{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Image #</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_ImageDir">
+    <property name="geometry">
+     <rect>
+      <x>1180</x>
+      <y>20</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Updates when scan starts</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#lineEdit_ImageDir{
+background: rgb(181, 181, 181);
+border: grey;
+}</string>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_ImageDir">
+    <property name="geometry">
+     <rect>
+      <x>1130</x>
+      <y>20</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_ImageDir{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Image Dir</string>
     </property>
    </widget>
   </widget>

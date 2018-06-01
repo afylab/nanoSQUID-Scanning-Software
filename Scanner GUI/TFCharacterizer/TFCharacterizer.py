@@ -2,6 +2,7 @@ import sys
 from PyQt4 import QtGui, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import pyqtgraph as pg
+import pyqtgraph.exporters
 import numpy as np
 from scipy.optimize import curve_fit
 
@@ -53,7 +54,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         self.showFit = True
         
+        #name of the data being saved
         self.fileName = 'unnnamed'
+        #true data vault file name. Determined when the dv file is created, and has a number depending on other files saved in the same folder
+        self.dvFileName = ''
+        
+        self.sessionFolder = ''
         
         self.reactor = reactor
         self.setupUi(self)
@@ -452,7 +458,18 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
             yield self.hf.set_output(self.output,False)
             yield self.hf.set_demod(self.demod,False)
-            yield self.dv.new("Tuning Fork Voltage vs. Frequency " + self.fileName,['Frequency'],['Amplitude R', 'Phase Phi'])
+            file_info = yield self.dv.new("Tuning Fork Voltage vs. Frequency " + self.fileName,['Frequency'],['Amplitude R', 'Phase Phi'])
+            self.dvFileName = file_info[1]
+            self.lineEdit_ImageNum.setText(file_info[1][0:5])
+            session  = ''
+            for folder in file_info[0][1:]:
+                session = session + '\\' + folder
+            self.lineEdit_ImageDir.setText(r'\.datavault' + session)
+            
+            #Wait for plot and lineEdit to update
+            yield self.sleep(0.25)
+            #save an image of the data to the session folder
+            self.saveDataToSessionFolder()
             
             formated_data = []
             for j in range(0, self.points):
@@ -481,7 +498,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.hf.clear_sweep()
         except Exception as inst:
             print inst
-   
+
     @inlineCallbacks
     def reinitSweep(self,c = None):
         #Uses demodulater 1, might need to change depending on input/output selected
@@ -505,7 +522,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.prevAmpPlot = self.ampPlot.plot(self.freq,self.R)
         self.prevPhasePlot = self.phasePlot.plot(self.freq,self.phi)
         
-    def fitCurrData(self):
+    @inlineCallbacks
+    def fitCurrData(self, c = None):
         #ideas: scale voltage data up to avoid small values, makes it easier to fit. Then rescale back down. 
         #avoiding small numbers as much as possible is good seems to work fine right now, so not necessary. 
         #But if data fitting is bad in the future this can be a possible fix. 
@@ -538,42 +556,49 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.prevAmpPlot = self.ampPlot.plot(self.freq,self.R)
         self.prevPhasePlot = self.phasePlot.plot(self.freq,self.phi)
         '''
+        try:
+            max = np.amax(self.R)
+            f0_guess = self.freq[np.argmax(self.R)]
+            
+            self.ampFitParams, pcov = curve_fit(ampFunc, self.freq, self.R, p0 = [f0_guess, 5000, 0.1, max])
+            perr = np.sqrt(np.diag(pcov))
 
-        max = np.amax(self.R)
-        f0_guess = self.freq[np.argmax(self.R)]
-        
-        self.ampFitParams, pcov = curve_fit(ampFunc, self.freq, self.R, p0 = [f0_guess, 5000, 0.1, max])
-        perr = np.sqrt(np.diag(pcov))
+            if self.showFit:
+                try: 
+                    self.ampPlot.removeItem(self.prevAmpFit)
+                except:
+                    pass
+                self.prevAmpFit = self.ampPlot.plot(self.freq,ampFunc(self.freq, *self.ampFitParams))
 
-        if self.showFit:
-            try: 
-                self.ampPlot.removeItem(self.prevAmpFit)
-            except:
-                pass
-            self.prevAmpFit = self.ampPlot.plot(self.freq,ampFunc(self.freq, *self.ampFitParams))
+            self.lineEdit_peakF.setText(formatNum(self.ampFitParams[0]))
+            self.lineEdit_peakFSig.setText(formatNum(perr[0]))
+            self.lineEdit_QFactor.setText(formatNum(self.ampFitParams[1]))
+            
+            avg = 0
+            for i in range(0,10):
+                avg = avg + self.phi[i]
+            avg = avg/10
+            self.phaseFitParams, pcov = curve_fit(phaseFunc, self.freq, self.phi, p0 = [self.ampFitParams[0], self.ampFitParams[1], self.ampFitParams[2], avg-90])
+            perr = np.sqrt(np.diag(pcov))
 
-        self.lineEdit_peakF.setText(formatNum(self.ampFitParams[0]))
-        self.lineEdit_peakFSig.setText(formatNum(perr[0]))
-        self.lineEdit_QFactor.setText(formatNum(self.ampFitParams[1]))
-        
-        avg = 0
-        for i in range(0,10):
-            avg = avg + self.phi[i]
-        avg = avg/10
-        self.phaseFitParams, pcov = curve_fit(phaseFunc, self.freq, self.phi, p0 = [self.ampFitParams[0], self.ampFitParams[1], self.ampFitParams[2], avg-90])
-        perr = np.sqrt(np.diag(pcov))
+            if self.showFit:
+                try:
+                    self.phasePlot.removeItem(self.prevPhaseFit)
+                except:
+                    pass
+                self.prevPhaseFit = self.phasePlot.plot(self.freq,phaseFunc(self.freq, *self.phaseFitParams))
 
-        if self.showFit:
-            try:
-                self.phasePlot.removeItem(self.prevPhaseFit)
-            except:
-                pass
-            self.prevPhaseFit = self.phasePlot.plot(self.freq,phaseFunc(self.freq, *self.phaseFitParams))
-
-        self.lineEdit_PhasePeakF.setText(formatNum(self.phaseFitParams[0]))
-        self.lineEdit_PhasePeakFSig.setText(formatNum(perr[0]))
-        self.lineEdit_PhaseQFactor.setText(formatNum(self.phaseFitParams[1]))
-        #Maybe iterate fits/starting parameters? 
+            self.lineEdit_PhasePeakF.setText(formatNum(self.phaseFitParams[0]))
+            self.lineEdit_PhasePeakFSig.setText(formatNum(perr[0]))
+            self.lineEdit_PhaseQFactor.setText(formatNum(self.phaseFitParams[1]))
+            #Maybe iterate fits/starting parameters? 
+        except Exception as inst:
+            print "Fitting threw the following error: ", inst
+            
+        #wait for plots to udpate before saving data screenshot
+        yield self.sleep(0.25)
+        #If a fit is done, resave the data to show the results
+        self.saveDataToSessionFolder()
         
     def toggleFitView(self):
         if self.showFit:
@@ -599,6 +624,20 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
             self.push_showFit.setText('Hide Fit')
             self.showFit = True
+            
+    def setSessionFolder(self, folder):
+        self.sessionFolder = folder
+        
+    def saveDataToSessionFolder(self):
+        try:
+            p = QtGui.QPixmap.grabWindow(self.winId())
+            a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
+            if not a:
+                print "Error saving TF data picture"
+        except Exception as inst:
+            print 'TF error: ', inst
+            print 'on line: ', sys.exc_traceback.tb_lineno
+        
 #----------------------------------------------------------------------------------------------#         
     """ The following section has generally useful functions."""
            

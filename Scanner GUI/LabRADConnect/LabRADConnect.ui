@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>471</height>
+    <height>500</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,13 +19,13 @@
   <property name="minimumSize">
    <size>
     <width>500</width>
-    <height>471</height>
+    <height>500</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>500</width>
-    <height>471</height>
+    <height>500</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -63,7 +63,7 @@ qproperty-wordWrap: true;
 }</string>
     </property>
     <property name="text">
-     <string>Session Folder:</string>
+     <string>Datavault Folder:</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="lineEdit_Session">
@@ -1416,6 +1416,61 @@ border-radius: 4px
      <string>Connect Remote Servers:</string>
     </property>
    </widget>
+   <widget class="QLineEdit" name="lineEdit_Session_2">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>470</y>
+      <width>311</width>
+      <height>20</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_Session_2">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>462</y>
+      <width>36</width>
+      <height>36</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#push_Session_2{
+image:url(:/nSOTScanner/Pictures/SessionSelect.png);
+background: black;
+}</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_Session_2">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>470</y>
+      <width>100</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_Session{
+color: rgb(168, 168, 168);
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+qproperty-alignment: 'AlignVCenter | AlignRight';
+qproperty-wordWrap: true;
+}</string>
+    </property>
+    <property name="text">
+     <string>Session Folder:</string>
+    </property>
+   </widget>
    <zorder>label_remoteLabRAD_status</zorder>
    <zorder>label_Session</zorder>
    <zorder>lineEdit_Session</zorder>
@@ -1435,6 +1490,9 @@ border-radius: 4px
    <zorder>serialFrame</zorder>
    <zorder>push_ConnectLocal</zorder>
    <zorder>push_ConnectRemote</zorder>
+   <zorder>lineEdit_Session_2</zorder>
+   <zorder>push_Session_2</zorder>
+   <zorder>label_Session_2</zorder>
   </widget>
  </widget>
  <resources>

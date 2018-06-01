@@ -1146,7 +1146,7 @@ border-radius: 5px
     <property name="geometry">
      <rect>
       <x>1170</x>
-      <y>90</y>
+      <y>80</y>
       <width>35</width>
       <height>23</height>
      </rect>
@@ -1377,7 +1377,7 @@ border-radius: 5px
     <property name="geometry">
      <rect>
       <x>1210</x>
-      <y>90</y>
+      <y>80</y>
       <width>35</width>
       <height>23</height>
      </rect>
@@ -1720,6 +1720,98 @@ border-radius: 5px
      <string>Go To Set</string>
     </property>
    </widget>
+   <widget class="QLabel" name="label_ImageNum">
+    <property name="geometry">
+     <rect>
+      <x>1140</x>
+      <y>110</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_ImageNum{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Image #</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_ImageNum">
+    <property name="geometry">
+     <rect>
+      <x>1190</x>
+      <y>110</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Updates when scan starts</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#lineEdit_ImageNum{
+background: rgb(181, 181, 181);
+border: grey;
+}</string>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_ImageDir">
+    <property name="geometry">
+     <rect>
+      <x>1190</x>
+      <y>140</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Updates when scan starts</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#lineEdit_ImageDir{
+background: rgb(181, 181, 181);
+border: grey;
+}</string>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_ImageDir">
+    <property name="geometry">
+     <rect>
+      <x>1140</x>
+      <y>140</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_ImageDir{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Image Dir</string>
+    </property>
+   </widget>
    <zorder>showRetraceGrad</zorder>
    <zorder>showTraceGrad</zorder>
    <zorder>hideTraceGrad</zorder>
@@ -1800,6 +1892,10 @@ border-radius: 5px
    <zorder>line_14</zorder>
    <zorder>line_15</zorder>
    <zorder>gotoSetBtn</zorder>
+   <zorder>label_ImageNum</zorder>
+   <zorder>lineEdit_ImageNum</zorder>
+   <zorder>lineEdit_ImageDir</zorder>
+   <zorder>label_ImageDir</zorder>
   </widget>
  </widget>
  <tabstops>

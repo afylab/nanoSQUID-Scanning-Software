@@ -8,6 +8,8 @@ import time
 import sys
 import dirExplorer
 import platform
+import datetime
+import os
 
 path = sys.path[0] + r"\LabRADConnect"
 LabRADConnectUI, QtBaseClass = uic.loadUiType(path + r"\LabRADConnect.ui")
@@ -16,6 +18,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
     cxnLocal = QtCore.pyqtSignal(dict)
     cxnRemote = QtCore.pyqtSignal(dict)
     cxnDisconnected = QtCore.pyqtSignal()
+    newSessionFolder = QtCore.pyqtSignal(str)
     
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
@@ -59,9 +62,19 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         #Dictionary that keeps track of whether or not the module has attempted to connect remotely
         self.cxnAttemptRemoteDictionary = self.emptyRemoteDictionary.copy()
         
+        #Data vault session info
         self.lineEdit_Session.setReadOnly(True)
         self.session = ''
         self.lineEdit_Session.setText(self.session)
+        
+        #Saving images of all data taken info
+        self.lineEdit_Session_2.setReadOnly(True)
+        self.session_2 = 'C:\\Users\\cltschirhart\\Data Sets\\ScanData\\' + str(datetime.date.today())
+        self.lineEdit_Session_2.setText(self.session_2)
+        
+        folderExists = os.path.exists(self.session_2)
+        if not folderExists:
+            os.makedirs(self.session_2)
         
         self.push_ConnectAll.clicked.connect(self.connectAllServers)
         self.push_ConnectLocal.clicked.connect(self.connectLocalServers)
@@ -79,6 +92,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         '''
 
         self.push_Session.clicked.connect(self.chooseSession)
+        self.push_Session_2.clicked.connect(self.chooseSession_2)
     
     def setupAdditionalUi(self):
         #Creates and array of stylesheets for the connect button 
@@ -753,7 +767,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             msgBox = QtGui.QMessageBox(self)
             msgBox.setIcon(QtGui.QMessageBox.Information)
             msgBox.setWindowTitle('Data Vault Connection Missing')
-            msgBox.setText("\r\n Cannot choose session location until connected to data vault.")
+            msgBox.setText("\r\n Cannot choose data vault folder until connected to data vault.")
             msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
             msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
             msgBox.exec_()
@@ -775,6 +789,12 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                     print inst.args
                     print inst
                     
+    def chooseSession_2(self):
+        folder = str(QtGui.QFileDialog.getExistingDirectory(self, directory = 'C:\\Users\\cltschirhart'))
+        if folder:
+            self.session_2 = folder
+            self.lineEdit_Session_2.setText(self.session_2)
+            self.newSessionFolder.emit(self.session_2)
         
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows

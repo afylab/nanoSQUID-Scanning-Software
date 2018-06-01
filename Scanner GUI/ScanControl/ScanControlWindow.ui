@@ -694,7 +694,7 @@ qproperty-alignment: 'AlignVCenter | AlignCenter';
      <string>Channel</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="label_Angle">
@@ -1563,8 +1563,8 @@ color:rgb(168, 168, 168)
    <widget class="QLabel" name="label_ImageNum">
     <property name="geometry">
      <rect>
-      <x>990</x>
-      <y>30</y>
+      <x>1000</x>
+      <y>0</y>
       <width>51</width>
       <height>20</height>
      </rect>
@@ -1644,8 +1644,8 @@ color: rgb(168, 168, 168)
     <property name="geometry">
      <rect>
       <x>995</x>
-      <y>60</y>
-      <width>40</width>
+      <y>20</y>
+      <width>101</width>
       <height>20</height>
      </rect>
     </property>
@@ -1943,7 +1943,7 @@ border: grey;
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit_YCurr">
+   <widget class="QLineEdit" name="lineEdit_Ycurr">
     <property name="geometry">
      <rect>
       <x>150</x>
@@ -1953,7 +1953,7 @@ border: grey;
      </rect>
     </property>
     <property name="styleSheet">
-     <string notr="true">#lineEdit_YCurr{
+     <string notr="true">#lineEdit_Ycurr{
 background: rgb(181, 181, 181);
 border: grey;
 }</string>
@@ -2050,19 +2050,6 @@ color: rgb(168, 168, 168)
      <string>Y (m):</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton">
-    <property name="geometry">
-     <rect>
-      <x>1045</x>
-      <y>58</y>
-      <width>51</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Settings</string>
-    </property>
-   </widget>
    <widget class="Line" name="line_20">
     <property name="geometry">
      <rect>
@@ -2146,11 +2133,6 @@ background: black
       <item>
        <property name="text">
         <string>DAC 4</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>N/A</string>
        </property>
       </item>
      </widget>
@@ -2245,56 +2227,6 @@ color: rgb(168, 168, 168)
        <string>Z input</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_Basename_3">
-      <property name="geometry">
-       <rect>
-        <x>210</x>
-        <y>5</y>
-        <width>61</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">#label_Basename{
-color: rgb(168, 168, 168)
-}</string>
-      </property>
-      <property name="text">
-       <string>Input 1</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_Basename_4">
-      <property name="geometry">
-       <rect>
-        <x>410</x>
-        <y>5</y>
-        <width>61</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">#label_Basename{
-color: rgb(168, 168, 168)
-}</string>
-      </property>
-      <property name="text">
-       <string>Input 2</string>
-      </property>
-     </widget>
      <widget class="QLineEdit" name="lineEdit_ZConversion">
       <property name="geometry">
        <rect>
@@ -2330,7 +2262,7 @@ border: grey;
 }</string>
       </property>
       <property name="text">
-       <string>None</string>
+       <string>1</string>
       </property>
      </widget>
      <widget class="QLineEdit" name="lineEdit_Input2Conversion">
@@ -2349,7 +2281,7 @@ border: grey;
 }</string>
       </property>
       <property name="text">
-       <string>None</string>
+       <string>1</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_Basename_5">
@@ -2501,7 +2433,7 @@ border: grey;
 }</string>
       </property>
       <property name="text">
-       <string>---</string>
+       <string>V</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
@@ -2523,10 +2455,70 @@ border: grey;
 }</string>
       </property>
       <property name="text">
-       <string>---</string>
+       <string>V</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_Input1Name">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>5</y>
+        <width>61</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>Click to edit name</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">#lineEdit_Input1Name{
+background: black;
+border: none;
+color: rgb(168,168,168)
+}</string>
+      </property>
+      <property name="text">
+       <string>Input 1</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_Input2Name">
+      <property name="geometry">
+       <rect>
+        <x>410</x>
+        <y>5</y>
+        <width>61</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>Click to edit name</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">#lineEdit_Input2Name{
+background: black;
+border: none;
+color: rgb(168,168,168)
+}</string>
+      </property>
+      <property name="text">
+       <string>Input 2</string>
       </property>
      </widget>
     </widget>
@@ -2539,7 +2531,7 @@ background: black
      <attribute name="title">
       <string>Output Settings</string>
      </attribute>
-     <widget class="QComboBox" name="comboBox_4">
+     <widget class="QComboBox" name="comboBox_ZOutput">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -2649,7 +2641,7 @@ color: rgb(168, 168, 168)
        <string>Z Output</string>
       </property>
      </widget>
-     <widget class="QComboBox" name="comboBox_5">
+     <widget class="QComboBox" name="comboBox_XOutput">
       <property name="geometry">
        <rect>
         <x>140</x>
@@ -2682,7 +2674,7 @@ color: rgb(168, 168, 168)
        </property>
       </item>
      </widget>
-     <widget class="QComboBox" name="comboBox_6">
+     <widget class="QComboBox" name="comboBox_YOutput">
       <property name="geometry">
        <rect>
         <x>270</x>
@@ -2740,7 +2732,7 @@ color: rgb(168, 168, 168)
        <string>Blink Output</string>
       </property>
      </widget>
-     <widget class="QComboBox" name="comboBox_7">
+     <widget class="QComboBox" name="comboBox_BlinkOutput">
       <property name="geometry">
        <rect>
         <x>400</x>
@@ -2794,6 +2786,52 @@ color: rgb(168, 168, 168)
       </item>
      </widget>
     </widget>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_ImageDir">
+    <property name="geometry">
+     <rect>
+      <x>995</x>
+      <y>60</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Updates when scan starts</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#lineEdit_ImageDir{
+background: rgb(181, 181, 181);
+border: grey;
+}</string>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_ImageDir">
+    <property name="geometry">
+     <rect>
+      <x>1000</x>
+      <y>40</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_ImageDir{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Image Dir</string>
+    </property>
    </widget>
    <zorder>PlotArea_2</zorder>
    <zorder>PlotArea</zorder>
@@ -2887,23 +2925,24 @@ color: rgb(168, 168, 168)
    <zorder>label_Lines_6</zorder>
    <zorder>label_Saving_2</zorder>
    <zorder>lineEdit_Xcurr</zorder>
-   <zorder>lineEdit_YCurr</zorder>
+   <zorder>lineEdit_Ycurr</zorder>
    <zorder>label_Saving_3</zorder>
    <zorder>line_19</zorder>
    <zorder>label_Lines_7</zorder>
    <zorder>label_Lines_8</zorder>
-   <zorder>pushButton</zorder>
    <zorder>line_20</zorder>
    <zorder>tabWidget</zorder>
+   <zorder>lineEdit_ImageDir</zorder>
+   <zorder>label_ImageDir</zorder>
   </widget>
  </widget>
  <tabstops>
-  <tabstop>lineEdit_Xc</tabstop>
-  <tabstop>lineEdit_Yc</tabstop>
-  <tabstop>lineEdit_H</tabstop>
-  <tabstop>lineEdit_W</tabstop>
-  <tabstop>push_FrameLock</tabstop>
-  <tabstop>lineEdit_Angle</tabstop>
+  <tabstop>lineEdit_ZConversion</tabstop>
+  <tabstop>lineEdit_ZUnit</tabstop>
+  <tabstop>lineEdit_Input1Conversion</tabstop>
+  <tabstop>lineEdit_Input1Unit</tabstop>
+  <tabstop>lineEdit_Input2Conversion</tabstop>
+  <tabstop>lineEdit_Input2Unit</tabstop>
   <tabstop>lineEdit_Linear</tabstop>
   <tabstop>lineEdit_LineTime</tabstop>
   <tabstop>push_SpeedLock</tabstop>
@@ -2928,6 +2967,32 @@ color: rgb(168, 168, 168)
   <tabstop>push_scanModeSet</tabstop>
   <tabstop>lineEdit_XTilt</tabstop>
   <tabstop>lineEdit_YTilt</tabstop>
+  <tabstop>lineEdit_FileName</tabstop>
+  <tabstop>lineEdit_ImageNum</tabstop>
+  <tabstop>lineEdit_TimeElapsed</tabstop>
+  <tabstop>comboBox_blinkMode</tabstop>
+  <tabstop>push_Zero</tabstop>
+  <tabstop>lineEdit_Xset</tabstop>
+  <tabstop>lineEdit_Yset</tabstop>
+  <tabstop>push_Set</tabstop>
+  <tabstop>lineEdit_Xcurr</tabstop>
+  <tabstop>lineEdit_Ycurr</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>comboBox_ZInput</tabstop>
+  <tabstop>comboBox_Input1</tabstop>
+  <tabstop>comboBox_Input2</tabstop>
+  <tabstop>lineEdit_Xc</tabstop>
+  <tabstop>lineEdit_H</tabstop>
+  <tabstop>push_FrameLock</tabstop>
+  <tabstop>lineEdit_Yc</tabstop>
+  <tabstop>lineEdit_W</tabstop>
+  <tabstop>lineEdit_Angle</tabstop>
+  <tabstop>comboBox_ZOutput</tabstop>
+  <tabstop>comboBox_XOutput</tabstop>
+  <tabstop>comboBox_YOutput</tabstop>
+  <tabstop>comboBox_BlinkOutput</tabstop>
+  <tabstop>lineEdit_Input1Name</tabstop>
+  <tabstop>lineEdit_Input2Name</tabstop>
  </tabstops>
  <resources>
   <include location="../Resources/nSOTScannerResources.qrc"/>

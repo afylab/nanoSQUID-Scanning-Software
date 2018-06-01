@@ -89,6 +89,7 @@
    <property name="styleSheet">
     <string notr="true">#home{
 qproperty-icon: url(:/nSOTScanner/Pictures/homeIcon.png);
+background: black;
 }</string>
    </property>
    <property name="text">
@@ -178,6 +179,7 @@ qproperty-icon: url(:/nSOTScanner/Pictures/homeIcon.png);
    <property name="styleSheet">
     <string notr="true">#back{
 qproperty-icon:url(:/nSOTScanner/Pictures/backIcon.png);
+background: black;
 }</string>
    </property>
    <property name="text">
@@ -245,6 +247,12 @@ qproperty-icon:url(:/nSOTScanner/Pictures/backIcon.png);
    <property name="toolTip">
     <string>Add Directory</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">#addDir{
+color: rgb(168,168,168);
+background: black;
+}</string>
+   </property>
    <property name="text">
     <string>+</string>
    </property>
@@ -264,6 +272,7 @@ qproperty-icon:url(:/nSOTScanner/Pictures/backIcon.png);
    <property name="styleSheet">
     <string notr="true">#refresh{
 qproperty-icon: url(:/nSOTScanner/Pictures/refreshIcon.png);
+background: black;
 }
 
 </string>
