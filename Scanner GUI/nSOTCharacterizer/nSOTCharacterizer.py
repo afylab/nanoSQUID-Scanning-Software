@@ -1654,6 +1654,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             for i in range(0, B_pnts):
                 t0 = time.time()
                 yield self.ips.set_control(3)
+                yield self.ips.set_activity(1)
                 yield self.ips.set_targetfield(B_space[i])
                 yield self.ips.set_control(2)
                 print 'Setting field to ' + str(B_space[i])
@@ -1666,6 +1667,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                         break
                     if time.time() - t0 > 1:
                         yield self.ips.set_control(3)
+                        yield self.ips.set_activity(1)
                         yield self.ips.set_targetfield(B_space[i])
                         yield self.ips.set_control(2)
                         t0 = time.time()
@@ -1732,6 +1734,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             
             #Go to 0 field
             yield self.ips.set_control(3)
+            yield self.ips.set_activity(1)
             yield self.ips.set_targetfield(0)
             yield self.ips.set_control(2)
             #wait for field to be reached
@@ -1744,6 +1747,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                     break
                 if time.time() - t0 > 1:
                     yield self.ips.set_control(3)
+                    yield self.ips.set_activity(1)
                     yield self.ips.set_targetfield(0)
                     yield self.ips.set_control(2)
                     t0 = time.time()
@@ -1947,6 +1951,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             for i in range (0, B_pnts):
                 t0 = time.time()
                 yield self.ips.set_control(3)
+                yield self.ips.set_activity(1)
                 yield self.ips.set_targetfield(B_space[i])
                 yield self.ips.set_control(2)
                 #wait for field to be reached
@@ -1958,6 +1963,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                         break
                     if time.time() - t0 > 1:
                         yield self.ips.set_control(3)
+                        yield self.ips.set_activity(1)
                         yield self.ips.set_targetfield(B_space[i])
                         yield self.ips.set_control(2)
                         yield self.sleep(0.5)
@@ -2056,6 +2062,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             
             #Go to 0 field
             yield self.ips.set_control(3)
+            yield self.ips.set_activity(1)
             yield self.ips.set_targetfield(0)
             yield self.ips.set_activity(2)
 
