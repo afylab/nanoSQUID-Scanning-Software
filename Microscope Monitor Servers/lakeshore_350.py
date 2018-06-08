@@ -294,7 +294,7 @@ class Lakeshore350Server(GPIBManagedServer):
 		"""
 		dev=self.selectedDevice(c)
 		ans = yield dev.range_read(output)
-		returnValue(ans)
+		returnValue(int(ans))
 		
 	@setting(118, output = 'i', setp = 'v[]')
 	def setpoint(self, c, output, setp):
