@@ -104,7 +104,7 @@ class Lakeshore350Wrapper(GPIBDeviceWrapper):
 	def range_set(self, output, range):
 		yield self.write("RANGE%i,%i" %(output, range))
 	@inlineCallbacks
-	def ramp_read(self, output):
+	def range_read(self, output):
 		ans = yield self.query("RANGE?%i" %output)
 		returnValue(ans)
 	@inlineCallbacks
@@ -286,6 +286,7 @@ class Lakeshore350Server(GPIBManagedServer):
 		"""
 		dev=self.selectedDevice(c)
 		yield dev.range_set(output, range)
+		
 	@setting(117, output = 'i', returns='i')
 	def range_read(self, c, output):
 		"""
@@ -294,6 +295,7 @@ class Lakeshore350Server(GPIBManagedServer):
 		dev=self.selectedDevice(c)
 		ans = yield dev.range_read(output)
 		returnValue(ans)
+		
 	@setting(118, output = 'i', setp = 'v[]')
 	def setpoint(self, c, output, setp):
 		"""
