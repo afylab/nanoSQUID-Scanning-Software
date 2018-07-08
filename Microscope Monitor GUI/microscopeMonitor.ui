@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>2000</width>
-    <height>1000</height>
+    <height>1100</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Cryostat Monitor</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="styleSheet">
@@ -21,8 +21,8 @@
    <widget class="QFrame" name="temperaturePlot">
     <property name="geometry">
      <rect>
-      <x>960</x>
-      <y>380</y>
+      <x>940</x>
+      <y>390</y>
       <width>400</width>
       <height>250</height>
      </rect>
@@ -40,8 +40,8 @@
    <widget class="QFrame" name="magFieldPlot">
     <property name="geometry">
      <rect>
-      <x>960</x>
-      <y>60</y>
+      <x>940</x>
+      <y>70</y>
       <width>400</width>
       <height>250</height>
      </rect>
@@ -59,8 +59,8 @@
    <widget class="QFrame" name="heLevelPlot">
     <property name="geometry">
      <rect>
-      <x>960</x>
-      <y>700</y>
+      <x>940</x>
+      <y>710</y>
       <width>400</width>
       <height>250</height>
      </rect>
@@ -78,21 +78,21 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>340</y>
-      <width>154</width>
+      <x>1020</x>
+      <y>350</y>
+      <width>249</width>
       <height>33</height>
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:20pt; color:#a8a8a8;&quot;&gt;Temperature&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:20pt; color:#a8a8a8;&quot;&gt;Sample Temperature&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>20</y>
+      <x>1060</x>
+      <y>30</y>
       <width>183</width>
       <height>35</height>
      </rect>
@@ -104,8 +104,8 @@
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>660</y>
+      <x>1060</x>
+      <y>670</y>
       <width>163</width>
       <height>35</height>
      </rect>
@@ -117,9 +117,9 @@
    <widget class="QLCDNumber" name="tempValue">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>710</y>
-      <width>311</width>
+      <x>80</x>
+      <y>720</y>
+      <width>271</width>
       <height>211</height>
      </rect>
     </property>
@@ -127,9 +127,9 @@
    <widget class="QLCDNumber" name="fieldValue">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>80</y>
-      <width>750</width>
+      <x>80</x>
+      <y>90</y>
+      <width>681</width>
       <height>521</height>
      </rect>
     </property>
@@ -137,9 +137,9 @@
    <widget class="QLCDNumber" name="levelValue">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>710</y>
-      <width>311</width>
+      <x>480</x>
+      <y>720</y>
+      <width>271</width>
       <height>211</height>
      </rect>
     </property>
@@ -148,7 +148,7 @@
     <property name="geometry">
      <rect>
       <x>370</x>
-      <y>750</y>
+      <y>760</y>
       <width>58</width>
       <height>116</height>
      </rect>
@@ -161,7 +161,7 @@
     <property name="geometry">
      <rect>
       <x>800</x>
-      <y>200</y>
+      <y>210</y>
       <width>117</width>
       <height>241</height>
      </rect>
@@ -178,21 +178,21 @@
    <widget class="QLabel" name="label_6">
     <property name="geometry">
      <rect>
-      <x>800</x>
-      <y>760</y>
-      <width>125</width>
+      <x>770</x>
+      <y>770</y>
+      <width>94</width>
       <height>116</height>
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:72pt; color:#a8a8a8;&quot;&gt;cm&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:72pt; color:#a8a8a8;&quot;&gt;%&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QFrame" name="serverCxn">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>10</y>
+      <x>60</x>
+      <y>20</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -210,14 +210,14 @@
    <widget class="Line" name="line">
     <property name="geometry">
      <rect>
-      <x>1410</x>
-      <y>30</y>
+      <x>1400</x>
+      <y>40</y>
       <width>3</width>
-      <height>900</height>
+      <height>1000</height>
      </rect>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: rgb(131, 131, 131);</string>
+     <string notr="true">background-color: rgb(168,168,168);</string>
     </property>
     <property name="orientation">
      <enum>Qt::Vertical</enum>
@@ -226,24 +226,30 @@
    <widget class="QLCDNumber" name="boilRate">
     <property name="geometry">
      <rect>
-      <x>1510</x>
-      <y>80</y>
+      <x>1460</x>
+      <y>90</y>
       <width>250</width>
       <height>200</height>
      </rect>
     </property>
+    <property name="smallDecimalPoint">
+     <bool>false</bool>
+    </property>
     <property name="digitCount">
-     <number>3</number>
+     <number>4</number>
     </property>
     <property name="mode">
      <enum>QLCDNumber::Dec</enum>
+    </property>
+    <property name="value" stdset="0">
+     <double>0.000000000000000</double>
     </property>
    </widget>
    <widget class="QLCDNumber" name="refillTime">
     <property name="geometry">
      <rect>
-      <x>1510</x>
-      <y>400</y>
+      <x>1460</x>
+      <y>410</y>
       <width>350</width>
       <height>200</height>
      </rect>
@@ -252,8 +258,8 @@
    <widget class="QLabel" name="label_7">
     <property name="geometry">
      <rect>
-      <x>1640</x>
-      <y>20</y>
+      <x>1555</x>
+      <y>25</y>
       <width>159</width>
       <height>35</height>
      </rect>
@@ -265,21 +271,21 @@
    <widget class="QLabel" name="label_8">
     <property name="geometry">
      <rect>
-      <x>1780</x>
-      <y>170</y>
+      <x>1730</x>
+      <y>180</y>
       <width>96</width>
       <height>45</height>
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:28pt; color:#a8a8a8;&quot;&gt;cm/hr&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:28pt; color:#a8a8a8;&quot;&gt;%/hr&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_9">
     <property name="geometry">
      <rect>
-      <x>1600</x>
-      <y>340</y>
+      <x>1555</x>
+      <y>370</y>
       <width>170</width>
       <height>35</height>
      </rect>
@@ -288,197 +294,190 @@
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:22pt; color:#a8a8a8;&quot;&gt;Time to Refill&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_10">
-    <property name="geometry">
-     <rect>
-      <x>1591</x>
-      <y>690</y>
-      <width>209</width>
-      <height>35</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:22pt; color:#a8a8a8;&quot;&gt;Monitor Settings&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_11">
-    <property name="geometry">
-     <rect>
-      <x>1490</x>
-      <y>770</y>
-      <width>202</width>
-      <height>29</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:18pt; color:#a8a8a8;&quot;&gt;Update Frequency:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_12">
     <property name="geometry">
      <rect>
       <x>1490</x>
-      <y>840</y>
-      <width>256</width>
-      <height>29</height>
+      <y>60</y>
+      <width>228</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:18pt; color:#a8a8a8;&quot;&gt;Boil-off Averaging Time:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="updateFreq">
-    <property name="geometry">
-     <rect>
-      <x>1760</x>
-      <y>770</y>
-      <width>50</width>
-      <height>35</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>22</pointsize>
-     </font>
-    </property>
-    <property name="buttonSymbols">
-     <enum>QAbstractSpinBox::NoButtons</enum>
-    </property>
-    <property name="decimals">
-     <number>0</number>
-    </property>
-    <property name="value">
-     <double>1.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="boilAvg">
-    <property name="geometry">
-     <rect>
-      <x>1760</x>
-      <y>840</y>
-      <width>50</width>
-      <height>35</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>22</pointsize>
-     </font>
-    </property>
-    <property name="buttonSymbols">
-     <enum>QAbstractSpinBox::NoButtons</enum>
-    </property>
-    <property name="decimals">
-     <number>0</number>
-    </property>
-    <property name="value">
-     <double>30.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_13">
-    <property name="geometry">
-     <rect>
-      <x>1820</x>
-      <y>770</y>
-      <width>13</width>
-      <height>35</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:22pt; color:#838383;&quot;&gt;s&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt; color:#a8a8a8;&quot;&gt;Boil-off Averaging Time:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_14">
     <property name="geometry">
      <rect>
-      <x>1820</x>
-      <y>840</y>
-      <width>47</width>
+      <x>1785</x>
+      <y>60</y>
+      <width>35</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt; color:#a8a8a8;&quot;&gt;hr&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="boilAvgValue">
+    <property name="geometry">
+     <rect>
+      <x>1730</x>
+      <y>60</y>
+      <width>46</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt; color:#a8a8a8;&quot;&gt;1.50&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="editSettings">
+    <property name="geometry">
+     <rect>
+      <x>1520</x>
+      <y>990</y>
+      <width>100</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>18</pointsize>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Starts preliminary sweep</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#editSettings{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#editSettings{
+color: rgb(168,168,168);
+background-color:rgb(0,0,0);
+border: 2px solid rgb(168,168,168);
+border-radius: 5px
+}</string>
+    </property>
+    <property name="text">
+     <string>Settings</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="stopMon">
+    <property name="geometry">
+     <rect>
+      <x>1680</x>
+      <y>990</y>
+      <width>100</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>18</pointsize>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Starts preliminary sweep</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#stopMon{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#stopMon{
+color: rgb(168,168,168);
+background-color:rgb(0,0,0);
+border: 2px solid rgb(168,168,168);
+border-radius: 5px
+}</string>
+    </property>
+    <property name="text">
+     <string>Connect</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_13">
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>670</y>
+      <width>163</width>
       <height>35</height>
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:22pt; color:#838383;&quot;&gt;min&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:22pt; color:#a8a8a8;&quot;&gt;Helium Level&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="Line" name="line_2">
+   <widget class="QLabel" name="label_17">
     <property name="geometry">
      <rect>
-      <x>1458</x>
-      <y>710</y>
-      <width>3</width>
-      <height>203</height>
+      <x>140</x>
+      <y>640</y>
+      <width>154</width>
+      <height>66</height>
      </rect>
     </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgb(131, 131, 131);</string>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Vertical</enum>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:20pt; color:#a8a8a8;&quot;&gt;Sample&lt;br/&gt;Temperature&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="Line" name="line_3">
+   <widget class="QLabel" name="label_18">
     <property name="geometry">
      <rect>
-      <x>1890</x>
-      <y>710</y>
-      <width>3</width>
-      <height>203</height>
+      <x>260</x>
+      <y>20</y>
+      <width>304</width>
+      <height>58</height>
      </rect>
     </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgb(131, 131, 131);</string>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Vertical</enum>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:36pt; color:#a8a8a8;&quot;&gt;Magnetic Field&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="Line" name="line_4">
+   <widget class="QLabel" name="label_19">
+    <property name="geometry">
+     <rect>
+      <x>1560</x>
+      <y>650</y>
+      <width>154</width>
+      <height>66</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:20pt; color:#a8a8a8;&quot;&gt;Magnet&lt;br/&gt;Temperature&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_10">
+    <property name="geometry">
+     <rect>
+      <x>1750</x>
+      <y>770</y>
+      <width>58</width>
+      <height>116</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:72pt; color:#a8a8a8;&quot;&gt;K&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLCDNumber" name="magnetTemp">
     <property name="geometry">
      <rect>
       <x>1460</x>
-      <y>910</y>
-      <width>433</width>
-      <height>3</height>
+      <y>730</y>
+      <width>271</width>
+      <height>211</height>
      </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgb(131, 131, 131);</string>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
-    </property>
-   </widget>
-   <widget class="Line" name="line_5">
-    <property name="geometry">
-     <rect>
-      <x>1460</x>
-      <y>710</y>
-      <width>100</width>
-      <height>3</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgb(131, 131, 131);</string>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
-    </property>
-   </widget>
-   <widget class="Line" name="line_6">
-    <property name="geometry">
-     <rect>
-      <x>1830</x>
-      <y>710</y>
-      <width>62</width>
-      <height>3</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgb(131, 131, 131);</string>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
     </property>
    </widget>
   </widget>
