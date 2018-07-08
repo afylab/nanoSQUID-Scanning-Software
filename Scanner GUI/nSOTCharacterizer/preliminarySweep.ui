@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>487</width>
-    <height>599</height>
+    <height>643</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <string notr="true">#prelim{
 	background-color: rgb(0, 0, 0);}</string>
   </property>
-  <widget class="QFrame" name="plotSweep">
+  <widget class="QFrame" name="plotSweepFrame">
    <property name="geometry">
     <rect>
      <x>30</x>
@@ -157,10 +157,10 @@
   <widget class="QPushButton" name="startSweep">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>530</y>
+     <x>65</x>
+     <y>510</y>
      <width>75</width>
-     <height>23</height>
+     <height>35</height>
     </rect>
    </property>
    <property name="toolTip">
@@ -289,7 +289,7 @@ border-radius: 5px
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(kΩ)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="critCurr">
+  <widget class="QLineEdit" name="critCurrLine">
    <property name="geometry">
     <rect>
      <x>370</x>
@@ -541,10 +541,10 @@ border-radius: 5px
   <widget class="QPushButton" name="closeWin">
    <property name="geometry">
     <rect>
-     <x>125</x>
-     <y>530</y>
+     <x>65</x>
+     <y>570</y>
      <width>75</width>
-     <height>23</height>
+     <height>35</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -801,7 +801,7 @@ border-radius: 5px
      <x>230</x>
      <y>512</y>
      <width>3</width>
-     <height>76</height>
+     <height>109</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -820,7 +820,7 @@ border-radius: 5px
      <x>460</x>
      <y>512</y>
      <width>3</width>
-     <height>76</height>
+     <height>109</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -856,7 +856,7 @@ border-radius: 5px
    <property name="geometry">
     <rect>
      <x>231</x>
-     <y>585</y>
+     <y>620</y>
      <width>231</width>
      <height>3</height>
     </rect>
@@ -981,6 +981,34 @@ color: rgb(168, 168, 168)
    </property>
    <property name="text">
     <string>Image Dir</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="showFitBtn">
+   <property name="geometry">
+    <rect>
+     <x>255</x>
+     <y>585</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:pressed#showFitBtn{
+color: rgb(0, 0, 0);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(0, 0, 0);
+border-radius: 5px
+}
+
+QPushButton#showFitBtn{
+color: rgb(168,168,168);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(168,168,168);
+border-radius: 5px
+}</string>
+   </property>
+   <property name="text">
+    <string>Show Fit</string>
    </property>
   </widget>
  </widget>
