@@ -35,6 +35,8 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         
         self.plotTimeRange = 30
 
+        self.counter = 0
+        
         self.push_zeroTime.clicked.connect(self.zeroTime)
         #Requires no labrad connections
         
@@ -44,14 +46,11 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         
     def moveDefault(self):    
         self.move(550,10)
+        self.resize(600,500)
             
     def setupAdditionalUi(self):
         #Set up UI that isn't easily done from Qt Designer
-
-        tab1 = QtGui.QWidget()
-        
         self.deltaFPlot = pg.PlotWidget(parent = self)
-        self.deltaFPlot.setGeometry(15,40,641,271)
         self.deltaFPlot.setLabel('left', 'Delta F', units = 'Hz')
         self.deltaFPlot.setLabel('bottom', 'Time', units = 's')
         self.deltaFPlot.showAxis('right', show = True)
@@ -59,25 +58,19 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.deltaFPlot.setTitle('PLL Delta F vs. Time (s)')
 
         self.phaseErrorPlot = pg.PlotWidget(parent = self)
-        self.phaseErrorPlot.setGeometry(15,310,641,271)
         self.phaseErrorPlot.setLabel('left', 'Phase Error', units = u'\N{DEGREE SIGN}')
         self.phaseErrorPlot.setLabel('bottom', 'Time', units = 's')
         self.phaseErrorPlot.showAxis('right', show = True)
         self.phaseErrorPlot.showAxis('top', show = True)
         self.phaseErrorPlot.setTitle('PLL Error vs. Time (s)')
         
-        vBoxlayout = QtGui.QVBoxLayout()
-        vBoxlayout.addWidget(self.deltaFPlot)
-        vBoxlayout.addWidget(self.phaseErrorPlot)
+        self.tab.layout().addWidget(self.deltaFPlot)
+        self.tab.layout().addWidget(self.phaseErrorPlot)
         
-        tab1.setLayout(vBoxlayout)
-        self.tabWidget.addTab(tab1,"PLL Monitor")
-        
-        
-        tab2 = QtGui.QWidget()
+        self.deltaFPlaceholder.close()
+        self.phasePlaceholder.close()
         
         self.fdbkDCPlot = pg.PlotWidget(parent = self)
-        self.fdbkDCPlot.setGeometry(15,40,641,271)
         self.fdbkDCPlot.setLabel('left', 'Feedback DC', units = 'V')
         self.fdbkDCPlot.setLabel('bottom', 'Time', units = 's')
         self.fdbkDCPlot.showAxis('right', show = True)
@@ -85,21 +78,17 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.fdbkDCPlot.setTitle('Feedback DC vs. Time (s)')
 
         self.fdbkACPlot = pg.PlotWidget(parent = self)
-        self.fdbkACPlot.setGeometry(15,310,641,271)
         self.fdbkACPlot.setLabel('left', 'Feedback AC', units = 'V')
         self.fdbkACPlot.setLabel('bottom', 'Time', units = 's')
         self.fdbkACPlot.showAxis('right', show = True)
         self.fdbkACPlot.showAxis('top', show = True)
         self.fdbkACPlot.setTitle('Feedback AC vs. Time (s)')
         
-        vBoxlayout2 = QtGui.QVBoxLayout()
-        vBoxlayout2.addWidget(self.fdbkDCPlot)
-        vBoxlayout2.addWidget(self.fdbkACPlot)
+        self.tab_2.layout().addWidget(self.fdbkDCPlot)
+        self.tab_2.layout().addWidget(self.fdbkACPlot)
         
-        tab2.setLayout(vBoxlayout2)
-        self.tabWidget.addTab(tab2,"Feedback Monitor")
-        
-        tab3 = QtGui.QWidget()
+        self.dcPlaceholder.close()
+        self.acPlaceholder.close()
         
         self.zPlot = pg.PlotWidget(parent = self)
         self.zPlot.setGeometry(15,40,641,271)
@@ -109,11 +98,9 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.zPlot.showAxis('top', show = True)
         self.zPlot.setTitle('Attocube Z Extension (m) vs. Time (s)')
         
-        vBoxlayout3 = QtGui.QVBoxLayout()
-        vBoxlayout3.addWidget(self.zPlot)
+        self.tab_3.layout().addWidget(self.zPlot)
         
-        tab3.setLayout(vBoxlayout3)
-        self.tabWidget.addTab(tab3,"Z Monitor")
+        self.zPlaceholder.close()
         
     def updatePLLPlots(self, deltaF, phaseError):
         if self.first_data_point:
@@ -215,6 +202,14 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
                 self.zPlot.plot(self.zTimeData[a:], self.zData[a:])
     
     def zeroTime(self):
+        curr_time = time.clock()
+        if curr_time - self.time_offset < 0.25:
+            self.counter = self.counter + 1
+            if self.counter >= 2:
+                self.flashSQUID()
+        else:
+            self.counter = 0
+            
         self.time_offset = time.clock()
         if len(self.pllTimeData) > 0:
             self.pllTimeData = self.pllTimeData - self.pllTimeData[-1]
@@ -239,3 +234,35 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         d = Deferred()
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
+        
+    @inlineCallbacks
+    def flashSQUID(self):
+        style = '''
+                QPushButton#push_zeroTime{
+                image:url(:/nSOTScanner/Pictures/SQUIDRotated.png);
+                background:black;
+                }
+                '''
+        self.push_zeroTime.setStyleSheet(style)
+        
+        yield self.sleep(1)
+    
+        style = '''QPushButton:pressed#push_zeroTime{
+                color: rgb(168,168,168);
+                background-color:rgb(95,107,166);
+                border: 1px solid rgb(168,168,168);
+                border-radius: 5px
+                }
+
+                QPushButton#push_zeroTime{
+                color: rgb(168,168,168);
+                background-color:rgb(0,0,0);
+                border: 1px solid rgb(168,168,168);
+                border-radius: 5px
+                }
+                '''
+        self.push_zeroTime.setStyleSheet(style)
+        
+        
+        
+        

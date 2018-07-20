@@ -57,6 +57,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_subFreq.clicked.connect(self.decrementFreqThresh)
         self.push_addFeedback.clicked.connect(self.incrementFeedbackThresh)
         self.push_subFeedback.clicked.connect(self.decrementFeedbackThresh)
+        
+        self.push_Advance.clicked.connect(self.AdvanceManualDAC)
+        self.push_Retract.clicked.connect(self.RetractManualDAC)
 
         self.lineEdit_freqSet.editingFinished.connect(self.setFreqThresh)
         self.lineEdit_feedbackSet.editingFinished.connect(self.setFeedbackThresh)
@@ -73,6 +76,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_Step_Const_Height.editingFinished.connect(self.set_step_const_height)
         self.lineEdit_Step_Step_Size.editingFinished.connect(self.set_step_step_size)
         self.lineEdit_Step_Step_Speed.editingFinished.connect(self.set_step_step_speed)
+        
+        self.lineEdit_Man_Step_Size.editingFinished.connect(self.set_man_step_size)
+        self.lineEdit_Man_Step_Speed.editingFinished.connect(self.set_man_step_speed)
 
         self.push_Abort.clicked.connect(self.abortApproachSequence)
         
@@ -109,16 +115,19 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.Temperature = 293    #in kelvin
 
         self.withdrawDistance = 2e-6
-        self.constantHeight = 100e-9
 
+        #Height at which the previous approach made contact
+        self.contactHeight = 0
+        
         self.JPE_Steps = []
 
         self.deltaf_track_length = 100
         self.deltafData = deque([0]*self.deltaf_track_length)
-                
+
         '''
         Below is the initialization of all the default measurement settings. Eventually organize into a dictionary
         '''
+        
         self.PLL_Locked = 0 #PLL starts not locked
 
         self.measurementSettings = {
@@ -191,18 +200,29 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 'step_speed'           : 10e-9, #Step speed for feedback approach in m/s
                 'height'               : 100e-9,#Height for constant height scanning
         }
+        
+        '''
+        Below is the initialization of all the default Manual Approach Settings
+        '''
+        self.ManualApproachSettings = {
+                'step_size'            : 10e-9, #Step size for manual approach in meters
+                'step_speed'           : 10e-9, #Step speed for manual approach in m/s
+        }
 
-        self.lineEdit_P.setText(formatNum(self.PIDApproachSettings['p'])) 
-        self.lineEdit_I.setText(formatNum(self.PIDApproachSettings['i'])) 
-        self.lineEdit_D.setText(formatNum(self.PIDApproachSettings['d'])) 
-        self.lineEdit_PID_Step_Size.setText(formatNum(self.PIDApproachSettings['step_size'])) 
-        self.lineEdit_PID_Step_Speed.setText(formatNum(self.PIDApproachSettings['step_speed'])) 
+        self.lineEdit_P.setText(formatNum(self.PIDApproachSettings['p']))
+        self.lineEdit_I.setText(formatNum(self.PIDApproachSettings['i']))
+        self.lineEdit_D.setText(formatNum(self.PIDApproachSettings['d']))
+        self.lineEdit_PID_Step_Size.setText(formatNum(self.PIDApproachSettings['step_size']))
+        self.lineEdit_PID_Step_Speed.setText(formatNum(self.PIDApproachSettings['step_speed']))
         self.lineEdit_PID_Const_Height.setText(formatNum(self.PIDApproachSettings['height']))
 
-        self.lineEdit_Step_Step_Size.setText(formatNum(self.StepApproachSettings['step_size'])) 
-        self.lineEdit_Step_Step_Speed.setText(formatNum(self.StepApproachSettings['step_speed'])) 
-        self.lineEdit_Step_Const_Height.setText(formatNum(self.StepApproachSettings['height']))        
+        self.lineEdit_Step_Step_Size.setText(formatNum(self.StepApproachSettings['step_size']))
+        self.lineEdit_Step_Step_Speed.setText(formatNum(self.StepApproachSettings['step_speed']))
+        self.lineEdit_Step_Const_Height.setText(formatNum(self.StepApproachSettings['height']))
 
+        self.lineEdit_Man_Step_Size.setText(formatNum(self.ManualApproachSettings['step_size']))
+        self.lineEdit_Man_Step_Speed.setText(formatNum(self.ManualApproachSettings['step_speed']))
+        
         '''
         Below is the initialization of all the thresholds for surface detection
         '''
@@ -274,10 +294,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         else:
             dac_voltage = total_voltage - zurich_voltage/10
             
-        print "Intialization determined dac voltage: ", dac_voltage
+        #print "Intialization determined dac voltage: ", dac_voltage
         
         if dac_voltage > 0:
             self.Atto_Z_Voltage = dac_voltage
+            
+        self.updateDACLabel()
             
     @inlineCallbacks
     def zeroHF2LI_Aux_Out(self, c= None):
@@ -482,6 +504,18 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         if isinstance(val,float):
             self.StepApproachSettings['step_speed'] = val
         self.lineEdit_Step_Step_Speed.setText(formatNum(self.StepApproachSettings['step_speed']))
+        
+    def set_man_step_size(self):
+        val = readNum(str(self.lineEdit_Man_Step_Size.text()))
+        if isinstance(val,float):
+            self.ManualApproachSettings['step_size'] = val
+        self.lineEdit_Man_Step_Size.setText(formatNum(self.ManualApproachSettings['step_size']))
+        
+    def set_man_step_speed(self):
+        val = readNum(str(self.lineEdit_Man_Step_Speed.text()))
+        if isinstance(val,float):
+            self.ManualApproachSettings['step_speed'] = val
+        self.lineEdit_Man_Step_Speed.setText(formatNum(self.ManualApproachSettings['step_speed']))
         
     def set_voltage_calibration(self, calibration):
         self.x_volts_to_meters = float(calibration[1])
@@ -697,7 +731,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.measurementSettings['pll_phase_setpoint'] = phase
         self.measurementSettings['pll_output'] = out
         self.measurementSettings['pll_output_amp'] = amp
-
         
     @inlineCallbacks
     def setHF2LI_PLL_Settings(self, c = None):
@@ -707,7 +740,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.hf.set_pll_autotc(self.measurementSettings['pll_output'],False)
             yield self.hf.set_pll_autopid(self.measurementSettings['pll_output'],False)
 
-            #All settings are set for PLL 1
+            #All settings are set for PLL 1 -- this looks not true anymore. Check if modifying
             yield self.hf.set_pll_input(self.measurementSettings['pll_output'],self.measurementSettings['pll_input'])
             yield self.hf.set_pll_freqcenter(self.measurementSettings['pll_output'], self.measurementSettings['pll_centerfreq'])
             yield self.hf.set_pll_setpoint(self.measurementSettings['pll_output'],self.measurementSettings['pll_phase_setpoint'])
@@ -724,6 +757,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.hf.set_pll_i(self.measurementSettings['pll_output'],self.measurementSettings['pll_i'])
             yield self.hf.set_pll_d(self.measurementSettings['pll_output'],self.measurementSettings['pll_d'])
 
+            yield self.hf.set_output_range(self.measurementSettings['pll_output'],self.measurementSettings['pll_output_amp'])
+            range = yield self.hf.get_output_range(self.measurementSettings['pll_output'])
+            yield self.hf.set_output_amplitude(self.measurementSettings['pll_output'],self.measurementSettings['pll_output_amp']/range)
         except Exception as inst:
             print inst
         
@@ -916,7 +952,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                         
                         yield self.blink()
                         
-                        yield self.sleep(30)
+                        yield self.sleep(1)
             
             self.approaching = False
             self.updateApproachStatus.emit(False)
@@ -1177,9 +1213,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             #Read the voltage being output by the PID
             z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
             
+            self.contactHeight = z_voltage / self.z_volts_to_meters
+            
             #Turn off the PID and back off by appropriate amount
             yield self.hf.set_pid_on(self.PID_Index, False)
-            end_voltage = z_voltage - self.constantHeight * self.z_volts_to_meters
+            end_voltage = z_voltage - self.PIDApproachSettings['height'] * self.z_volts_to_meters
             #Find desired retract speed in volts per second
             retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
             yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
@@ -1401,6 +1439,35 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.DACRamping = False
             self.Atto_Z_Voltage = float(end)
             
+            if points * delay / 1e6 > 1: 
+                a = yield self.dac.read()
+                while a != '':
+                    print a
+                    a = yield self.dac.read()
+            
+            self.updateDACLabel()
+            
+    @inlineCallbacks
+    def AdvanceManualDAC(self, c = None):
+        start = self.Atto_Z_Voltage
+        end = start + self.ManualApproachSettings['step_size']*self.z_volts_to_meters
+        if end > self.z_volts_max:
+            end = self.z_volts_max
+        speed = self.ManualApproachSettings['step_speed']*self.z_volts_to_meters
+        yield self.setDAC_Voltage(start, end, speed)
+        
+    @inlineCallbacks
+    def RetractManualDAC(self, c = None):
+        start = self.Atto_Z_Voltage
+        end = start - self.ManualApproachSettings['step_size']*self.z_volts_to_meters
+        if end < 0:
+            end = 0
+        speed = self.ManualApproachSettings['step_speed']*self.z_volts_to_meters
+        yield self.setDAC_Voltage(start, end, speed)
+            
+    def updateDACLabel(self):
+        self.label_manApproachStatus.setText('DAC is extended for ' + formatNum(self.Atto_Z_Voltage / self.z_volts_to_meters) + 'm')
+        
     @inlineCallbacks
     def stepJPEs(self):
         self.JPEStepping = True
@@ -1599,6 +1666,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_addFeedbackAC.setEnabled(False)
         self.push_subFeedbackAC.setEnabled(False)
         
+        self.push_Advance.setEnabled(False)
+        self.push_Retract.setEnabled(False)
+        
         self.lineEdit_Withdraw.setDisabled(True)
 
         self.lineEdit_FineZ.setDisabled(True)
@@ -1651,6 +1721,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_subFeedback.setEnabled(True)
         self.push_addFeedbackAC.setEnabled(True)
         self.push_subFeedbackAC.setEnabled(True)
+        
+        self.push_Advance.setEnabled(True)
+        self.push_Retract.setEnabled(True)
         
         self.lineEdit_Withdraw.setDisabled(False)
 

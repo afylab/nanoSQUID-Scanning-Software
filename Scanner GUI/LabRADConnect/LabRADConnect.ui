@@ -28,6 +28,9 @@
     <height>500</height>
    </size>
   </property>
+  <property name="focusPolicy">
+   <enum>Qt::ClickFocus</enum>
+  </property>
   <property name="windowTitle">
    <string>LabRAD Connect</string>
   </property>

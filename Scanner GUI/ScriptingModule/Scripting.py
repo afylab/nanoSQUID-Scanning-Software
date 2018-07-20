@@ -1,6 +1,6 @@
 import sys
 from PyQt4 import QtGui, QtCore, uic
-from twisted.internet.defer import inlineCallbacks, Deferred
+from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 
 path = sys.path[0] + r"\ScriptingModule"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\Scripting.ui")
@@ -20,6 +20,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.JPEControl = args[2]
         self.nSOTChar = args[3]
         self.FieldControl = args[4]
+        self.TempControl = args[5]
         
         self.setupUi(self)
         self.setupAdditionalUi()
@@ -30,6 +31,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_abort.clicked.connect(self.abortScript)
         self.push_load.clicked.connect(self.loadFile)
         self.push_save.clicked.connect(self.saveFile)
+        
+        #Have Ctrl+S 
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self.codeEditor, self.saveFile, context=QtCore.Qt.WidgetShortcut)
+        
         #Initialize all the labrad connections as none
         self.cxn = None
         self.cxnr = None
@@ -38,9 +43,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.push_abort.setEnabled(False)
         
-    def moveDefault(self):    
+    def moveDefault(self):
         self.move(550,10)
-            
+        self.resize(700,510)
+        
     def connectLabRAD(self, dict):
         self.cxn =  dict['cxn']
             
@@ -53,24 +59,28 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
     def setupAdditionalUi(self):
         #Set up UI that isn't easily done from Qt Designer
-        geom = self.codeEditor.geometry()
         self.codeEditor.close()
         self.codeEditor = CodeEditor(self)
-        self.codeEditor.setGeometry(geom)
-            
+        self.verticalLayout.removeItem(self.horizontalLayout)
+        self.verticalLayout.addWidget(self.codeEditor)
+        self.verticalLayout.addItem(self.horizontalLayout)
+        
     @inlineCallbacks
     def runScript(self, c = None):
         #Define variables that can be used in the script.
         self.lockInterface()
         self.runningScript = True
         self.label_status.setText('Script is compiling')
-        code_to_run = self.formatCode()
-
+        try:
+            code_to_run = self.formatCode()
+        except Exception as inst:
+            print "Error when formatting code: ", inst
+            
         try:
             self.current_line = 0
             exec code_to_run
             self.current_line = 1
-            yield f(self, self.sleep, self.cxn, self.cxnr, self.ScanControl, self.Approach, self.JPEControl, self.nSOTChar, self.FieldControl)
+            yield f(self, self.sleep, self.cxn, self.cxnr, self.ScanControl, self.Approach, self.JPEControl, self.nSOTChar, self.FieldControl, self.TempControl)
             self.runningScript = False
             self.label_status.setText('Script is in editing mode')
             self.unlockInterface()
@@ -106,19 +116,23 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         in this section is critical to it running correctly. 
         '''
         code_lines = str(self.codeEditor.toPlainText()).splitlines()
-        code_to_run = "@inlineCallbacks\ndef f(self, sleep, cxn, cxnr, ScanControl, Approach, JPEControl, nSOTChar, FieldControl):\n "
+        code_to_run = "@inlineCallbacks\ndef f(self, sleep, cxn, cxnr, ScanControl, Approach, JPEControl, nSOTChar, FieldControl, TempControl):\n "
         code_to_run = code_to_run + "yield sleep(0.1)\n "
         i = 1
+        prev_line = 'None'
         for line in code_lines:
             #detect number of space on next line
             spaces = self.detectSpaces(line)
-            #Add code that updates which line of code is being run
-            code_to_run = code_to_run + spaces + "self.current_line = " + str(i) + "\n "
-            #Eventually add line of code that throws signal to update status
-            code_to_run = code_to_run + spaces + "self.label_status.setText(\'Script is running line " + str(i) + "\')\n "
-            #Add code that throws error if not running the script
-            code_to_run = code_to_run + spaces + "if not self.runningScript:\n" + spaces + "  raise ScriptAborted(" + str(i) + ")\n "
+            #inlineCallbacks header is special and needs to be right before the next line in the code, 
+            if '@inlineCallbacks' not in prev_line:
+                #Add code that updates which line of code is being run
+                code_to_run = code_to_run + spaces + "self.current_line = " + str(i) + "\n "
+                #Eventually add line of code that throws signal to update status
+                code_to_run = code_to_run + spaces + "self.label_status.setText(\'Script is running line " + str(i) + "\')\n "
+                #Add code that throws error if not running the script
+                code_to_run = code_to_run + spaces + "if not self.runningScript:\n" + spaces + "  raise ScriptAborted(" + str(i) + ")\n "
             code_to_run = code_to_run + line + "\n "
+            prev_line = line
             i = i + 1
         code_to_run = code_to_run + "\n" 
         return code_to_run
@@ -191,6 +205,8 @@ class CodeEditor(QtGui.QPlainTextEdit):
 
         self.updateLineNumberAreaWidth(0)
 
+        self.setTabStopWidth(20)
+        
     def lineNumberAreaWidth(self):
         digits = 1
         count = max(1, self.blockCount())
@@ -200,10 +216,8 @@ class CodeEditor(QtGui.QPlainTextEdit):
         space = 3 + self.fontMetrics().width('9') * digits
         return space
 
-
     def updateLineNumberAreaWidth(self, _):
         self.setViewportMargins(self.lineNumberAreaWidth(), 0, 0, 0)
-
 
     def updateLineNumberArea(self, rect, dy):
 

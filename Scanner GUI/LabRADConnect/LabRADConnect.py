@@ -19,6 +19,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
     cxnRemote = QtCore.pyqtSignal(dict)
     cxnDisconnected = QtCore.pyqtSignal()
     newSessionFolder = QtCore.pyqtSignal(str)
+    newDVFolder = QtCore.pyqtSignal()
     
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
@@ -81,6 +82,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.push_ConnectRemote.clicked.connect(self.connectRemoteServers)
         self.push_DisconnectAll.clicked.connect(self.disconnectLabRAD)
 
+        self.key_list = []
         '''
         Eventually add ability to toggle individual connections. Gotta think
         about how to emit the dictionary
@@ -116,7 +118,8 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             new_background = 180 - i*3
             new_sheet = base_sheet.replace('60',str(new_background))
             self.sheets.append(new_sheet)
-    
+
+
     def moveDefault(self):    
         self.move(10,170)
         
@@ -784,10 +787,14 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                         session = session + '\\' + i
                     self.session = r'\.datavault' + session
                     self.lineEdit_Session.setText(self.session)
+                    
+                    self.newDVFolder.emit()
                 except Exception as inst:
                     print type(inst)
                     print inst.args
                     print inst
+                    
+                
                     
     def chooseSession_2(self):
         folder = str(QtGui.QFileDialog.getExistingDirectory(self, directory = 'C:\\Users\\cltschirhart'))
@@ -803,6 +810,38 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
     
+    def keyPressEvent(self, event):
+        self.key_list.append(event.key())
+        if len(self.key_list) > 10:
+            self.key_list = self.key_list[-10:]
+        if len(self.key_list) == 10:
+            if self.key_list == [QtCore.Qt.Key_Up,QtCore.Qt.Key_Up,QtCore.Qt.Key_Down,QtCore.Qt.Key_Down,QtCore.Qt.Key_Left,QtCore.Qt.Key_Right,QtCore.Qt.Key_Left,QtCore.Qt.Key_Right,QtCore.Qt.Key_B,QtCore.Qt.Key_A]:
+                self.flashSQUID()
+                
+                
+    @inlineCallbacks
+    def flashSQUID(self):
+        style = '''QLabel{
+                color:rgb(168,168,168);
+                qproperty-alignment: 'AlignVCenter | AlignRight';
+                }
+                
+                #centralwidget{
+                background: url(:/nSOTScanner/Pictures/SQUID.png);
+                }'''
+        self.centralwidget.setStyleSheet(style)
+        
+        yield self.sleep(1)
+
+        style = '''QLabel{
+                color:rgb(168,168,168);
+                qproperty-alignment: 'AlignVCenter | AlignRight';
+                }
+                
+                #centralwidget{
+                background: black;
+                }'''
+        self.centralwidget.setStyleSheet(style)
         
         
         

@@ -18,13 +18,13 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>0</width>
+    <width>500</width>
     <height>469</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>1000</width>
+    <width>750</width>
     <height>469</height>
    </size>
   </property>
@@ -1447,6 +1447,27 @@ color:rgb(168,168,168)
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QFrame" name="frame_2">
+    <property name="geometry">
+     <rect>
+      <x>690</x>
+      <y>10</y>
+      <width>51</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#frame_2{
+border-image: url(:/nSOTScanner/Pictures/21232342inverted.bmp)
+}</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
     </property>
    </widget>
   </widget>

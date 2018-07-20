@@ -856,7 +856,7 @@ background: black
 }</string>
      </property>
      <attribute name="title">
-      <string>PID Approach (Frequency Only)</string>
+      <string>PID Approach</string>
      </attribute>
      <widget class="QPushButton" name="push_ApproachForFeedback">
       <property name="geometry">
@@ -1247,7 +1247,7 @@ color:rgb(168,168,168)
       <property name="geometry">
        <rect>
         <x>-20</x>
-        <y>190</y>
+        <y>194</y>
         <width>61</width>
         <height>22</height>
        </rect>
@@ -1262,8 +1262,8 @@ color:rgb(168,168,168)
      <widget class="QLabel" name="label_stepApproachStatus">
       <property name="geometry">
        <rect>
-        <x>60</x>
-        <y>190</y>
+        <x>100</x>
+        <y>194</y>
         <width>131</width>
         <height>22</height>
        </rect>
@@ -1405,6 +1405,194 @@ border-radius: 5px
       </property>
       <property name="text">
        <string>Step Size (m):</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_3">
+     <property name="styleSheet">
+      <string notr="true">#tab_3{
+background: black
+}</string>
+     </property>
+     <attribute name="title">
+      <string>Manual Approach</string>
+     </attribute>
+     <widget class="QPushButton" name="push_Advance">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>120</y>
+        <width>101</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton#push_Advance{
+color: rgb(168,168,168);
+background-color:rgb(0,0,0);
+border: 1px solid rgb(168,168,168);
+border-radius: 5px
+}
+
+QPushButton:pressed#push_Advance{
+color: rgb(168,168,168);
+background-color:rgb(95,107,166);
+border: 1px solid rgb(168,168,168);
+border-radius: 5px
+}
+
+QPushButton:disabled#push_Advance{
+color: rgb(80,80,80);
+background-color:rgb(0,0,0);
+border: 1px solid rgb(80,80,80);
+border-radius: 5px
+}
+
+</string>
+      </property>
+      <property name="text">
+       <string>Advance</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="push_Retract">
+      <property name="geometry">
+       <rect>
+        <x>190</x>
+        <y>120</y>
+        <width>101</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton#push_Retract{
+color: rgb(168,168,168);
+background-color:rgb(0,0,0);
+border: 1px solid rgb(168,168,168);
+border-radius: 5px
+}
+
+QPushButton:pressed#push_Retract{
+color: rgb(168,168,168);
+background-color:rgb(95,107,166);
+border: 1px solid rgb(168,168,168);
+border-radius: 5px
+}
+
+QPushButton:disabled#push_Retract{
+color: rgb(80,80,80);
+background-color:rgb(0,0,0);
+border: 1px solid rgb(80,80,80);
+border-radius: 5px
+}
+
+</string>
+      </property>
+      <property name="text">
+       <string>Retract</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_7">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>40</y>
+        <width>81</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Step Size (m):</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_Man_Step_Size">
+      <property name="geometry">
+       <rect>
+        <x>85</x>
+        <y>40</y>
+        <width>71</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_Man_Step_Speed">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>40</y>
+        <width>71</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_34">
+      <property name="geometry">
+       <rect>
+        <x>165</x>
+        <y>40</y>
+        <width>121</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Speed (m/s):</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_35">
+      <property name="geometry">
+       <rect>
+        <x>-20</x>
+        <y>194</y>
+        <width>61</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Status:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_manApproachStatus">
+      <property name="geometry">
+       <rect>
+        <x>60</x>
+        <y>194</y>
+        <width>231</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>DAC is extended for 0nm</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
     </widget>
