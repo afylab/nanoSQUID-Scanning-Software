@@ -244,6 +244,7 @@ background: black;
     <addaction name="actionJPE_Coarse_Position_Control"/>
     <addaction name="actionAttocube_Position_Calibration"/>
     <addaction name="actionMagnetic_Field_Control"/>
+    <addaction name="actionTemperature_Control"/>
    </widget>
    <widget class="QMenu" name="menuExeriments">
     <property name="title">
@@ -338,6 +339,11 @@ background: black;
   <action name="actionApproach_Monitor">
    <property name="text">
     <string>Approach Monitor</string>
+   </property>
+  </action>
+  <action name="actionTemperature_Control">
+   <property name="text">
+    <string>Temperature Control</string>
    </property>
   </action>
  </widget>

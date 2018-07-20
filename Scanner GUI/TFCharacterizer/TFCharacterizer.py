@@ -89,30 +89,46 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_Start.clicked.connect(self.startSweep)
         self.push_Stop.clicked.connect(self.stopSweep)
         self.push_WorkingPoint.clicked.connect(self.selectWorkingPoint)
-        self.push_SuggestWorkingPoint.clicked.connect(self.selectAutoWorkingPoint)
+
         
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
         self.push_advancedSettings.clicked.connect(self.showAdvancedSettings)
         #Initialize all the labrad connections as none
-        self.cxn = False
+        self.gen_dv = False
         self.dv = False
+        self.cxn = False
+        self.cxn_dv = False
         self.hf = False
         
         #Lock interface until appropriate LabRAD servers are connected
         self.lockInterface()
         
-    def moveDefault(self):    
+    def moveDefault(self):
         self.move(550,10)
+        #Resizing the width to 100 make it the minimum width it can be
+        self.resize(100,600)
         
+    @inlineCallbacks
     def connectLabRAD(self, dict):
         try:
             self.cxn = dict['cxn']
-            self.dv = dict['dv']
+            #Create another connection for the connection to data vault to prevent 
+            #problems of multiple windows trying to write the data vault at the same
+            #time
+            self.gen_dv = dict['dv']
+
+            from labrad.wrappers import connectAsync
+            self.cxn_dv = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            self.dv = yield self.cxn_dv.data_vault
+            curr_folder = yield self.gen_dv.cd()
+            yield self.dv.cd(curr_folder)
+
             self.hf = dict['hf2li']
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
-        except:
+        except Exception as inst:
+            print inst
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
         if not self.cxn: 
@@ -146,12 +162,19 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def disconnectLabRAD(self):
         if self.hf is not False:
             self.hf.clear_sweep()
+        self.gen_dv = False
         self.dv = False
         self.cxn = False
+        self.cxn_dv = False
         self.hf = False
         self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.lockInterface()
+            
+    @inlineCallbacks
+    def updateDataVaultDirectory(self):
+        curr_folder = yield self.gen_dv.cd()
+        yield self.dv.cd(curr_folder)
             
     def showServersList(self):
         serList = serversList(self.reactor, self)
@@ -174,6 +197,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.reinitSweep()
         
     def setupAdditionalUi(self):
+        self.amplitudePlot.close()
+        self.phasePlot.close()
+    
         #Set up UI that isn't easily done from Qt Designer
         self.ampPlot = pg.PlotWidget(parent = self)
         self.ampPlot.setGeometry(10,190,631,451)
@@ -228,6 +254,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.phasePlot.getPlotItem().addItem(self.minFreqLine2)
         self.phasePlot.getPlotItem().addItem(self.maxFreqLine2)
         self.phasePlot.getPlotItem().addItem(self.freqSelectLine2)
+        
+        self.horizontalLayout.addWidget(self.ampPlot)
+        self.horizontalLayout.addWidget(self.phasePlot)
+        
+
           
 #----------------------------------------------------------------------------------------------#         
     """ The following section connects all signals."""
@@ -414,12 +445,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             phase = self.phi[index]
             
         self.workingPointSelected.emit(self.selectFreq, phase, self.output, self.exAmp)
-
-    def selectAutoWorkingPoint(self):
-
-        phase = phaseFunc(self.ampFitParams[0], *self.phaseFitParams)
-
-        self.workingPointSelected.emit(self.ampFitParams[0], phase, self.output, self.exAmp)
 
     @inlineCallbacks
     def startSweep(self, c = None):    
@@ -646,7 +671,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_Stop.setEnabled(False)
         self.push_fitData.setEnabled(False)
         self.push_WorkingPoint.setEnabled(False)
-        self.push_SuggestWorkingPoint.setEnabled(False)
         self.push_advancedSettings.setEnabled(False)
         self.push_showFit.setEnabled(False)
         
@@ -675,7 +699,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_Stop.setEnabled(True)
         self.push_fitData.setEnabled(True)
         self.push_WorkingPoint.setEnabled(True)
-        self.push_SuggestWorkingPoint.setEnabled(True)
         self.push_advancedSettings.setEnabled(True)
         self.push_showFit.setEnabled(True)
 

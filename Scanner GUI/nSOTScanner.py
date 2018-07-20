@@ -16,6 +16,7 @@ sys.path.append(path+'\JPEPositionControl')
 sys.path.append(path+'\PositionCalibration')
 sys.path.append(path+'\Field Control')
 sys.path.append(path+'\ScriptingModule')
+sys.path.append(path+'\TemperatureControl')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -32,6 +33,7 @@ import JPEControl
 import PositionCalibration
 import FieldControl
 import Scripting
+import TemperatureControl
 
 import exceptions
 
@@ -61,11 +63,12 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.JPEControl = JPEControl.Window(self.reactor, None)
         self.PosCalibration = PositionCalibration.Window(self.reactor, None)
         self.FieldControl = FieldControl.Window(self.reactor, None)
+        self.TempControl = TemperatureControl.Window(self.reactor,None)
         
         #This module should always be initialized last, and have the modules
         #That are desired to be scriptable be input
         self.Scripting = Scripting.Window(self.reactor, None, self.ScanControl, self.Approach, 
-                                          self.JPEControl, self.nSOTChar, self.FieldControl)
+                                          self.JPEControl, self.nSOTChar, self.FieldControl, self.TempControl)
         
         #Connects all drop down menu button
         self.actionScan_Control.triggered.connect(self.openScanControlWindow)
@@ -79,6 +82,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.actionAttocube_Position_Calibration.triggered.connect(self.openPosCalibrationWindow)
         self.actionMagnetic_Field_Control.triggered.connect(self.openFieldControlWindow)
         self.actionRun_Scripts.triggered.connect(self.openScriptingModule)
+        self.actionTemperature_Control.triggered.connect(self.openTempControlWindow)
         
         #Connectors all layout buttons
         self.push_Layout1.clicked.connect(self.setLayout1)
@@ -189,6 +193,11 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         if self.FieldControl.isVisible() == False:
             self.FieldControl.show()
             
+    def openTempControlWindow(self):
+        self.TempControl.moveDefault()
+        self.TempControl.raise_()
+        self.TempControl.show()
+        
     def openScriptingModule(self):
         self.Scripting.moveDefault()
         self.Scripting.raise_()
@@ -200,7 +209,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
     """ The following section connects actions related to passing LabRAD connections."""
     
     def distributeLocalLabRADConnections(self,dict):
-        #print dict
+        #Call connectLabRAD functions for relevant modules
         self.Plot.connectLabRAD(dict)
         self.nSOTChar.connectLabRAD(dict)
         self.ScanControl.connectLabRAD(dict)
@@ -210,12 +219,12 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Scripting.connectLabRAD(dict)
         
     def distributeRemoteLabRADConnections(self,dict):
-        #print dict
+        #Call connectRemoteLabRAD functions for relevant modules
         self.FieldControl.connectRemoteLabRAD(dict)
         self.Scripting.connectRemoteLabRAD(dict)
         self.nSOTChar.connectRemoteLabRAD(dict)
-        #Call connectRemoteLabRAD functions for relevant modules
-        
+        self.TempControl.connectRemoteLabRAD(dict)
+
     def disconnectLabRADConnections(self):
         self.Plot.disconnectLabRAD()
         self.nSOTChar.disconnectLabRAD()
@@ -225,11 +234,17 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.JPEControl.disconnectLabRAD()
         self.FieldControl.disconnectLabRAD()
         self.Scripting.disconnectLabRAD()
+        self.TempControl.disconnectLabRAD()
         
     def distributeSessionFolder(self, folder):
         self.TFChar.setSessionFolder(folder)
         self.ScanControl.setSessionFolder(folder)
         self.nSOTChar.setSessionFolder(folder)
+        
+    def updateDataVaultFolder(self):
+        self.ScanControl.updateDataVaultDirectory()
+        self.TFChar.updateDataVaultDirectory()
+        self.nSOTChar.updateDataVaultDirectory()
 
 #----------------------------------------------------------------------------------------------#
             
@@ -255,10 +270,12 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         if self.isRedEyes == False:
             self.push_Logo.setStyleSheet("#push_Logo{"+
             "image:url(:/nSOTScanner/Pictures/SQUIDRotated.png);background: black;}")
+            self.push_Logo.setToolTip('A SQUID has been hidden in every module (no exceptions). Can you find them all?')
             self.isRedEyes = True
         else:
             self.push_Logo.setStyleSheet("#push_Logo{"+
             "image:url(:/nSOTScanner/Pictures/SQUIDRotated2.png);background: black;}")
+            self.push_Logo.setToolTip('')
             self.isRedEyes = False
             
     def hideAllWindows(self):
