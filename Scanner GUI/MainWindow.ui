@@ -34,6 +34,10 @@
   <property name="windowTitle">
    <string>nSOT Scanner</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="Resources/nSOTScannerResources.qrc">
+    <normaloff>:/nSOTScanner/Pictures/jj_schema.svg</normaloff>:/nSOTScanner/Pictures/jj_schema.svg</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -251,6 +255,7 @@ background: black;
      <string>Experiments</string>
     </property>
     <addaction name="actionRun_Scripts"/>
+    <addaction name="actionQR_Reader"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -344,6 +349,11 @@ background: black;
   <action name="actionTemperature_Control">
    <property name="text">
     <string>Temperature Control</string>
+   </property>
+  </action>
+  <action name="actionQR_Reader">
+   <property name="text">
+    <string>QR Reader</string>
    </property>
   </action>
  </widget>

@@ -19,7 +19,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.setupUi(self)
         self.setupAdditionalUi()
 
-        self.moveDefault()        
+        self.moveDefault()
 
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
@@ -30,7 +30,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.lockInterface()
         
-    def moveDefault(self):    
+    def moveDefault(self):
         self.move(550,10)
         
     def connectLabRAD(self, dict):

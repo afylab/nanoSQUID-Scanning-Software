@@ -1,6 +1,9 @@
 import sys
-from PyQt4 import QtGui, QtCore, uic
+from PyQt4 import Qt, QtGui, QtCore, uic
 import time 
+import ctypes
+myappid = 'YoungLab.nSOTScannerSoftware'
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 path = sys.path[0]
 sys.path.append(path+'\Resources')
@@ -17,6 +20,7 @@ sys.path.append(path+'\PositionCalibration')
 sys.path.append(path+'\Field Control')
 sys.path.append(path+'\ScriptingModule')
 sys.path.append(path+'\TemperatureControl')
+sys.path.append(path+'\QRreader')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -34,6 +38,7 @@ import PositionCalibration
 import FieldControl
 import Scripting
 import TemperatureControl
+import QRreader
 
 import exceptions
 
@@ -64,6 +69,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.PosCalibration = PositionCalibration.Window(self.reactor, None)
         self.FieldControl = FieldControl.Window(self.reactor, None)
         self.TempControl = TemperatureControl.Window(self.reactor,None)
+        self.QRreader = QRreader.Window(self.reactor,None)
         
         #This module should always be initialized last, and have the modules
         #That are desired to be scriptable be input
@@ -83,6 +89,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.actionMagnetic_Field_Control.triggered.connect(self.openFieldControlWindow)
         self.actionRun_Scripts.triggered.connect(self.openScriptingModule)
         self.actionTemperature_Control.triggered.connect(self.openTempControlWindow)
+        self.actionQR_Reader.triggered.connect(self.openQRreaderWindow)
         
         #Connectors all layout buttons
         self.push_Layout1.clicked.connect(self.setLayout1)
@@ -134,78 +141,71 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.move(10,10)
     
     def openScanControlWindow(self):
+        self.ScanControl.showNormal()
         self.ScanControl.moveDefault()
         self.ScanControl.raise_()
-        if self.ScanControl.isVisible() == False:
-            self.ScanControl.show()
-            
+        
     def openLabRADConnectWindow(self):
+        self.LabRAD.showNormal()
         self.LabRAD.moveDefault()
         self.LabRAD.raise_()
-        if self.LabRAD.isVisible() == False:
-            self.LabRAD.show()
-            
+
     def opennSOTCharWindow(self):
+        self.nSOTChar.showNormal()
         self.nSOTChar.moveDefault()
         self.nSOTChar.raise_()
-        if self.nSOTChar.isVisible() == False:
-            self.nSOTChar.show()
             
     def openDataPlotter(self):
+        self.Plot.showNormal()
         self.Plot.moveDefault()
         self.Plot.raise_()
-        if self.Plot.isVisible() == False:
-            self.Plot.show()
             
     def openTFCharWindow(self):
+        self.TFChar.showNormal()
         self.TFChar.moveDefault()
         self.TFChar.raise_()
-        if self.TFChar.isVisible() == False:
-            self.TFChar.show()
     
     def openApproachWindow(self):
+        self.Approach.showNormal()
         self.Approach.moveDefault()
         self.Approach.raise_()
-        if self.Approach.isVisible() == False:
-            self.Approach.show()
-
+            
     def openApproachMonitorWindow(self):
+        self.ApproachMonitor.showNormal()
         self.ApproachMonitor.moveDefault()
         self.ApproachMonitor.raise_()
-        if self.ApproachMonitor.isVisible() == False:
-            self.ApproachMonitor.show()
             
     def openJPEControlWindow(self):
+        self.JPEControl.showNormal()
         self.JPEControl.moveDefault()
         self.JPEControl.raise_()
-        if self.JPEControl.isVisible() == False:
-            self.JPEControl.show()
 
     def openPosCalibrationWindow(self):
+        self.PosCalibration.showNormal()
         self.PosCalibration.moveDefault()
         self.PosCalibration.raise_()
-        if self.PosCalibration.isVisible() == False:
-            self.PosCalibration.show()
             
     def openFieldControlWindow(self):
+        self.FieldControl.showNormal()
         self.FieldControl.moveDefault()
         self.FieldControl.raise_()
-        if self.FieldControl.isVisible() == False:
-            self.FieldControl.show()
             
     def openTempControlWindow(self):
+        self.TempControl.showNormal()
         self.TempControl.moveDefault()
         self.TempControl.raise_()
-        self.TempControl.show()
-        
+
     def openScriptingModule(self):
+        self.Scripting.showNormal()
         self.Scripting.moveDefault()
         self.Scripting.raise_()
-        if self.Scripting.isVisible() == False:
-            self.Scripting.show()
+        
+    def openQRreaderWindow(self):
+        self.QRreader.showNormal()
+        self.QRreader.moveDefault()
+        self.QRreader.raise_()
             
 #----------------------------------------------------------------------------------------------#
-            
     """ The following section connects actions related to passing LabRAD connections."""
     
     def distributeLocalLabRADConnections(self,dict):

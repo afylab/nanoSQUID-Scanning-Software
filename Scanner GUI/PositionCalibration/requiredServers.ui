@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>nSOT Charactizer Server List</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../Resources/nSOTScannerResources.qrc">
+    <normaloff>:/nSOTScanner/Pictures/jj_schema.svg</normaloff>:/nSOTScanner/Pictures/jj_schema.svg</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">background: black</string>
   </property>
@@ -128,6 +132,8 @@ color: rgb(168,168,168)
    </property>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="../Resources/nSOTScannerResources.qrc"/>
+ </resources>
  <connections/>
 </ui>

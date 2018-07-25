@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Plotter</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../Resources/nSOTScannerResources.qrc">
+    <normaloff>:/nSOTScanner/Pictures/jj_schema.svg</normaloff>:/nSOTScanner/Pictures/jj_schema.svg</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">#Dialog{
 	background-color: rgb(0, 0, 0);}</string>

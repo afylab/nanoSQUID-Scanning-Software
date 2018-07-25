@@ -221,7 +221,7 @@ class Window(QtGui.QMainWindow, CalibrationUI):
         f.close()
 
     def set_XCon(self):
-        val = readNum(str(self.lineEdit_XCon.text()))
+        val = readNum(str(self.lineEdit_XCon.text()), self)
         if isinstance(val,float):
             self.tempData[1] = val
             if self.tempData[1] is not None and self.tempData[4] is not None:
@@ -233,7 +233,7 @@ class Window(QtGui.QMainWindow, CalibrationUI):
             self.lineEdit_XCon.setText(formatNum(self.tempData[1]))
 
     def set_YCon(self):
-        val = readNum(str(self.lineEdit_YCon.text()))
+        val = readNum(str(self.lineEdit_YCon.text()), self)
         if isinstance(val,float):
             self.tempData[2] = val
             if self.tempData[2] is not None and self.tempData[5] is not None:
@@ -245,7 +245,7 @@ class Window(QtGui.QMainWindow, CalibrationUI):
             self.lineEdit_YCon.setText(formatNum(self.tempData[2]))
 
     def set_ZCon(self):
-        val = readNum(str(self.lineEdit_ZCon.text()))
+        val = readNum(str(self.lineEdit_ZCon.text()), self)
         if isinstance(val,float):
             self.tempData[3] = val
             if self.tempData[3] is not None and self.tempData[6] is not None:
@@ -257,7 +257,7 @@ class Window(QtGui.QMainWindow, CalibrationUI):
             self.lineEdit_ZCon.setText(formatNum(self.tempData[3]))
 
     def set_XMax(self):
-        val = readNum(str(self.lineEdit_XMax.text()))
+        val = readNum(str(self.lineEdit_XMax.text()), self)
         if isinstance(val,float):
             self.tempData[4] = val
             if self.tempData[1] is not None and self.tempData[4] is not None:
@@ -269,7 +269,7 @@ class Window(QtGui.QMainWindow, CalibrationUI):
             self.lineEdit_XMax.setText(formatNum(self.tempData[4]))
 
     def set_YMax(self):
-        val = readNum(str(self.lineEdit_YMax.text()))
+        val = readNum(str(self.lineEdit_YMax.text()), self)
         if isinstance(val,float):
             self.tempData[5] = val
             if self.tempData[2] is not None and self.tempData[5] is not None:
@@ -281,7 +281,7 @@ class Window(QtGui.QMainWindow, CalibrationUI):
             self.lineEdit_YMax.setText(formatNum(self.tempData[5]))
 
     def set_ZMax(self):
-        val = readNum(str(self.lineEdit_ZMax.text()))
+        val = readNum(str(self.lineEdit_ZMax.text()), self)
         if isinstance(val,float):
             self.tempData[6] = val
             if self.tempData[3] is not None and self.tempData[6] is not None:
