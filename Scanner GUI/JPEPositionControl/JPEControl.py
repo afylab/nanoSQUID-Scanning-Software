@@ -99,7 +99,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         pass
 
     def setTemperature(self):
-        val = readNum(str(self.lineEdit_Temperature.text()))
+        val = readNum(str(self.lineEdit_Temperature.text()), self, False)
         if isinstance(val,float):
             self.JPESettings['temp'] = int(val)
             self.newJPESettings.emit(self.JPESettings)
@@ -107,7 +107,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     
     @inlineCallbacks
     def setJPE_Tip_Height(self, c = None):
-        val = readNum(str(self.lineEdit_Tip_Height.text()))
+        val = readNum(str(self.lineEdit_Tip_Height.text()), self)
         if isinstance(val,float):
             self.tip_height = val
             yield self.cpsc.set_height(self.tip_height*1000+33.9)
@@ -118,19 +118,19 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.newJPESettings.emit(self.JPESettings)
         
     def setJPE_Approach_Steps(self):
-        val = readNum(str(self.lineEdit_JPE_Approach_Steps.text()))
+        val = readNum(str(self.lineEdit_JPE_Approach_Steps.text()), self, False)
         if isinstance(val,float):
             self.steps = val
         self.lineEdit_JPE_Approach_Steps.setText(formatNum(self.steps))
         
     def setJPE_Approach_Size(self):
-        val = readNum(str(self.lineEdit_JPE_Approach_Size.text()))
+        val = readNum(str(self.lineEdit_JPE_Approach_Size.text()), self, False)
         if isinstance(val,float):
             self.size = int(val)
         self.lineEdit_JPE_Approach_Size.setText(formatNum(self.size))
         
     def setJPE_Approach_Freq(self):
-        val = readNum(str(self.lineEdit_JPE_Approach_Freq.text()))
+        val = readNum(str(self.lineEdit_JPE_Approach_Freq.text()), self, False)
         if isinstance(val,float):
             self.freq = int(val)
         self.lineEdit_JPE_Approach_Freq.setText(formatNum(self.freq))
@@ -203,7 +203,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     
     @inlineCallbacks
     def setForwardJPEWeightA(self, c = None):
-        val = readNum(str(self.lineEdit_weight_for_A.text()))
+        val = readNum(str(self.lineEdit_weight_for_A.text()), self, False)
         if isinstance(val,float) and val > 0:
             self.weight_for[0] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)
@@ -211,7 +211,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
     @inlineCallbacks
     def setForwardJPEWeightB(self, c = None):
-        val = readNum(str(self.lineEdit_weight_for_B.text()))
+        val = readNum(str(self.lineEdit_weight_for_B.text()), self, False)
         if isinstance(val,float) and val >0:
             self.weight_for[1] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)
@@ -219,7 +219,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     @inlineCallbacks
     def setForwardJPEWeightC(self, c = None):
-        val = readNum(str(self.lineEdit_weight_for_C.text()))
+        val = readNum(str(self.lineEdit_weight_for_C.text()), self, False)
         if isinstance(val,float) and val >0:
             self.weight_for[2] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)
@@ -227,7 +227,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     @inlineCallbacks
     def setBackwardJPEWeightA(self, c = None):
-        val = readNum(str(self.lineEdit_weight_back_A.text()))
+        val = readNum(str(self.lineEdit_weight_back_A.text()), self, False)
         if isinstance(val,float) and val > 0:
             self.weight_back[0] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)
@@ -235,7 +235,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
     @inlineCallbacks
     def setBackwardJPEWeightB(self, c = None):
-        val = readNum(str(self.lineEdit_weight_back_B.text()))
+        val = readNum(str(self.lineEdit_weight_back_B.text()), self, False)
         if isinstance(val,float) and val > 0:
             self.weight_back[1] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)
@@ -243,7 +243,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     @inlineCallbacks
     def setBackwardJPEWeightC(self, c = None):
-        val = readNum(str(self.lineEdit_weight_back_C.text()))
+        val = readNum(str(self.lineEdit_weight_back_C.text()), self, False)
         if isinstance(val,float) and val > 0:
             self.weight_back[2] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)

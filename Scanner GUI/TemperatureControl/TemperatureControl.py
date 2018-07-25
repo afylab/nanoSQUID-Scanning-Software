@@ -203,9 +203,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         else:
             yield self.ls.range_set(self.measurementSettings['heater output'], 0)
             self.push_heater.setText('Heater Off')
+            
     @inlineCallbacks
     def setSetpoint(self, c = None):
-        val = readNum(str(self.lineEdit_setpoint.text()))
+        val = readNum(str(self.lineEdit_setpoint.text()), self, False)
         if isinstance(val,float):
             self.measurementSettings['setpoint'] = val
             yield self.ls.setpoint(self.measurementSettings['heater output'], self.measurementSettings['setpoint'])
@@ -380,31 +381,31 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.measurementSettings['sample Input'] = 'D5'
             
     def updateP(self):
-        val = readNum(str(self.lineEdit_P.text()))
+        val = readNum(str(self.lineEdit_P.text()), self)
         if isinstance(val,float):
             self.measurementSettings['p'] = val
         self.lineEdit_P.setText(formatNum(self.measurementSettings['p']))
     
     def updateD(self):
-        val = readNum(str(self.lineEdit_D.text()))
+        val = readNum(str(self.lineEdit_D.text()), self)
         if isinstance(val,float):
             self.measurementSettings['d'] = val
         self.lineEdit_D.setText(formatNum(self.measurementSettings['d']))
     
     def updateI(self):
-        val = readNum(str(self.lineEdit_I.text()))
+        val = readNum(str(self.lineEdit_I.text()), self)
         if isinstance(val,float):
             self.measurementSettings['i'] = val
         self.lineEdit_I.setText(formatNum(self.measurementSettings['i']))
         
     def updateTime(self):
-        val = readNum(str(self.lineEdit_time.text()))
+        val = readNum(str(self.lineEdit_time.text()), self)
         if isinstance(val,float):
             self.measurementSettings['plot record'] = val
         self.lineEdit_time.setText(formatNum(self.measurementSettings['plot record']))
         
     def updateDelay(self):
-        val = readNum(str(self.lineEdit_delay.text()))
+        val = readNum(str(self.lineEdit_delay.text()), self)
         if isinstance(val,float):
             self.measurementSettings['sample delay'] = val
         self.lineEdit_delay.setText(formatNum(self.measurementSettings['sample delay']))

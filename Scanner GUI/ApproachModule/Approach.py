@@ -41,7 +41,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.setupUi(self)
         self.setupAdditionalUi()
 
-        self.moveDefault()        
+        self.moveDefault()
 
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
@@ -93,6 +93,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         self.radioButton_plus.toggled.connect(self.setFreqThreshholdSign)
 
+        self.comboBox_ZMultiplier.currentIndexChanged.connect(self.setZMultiplier)
+        
         self.push_Fake.clicked.connect(self.sendFakeSignals)
         #Initialize all the labrad connections as not connected
         self.cxn = False
@@ -103,17 +105,21 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         self.measuring = False
         self.approaching = False
-        self.voltage1to10 = False #Variable to keep track of sum box status
+        self.voltageMultiplied = False #Variable to keep track of sum box status ie if the voltage from the Zurich being multiplied down
+        self.voltageMultiplier = 0.1   #This is the multiplier value for scanning in feedback
         self.JPEStepping = False
         self.DACRamping = False
+        self.withdrawing = False 
         
         #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's hard coded in
         self.PID_Index = 1
 
-        self.Atto_Z_Voltage = 0.0 #Voltage being sent to Z of attocubes. Eventually should synchronize with the 
-                                  #Scan module Atto Z voltage TODO
+        self.Atto_Z_Voltage = 0.0 #Voltage being sent to Z of attocubes. Synchronized with the Scan module Atto Z voltage
         self.Temperature = 293    #in kelvin
 
+
+        
+        #intial withdraw distance
         self.withdrawDistance = 2e-6
 
         #Height at which the previous approach made contact
@@ -226,14 +232,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         '''
         Below is the initialization of all the thresholds for surface detection
         '''
-        #Initialize values
-        self.freqThreshold = 0.4
+        #Initialize values based off of the numbers put in the lineEdit in the ui file
         self.setFreqThresh()
-        
-        self.feedbackThresh = 0.1
         self.setFeedbackThresh()
-        
-        self.feedbackACThresh = 0.1
         self.setFeedbackACThresh()
 
         self.lockInterface()
@@ -289,10 +290,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Get Zurich voltage output
         zurich_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
         
-        if not self.voltage1to10:
+        if not self.voltageMultiplied:
             dac_voltage = total_voltage - zurich_voltage
         else:
-            dac_voltage = total_voltage - zurich_voltage/10
+            dac_voltage = total_voltage - zurich_voltage*self.voltageMultiplier
             
         #print "Intialization determined dac voltage: ", dac_voltage
         
@@ -438,7 +439,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.feedbackACSlider.logValueChanged.connect(self.updateFeedbackACThresh)
 
     def set_p(self):
-        val = readNum(str(self.lineEdit_P.text()))
+        val = readNum(str(self.lineEdit_P.text()), self)
         if isinstance(val,float):
             self.PIDApproachSettings['p'] = val
             self.setPIDParameters()
@@ -447,7 +448,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def set_i(self):
         #note that i can never be set to 0, otherwise the hidden integrator value jumps back to 0
         #which can lead to dangerous voltage spikes to the attocube. 
-        val = readNum(str(self.lineEdit_I.text()))
+        val = readNum(str(self.lineEdit_I.text()), self)
         if isinstance(val,float):
             if np.abs(val)> 1e-30:
                 self.PIDApproachSettings['i'] = val
@@ -455,14 +456,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_I.setText(formatNum(self.PIDApproachSettings['i']))
         
     def set_d(self):
-        val = readNum(str(self.lineEdit_D.text()))
+        val = readNum(str(self.lineEdit_D.text()), self)
         if isinstance(val,float):
             self.PIDApproachSettings['d'] = val
             self.setPIDParameters()
         self.lineEdit_D.setText(formatNum(self.PIDApproachSettings['d']))
         
     def set_pid_const_height(self):
-        val = readNum(str(self.lineEdit_PID_Const_Height.text()))
+        val = readNum(str(self.lineEdit_PID_Const_Height.text()), self)
         if isinstance(val,float):
             if val < 0:
                 val = 0
@@ -472,19 +473,19 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_PID_Const_Height.setText(formatNum(self.PIDApproachSettings['height']))
         
     def set_pid_step_size(self):
-        val = readNum(str(self.lineEdit_PID_Step_Size.text()))
+        val = readNum(str(self.lineEdit_PID_Step_Size.text()), self)
         if isinstance(val,float):
             self.PIDApproachSettings['step_size'] = val
         self.lineEdit_PID_Step_Size.setText(formatNum(self.PIDApproachSettings['step_size']))
         
     def set_pid_step_speed(self):
-        val = readNum(str(self.lineEdit_PID_Step_Speed.text()))
+        val = readNum(str(self.lineEdit_PID_Step_Speed.text()), self)
         if isinstance(val,float):
             self.PIDApproachSettings['step_speed'] = val
         self.lineEdit_PID_Step_Speed.setText(formatNum(self.PIDApproachSettings['step_speed']))
         
     def set_step_const_height(self):
-        val = readNum(str(self.lineEdit_Step_Const_Height.text()))
+        val = readNum(str(self.lineEdit_Step_Const_Height.text()), self)
         if isinstance(val,float):
             if val < 0:
                 val = 0
@@ -494,25 +495,25 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_Step_Const_Height.setText(formatNum(self.StepApproachSettings['height']))
         
     def set_step_step_size(self):
-        val = readNum(str(self.lineEdit_Step_Step_Size.text()))
+        val = readNum(str(self.lineEdit_Step_Step_Size.text()), self)
         if isinstance(val,float):
             self.StepApproachSettings['step_size'] = val
         self.lineEdit_Step_Step_Size.setText(formatNum(self.StepApproachSettings['step_size']))
         
     def set_step_step_speed(self):
-        val = readNum(str(self.lineEdit_Step_Step_Speed.text()))
+        val = readNum(str(self.lineEdit_Step_Step_Speed.text()), self)
         if isinstance(val,float):
             self.StepApproachSettings['step_speed'] = val
         self.lineEdit_Step_Step_Speed.setText(formatNum(self.StepApproachSettings['step_speed']))
         
     def set_man_step_size(self):
-        val = readNum(str(self.lineEdit_Man_Step_Size.text()))
+        val = readNum(str(self.lineEdit_Man_Step_Size.text()), self)
         if isinstance(val,float):
             self.ManualApproachSettings['step_size'] = val
         self.lineEdit_Man_Step_Size.setText(formatNum(self.ManualApproachSettings['step_size']))
         
     def set_man_step_speed(self):
-        val = readNum(str(self.lineEdit_Man_Step_Speed.text()))
+        val = readNum(str(self.lineEdit_Man_Step_Speed.text()), self)
         if isinstance(val,float):
             self.ManualApproachSettings['step_speed'] = val
         self.lineEdit_Man_Step_Speed.setText(formatNum(self.ManualApproachSettings['step_speed']))
@@ -558,7 +559,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
     @inlineCallbacks
     def setFreqThreshholdSign(self, c = None):
-        if self.measurementSettings['pll_centerfreq'] is not None:
+        if self.measurementSettings['pll_centerfreq'] is not None and not self.withdrawing:
             if self.radioButton_plus.isChecked():
                 yield self.hf.set_pid_setpoint(self.PID_Index, self.measurementSettings['pll_centerfreq'] + self.freqThreshold)
             else:
@@ -566,7 +567,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
     def setFreqThresh(self):
         new_freqThresh = str(self.lineEdit_freqSet.text())
-        val = readNum(new_freqThresh)
+        val = readNum(new_freqThresh, self, False)
         if isinstance(val,float):
             if val < 0.008:
                 val = 0.008
@@ -602,7 +603,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
     def setFeedbackThresh(self):
         new_feedbackThresh = str(self.lineEdit_feedbackSet.text())
-        val = readNum(new_feedbackThresh)
+        val = readNum(new_feedbackThresh, self, False)
         if isinstance(val,float):
             if val < 0.0008:
                 val = 0.0008
@@ -638,7 +639,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
     def setFeedbackACThresh(self):
         new_feedbackACThresh = str(self.lineEdit_feedbackACSet.text())
-        val = readNum(new_feedbackACThresh)
+        val = readNum(new_feedbackACThresh, self, False)
         if isinstance(val,float):
             if val < 0.0008:
                 val = 0.0008
@@ -1011,14 +1012,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 yield self.setDAC_Voltage(self.Atto_Z_Voltage,0,speed)
                 
             #Toggle the sum board to be 1 to 1 
-            if self.voltage1to10 == True:
+            if self.voltageMultiplied == True:
                 #Withdraw completely before switching to 1 to 1
                 #Find desired retract speed in volts per second
-                retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters / self.voltageMultiplier
                 yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
-                
+                #TODO1
                 yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
-                self.voltage1to10 = False
+                self.voltageMultiplied = False
                 #TODO check that voltage is actually 1 to 1 if recently switched
                 
             self.label_pidApproachStatus.setText('Approaching with Zurich')
@@ -1086,7 +1087,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
             #If the voltage is not yet in the divided by 10 mode, then we need to
             #do the initial approach
-            if not self.voltage1to10:
+            if not self.voltageMultiplied:
                 #Run feedback approach sequence with coarse steps (16 bit limited)
                 #until it hits the surface 
                 yield self.startPIDApproachSequence()
@@ -1112,7 +1113,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 
                 #Toggle the sum board to be 10 to 1 
                 yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 2.5)
-                self.voltage1to10 = True
+                self.voltageMultiplied = True
                 
                 #Initializes all the PID settings. This is mostly to update the PID parameters
                 # self.setPIDParameters() might be sufficent instead of all PID settings
@@ -1180,7 +1181,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                             #Set mode to 1 to 1 again, so that if Approach for Feedback is reinitiated, it does a 
                             #surface approach first
                             yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
-                            self.voltage1to10 = False
+                            self.voltageMultiplied = False
                             
                             self.approaching = False
                             self.updateApproachStatus.emit(False)
@@ -1346,7 +1347,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #are in meters. Also takes into account wether or not the system is currently in the voltage
         #divided mode
         try:
-            if not self.voltage1to10:
+            if not self.voltageMultiplied:
                 yield self.hf.set_pid_p(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['p'])
                 yield self.hf.set_pid_i(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['i'])
                 yield self.hf.set_pid_d(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['d'])
@@ -1455,6 +1456,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             end = self.z_volts_max
         speed = self.ManualApproachSettings['step_speed']*self.z_volts_to_meters
         yield self.setDAC_Voltage(start, end, speed)
+        if str(self.label_pidApproachStatus.text()) == 'Constant Height':
+            self.updateConstantHeightStatus.emit(True, self.Atto_Z_Voltage)
         
     @inlineCallbacks
     def RetractManualDAC(self, c = None):
@@ -1464,6 +1467,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             end = 0
         speed = self.ManualApproachSettings['step_speed']*self.z_volts_to_meters
         yield self.setDAC_Voltage(start, end, speed)
+        if str(self.label_pidApproachStatus.text()) == 'Constant Height':
+            self.updateConstantHeightStatus.emit(True, self.Atto_Z_Voltage)
             
     def updateDACLabel(self):
         self.label_manApproachStatus.setText('DAC is extended for ' + formatNum(self.Atto_Z_Voltage / self.z_volts_to_meters) + 'm')
@@ -1489,6 +1494,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def withdrawSpecifiedDistance(self, c = None):
         try:          
+            self.lockWithdrawSensitiveInputs()
             #Abort all approach efforts
             yield self.abortApproachSequence()
             #Signal that no longer in constant height or in feedback
@@ -1515,7 +1521,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             if z_voltage >= 0.001: 
                 #Find desired end voltage
                 end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters     
-                if self.voltage1to10:
+                if self.voltageMultiplied:
                     end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters * 10
                     
                 print 'Zurich start voltage: '
@@ -1526,7 +1532,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 if end_voltage < 0:
                     end_voltage = 0
                     #Remaining withdraw distance
-                    if self.voltage1to10:
+                    if self.voltageMultiplied:
                         withdrawDistance = withdrawDistance - z_voltage / (self.z_volts_to_meters*10)
                     else:
                         withdrawDistance = withdrawDistance - z_voltage / self.z_volts_to_meters
@@ -1541,7 +1547,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
                 
                 #If output voltage is being divided by 10, multiply by 10 to compensate
-                if self.voltage1to10:
+                if self.voltageMultiplied:
                     retract_speed = 10*retract_speed
                     
                 yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
@@ -1575,6 +1581,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.label_stepApproachStatus.setText('Idle')
             self.label_pidApproachStatus.setText('Idle')
             
+            self.unlockWithdrawSensitiveInputs()
         except Exception as inst:
             print inst
         
@@ -1585,8 +1592,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
             #This retracts the attocubes voltage contribution from the HF2LI
             retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
-            if self.voltage1to10:
-                retract_speed = retract_speed*10
+            if self.voltageMultiplied:
+                retract_speed = retract_speed/self.voltageMultiplier
             yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
             
             #This retracts the attocubes voltage contribution from the DAC
@@ -1606,7 +1613,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             print "Return home error" + str(inst)
     
     def setWithdrawDistance(self):
-        val = readNum(str(self.lineEdit_Withdraw.text()))
+        val = readNum(str(self.lineEdit_Withdraw.text()), self)
         if isinstance(val,float):
             if val < 0:
                 val = 0
@@ -1615,6 +1622,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.withdrawDistance = val
         self.lineEdit_Withdraw.setText(formatNum(self.withdrawDistance))
 
+    def setZMultiplier(self):
+        if self.comboBox_ZMultiplier.currentIndex() == 0:
+            self.ZMultiplier = 1
+        elif self.comboBox_ZMultiplier.currentIndex() == 1:
+            self.ZMultiplier = 0.4
+        elif self.comboBox_ZMultiplier.currentIndex() == 2:
+            self.ZMultiplier = 0.1
+        
     @inlineCallbacks
     def monitorZVoltage(self):
         #Sleep 2 seconds before starting monitoring to allow everything else to start up properly
@@ -1683,6 +1698,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_I.setDisabled(True)
         self.lineEdit_D.setDisabled(True)
 
+        self.comboBox_ZMultiplier.setEnabled(False)
+        
         self.lockFreq()
         self.lockFdbkDC()
         self.lockFdbkAC()
@@ -1700,6 +1717,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def lockFdbkAC(self):
         self.feedbackACSlider.setEnabled(False)
         self.lineEdit_feedbackACSet.setDisabled(True)
+        
+    def lockWithdrawSensitiveInputs(self):
+        self.lockFreq()
+        self.lockFdbkDC()
+        self.lockFdbkAC()
+        self.lineEdit_P.setDisabled(True)
+        self.lineEdit_I.setDisabled(True)
+        self.lineEdit_D.setDisabled(True)
         
     def unlockInterface(self):
         self.push_Home.setEnabled(True)
@@ -1739,6 +1764,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_I.setDisabled(False)
         self.lineEdit_D.setDisabled(False)
         
+        self.comboBox_ZMultiplier.setEnabled(True)
+        
         self.unlockFdbkAC()
         self.unlockFdbkDC()
         self.unlockFreq()
@@ -1756,7 +1783,18 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def unlockFdbkAC(self):
         self.feedbackACSlider.setEnabled(True)
         self.lineEdit_feedbackACSet.setDisabled(False)
-
+        
+    def unlockWithdrawSensitiveInputs(self):
+        if self.measurementSettings['meas_pll']:
+            self.unlockFreq()
+        if self.measurementSettings['meas_fdbk_dc']:
+            self.unlockFdbkDC()
+        if self.measurementSettings['meas_fdbk_ac']:
+            self.unlockFdbkAC()
+        self.lineEdit_P.setDisabled(False)
+        self.lineEdit_I.setDisabled(False)
+        self.lineEdit_D.setDisabled(False)
+        
     def updateScanningStatus(self, status):
         print "Scanning status in approach window updated to: "
         print status
@@ -1831,7 +1869,7 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.generalApproachSettings['blink_output'] = self.comboBox_Blink.currentIndex() + 1
         
     def setStep_Retract_Speed(self):
-        val = readNum(str(self.lineEdit_Step_Retract_Speed.text()))
+        val = readNum(str(self.lineEdit_Step_Retract_Speed.text()), self)
         if isinstance(val,float):
             self.generalApproachSettings['step_retract_speed'] = val
             self.generalApproachSettings['step_retract_time'] = self.generalApproachSettings['total_retract_dist'] / self.generalApproachSettings['step_retract_speed']
@@ -1839,7 +1877,7 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_Step_Retract_Time.setText(formatNum(self.generalApproachSettings['step_retract_time']))
         
     def setStep_Retract_Time(self):
-        val = readNum(str(self.lineEdit_Step_Retract_Time.text()))
+        val = readNum(str(self.lineEdit_Step_Retract_Time.text()), self, False)
         if isinstance(val,float):
             self.generalApproachSettings['step_retract_time'] = val
             self.generalApproachSettings['step_retract_speed'] = self.generalApproachSettings['total_retract_dist'] / self.generalApproachSettings['step_retract_time']
@@ -1847,7 +1885,7 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_Step_Retract_Time.setText(formatNum(self.generalApproachSettings['step_retract_time']))
 
     def setPID_Retract_Speed(self):
-        val = readNum(str(self.lineEdit_PID_Retract_Speed.text()))
+        val = readNum(str(self.lineEdit_PID_Retract_Speed.text()), self)
         if isinstance(val,float):
             self.generalApproachSettings['pid_retract_speed'] = val
             self.generalApproachSettings['pid_retract_time'] = self.generalApproachSettings['total_retract_dist'] / self.generalApproachSettings['pid_retract_speed']
@@ -1855,7 +1893,7 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_PID_Retract_Time.setText(formatNum(self.generalApproachSettings['pid_retract_time']))
         
     def setPID_Retract_Time(self):
-        val = readNum(str(self.lineEdit_PID_Retract_Time.text()))
+        val = readNum(str(self.lineEdit_PID_Retract_Time.text()), self, False)
         if isinstance(val,float):
             self.generalApproachSettings['pid_retract_time'] = val
             self.generalApproachSettings['pid_retract_speed'] = self.generalApproachSettings['total_retract_dist'] / self.generalApproachSettings['pid_retract_time']
@@ -1863,19 +1901,19 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_PID_Retract_Time.setText(formatNum(self.generalApproachSettings['pid_retract_time']))
     
     def setJPE_Steps(self):
-        val = readNum(str(self.lineEdit_JPE_Steps.text()))
+        val = readNum(str(self.lineEdit_JPE_Steps.text()), self, False)
         if isinstance(val,float):
             self.generalApproachSettings['jpe_steps'] = val
         self.lineEdit_JPE_Steps.setText(formatNum(self.generalApproachSettings['jpe_steps']))
         
     def setJPE_Size(self):
-        val = readNum(str(self.lineEdit_JPE_Size.text()))
+        val = readNum(str(self.lineEdit_JPE_Size.text()), self, False)
         if isinstance(val,float):
             self.generalApproachSettings['jpe_size'] = val
         self.lineEdit_JPE_Size.setText(formatNum(self.generalApproachSettings['jpe_size']))
         
     def setJPE_Freq(self):
-        val = readNum(str(self.lineEdit_JPE_Freq.text()))
+        val = readNum(str(self.lineEdit_JPE_Freq.text()), self, False)
         if isinstance(val,float):
             self.generalApproachSettings['jpe_freq'] = val
         self.lineEdit_JPE_Freq.setText(formatNum(self.generalApproachSettings['jpe_freq'] ))
@@ -2021,14 +2059,14 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         
     def setPLL_TargetBW(self):
         new_target = str(self.lineEdit_TargetBW.text())
-        val = readNum(new_target)
+        val = readNum(new_target, self, False)
         if isinstance(val,float):
             self.measSettings['pll_targetBW'] = val
         self.lineEdit_TargetBW.setText(formatNum(self.measSettings['pll_targetBW']))
       
     def setPLL_Range(self):
         new_range = str(self.lineEdit_PLL_Range.text())
-        val = readNum(new_range)
+        val = readNum(new_range, self, False)
         if isinstance(val,float):
             self.measSettings['pll_range'] = val
         self.lineEdit_PLL_Range.setText(formatNum(self.measSettings['pll_range']))
@@ -2036,19 +2074,19 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def setPLL_TC(self, c = None):
         new_TC = str(self.lineEdit_PLL_TC.text())
-        val = readNum(new_TC)
+        val = readNum(new_TC, self)
         if isinstance(val,float):
             self.measSettings['pll_tc'] = val
             self.measSettings['pll_filterBW'] = calculate_FilterBW(self.measSettings['pll_filterorder'], self.measSettings['pll_tc'])
-            yield self.hf.set_advisor_tc(self.PLL_TC)
+            yield self.hf.set_advisor_tc(self.measSettings['pll_tc'])
             yield self.updateSimulation()
         self.lineEdit_PLL_TC.setText(formatNum(self.measSettings['pll_tc']))
         self.lineEdit_PLL_FilterBW.setText(formatNum(self.measSettings['pll_filterBW']))
-    
+
     @inlineCallbacks
     def setPLL_FilterBW(self, c = None):
         new_filterBW = str(self.lineEdit_PLL_FilterBW.text())
-        val = readNum(new_filterBW)
+        val = readNum(new_filterBW, self, False)
         if isinstance(val,float):
             self.measSettings['pll_filterBW']  = val
             self.measSettings['pll_tc']  = calculate_FilterBW(self.measSettings['pll_filterorder'], self.measSettings['pll_filterBW'])
@@ -2060,7 +2098,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def setPLL_P(self, c = None):
         new_P = str(self.lineEdit_PLL_P.text())
-        val = readNum(new_P)
+        val = readNum(new_P, self, False)
         if isinstance(val,float):
             self.measSettings['pll_p'] = val
             yield self.hf.set_advisor_p(self.measSettings['pll_p'])
@@ -2070,7 +2108,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def setPLL_I(self, c = None):
         new_I = str(self.lineEdit_PLL_I.text())
-        val = readNum(new_I)
+        val = readNum(new_I, self, False)
         if isinstance(val,float):
             self.measSettings['pll_i'] = val
             yield self.hf.set_advisor_i(self.measSettings['pll_i'])
@@ -2080,7 +2118,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def setPLL_D(self, c = None):
         new_D = str(self.lineEdit_PLL_D.text())
-        val = readNum(new_D)
+        val = readNum(new_D, self, False)
         if isinstance(val,float):
             self.measSettings['pll_d'] = val
             yield self.hf.set_advisor_d(self.measSettings['pll_d'])
@@ -2094,7 +2132,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.measSettings['pll_output'] = self.comboBox_PLL_Output.currentIndex() + 1
         
     def setPLL_Output_Amplitude(self):
-        val = readNum(str(self.lineEdit_PLL_Amplitude.text()))
+        val = readNum(str(self.lineEdit_PLL_Amplitude.text()), self)
         if isinstance(val,float):
             self.measSettings['pll_output_amp'] = val
         self.lineEdit_PLL_Amplitude.setText(formatNum(self.measSettings['pll_output_amp']))
@@ -2203,7 +2241,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.measSettings['fdbk_dc_input'] = self.comboBox_DC_Input.currentIndex() + 1
     
     def setFdbk_DC_Setpoint(self):
-        val = readNum(str(self.lineEdit_DC_Setpoint.text()))
+        val = readNum(str(self.lineEdit_DC_Setpoint.text()), self)
         if isinstance(val,float):
             self.measSettings['fdbk_dc_setpoint'] = val
         self.lineEdit_DC_Setpoint.setText(formatNum(self.measSettings['fdbk_dc_setpoint']))
@@ -2212,7 +2250,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.measSettings['fdbk_ac_input'] = self.comboBox_AC_Input.currentIndex() + 1
     
     def setFdbk_AC_Setpoint(self):
-        val = readNum(str(self.lineEdit_AC_Setpoint.text()))
+        val = readNum(str(self.lineEdit_AC_Setpoint.text()), self)
         if isinstance(val,float):
             self.measSettings['fdbk_ac_setpoint'] = val
         self.lineEdit_AC_Setpoint.setText(formatNum(self.measSettings['fdbk_ac_setpoint']))

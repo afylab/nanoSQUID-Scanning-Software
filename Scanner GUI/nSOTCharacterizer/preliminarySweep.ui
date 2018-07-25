@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Preliminary Sweep</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../Resources/nSOTScannerResources.qrc">
+    <normaloff>:/nSOTScanner/Pictures/jj_schema.svg</normaloff>:/nSOTScanner/Pictures/jj_schema.svg</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">#prelim{
 	background-color: rgb(0, 0, 0);}</string>
@@ -460,7 +464,7 @@ border-radius: 5px
     <double>1000.000000000000000</double>
    </property>
    <property name="value">
-    <double>3.743000000000000</double>
+    <double>2.700000000000000</double>
    </property>
   </widget>
   <widget class="QDoubleSpinBox" name="shuntRes">
@@ -510,7 +514,7 @@ border-radius: 5px
     <double>1000.000000000000000</double>
    </property>
    <property name="value">
-    <double>1.000000000000000</double>
+    <double>2.000000000000000</double>
    </property>
   </widget>
   <widget class="QDoubleSpinBox" name="ssaaWinding">
@@ -535,7 +539,7 @@ border-radius: 5px
     <double>1000.000000000000000</double>
    </property>
    <property name="value">
-    <double>10.619999999999999</double>
+    <double>14.000000000000000</double>
    </property>
   </widget>
   <widget class="QPushButton" name="closeWin">
@@ -1012,6 +1016,8 @@ border-radius: 5px
    </property>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="../Resources/nSOTScannerResources.qrc"/>
+ </resources>
  <connections/>
 </ui>

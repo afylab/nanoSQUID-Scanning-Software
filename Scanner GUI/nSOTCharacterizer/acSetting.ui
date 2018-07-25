@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../Resources/nSOTScannerResources.qrc">
+    <normaloff>:/nSOTScanner/Pictures/jj_schema.svg</normaloff>:/nSOTScanner/Pictures/jj_schema.svg</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">#Dialog{
 	background-color: rgb(6, 6, 6);}</string>
@@ -190,6 +194,8 @@ border-radius: 5px
    </property>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="../Resources/nSOTScannerResources.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -14,7 +14,7 @@ ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\ScanControlWindow.ui
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 
 sys.path.append(sys.path[0]+'\Resources')
-from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData
+from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData, ScanImageView
 
 '''
 TODO:
@@ -73,12 +73,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lines = 256
         self.PixelsAspectRatio = 1.0
         
-        #Measurement time information
-        self.FrameTime = 32.76
+        #Measurement information
         self.linearSpeed = 78.13e-6
         self.delayTime = 1e-2
         self.lineTime = 64e-3
-
+        
         #Initial attocube position
         self.Atto_X_Voltage = 0.0
         self.Atto_Y_Voltage = 0.0
@@ -136,18 +135,24 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 'y out'               : 3,          # 1 indexed DAC output that goes to Y
                 'blink out'           : 2,         # 1 indexed DC Box output that goes to blinking
         }
+        
+        #Random number that is not real data. This lets us know when plotting which values are real data, and which can just be ignored.
+        #Should be a float with magnitude less than 1, as otherwise seems to cause problems with imageView
+        #A negative value is chosen because, more often than not, the data will be positive. This minimizes the risk of removing a real 
+        #data point from the plot. 
+        self.randomFill = -0.987654321
                 
         #Set up rest of UI (must be done after initializing default values)
         self.setupAdditionalUi()
         self.setupScanningArea()
         self.moveDefault()
-        
+
         #Connect the buttons to the appropriate methods
         self.push_FrameLock.clicked.connect(self.toggleFrameLock)
         self.push_SpeedLock.clicked.connect(self.toggleSpeedLock)
         self.push_DataLock.clicked.connect(self.toggleDataLock)
-        self.push_autoRange.clicked.connect(self.autoRange)
-        self.push_autoLevel.clicked.connect(self.autoLevel)
+        self.push_autoRange.clicked.connect(self.autoRangeImageViews)
+        self.push_autoLevel.clicked.connect(self.autoLevelImageViews)
         self.push_aspectLocked.clicked.connect(self.toggleAspect)
         self.push_scanCoordinates.clicked.connect(self.toggleCoordinates)
         self.push_apply2DFit.clicked.connect(self.apply2DFit)
@@ -157,6 +162,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_Zero.clicked.connect(self.zeroPosition)
         self.push_Set.clicked.connect(self.setPosition)
         self.push_toggleSmooth.clicked.connect(self.toggleSmoothScan)
+        self.push_ResetScan.clicked.connect(self.resetScan)
         
         #Connect lineEdits
         self.lineEdit_Xc.editingFinished.connect(self.updateXc)
@@ -295,7 +301,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.view.setLabel('right',text='Y position',units = 'm')
         self.view.setLabel('top',text='X position',units = 'm')
         self.view.setLabel('bottom',text='X position',units = 'm')
-        self.Plot2D = pg.ImageView(parent = self.centralwidget, view = self.view)
+        self.Plot2D = ScanImageView(parent = self.centralwidget, view = self.view, randFill = self.randomFill)
         self.view.invertY(False)
         self.view.setAspectLocked(self.aspectLocked)
         self.Plot2D.ui.roiBtn.hide()
@@ -311,7 +317,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.view3.setLabel('right',text='Y position',units = 'm')
         self.view3.setLabel('top',text='X position',units = 'm')
         self.view3.setLabel('bottom',text='X position',units = 'm')
-        self.Plot2D_Retrace = pg.ImageView(parent = self.centralwidget, view = self.view3)
+        self.Plot2D_Retrace = ScanImageView(parent = self.centralwidget, view = self.view3, randFill = self.randomFill)
         self.view3.invertY(False)
         self.view3.setAspectLocked(self.aspectLocked)
         self.Plot2D_Retrace.ui.roiBtn.hide()
@@ -328,7 +334,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.view2.setLabel('top',text='X position',units = 'm')
         self.view2.setLabel('bottom',text='X position',units = 'm')
         self.view2.enableAutoRange(self.view2.getViewBox().XYAxes, enable = False)
-        self.MiniPlot2D = pg.ImageView(parent = self.centralwidget, view = self.view2)
+        self.MiniPlot2D = ScanImageView(parent = self.centralwidget, view = self.view2, randFill = self.randomFill)
         self.view2.invertY(False)
         self.MiniPlot2D.ui.roiBtn.hide()
         self.MiniPlot2D.ui.menuBtn.hide()
@@ -349,27 +355,34 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         #Determine plot scales
         self.xscale, self.yscale = self.currW / self.lines, self.currH / self.pixels
-        
-        #Create default dataset for initial plots. lines x pixels x 2 (Z info and B info)
-        pxsize = (2, self.pixels, self.lines)
+
+        #Create default dataset for initial plots. lines x pixels x 3 (Z info and B info and AC info)
+        pxsize = (3, self.pixels, self.lines)
         #data and data_retrace contain only the raw data
-        self.data = np.zeros(pxsize)
-        self.data_retrace = np.zeros(pxsize)
+        self.data = np.full(pxsize, self.randomFill)
+        self.data_retrace = np.full(pxsize, self.randomFill)
         #plotData and plotData_retrace contain processed data for graphing
-        self.plotData = np.zeros(pxsize)[0]
-        self.plotData_retrace = np.zeros(pxsize)[0]
+        self.plotData = np.full(pxsize, self.randomFill)[0]
+        self.plotData_retrace = np.full(pxsize, self.randomFill)[0]
+
+        #By default, automatically range and level the histogram when data is being updated
+        self.autoLevels = True
+        self.autoHistogramRange = True
+        #If you manually change the range of the histograms, then stop the histogram from auto updating
+        #Maybe eventially separate range from autolevels. For now changing range manually stops both
+        #and changing levels manually stops neither. 
+        self.Plot2D.ui.histogram.vb.sigRangeChangedManually.connect(self.disableAutoHistogram)
+        self.Plot2D_Retrace.ui.histogram.vb.sigRangeChangedManually.connect(self.disableAutoHistogram)
         
-        #Load default empty image into all three plots
-        self.Plot2D.setImage(self.plotData, autoRange = False, autoLevels = False, pos=[self.curr_x, self.curr_y],scale=[self.xscale, self.yscale])
-        self.Plot2D.show()
-        self.Plot2D_Retrace.setImage(self.plotData_retrace, autoRange = False, autoLevels = False, pos=[self.curr_x, self.curr_y],scale=[self.xscale, self.yscale])
-        self.Plot2D_Retrace.show()
-        self.MiniPlot2D.setImage(self.plotData, autoRange = False, autoLevels = False, pos=[self.curr_x, self.curr_y],scale=[self.xscale, self.yscale])
-        self.MiniPlot2D.show()
-        
-        #Connect retrace plot histogram to the other two plots
+        #Connect plot histogram to the other two plots so that changing one changes the other
+        self.sigHistogramRangeChangedEmitted = False
         self.Plot2D_Retrace.ui.histogram.sigLevelsChanged.connect(self.updateHistogramLevels)
-        self.Plot2D_Retrace.ui.histogram.sigLookupTableChanged.connect(self.updateHistogramLookup)
+        self.Plot2D_Retrace.ui.histogram.gradient.sigGradientChangeFinished.connect(self.updateTraceHistogramLookup)
+        self.Plot2D_Retrace.ui.histogram.vb.sigRangeChanged.connect(self.retraceHistogramRangeChanged)
+        
+        self.Plot2D.ui.histogram.sigLevelsChanged.connect(self.updateHistogramLevels)
+        self.Plot2D.ui.histogram.gradient.sigGradientChangeFinished.connect(self.updateRetraceHistogramLookup)
+        self.Plot2D.ui.histogram.vb.sigRangeChanged.connect(self.traceHistogramRangeChanged)
         
         #Connect the trace and retrace plots view ranges
         self.sigRangeChangedEmitted = False
@@ -390,7 +403,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.horizontalLayout_3.addWidget(self.traceLinePlot)
         self.horizontalLayout_3.addItem(horizontalSpacer)
 
-        
         self.retraceLinePlot = pg.PlotWidget(parent = self)
         self.retraceLinePlot.setGeometry(910,745,630,200)
         self.retraceLinePlot.setLabel('left', 'Z Voltage', units = 'V')
@@ -431,11 +443,61 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         mn, mx = hist.getLevels()
         self.MiniPlot2D.ui.histogram.setLevels(mn, mx)
         self.Plot2D.ui.histogram.setLevels(mn, mx)
+        self.Plot2D_Retrace.ui.histogram.setLevels(mn, mx)
+        #self.autoLevels = False
         
-    def updateHistogramLookup(self,hist):
-        self.MiniPlot2D.ui.histogram.imageItem().setLookupTable(hist.getLookupTable)
-        self.Plot2D.ui.histogram.imageItem().setLookupTable(hist.getLookupTable)
+    def gradientsEqual(self, grad1, grad2):
+        if grad1['mode'] != grad2['mode']:
+            return False
+            
+        if self.sortTicks(grad1['ticks']) == self.sortTicks(grad2['ticks']):
+            return True
+        else:
+            return False
 
+    def sortTicks(self,ticklist):
+        length = len(ticklist)
+        for index in range(0,length):
+            currentvalue = ticklist[index]
+            position = index
+            while position>0 and ticklist[position-1][0]>currentvalue[0]:
+                ticklist[position] = ticklist[position-1]
+                position = position-1
+            ticklist[position] = currentvalue
+        return ticklist
+        
+    def updateTraceHistogramLookup(self,grad):
+        new_gradient = grad.saveState()
+        old_gradient = self.Plot2D.ui.histogram.gradient.saveState()
+        if not self.gradientsEqual(new_gradient, old_gradient):
+            self.Plot2D.ui.histogram.gradient.restoreState(new_gradient)
+
+    def updateRetraceHistogramLookup(self,grad):
+        new_gradient = grad.saveState()
+        old_gradient = self.Plot2D_Retrace.ui.histogram.gradient.saveState()
+        if not self.gradientsEqual(new_gradient,old_gradient):
+            self.Plot2D_Retrace.ui.histogram.gradient.restoreState(new_gradient)
+
+    def traceHistogramRangeChanged(self, input):
+        #This format was done because setRange emits a range as changed signal, so you need to toggle this boolean to cut
+        #a possible infinite recursion
+        if not self.sigHistogramRangeChangedEmitted:
+            range = input.viewRange()
+            self.sigHistogramRangeChangedEmitted= True
+            self.Plot2D_Retrace.ui.histogram.vb.setRange(xRange = range[0], yRange = range[1], padding =  0, update = False)
+        else:
+            self.sigHistogramRangeChangedEmitted= False
+        #self.autoHistogramRange = False
+        
+    def retraceHistogramRangeChanged(self, input):
+        if not self.sigHistogramRangeChangedEmitted:
+            range = input.viewRange()
+            self.sigHistogramRangeChangedEmitted= True
+            self.Plot2D.ui.histogram.vb.setRange(xRange = range[0], yRange = range[1], padding =  0, update = False)
+        else:
+            self.sigHistogramRangeChangedEmitted= False
+        #self.autoHistogramRange = False
+    
     def set_voltage_calibration(self, calibration):
         self.x_volts_to_meters = float(calibration[1])
         self.y_volts_to_meters = float(calibration[2])
@@ -453,6 +515,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_ZConversion.setText(formatNum(self.z_volts_to_meters))
         
         self.updatePosition()
+        self.updateFrameTime()
 
 #----------------------------------------------------------------------------------------------#         
     """ The following section connects actions related to buttons on the Scan Control window."""
@@ -513,15 +576,34 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.lineTime = self.W / self.linearSpeed
             self.scanSmooth = True
         self.lineEdit_LineTime.setText(formatNum(self.lineTime))
-        self.FrameTime = 2*self.lines * self.lineTime
-        self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
+        self.updateFrameTime()
             
-    def autoRange(self):
+    def resetScan(self):
+        #Set scan values to those of the previous scan
+        self.angle = self.currAngle
+        self.Xc = self.currXc
+        self.Yc = self.currYc
+        self.W = self.currW
+        self.H = self.currH
+        self.x = self.curr_x
+        self.y = self.curr_y
+            
+        self.updateLineEdits()
+        self.moveROIs()
+            
+    def autoRangeImageViews(self):
         self.Plot2D.autoRange()
         self.Plot2D_Retrace.autoRange()
         
-    def autoLevel(self):    
+    def autoLevelImageViews(self):
         self.Plot2D_Retrace.autoLevels()
+        self.Plot2D_Retrace.ui.histogram.vb.autoRange()
+        self.autoLevels = True
+        self.autoHistogramRange = True
+    
+    def disableAutoHistogram(self):
+        self.autoLevels = False
+        self.autoHistogramRange = False
     
     def toggleAspect(self):
         if self.aspectLocked:
@@ -562,6 +644,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def setBlinkMode(self):
         self.blinkMode = self.comboBox_blinkMode.currentIndex()
+        self.updateFrameTime()
         
     def refreshPlotData(self):
         if self.dataProcessing == 'Raw':
@@ -723,6 +806,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.view3.removeItem(self.ROI3)
             
     def traceRangeChanged(self, input):
+        #Presumably this was done because setRange emits a range as changed signal, so you need to toggle this boolean to cut
+        #a possible infinite recursion
         if not self.sigRangeChangedEmitted:
             range = input.viewRange()
             self.sigRangeChangedEmitted = True
@@ -813,7 +898,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateXc(self):
         new_Xc = str(self.lineEdit_Xc.text())
-        val = readNum(new_Xc)
+        val = readNum(new_Xc, self)
         if isinstance(val,float):
             Xc = val
             x = Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
@@ -825,7 +910,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateYc(self):
         new_Yc = str(self.lineEdit_Yc.text())
-        val = readNum(new_Yc)
+        val = readNum(new_Yc, self)
         if isinstance(val,float):
             Yc = val
             y = Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
@@ -837,7 +922,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateAngle(self):
         new_Angle = str(self.lineEdit_Angle.text())
-        val = readNum(new_Angle)
+        val = readNum(new_Angle, self)
         if isinstance(val,float):
             angle = val
             x = self.Xc + self.H*np.sin(angle*np.pi/180)/2 - self.W*np.cos(angle*np.pi/180)/2
@@ -851,7 +936,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateH(self):
         new_H = str(self.lineEdit_H.text())
-        val = readNum(new_H)
+        val = readNum(new_H, self)
         if isinstance(val,float):
             H = val
             if self.FrameLocked:
@@ -876,7 +961,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateW(self):
         new_W = str(self.lineEdit_W.text())
-        val = readNum(new_W)
+        val = readNum(new_W, self)
         if isinstance(val,float):
             W = val
             if self.FrameLocked:
@@ -903,22 +988,18 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             if self.LinearSpeedLocked:
                 self.lineTime = self.W / self.linearSpeed
                 self.lineEdit_LineTime.setText(formatNum(self.lineTime))
-                self.FrameTime = 2*self.lines * self.lineTime
-                self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
             else: 
                 self.linearSpeed = self.W / self.lineTime
                 self.lineEdit_Linear.setText(formatNum(self.linearSpeed))
+        self.updateFrameTime()
         
     def updatePixels(self):
-        new_Pixels = str(self.lineEdit_Pixels.text())
-        val = readNum(new_Pixels)
-        if isinstance(val,float):
+        val = readNum(str(self.lineEdit_Pixels.text()), self, False)
+        if isinstance(val,float) and int(val) > 0:
             self.pixels = int(val)
             if self.DataLocked:
                 self.lines = int(val/self.PixelsAspectRatio)
                 self.lineEdit_Lines.setText(formatNum(self.lines))
-                self.FrameTime = 2*self.lines * self.lineTime
-                self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
             else:
                 self.PixelsAspectRatio = float(self.pixels)/float(self.lines)
             if not self.scanSmooth:
@@ -928,14 +1009,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 else:
                     self.delayTime = self.lineTime / self.pixels
                     self.lineEdit_Linear.setText(formatNum(self.delayTime))
-                self.FrameTime = 2*self.lines * self.lineTime
-                self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
+            self.updateFrameTime()
         self.lineEdit_Pixels.setText(formatNum(self.pixels))
         
     def updateLines(self):
         new_Lines = str(self.lineEdit_Lines.text())
-        val = readNum(new_Lines)
-        if isinstance(val,float):
+        val = readNum(new_Lines, self, False)
+        if isinstance(val,float) and int(val) > 0:
             self.lines = int(val)
             if self.DataLocked:
                 self.pixels = int(val*self.PixelsAspectRatio)
@@ -949,13 +1029,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                         self.lineEdit_Linear.setText(formatNum(self.delayTime))
             else:
                 self.PixelsAspectRatio = float(self.pixels)/float(self.lines)
-            self.FrameTime = 2*self.lines * self.lineTime
-            self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
+            self.updateFrameTime()
         self.lineEdit_Lines.setText(formatNum(self.lines))
         
     def updateLinearSpeed(self):
         new_LinearSpeed = str(self.lineEdit_Linear.text())
-        val = readNum(new_LinearSpeed)
+        val = readNum(new_LinearSpeed, self)
         if isinstance(val,float) and val > 0:
             if self.scanSmooth:
                 self.linearSpeed = val
@@ -964,17 +1043,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.delayTime = val
                 self.lineTime = self.pixels * self.delayTime
             self.lineEdit_LineTime.setText(formatNum(self.lineTime))
-            self.FrameTime = 2*self.lineTime * self.lines
-            self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
         if self.scanSmooth:
             self.lineEdit_Linear.setText(formatNum(self.linearSpeed))
         else:
             self.lineEdit_Linear.setText(formatNum(self.delayTime))
         self.updateScanParameters()
+        self.updateFrameTime()
 
     def updateLineTime(self):
         new_LineTime = str(self.lineEdit_LineTime.text())
-        val = readNum(new_LineTime)
+        val = readNum(new_LineTime, self)
         if isinstance(val,float):
             self.lineTime = val
             if self.scanSmooth:
@@ -983,22 +1061,21 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             else:
                 self.delayTime = self.lineTime / self.pixels
                 self.lineEdit_Linear.setText(formatNum(self.delayTime))
-            self.FrameTime = 2*self.lineTime * self.lines
-            self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
         self.lineEdit_LineTime.setText(formatNum(self.lineTime))
         self.updateScanParameters()
+        self.updateFrameTime()
 
     def updateFileName(self):
         self.fileName = str(self.lineEdit_FileName.text())
         
     def updateXTilt(self):
-        val = readNum(str(self.lineEdit_XTilt.text()))
+        val = readNum(str(self.lineEdit_XTilt.text()), self, False)
         if isinstance(val,float):
             self.x_tilt = val*np.pi / 180
         self.lineEdit_XTilt.setText(formatNum(self.x_tilt*180 / np.pi))
 
     def updateYTilt(self):
-        val = readNum(str(self.lineEdit_YTilt.text()))
+        val = readNum(str(self.lineEdit_YTilt.text()), self, False)
         if isinstance(val,float):
             self.y_tilt = val*np.pi / 180
         self.lineEdit_YTilt.setText(formatNum(self.y_tilt*180 / np.pi))
@@ -1036,7 +1113,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 border-radius: 5px;
                 }""")
                 self.push_Scan.setEnabled(False)
-
+        self.updateFrameTime()
+        
     def updateFeedbackStatus(self, status):
         if status:
             self.FeedbackReady = True
@@ -1076,7 +1154,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 
     def updateXset(self):
         new_Xset = str(self.lineEdit_Xset.text())
-        val = readNum(new_Xset)
+        val = readNum(new_Xset, self)
         if isinstance(val,float):
             Xset = val
             Vset = Xset * self.x_volts_to_meters + self.x_volts_max/2
@@ -1086,7 +1164,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateYset(self):
         new_Yset = str(self.lineEdit_Yset.text())
-        val = readNum(new_Yset)
+        val = readNum(new_Yset, self)
         if isinstance(val,float):
             Yset = val
             Vset = Yset * self.y_volts_to_meters + self.y_volts_max/2
@@ -1125,14 +1203,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def setInput1Conversion(self):
         text = str(self.lineEdit_Input1Conversion.text())
-        val = readNum(text)
+        val = readNum(text, self, False)
         if isinstance(val,float):
             self.inputs['Input 1 conversion'] = val
         self.lineEdit_Input1Conversion.setText(formatNum(self.inputs['Input 1 conversion']))
     
     def setInput2Conversion(self):
         text = str(self.lineEdit_Input2Conversion.text())
-        val = readNum(text)
+        val = readNum(text, self, False)
         if isinstance(val,float):
             self.inputs['Input 2 conversion'] = val
         self.lineEdit_Input2Conversion.setText(formatNum(self.inputs['Input 2 conversion']))
@@ -1155,6 +1233,70 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def setBlinkOutput(self):
         self.outputs['blink out'] = self.comboBox_BlinkOutput.currentIndex()+1
         
+    def updateFrameTime(self):
+        #These speeds are calculated using the manually set delay values
+        lineContribution = 2*self.lines * self.lineTime
+        if self.scanSmooth:
+            pixelContribution = (self.lines-1) * self.H / (self.linearSpeed*self.lines)
+        else:
+            pixelContribution = 0
+        
+        #Next we consider the unavoidable delays not accounted for in speed calcualtions. 
+        line_x = self.W * np.cos(np.pi*self.angle/180) * self.x_volts_to_meters
+        line_y = self.W * np.sin(np.pi*self.angle/180) * self.y_volts_to_meters
+
+        line_points = int(np.maximum(np.absolute(line_x / (300e-6)), np.absolute(line_y / (300e-6))))
+        
+        line_ADC = self.pixels
+        if self.scanSmooth:
+            line_DAC = np.maximum(line_points, self.pixels)
+        else:
+            line_DAC = self.pixels
+
+        pixel_x = -self.H * np.sin(np.pi*self.angle/180) * self.x_volts_to_meters / (self.lines - 1)
+        pixel_y = self.H * np.cos(np.pi*self.angle/180) * self.y_volts_to_meters / (self.lines - 1)
+        
+        pixel_points = int(np.maximum(np.absolute(pixel_x / (300e-6)), np.absolute(pixel_y / (300e-6))))
+        if pixel_points == 0:
+            pixel_points = 1
+            
+        #Pixel_ADC should be 0, but causes a bug in the code. So currently set to 1
+        pixel_ADC = 1
+        if self.scanSmooth:
+            pixel_DAC = pixel_points
+        else:
+            pixel_DAC = 1
+            
+        #Assumed conversion time of 425 us for ADC (determined experimentally, much larger than it should be but hey). Multiplied by 3 because reading 3 channels
+        #on a line scan, and only 1 on the pixel scan (that ends up thrown out). 
+        conversionContribution = 0.000425*(2*line_ADC*3*self.lines + pixel_ADC*(self.lines-1))
+        #Assumed setting time of 48 us for the DAC (determined experimentally, much larger than it should be). Multiplied by either 2 or 3 depending on if scanning
+        #in feedback (z is not buffer ramped) or constant height (z is controlled) 
+        if self.scanMode == 'Constant Height':
+            settlingContribution = 0.000048*(2*line_DAC*3*self.lines + pixel_DAC*(self.lines-1))
+        else:
+            settlingContribution = 0.000048*(2*line_DAC*2*self.lines + pixel_DAC*(self.lines-1))
+        
+        #Assume 0.02 seconds taken for each buffer ramp call
+        #3 communications per line, trace, retrace, and pixel step. 
+        communicationContribution = 3 * self.lines * 0.02
+        
+        #Each blink takes ~ 0.6 seconds
+        blinkContribution = 0.6 * self.blinkMode * self.lines
+        
+        #Graphing contribution. Takes about 15 ms to update the graph. This happens once per line
+        graphContribution = 0.015*self.lines
+        '''
+        print 'Line contribution: ', lineContribution
+        print 'Pixel contribution: ', pixelContribution
+        print 'Blink contribution: ', blinkContribution
+        print 'Communication contribution: ', communicationContribution
+        print 'Conversion contribution: ', conversionContribution
+        print 'Settling contribution: ', settlingContribution
+        print 'Graphing contribution: ', graphContribution
+        '''
+        self.FrameTime = lineContribution + pixelContribution + blinkContribution + communicationContribution + conversionContribution + settlingContribution+graphContribution
+        self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
 #----------------------------------------------------------------------------------------------#      
     """ The following section has scanning functions and live graph updating."""  
     
@@ -1265,13 +1407,21 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             if self.scanCoordinates:
                 self.moveROI()
                 self.moveROI3()
-                
+            '''
             #Initialize empty data sets
             pxsize = (3, self.pixels, self.lines)
             self.data = np.zeros(pxsize)
             self.data_retrace = np.zeros(pxsize)
             self.plotData = np.zeros(pxsize)[0]
             self.plotData_retrace = np.zeros(pxsize)[0]
+            '''
+            #Initialize empty data sets
+            pxsize = (3, self.pixels, self.lines)
+            self.data = np.full(pxsize, self.randomFill)
+            self.data_retrace = np.full(pxsize, self.randomFill)
+            self.plotData = np.full(pxsize, self.randomFill)[0]
+            self.plotData_retrace = np.full(pxsize, self.randomFill)[0]
+            
             self.currLine = 0
 
             #Update graphs with empty data sets
@@ -1298,7 +1448,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.updateScanningStatus.emit(True)
             self.push_Scan.setText('Scanning')
             self.push_Scan.setEnabled(False)
-            self.startScanTimer()
             self.update_data()
         except Exception as inst:
             print "testUpdates: " + str(inst)
@@ -1362,6 +1511,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 print a
                 a = yield self.dac.read()
             
+            self.startScanTimer()
+            
             for i in range(0,self.lines):
                 print 'Starting sweep for line ' + str(i) + '.'
                 
@@ -1411,7 +1562,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.updatePosition()
                 
                 #bin newData to appropriate number of pixels
-                print 'Time taken for buffer ramp: ' + str(time.clock()-tzero)
+                print 'Time taken for trace buffer ramp: ' + str(time.clock()-tzero)
                 tzero = time.clock()
                 #Add the binned Z data to the dataset. Note that right now, newData is the same length as self.pixels, 
                 #and the binning does nothing except flip the order of the data for retraces
@@ -1432,7 +1583,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 y_voltage = np.linspace(starty, stopy, self.pixels)
                 formated_data = []
                 for j in range(0, self.pixels):
-                    formated_data.append((0, i, j, x_voltage[j], y_voltage[j], self.data[0][j,i], self.data[1][j,i],self.data[2][j,i]))
+                    formated_data.append((0, j, i, x_voltage[j], y_voltage[j], self.data[0][j,i], self.data[1][j,i],self.data[2][j,i]))
                 yield self.dv.add(formated_data)
                 print 'Time taken to add data to data vault: ' + str(time.clock()-tzero)
 
@@ -1454,6 +1605,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 if not self.scanning:
                     break
                     
+                tzero = time.clock()
                 if self.scanMode == 'Feedback':
                     self.ramping = True
                     out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
@@ -1479,6 +1631,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.Atto_Y_Voltage = stopy
                 self.updatePosition()
                 
+                print 'Time taken for retrace buffer ramp: ' + str(time.clock()-tzero)
+                tzero = time.clock()
+                
                 #bin newData to appropriate number of pixels for Z data
                 self.data_retrace[0][:,i] = self.bin_data(newData[0]/self.z_volts_to_meters, self.pixels,'retrace')
                 #bin newData to appropriate number of pixels for input 1
@@ -1495,7 +1650,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 formated_data = []
                 for j in range(0, self.pixels):
                     #Putting in 0 for SSAA voltage (last entry) because not yet being used/read
-                    formated_data.append((1, i, j, x_voltage[::-1][j], y_voltage[::-1][j], self.data_retrace[0][j,i], self.data_retrace[1][j,i], self.data_retrace[2][j,i]))
+                    formated_data.append((1, j, i, x_voltage[::-1][j], y_voltage[::-1][j], self.data_retrace[0][j,i], self.data_retrace[1][j,i], self.data_retrace[2][j,i]))
                 yield self.dv.add(formated_data)
                 
                 #------------------------------------#
@@ -1542,7 +1697,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.update_gph()
                 print 'Time taken to update graphs: ' + str(time.clock()-tzero)
             
-            #So that, no matter what, after a scan back at 0 height relative to the Offset point
+            #So that, no matter what, after a scan back at 0 height relative to the Offset point. FIX THIS SOON
             if self.Atto_Z_Voltage != 0:
                 print 'Moving by: ' + str(self.Atto_Z_Voltage) + ' in the z direction to return to zero z offset.'
                 #By default ramps output 0 from the current z voltage back to 0 with 1000 points at 1 ms delay 
@@ -1582,10 +1737,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def update_gph(self):
         #Updates the trace, retrace, and mini plots with the plotData and plotData_retract images. 
         try:
-            self.Plot2D.setImage(self.plotData, autoRange = False, autoLevels = False)
+            self.Plot2D.setImage(self.plotData, autoRange = False, autoLevels = self.autoLevels, autoHistogramRange = self.autoHistogramRange)
             self.Plot2D.imageItem.resetTransform()
             
-            self.Plot2D_Retrace.setImage(self.plotData_retrace, autoRange = False, autoLevels = False)
+            self.Plot2D_Retrace.setImage(self.plotData_retrace, autoRange = False, autoLevels = self.autoLevels, autoHistogramRange = self.autoHistogramRange)
             self.Plot2D_Retrace.imageItem.resetTransform()
             
             if self.scanCoordinates:
@@ -1603,7 +1758,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.Plot2D_Retrace.imageItem.setPos(self.curr_x,self.curr_y)
                 self.Plot2D_Retrace.imageItem.setTransform(tr)
             
-            self.MiniPlot2D.setImage(self.plotData, autoRange = False, autoLevels = False)
+            self.MiniPlot2D.setImage(self.plotData, autoRange = False, autoLevels = self.autoLevels, autoHistogramRange = self.autoHistogramRange)
             self.MiniPlot2D.imageItem.resetTransform()
             angle = self.currAngle
             tr = QtGui.QTransform(self.xscale * np.cos(angle * np.pi/180),self.xscale * np.sin(angle * np.pi/180),0,-self.yscale * np.sin(angle * np.pi/180),self.yscale * np.cos(angle * np.pi/180),0,0,0,1)
@@ -1619,7 +1774,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         except Exception as inst:
             print 'update_gph: ' + str(inst)
-    
+        
     '''
     Function that in the future can be implemented to bin data in different ways. 
     Right now, it will take 

@@ -159,7 +159,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
     @inlineCallbacks
     def setSetpoint(self, c = None):
-        val = readNum(str(self.lineEdit_setpoint.text()))
+        val = readNum(str(self.lineEdit_setpoint.text()), self, False)
         if isinstance(val,float):
             self.setpoint = val
             #Set to remote control mode
@@ -173,7 +173,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     @inlineCallbacks
     def setRamprate(self, c = None):
-        val = readNum(str(self.lineEdit_ramprate.text()))
+        val = readNum(str(self.lineEdit_ramprate.text()), self, False)
         if isinstance(val,float):
             self.ramprate = val
             self.setting_value = True

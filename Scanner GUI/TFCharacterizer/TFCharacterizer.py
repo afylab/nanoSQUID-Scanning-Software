@@ -313,7 +313,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateStartFreq(self):
         new_startFreq = str(self.lineEdit_MinFreq.text())
-        val = readNum(new_startFreq)
+        val = readNum(new_startFreq, self)
         if isinstance(val,float):
             self.startFreq = val
             self.minFreqLine.setPos(self.startFreq)
@@ -324,7 +324,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     
     def updateStopFreq(self):
         new_stopFreq = str(self.lineEdit_MaxFreq.text())
-        val = readNum(new_stopFreq)
+        val = readNum(new_stopFreq, self)
         if isinstance(val,float):
             self.stopFreq = val
             self.maxFreqLine.setPos(self.stopFreq)
@@ -335,7 +335,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     
     def updateSelectFreq(self):
         new_selectFreq = str(self.lineEdit_freqSelect.text())
-        val = readNum(new_selectFreq)
+        val = readNum(new_selectFreq, self)
         if isinstance(val,float):
             self.selectFreq = val
             self.freqSelectLine.setPos(self.selectFreq)
@@ -345,7 +345,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateStepSize(self):
         new_freqStep = str(self.lineEdit_deltaF.text())
-        val = readNum(new_freqStep)
+        val = readNum(new_freqStep, self, False)
         if isinstance(val,float):
             self.freqStep = val
             self.points = int(np.abs(self.startFreq-self.stopFreq)/self.freqStep)
@@ -356,7 +356,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def updateSensitivity(self, c = None):
         try:
             new_sens = str(self.lineEdit_sensitivity.text())
-            val = readNum(new_sens)
+            val = readNum(new_sens, self, False)
             if isinstance(val,float):
                 yield self.hf.set_range(self.input, val)
                 range = yield self.hf.get_range(self.input)
@@ -369,7 +369,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def updateOutputAmplitude(self, c = None):
         try:
             new_Amp = str(self.lineEdit_Amplitude.text())
-            val = readNum(new_Amp)
+            val = readNum(new_Amp, self)
             if isinstance(val,float):
                 yield self.hf.set_output_range(self.output,val)
                 range = yield self.hf.get_output_range(self.output)
@@ -382,7 +382,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def updateTC(self, c = None):
         new_Tc = str(self.lineEdit_timeConst.text())
-        val = readNum(new_Tc)
+        val = readNum(new_Tc, self)
         if isinstance(val, float):
             yield self.hf.set_demod_time_constant(1,val)
             self.timeConst = yield self.hf.get_demod_time_constant(1)
@@ -764,14 +764,14 @@ class advancedSettings(QtGui.QDialog, Ui_advancedSettings):
         
     def updateSettleTime(self):
         new_settle_time = str(self.lineEdit_settle_time.text())
-        val = readNum(new_settle_time)
+        val = readNum(new_settle_time, self)
         if isinstance(val, float):
             self.settle_time = val
         self.lineEdit_settle_time.setText(formatNum(self.settle_time))
         
     def updateSettleAcc(self):
         new_settle_acc = str(self.lineEdit_settle_acc.text())
-        val = readNum(new_settle_acc)
+        val = readNum(new_settle_acc, self)
         if isinstance(val, float):
             self.settle_acc = val
         self.lineEdit_settle_acc.setText(formatNum(self.settle_acc))
@@ -794,7 +794,7 @@ class advancedSettings(QtGui.QDialog, Ui_advancedSettings):
         
     def updateBandwidth(self):
         new_bandwidth = str(self.lineEdit_bandwidth.text())
-        val = readNum(new_bandwidth)
+        val = readNum(new_bandwidth, self)
         if isinstance(val, float):
             self.bandwidth = val
         self.lineEdit_bandwidth.setText(formatNum(self.bandwidth))
