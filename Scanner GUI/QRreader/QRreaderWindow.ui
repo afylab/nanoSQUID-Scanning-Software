@@ -70,7 +70,7 @@ background: rgb(230,230,230)
 
 QPushBotton{
 background-color: rgb(230,230,230);
-color:grey
+
 }</string>
    </property>
    <layout class="QGridLayout" name="gridLayout_4" rowstretch="1,1,1,1" columnstretch="0,0">
@@ -393,7 +393,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>2,1</string>
@@ -417,7 +417,7 @@ background-color: red</string>
          <bool>false</bool>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>3,3</string>
@@ -438,7 +438,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>3,1</string>
@@ -459,7 +459,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>0,1</string>
@@ -480,7 +480,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>1,0</string>
@@ -504,7 +504,7 @@ background-color: red</string>
          <bool>false</bool>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>0,0</string>
@@ -525,7 +525,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>1,1</string>
@@ -549,7 +549,7 @@ background-color: red</string>
          <enum>Qt::PreventContextMenu</enum>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>0,2</string>
@@ -570,7 +570,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>2,0</string>
@@ -589,6 +589,9 @@ background-color: red</string>
          <font>
           <pointsize>14</pointsize>
          </font>
+        </property>
+        <property name="styleSheet">
+         <string>background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>1,2</string>
@@ -609,7 +612,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>2,2</string>
@@ -630,7 +633,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>2,3</string>
@@ -651,7 +654,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>3,0</string>
@@ -672,7 +675,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>0,3</string>
@@ -693,7 +696,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>1,3</string>
@@ -714,7 +717,7 @@ background-color: red</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color: rgb(230,230,230);color:grey</string>
         </property>
         <property name="text">
          <string>3,2</string>

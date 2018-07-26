@@ -60,7 +60,7 @@ class Window(QtGui.QMainWindow, QRreaderWindowUI):
 
     def colorButton(self, button, fill):
         fillstatus ="background-color: red;color:black"
-        notfillstatus = "background-color: white;color:grey"
+        notfillstatus = "background-color: rgb(230,230,230);color:grey"
         if fill:
             button.setStyleSheet(fillstatus)
         else:
