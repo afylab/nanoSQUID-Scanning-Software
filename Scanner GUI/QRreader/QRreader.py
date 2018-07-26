@@ -4,6 +4,8 @@ from twisted.internet.defer import inlineCallbacks, Deferred
 import time 
 from array import array
 import numpy
+from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData, ScanImageView
+
 
 path = sys.path[0] 
 sys.path.append(path+'\Resources')
@@ -50,9 +52,11 @@ class Window(QtGui.QMainWindow, QRreaderWindowUI):
         
     def Updateposition(self):
         self.xposition=int(self.fill[0,0])*2**7+int(self.fill[0,1])*2**6+int(self.fill[0,2])*2**5+int(self.fill[0,3])*2**4+int(self.fill[1,0])*2**3+int(self.fill[1,1])*2**2+int(self.fill[1,2])*2**1+int(self.fill[1,3])*2**0
-        self.Label_Xposition.setText(str(self.xposition))
+        valx=formatNum(self.inttonum(self.xposition))
+        self.LineEdit_Xposition.setText(valx)
         self.yposition=int(self.fill[2,0])*2**7+int(self.fill[2,1])*2**6+int(self.fill[2,2])*2**5+int(self.fill[2,3])*2**4+int(self.fill[3,0])*2**3+int(self.fill[3,1])*2**2+int(self.fill[3,2])*2**1+int(self.fill[3,3])*2**0
-        self.Label_Yposition.setText(str(self.yposition))
+        valy=formatNum(self.inttonum(self.yposition))
+        self.LineEdit_Yposition.setText(valy)
 
     def colorButton(self, button, fill):
         fillstatus ="background-color: red;color:black"
@@ -68,27 +72,42 @@ class Window(QtGui.QMainWindow, QRreaderWindowUI):
                 Status=self.fill[i,j]
                 self.colorButton(eval("self.PushBotton_qrcode"+str(i)+str(j)),Status)
             
-    def Updatetext(self):
-        x = int(self.Label_Xposition.text())
-        y = int(self.Label_Yposition.text())
-        self.Combobox_Text.setText("To get to the center, you need to move in X " + str(x*30-128.5*30) +" um. and move in Y " + str(y*30-128.5*30)+" um. \rGood Luck!")
+#    def Updatedistancetocenter(self):
+#        x = readNum(str(self.LineEdit_Xposition.text()),self)
+#        y = readNum(str(self.LineEdit_Yposition.text()),self)
+#        self.LineEdit_Xposition.setText(formatNum(x-127.5*30/(10**6)))
+#        self.LineEdit_Yposition.setText(formatNum(y-127.5*30/(10**6)))
 
+    def numtoint(self,num):
+        val=int((num*10**6)/30.0+127.5)
+        return val
+
+    def inttonum(self,int):
+        val=float((int*30-127.5*30)/(10**6))
+        return val
+        
+        
     def GoTo(self):
-        x = int(self.Label_Xposition.text())
-        y = int(self.Label_Yposition.text())
-        xbinaryarray=list('{0:08b}'.format(x))
-        ybinaryarray=list('{0:08b}'.format(y))
-        for i in range(0, 2):
-            for j in range(0,4):
-                self.fill[i,j]=xbinaryarray[i*4+j]
-        for i in range(2, 4):
-            for j in range(0,4):
-                self.fill[i,j]=ybinaryarray[(i-2)*4+j]
-        self.Updateposition()
-        self.colorAllButton()
-        self.Updatetext()
-        self.UpdateTipTF()
-            
+        if self.LineEdit_Xposition.text()=="SQUID":
+            print("yes")
+            self.ASQUID()
+        else:  
+            valx=readNum(str(self.LineEdit_Xposition.text()),self)
+            valy=readNum(str(self.LineEdit_Yposition.text()),self)
+            x = self.numtoint(valx)
+            y = self.numtoint(valy)
+            xbinaryarray=list('{0:08b}'.format(x))
+            ybinaryarray=list('{0:08b}'.format(y))
+            for i in range(0, 2):
+                for j in range(0,4):
+                    self.fill[i,j]=xbinaryarray[i*4+j]
+            for i in range(2, 4):
+                for j in range(0,4):
+                    self.fill[i,j]=ybinaryarray[(i-2)*4+j]
+            self.Updateposition()
+            self.colorAllButton()
+            self.UpdateTipTF()
+
             
     def setupAdditionalUi(self):
     #Set up UI that isn't easily done from Qt Designer
@@ -111,22 +130,36 @@ class Window(QtGui.QMainWindow, QRreaderWindowUI):
             self.fill[location] = False
             self.colorButton(button, False)
         self.Updateposition()
-        self.Updatetext()
-        x = int(self.Label_Xposition.text())
-        y = int(self.Label_Yposition.text())
-        print(x,y)
+        x = readNum((self.LineEdit_Xposition.text()),self)
+        y = readNum((self.LineEdit_Yposition.text()),self)
         self.UpdateTipTF()
 
     def UpdateTipTF(self):
         W=float(self.Frame_Minimap.width())
         H=self.Frame_Minimap.height()
         Length=float(H)*11/12
-        x = float(self.Label_Xposition.text())
-        y = float(self.Label_Yposition.text())
-        self.Frame_TFTP.move(int(x/256*Length+W/2-Length/2-40),int(y/256*Length-30))
+        x = readNum(str(self.LineEdit_Xposition.text()),self)
+        y = readNum(str(self.LineEdit_Yposition.text()),self)
+        self.Frame_TFTP.move(int(x/(256*30)*(10**6)*Length+W/2-70),int(-y/(256*30*(10**6))*Length-60+Length/2))
         self.Frame_TFTP.raise_()
-        print(self.Frame_TFTP.x(),self.Frame_TFTP.y())
-        print(x,y,float(x)/256*Length+W/2-Length/2,y/256*Length+Length/2,Length)
+
+    def ASQUID(self):
+        print("hey")
+        style = '''
+                {
+                image:url(:/nSOTScanner/Pictures/SQUIDRotated.png);
+                background:black;
+                }
+                '''
+        defaultstyle=self.centralwidget.styleSheet()
+        self.centralwidget.setStyleSheet(style)
+
+        yield self.sleep(1)
+        self.centralwidget.setStyleSheet(defaultstyle)
+        
+        
+        
+        
             
 #----------------------------------------------------------------------------------------------#         
     """ The following section has generally useful functions."""
