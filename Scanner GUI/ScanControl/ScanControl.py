@@ -66,7 +66,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.currW = 2e-5
         self.curr_x = -1e-5
         self.curr_y = -1e-5
-        self.currLine = 0
+        self.currLine = -1
 
         #Number of pixels taken in each direction, and the ratio of pixels to lines
         self.pixels = 256
@@ -223,7 +223,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.dv = False
         self.dc_box = False
         
-        self.lockInterface()
+        #self.lockInterface()
         
     def moveDefault(self):
         self.move(10,170)
@@ -391,8 +391,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         #Set up UI that isn't easily done from Qt Designer
         self.traceLinePlot = pg.PlotWidget(parent = self)
-        self.traceLinePlot.setGeometry(240,745,630,200)
-        self.traceLinePlot.setLabel('left', 'Z Voltage', units = 'V')
+        self.traceLinePlot.setLabel('left', 'Z Extension', units = 'm')
         self.traceLinePlot.setLabel('bottom', 'Position', units = 'm')
         self.traceLinePlot.showAxis('right', show = True)
         self.traceLinePlot.showAxis('top', show = True)
@@ -404,8 +403,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.horizontalLayout_3.addItem(horizontalSpacer)
 
         self.retraceLinePlot = pg.PlotWidget(parent = self)
-        self.retraceLinePlot.setGeometry(910,745,630,200)
-        self.retraceLinePlot.setLabel('left', 'Z Voltage', units = 'V')
+        self.retraceLinePlot.setLabel('left', 'Z Extension', units = 'm')
         self.retraceLinePlot.setLabel('bottom', 'Position', units = 'm')
         self.retraceLinePlot.showAxis('right', show = True)
         self.retraceLinePlot.showAxis('top', show = True)
@@ -431,9 +429,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.ROI.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = True)
         
         self.ROI2.removeHandle(self.ROI2.indexOfHandle(self.ROI2.getHandles()[0]))
-        #Handles obscure view and aren't really useful on the minimap 
-        #self.ROI2.addRotateHandle((0,0),(0.5,0.5), name = 'Rotate')
-        #self.ROI2.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = True)
         
         self.ROI3.removeHandle(self.ROI3.indexOfHandle(self.ROI3.getHandles()[0]))
         self.ROI3.addRotateHandle((0,0),(0.5,0.5), name = 'Rotate')
@@ -471,12 +466,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         old_gradient = self.Plot2D.ui.histogram.gradient.saveState()
         if not self.gradientsEqual(new_gradient, old_gradient):
             self.Plot2D.ui.histogram.gradient.restoreState(new_gradient)
+            self.MiniPlot2D.ui.histogram.gradient.restoreState(new_gradient)
 
     def updateRetraceHistogramLookup(self,grad):
         new_gradient = grad.saveState()
         old_gradient = self.Plot2D_Retrace.ui.histogram.gradient.saveState()
         if not self.gradientsEqual(new_gradient,old_gradient):
             self.Plot2D_Retrace.ui.histogram.gradient.restoreState(new_gradient)
+            self.MiniPlot2D.ui.histogram.gradient.restoreState(new_gradient)
 
     def traceHistogramRangeChanged(self, input):
         #This format was done because setRange emits a range as changed signal, so you need to toggle this boolean to cut
@@ -487,7 +484,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.Plot2D_Retrace.ui.histogram.vb.setRange(xRange = range[0], yRange = range[1], padding =  0, update = False)
         else:
             self.sigHistogramRangeChangedEmitted= False
-        #self.autoHistogramRange = False
         
     def retraceHistogramRangeChanged(self, input):
         if not self.sigHistogramRangeChangedEmitted:
@@ -496,7 +492,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.Plot2D.ui.histogram.vb.setRange(xRange = range[0], yRange = range[1], padding =  0, update = False)
         else:
             self.sigHistogramRangeChangedEmitted= False
-        #self.autoHistogramRange = False
     
     def set_voltage_calibration(self, calibration):
         self.x_volts_to_meters = float(calibration[1])
@@ -640,6 +635,15 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def selectChannel(self):
         self.channel = self.comboBox_Channel.currentIndex()
+        if self.channel == 0:
+            self.traceLinePlot.setLabel('left', 'Z Extension', units = 'm')
+            self.retraceLinePlot.setLabel('left', 'Z Extension', units = 'm')
+        elif self.channel == 1:
+            self.traceLinePlot.setLabel('left', self.inputs['Input 1 name'], units = self.inputs['Input 1 unit'])
+            self.retraceLinePlot.setLabel('left', self.inputs['Input 1 name'], units = self.inputs['Input 1 unit'])
+        elif self.channel == 2:
+            self.traceLinePlot.setLabel('left', self.inputs['Input 2 name'], units = self.inputs['Input 2 unit'])
+            self.retraceLinePlot.setLabel('left', self.inputs['Input 2 name'], units = self.inputs['Input 2 unit'])
         self.refreshPlotData()
         
     def setBlinkMode(self):
@@ -1407,14 +1411,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             if self.scanCoordinates:
                 self.moveROI()
                 self.moveROI3()
-            '''
-            #Initialize empty data sets
-            pxsize = (3, self.pixels, self.lines)
-            self.data = np.zeros(pxsize)
-            self.data_retrace = np.zeros(pxsize)
-            self.plotData = np.zeros(pxsize)[0]
-            self.plotData_retrace = np.zeros(pxsize)[0]
-            '''
+
             #Initialize empty data sets
             pxsize = (3, self.pixels, self.lines)
             self.data = np.full(pxsize, self.randomFill)
@@ -1422,7 +1419,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.plotData = np.full(pxsize, self.randomFill)[0]
             self.plotData_retrace = np.full(pxsize, self.randomFill)[0]
             
-            self.currLine = 0
+            self.currLine = -1
 
             #Update graphs with empty data sets
             self.update_gph()
@@ -1465,22 +1462,23 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 session = session + '\\' + folder
             self.lineEdit_ImageDir.setText(r'\.datavault' + session)
             print 'Created new DV file'
-            params = (('X Center', self.currXc), ('Y Center', self.currYc), ('Width', self.currW), ('Height',self.currH), ('Angle',self.currAngle), ('Speed',self.linearSpeed), ('Pixels',self.pixels), ('Lines', self.lines))
+            params = (('X Center', self.currXc), ('Y Center', self.currYc), ('Width', self.currW), 
+                     ('Height',self.currH), ('Angle',self.currAngle), ('Speed',self.linearSpeed), ('Blink', self.blinkMode),
+                     ('Pixels',self.pixels), ('Lines', self.lines), ('Input 1 name', self.inputs['Input 1 name']),
+                     ('Input 1 unit',self.inputs['Input 1 unit']),('Input 1 conversion',self.inputs['Input 1 conversion']),
+                     ('Input 2 name', self.inputs['Input 2 name']), ('Input 2 unit',self.inputs['Input 2 unit']),
+                     ('Input 2 conversion',self.inputs['Input 2 conversion']))
+                     
             print params
             #Avi - This line was throwing an error - I'm not sure why - I commented it out to test the scanning
             #the version of data vault that is saved on this computer differs from that running on the mScope monitor 
             #computer in exactly the function that was throwing an error - the save() function in the ini python file
-            #yield self.dv.add_parameters(params)
+            yield self.dv.add_parameters(params)
             #Marec - Yes, we should update that computer to the latest version of datavault
             print 'Added params'
             #TODO Fix parameters so that scan info properly saved. Get all info needed 
             
             self.updateScanParameters()
-            
-            #For now, HARD CODED THAT using DAC out 2 (or 1 when zero indexed) for X 
-            #and DAC out 3 (2 zeros indexed) for Y. 1 (or 0 when zero indexed) for Z. 
-            #DC box output 2 (1 when 0 indexed) is being used to blink (specified when
-            #initializing parameters)
 
             #TODO Many of the following steps are because of the timeout in the DAC ADC server error when ramping
             #Should be removed / fixed once the server is updated properly. 
@@ -1766,11 +1764,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.MiniPlot2D.imageItem.setTransform(tr)
 
             #Update line traces
-            pos = np.linspace(-self.currH/2, self.currH/2, self.pixels)
-            self.traceLinePlot.clear()
-            self.traceLinePlot.plot(pos, self.plotData[:,self.currLine])
-            self.retraceLinePlot.clear()
-            self.retraceLinePlot.plot(pos, self.plotData_retrace[:,self.currLine])
+            if self.currLine >= 0:
+                pos = np.linspace(-self.currH/2, self.currH/2, self.pixels)
+                self.traceLinePlot.clear()
+                self.traceLinePlot.plot(pos, self.plotData[:,self.currLine])
+                self.retraceLinePlot.clear()
+                self.retraceLinePlot.plot(pos, self.plotData_retrace[:,self.currLine])
 
         except Exception as inst:
             print 'update_gph: ' + str(inst)

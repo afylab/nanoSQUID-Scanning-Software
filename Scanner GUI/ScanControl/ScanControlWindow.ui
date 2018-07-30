@@ -2778,6 +2778,9 @@ border: grey;
                    <height>20</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;volts / conversion_factor= units&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="styleSheet">
                   <string notr="true">#lineEdit_ImageNum{
 background: rgb(181, 181, 181);
@@ -2857,6 +2860,9 @@ color: rgb(168, 168, 168)
                    <width>61</width>
                    <height>20</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;volts / conversion_factor= units&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="styleSheet">
                   <string notr="true">#lineEdit_ImageNum{
