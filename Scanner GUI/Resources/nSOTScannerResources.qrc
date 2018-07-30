@@ -1,6 +1,8 @@
 <RCC>
   <qresource prefix="nSOTScanner">
     <file>Pictures/tiptf.png</file>
+    <file>Pictures/Connected.png</file>
+    <file>Pictures/Disconnected.png</file>
     <file>Pictures/map.png</file>
     <file>Pictures/jj_schema.svg</file>
     <file>Pictures/smoothScan.png</file>

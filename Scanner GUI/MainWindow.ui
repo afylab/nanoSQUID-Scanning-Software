@@ -249,6 +249,7 @@ background: black;
     <addaction name="actionAttocube_Position_Calibration"/>
     <addaction name="actionMagnetic_Field_Control"/>
     <addaction name="actionTemperature_Control"/>
+    <addaction name="actionNSOT_Setpoint"/>
    </widget>
    <widget class="QMenu" name="menuExeriments">
     <property name="title">
@@ -354,6 +355,11 @@ background: black;
   <action name="actionQR_Reader">
    <property name="text">
     <string>QR Reader</string>
+   </property>
+  </action>
+  <action name="actionNSOT_Setpoint">
+   <property name="text">
+    <string>nSOT Setpoint</string>
    </property>
   </action>
  </widget>

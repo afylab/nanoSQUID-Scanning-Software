@@ -16,7 +16,7 @@ import time
 from collections import deque
 
 path = sys.path[0] + r"\ApproachModule"
-ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\Approach-v2.ui")
+ApproachUI, QtBaseClass = uic.loadUiType(path + r"\Approach-v2.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 Ui_generalApproachSettings, QtBaseClass = uic.loadUiType(path + r"\generalApproachSettings.ui")
 Ui_MeasurementSettings, QtBaseClass = uic.loadUiType(path + r"\MeasurementSettings.ui")
@@ -24,7 +24,7 @@ Ui_MeasurementSettings, QtBaseClass = uic.loadUiType(path + r"\MeasurementSettin
 sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
 
-class Window(QtGui.QMainWindow, ScanControlWindowUI):
+class Window(QtGui.QMainWindow, ApproachUI):
     newPLLData = QtCore.pyqtSignal(float, float)
     newFdbkDCData = QtCore.pyqtSignal(float)
     newFdbkACData = QtCore.pyqtSignal(float)
@@ -32,6 +32,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     updateFeedbackStatus = QtCore.pyqtSignal(bool)
     updateConstantHeightStatus = QtCore.pyqtSignal(bool, float)
     updateApproachStatus = QtCore.pyqtSignal(bool)
+    updateJPEConnectStatus = QtCore.pyqtSignal(bool)
 
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
@@ -48,10 +49,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         #Connect measurement buttons
         self.push_StartControllers.clicked.connect(self.toggleControllers)
-        
+
         #Connect advanced setting pop up menues
         self.push_MeasurementSettings.clicked.connect(self.showMeasurementSettings)
         self.push_GenSettings.clicked.connect(self.showGenSettings)
+        
         #Connect incrementing buttons
         self.push_addFreq.clicked.connect(self.incrementFreqThresh)
         self.push_subFreq.clicked.connect(self.decrementFreqThresh)
@@ -117,8 +119,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.Atto_Z_Voltage = 0.0 #Voltage being sent to Z of attocubes. Synchronized with the Scan module Atto Z voltage
         self.Temperature = 293    #in kelvin
 
-
-        
         #intial withdraw distance
         self.withdrawDistance = 2e-6
 
@@ -179,6 +179,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 'jpe_size'                   : 100,   #relative step size of jpe steps
                 'jpe_freq'                   : 250,   #Frequency of steps on JPE approach
                 'jpe_temperature'            : 293,   #Temperature setting of the JPEs
+                'jpe_toggle'                 : 3,     #By default 
                 'step_retract_speed'         : 1e-5, #speed in m/s when retracting
                 'step_retract_time'          : 2.4,    #time required in seconds for full atto retraction
                 'pid_retract_speed'          : 1e-5, #speed in m/s when retracting
@@ -354,7 +355,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         serList = serversList(self.reactor, self)
         serList.exec_()
         
-    def showAdvancedFdbkApproach(self):      
+    def showAdvancedFdbkApproach(self):
         advApp = advancedFdbkApproachSettings(self.reactor, self.feedbackApproachSettings, self)
         if advApp.exec_():
             self.feedbackApproachSettings = advApp.getValues()
@@ -400,6 +401,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def updateJPESettings(self, newSettings):
         self.generalSettings['jpe_temperature'] = newSettings['temp']
         self.generalSettings['jpe_module_address'] = newSettings['module_address']
+        self.generalSettings['jpe_toggle'] = newSettings['toggle_channel']
+        
+    def updateJPEConnected(self, connected):
+        self.JPEConnected = connected
             
     def setupAdditionalUi(self):
         self.freqSlider.close()
@@ -670,55 +675,64 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def toggleControllers(self, c = None):
         try:
-            if not self.measuring:
-                self.push_StartControllers.setText("Stop Meas.")  
-                style = """ QPushButton#push_StartControllers{
-                        color: rgb(50,168,50);
-                        background-color:rgb(0,0,0);
-                        border: 1px solid rgb(50,168,50);
-                        border-radius: 5px
-                        }  
-                        QPushButton:pressed#push_StartControllers{
-                        color: rgb(168,168,168);
-                        background-color:rgb(95,107,166);
-                        border: 1px solid rgb(168,168,168);
-                        border-radius: 5px
-                        }
-                        """
-                self.push_StartControllers.setStyleSheet(style)
-                self.measuring = True
-                self.push_MeasurementSettings.setEnabled(False)
-                if self.measurementSettings['meas_pll']:
-                    yield self.setHF2LI_PLL_Settings()
-                    self.startFrequencyMonitoring()
-                if self.measurementSettings['meas_fdbk_dc']:
-                    self.startFdbkDCMonitoring()
-                if self.measurementSettings['meas_fdbk_ac']:
-                    self.startFdbkACMonitoring()
-            else: 
-                self.push_StartControllers.setText("Start Meas.")
-                style = """ QPushButton#push_StartControllers{
-                        color: rgb(168,168,168);
-                        background-color:rgb(0,0,0);
-                        border: 1px solid rgb(168,168,168);
-                        border-radius: 5px
-                        }  
-                        QPushButton:pressed#push_StartControllers{
-                        color: rgb(168,168,168);
-                        background-color:rgb(95,107,166);
-                        border: 1px solid rgb(168,168,168);
-                        border-radius: 5px
-                        }
-                        """
-                self.push_StartControllers.setStyleSheet(style)
-                self.measuring = False
-                self.push_MeasurementSettings.setEnabled(True)
-                yield self.sleep(0.1)
-                self.PLL_Locked = 0
-                self.push_Locked.setStyleSheet("""#push_Locked{
-                        background: rgb(161, 0, 0);
-                        border-radius: 5px;
-                        }""")
+            if not self.approaching:
+                if not self.measuring:
+                    self.push_StartControllers.setText("Stop Meas.")  
+                    style = """ QPushButton#push_StartControllers{
+                            color: rgb(50,168,50);
+                            background-color:rgb(0,0,0);
+                            border: 1px solid rgb(50,168,50);
+                            border-radius: 5px
+                            }  
+                            QPushButton:pressed#push_StartControllers{
+                            color: rgb(168,168,168);
+                            background-color:rgb(95,107,166);
+                            border: 1px solid rgb(168,168,168);
+                            border-radius: 5px
+                            }
+                            """
+                    self.push_StartControllers.setStyleSheet(style)
+                    self.measuring = True
+                    self.push_MeasurementSettings.setEnabled(False)
+                    if self.measurementSettings['meas_pll']:
+                        yield self.setHF2LI_PLL_Settings()
+                        self.startFrequencyMonitoring()
+                    if self.measurementSettings['meas_fdbk_dc']:
+                        self.startFdbkDCMonitoring()
+                    if self.measurementSettings['meas_fdbk_ac']:
+                        self.startFdbkACMonitoring()
+                else: 
+                    self.push_StartControllers.setText("Start Meas.")
+                    style = """ QPushButton#push_StartControllers{
+                            color: rgb(168,168,168);
+                            background-color:rgb(0,0,0);
+                            border: 1px solid rgb(168,168,168);
+                            border-radius: 5px
+                            }  
+                            QPushButton:pressed#push_StartControllers{
+                            color: rgb(168,168,168);
+                            background-color:rgb(95,107,166);
+                            border: 1px solid rgb(168,168,168);
+                            border-radius: 5px
+                            }
+                            """
+                    self.push_StartControllers.setStyleSheet(style)
+                    self.measuring = False
+                    self.push_MeasurementSettings.setEnabled(True)
+                    yield self.sleep(0.1)
+                    self.PLL_Locked = 0
+                    self.push_Locked.setStyleSheet("""#push_Locked{
+                            background: rgb(161, 0, 0);
+                            border-radius: 5px;
+                            }""")
+            else:
+                msgBox = QtGui.QMessageBox(self)
+                msgBox.setIcon(QtGui.QMessageBox.Information)
+                msgBox.setWindowTitle('Measurements Necessary')
+                msgBox.setText("\r\n You cannot stop measuring mid-approach. Safely abort the approach before stopping the measurements.")
+                msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+                msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+                msgBox.exec_()
         except Exception as inst:
             print inst
             
@@ -1017,7 +1031,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Find desired retract speed in volts per second
                 retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters / self.voltageMultiplier
                 yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
-                #TODO1
+
                 yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
                 self.voltageMultiplied = False
                 #TODO check that voltage is actually 1 to 1 if recently switched
@@ -1071,10 +1085,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def startFeedbackApproachSequence(self, c = None):
         try:
-            #TODO improve function. View all TODOs and implement them. 
+            #This function assumes that we are already within the DAC extension range of the surface. 
         
             #TODO make automated check to make sure that sum box is changing voltage
             #mode appropriately. Probably toggle voltage, then go up to 1V output?
+            
+            #First lock in the choice of feedback voltage multiplier 
+            self.comboBox_ZMultiplier.setEnabled(False)
             
             #First emit signal saying we are no longer in contact with the surface, either at constant height
             #for feedback
@@ -1085,21 +1102,22 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.approaching = True
             self.updateApproachStatus.emit(True)
             
-            #If the voltage is not yet in the divided by 10 mode, then we need to
-            #do the initial approach
-            if not self.voltageMultiplied:
-                #Run feedback approach sequence with coarse steps (16 bit limited)
-                #until it hits the surface 
-                yield self.startPIDApproachSequence()
+            #If the voltage is not yet in the multiplied mode and it needs to be,
+            #then we need to withdraw 
+            if not self.voltageMultiplied and self.voltageMultiplier < 1:
+                #Make sure that the DAC output voltage is 0 from stepwise mode or approaching
+                #for feedback
+                if self.Atto_Z_Voltage >0:
+                    self.label_pidApproachStatus.setText('Zeroing DAC Voltage')
+                    speed = self.generalSettings['step_retract_speed']*self.z_volts_to_meters
+                    yield self.setDAC_Voltage(self.Atto_Z_Voltage,0,speed)
+                
+                #make sure that the zurich voltage output is 0
+                retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
             
                 #TODO: take note of current surface position to make next step more efficient?
-                
-                if self.approaching:
-                    #Withdraw completely
-                    #Find desired retract speed in volts per second
-                    retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
-                    yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
-                    self.label_pidApproachStatus.setText('Withdrawing post contact')
+                #Could use self.contactHeight
             
             if self.approaching:
                 #Make sure the PID is off
@@ -1107,14 +1125,24 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 if pid_on:
                     yield self.hf.set_pid_on(self.PID_Index, False)
                     
-                #Set range from 0 to 10 V. This voltage should be divided by 10, at room temperature
-                #This corresponds to ~8 microns
-                yield self.setPIDOutputRange(10)
-                
-                #Toggle the sum board to be 10 to 1 
-                yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 2.5)
-                self.voltageMultiplied = True
-                
+                #If the multiplier is less than one, toggle the sum board
+                if self.voltageMultiplier < 1:
+                    #The choice between 0.4 and 0.1 is done through selecting a different sum box. Make sure 
+                    #the selected option matches the hardware
+                    yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 2.5)
+                    self.voltageMultiplied = True
+                    
+                    
+                #Scale up the output voltage range. This voltage should be multiplied by 0.4 or 0.1.
+                #makes sure that it doesn't accidentally overshoot the voltage
+                if self.voltageMultiplied:
+                    if self.voltageMultiplier*10 < self.z_volts_max:
+                        yield self.setPIDOutputRange(10)
+                        max_zurich_voltage = 10
+                    else:
+                        yield self.setPIDOutputRange(self.z_volts_max/self.voltageMultiplier)
+                        max_zurich_voltage = self.z_volts_max/self.voltageMultiplier
+                        
                 #Initializes all the PID settings. This is mostly to update the PID parameters
                 # self.setPIDParameters() might be sufficent instead of all PID settings
                 yield self.setHF2LI_PID_Settings()
@@ -1131,7 +1159,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 while self.approaching:
                     z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
                     #if we've maxed out the PID voltage, we're done approaching with the PID
-                    if z_voltage >= 10:
+                    if z_voltage >= max_zurich_voltage:
                         break
                     #TODO reset self.deltafData to avoid triggering
                     #Find the number of data points that are above the threshhold
@@ -1154,8 +1182,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                         #check to see if output voltage of the PID has dropped to below 8V 
                         PID_output = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
                         #If we're midrange of the Zurich PID output, then we're in contact with good range
-                        #8 could be changed to 5 to really be in the middle eventually
-                        if PID_output < 5:
+                        if PID_output < max_zurich_voltage/2:
                             print 'In feedback biotch'
                             self.label_pidApproachStatus.setText('In Feedback')
                             self.updateFeedbackStatus.emit(True)
@@ -1168,11 +1195,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                         
                         #Check to see if we've reached the maximum z voltage. 
                         #If so, stop the approach 
-                        if (end_voltage + PID_output/10) > self.z_volts_max:
+                        if (end_voltage + PID_output*self.voltageMultiplier) > self.z_volts_max:
                             self.label_pidApproachStatus.setText('Feedback Approach Failed')
                             
                             #Fully withdraw DAC and Zurich
-                            speed = self.generalSettings['pid_retract_speed']*self.z_volts_to_meters*10
+                            speed = self.generalSettings['pid_retract_speed']*self.z_volts_to_meters/self.voltageMultiplier
                             yield self.setHF2LI_PID_Integrator(0, speed)
                             
                             speed = self.generalSettings['step_retract_speed']*self.z_volts_to_meters
@@ -1193,6 +1220,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                             
                     self.approaching = False
                     self.updateApproachStatus.emit(False)
+                    self.comboBox_ZMultiplier.setEnabled(True)
                 except Exception as inst:
                     print "Feedback Sequence 2 error:"
                     print inst
@@ -1352,9 +1380,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 yield self.hf.set_pid_i(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['i'])
                 yield self.hf.set_pid_d(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['d'])
             else:
-                yield self.hf.set_pid_p(self.PID_Index, 10*self.z_volts_to_meters*self.PIDApproachSettings['p'])
-                yield self.hf.set_pid_i(self.PID_Index, 10*self.z_volts_to_meters*self.PIDApproachSettings['i'])
-                yield self.hf.set_pid_d(self.PID_Index, 10*self.z_volts_to_meters*self.PIDApproachSettings['d'])
+                yield self.hf.set_pid_p(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['p']/self.voltageMultiplier)
+                yield self.hf.set_pid_i(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['i']/self.voltageMultiplier)
+                yield self.hf.set_pid_d(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['d']/self.voltageMultiplier)
         except Exception as inst:
             print "PID errror:"
             print inst
@@ -1368,6 +1396,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         '''
         #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's hard coded in (initialized at start)
         try:
+            self.lockWithdrawSensitiveInputs()
             curr_val = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
 
             if 0 <= val and val <= curr_val:
@@ -1412,7 +1441,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
                 #Set the appropriate PID settings again
                 yield self.setHF2LI_PID_Settings()
-
+            self.unlockWithdrawSensitiveInputs()
         except Exception as inst:
             print "Set integrator error" + str(inst)
 
@@ -1476,6 +1505,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def stepJPEs(self):
         self.JPEStepping = True
+        
+        #Make sure the JPEs are electrically connected
+        yield self.connectJPEs()
+        
         print 'Printing JPE Settings', int(self.generalSettings['jpe_module_address']), int(self.generalSettings['jpe_temperature']), int(self.generalSettings['jpe_freq']), int(self.generalSettings['jpe_size']), -1.0*self.generalSettings['jpe_steps'],30
         #Step JPE by specified amount in z direction (30 at the end ensures that we move w/ high torque)
         yield self.cpsc.move_z(int(self.generalSettings['jpe_module_address']), int(self.generalSettings['jpe_temperature']), int(self.generalSettings['jpe_freq']), int(self.generalSettings['jpe_size']), -1.0*self.generalSettings['jpe_steps'],30)
@@ -1486,15 +1519,29 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except Exception as inst:
             print inst
             
+        #Make sure the JPEs are electrically disconnected during rest of approach
+        yield self.disconnectJPEs()
+            
         #Give time to make sure that deltaf settles back to true value from violent JPE steps
         #Might be unnecessary
         yield self.sleep(0.5)
         self.JPEStepping = False
             
     @inlineCallbacks
+    def connectJPEs(self, c = None):
+        yield self.dcbox.set_voltage(self.generalSettings['jpe_toggle']-1, 10)
+        self.JPEConnected = True
+        self.updateJPEConnectStatus.emit(self.JPEConnected)
+        
+    @inlineCallbacks
+    def disconnectJPEs(self, c = None):
+        yield self.dcbox.set_voltage(self.generalSettings['jpe_toggle']-1, 0)
+        self.JPEConnected = False
+        self.updateJPEConnectStatus.emit(self.JPEConnected)
+            
+    @inlineCallbacks
     def withdrawSpecifiedDistance(self, c = None):
         try:          
-            self.lockWithdrawSensitiveInputs()
             #Abort all approach efforts
             yield self.abortApproachSequence()
             #Signal that no longer in constant height or in feedback
@@ -1522,7 +1569,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Find desired end voltage
                 end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters     
                 if self.voltageMultiplied:
-                    end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters * 10
+                    end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters/self.voltageMultiplier
                     
                 print 'Zurich start voltage: '
                 print z_voltage
@@ -1533,7 +1580,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     end_voltage = 0
                     #Remaining withdraw distance
                     if self.voltageMultiplied:
-                        withdrawDistance = withdrawDistance - z_voltage / (self.z_volts_to_meters*10)
+                        withdrawDistance = withdrawDistance - z_voltage / (self.z_volts_to_meters/self.voltageMultiplier)
                     else:
                         withdrawDistance = withdrawDistance - z_voltage / self.z_volts_to_meters
                 else:
@@ -1548,7 +1595,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 
                 #If output voltage is being divided by 10, multiply by 10 to compensate
                 if self.voltageMultiplied:
-                    retract_speed = 10*retract_speed
+                    retract_speed = retract_speed/self.voltageMultiplier
                     
                 yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
             
@@ -1580,8 +1627,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
             self.label_stepApproachStatus.setText('Idle')
             self.label_pidApproachStatus.setText('Idle')
-            
-            self.unlockWithdrawSensitiveInputs()
         except Exception as inst:
             print inst
         

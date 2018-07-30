@@ -27,221 +27,13 @@ Ui_dacSet, QtBaseClass = uic.loadUiType(dacSet)
 Ui_acSet, QtBaseClass = uic.loadUiType(acSet)
 Ui_prelimSweep, QtBaseClass = uic.loadUiType(prelimSweep)
 Ui_toeReminder, QtBaseClass = uic.loadUiType(toeReminder)
-Ui_gotoSetpoint, QtBaseClass = uic.loadUiType(gotoSetPoint)
 Ui_ServerList, QtBaseClass = uic.loadUiType(serlist)
-
-#Window for going to a particular nSOT bias or magnetic field 
-class gotoSetWindow(QtGui.QDialog, Ui_gotoSetpoint):
-    def __init__(self, reactor, magPower, dac, blinkDev, sweepParams, dacouts, dacins, parent = None):
-        super(gotoSetWindow, self).__init__(parent)
-        
-        self.setupUi(self)
-        self.window = parent
-        self.reactor = reactor
-        self.magDev = magPower
-        self.dac = dac
-        self.blinkDev = blinkDev
-        self.magPowerStr = sweepParams['mag power']
-        self.biasChan = dacouts['nsot bias'] - 1
-        self.blinkChan = dacouts['blink'] - 1
-        self.biasRefChan = dacins['bias ref'] - 1
-        self.setpointDict = {'field' : 0, 'bias' : 0}
-        self.readInitVals()
-        
-        if self.magPowerStr == 'toe':
-            self.toeCurChan = dacouts['toe current'] - 1
-            self.toeVoltsChan = dacouts['toe volts'] - 1
-
-            self.currFieldLbl.setStyleSheet("QLabel#currFieldLbl{color: rgb(168,168,168); font:bold 10pt;}")            
-
-        self.moveDefault()
-        
-        self.zeroFieldBtn.clicked.connect(self.zeroFieldFunc)
-        self.zeroBiasBtn.clicked.connect(self.zeroBiasFunc)
-        self.gotoFieldBtn.clicked.connect(self.gotoFieldFunc)
-        self.gotoBiasBtn.clicked.connect(self.gotoBiasFunc)
-        
-        self.blinkBtn.clicked.connect(self.blinkOutFunc)
-        self.exitBtn.clicked.connect(self.exitFunc)
-
-    @inlineCallbacks
-    def readInitVals(self, c = None):
-        try:
-            if self.magPowerStr == 'ips':
-                yield self.magDev.set_control(3)
-                curr_field = yield self.magDev.read_parameter(7)
-                yield self.magDev.set_control(2)
-                curr_field =float(curr_field[1:])
-
-                self.setpointDict['field'] = curr_field
-                self.currFieldLbl.setText('Current Field: ' + str(curr_field) + 'T')
-                self.currFieldLbl.setStyleSheet("QLabel#currFieldLbl{color: rgb(168,168,168); font:bold 10pt;}")
-                
-            else:
-                self.currFieldLbl.setText('Current Field: 0T')
-                self.currFieldLbl.setStyleSheet("QLabel#currFieldLbl{color: rgb(168,168,168); font:bold 10pt;}")
-            
-            curr_bias = yield self.dac.read_voltage(self.biasRefChan)
-            self.setpointDict['bias'] = float(curr_bias)
-            
-            self.currBiasLbl.setText('Current Bias: '+ str(curr_bias) + 'V')
-            self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
-            self.currStatusLbl.setText('Status: Idle')
-            self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
-        except Exception as inst:
-            print "readInitVals Error: ", inst
-
-    @inlineCallbacks
-    def ipsGoToFieldFunc(self, field, rate, c = None):
-        yield self.magDev.set_control(3)
-        yield self.magDev.set_comm_protocol(6)
-        yield self.magDev.set_control(2)
-        yield self.sleep(0.1)
-
-        yield self.magDev.set_control(3)
-        yield self.magDev.set_targetfield(field)
-        yield self.magDev.set_control(2)
-        yield self.sleep(0.1)
-
-        yield self.magDev.set_control(3)
-        yield self.magDev.set_fieldsweep_rate(rate)
-        yield self.magDev.set_control(2)
-        yield self.sleep(0.1)
-        
-        yield self.magDev.set_control(3)
-        yield self.magDev.set_activity(1)
-        yield self.magDev.set_control(2)
-        yield self.sleep(0.1)
-
-        
-        t0 = time.time()
-        self.currStatusLbl.setText('Status: Ramping Field')
-        self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
-        while True:
-            yield self.magDev.set_control(3)
-            curr_field = yield self.magDev.read_parameter(7)
-            yield self.magDev.set_control(2)
-            if float(curr_field[1:]) <= field + 0.00001 and float(curr_field[1:]) >= field -0.00001:
-                break
-            if time.time() - t0 > 1:
-                yield self.magDev.set_control(3)
-                yield self.magDev.set_targetfield(float(field))
-                yield self.magDev.set_control(2)
-                t0 = time.time()
-            yield self.sleep(0.25)
-        
-        self.setpointDict['field'] = field
-        self.currFieldLbl.setText('Current Field: '+ str(field) + 'T')
-        self.currFieldLbl.setStyleSheet("QLabel#currFieldLbl{color: rgb(168,168,168); font:bold 10pt;}")
-        self.currStatusLbl.setText('Status: Idle')
-        self.currStatusLbl.setStyleSheet("QLabel#currStatusLbl{color: rgb(168,168,168); font:bold 10pt;}")
-
-    @inlineCallbacks
-    def zeroFieldFunc(self, c = None):
-        if self.magPowerStr == 'ips':
-            try:
-                rate = float(self.fieldRampRateLine.text())
-                yield self.ipsGoToFieldFunc(0, rate, self.reactor)
-            except:
-                yield self.ipsGoToFieldFunc(0, 0.1, self.reactor)
-
-            
-    @inlineCallbacks
-    def zeroBiasFunc(self, c = None):
-        curr_bias = float(self.setpointDict['bias'])
-        steps = int(np.absolute(curr_bias) * 1000)
-        delay = 2000
-        tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [0], steps, delay)
-        self.setpointDict['bias'] = 0
-        new_bias = yield self.dac.read_voltage(self.biasRefChan)
-        self.currBiasLbl.setText('Current Bias: ' + str(new_bias) + 'V')
-        self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
-
-
-    @inlineCallbacks
-    def gotoFieldFunc(self, c = None):
-        flag = False
-        if self.magPowerStr == 'ips':
-            try:
-                field = float(self.window.siFormat(self.fieldSetpntLine.text(), 3))
-            except:
-                self.fieldSetpntLine.setText('FORMAT')
-                flag = True
-            try:
-                rate = np.absolute(float(self.window.siFormat(self.fieldRampRateLine.text(), 3)))
-            except:
-                self.fieldRampRateLine.setText('FORMAT')
-                flag = True
-            if np.absolute(field) > 5:
-                field  = 5 * (field / np.absolute(field))
-            if flag == False:
-                yield self.ipsGoToFieldFunc(field, rate)
-        
-    @inlineCallbacks
-    def gotoBiasFunc(self, c = None):
-        flag = False
-        try:
-            new_bias = float(self.window.siFormat(self.biasSetpntLine.text(), 3))
-            
-        except:
-
-            self.baisSetpntLine.setText('FORAMT')
-            flag = True
-        try:
-            steps = np.absolute(int(self.window.siFormat(self.biasPntsLine.text(), 3)))
-            
-        except:
-            self.biasPntsLine.setText('FORMAT')
-            flag = True
-        try:
-            delay = np.absolute(int(self.window.siFormat(self.biasDelayLine.text(), 3))) * 1000
-            
-        except:
-            
-            self.biasDelayLine.setText('FORMAT')
-            flag = True
-        print self.setpointDict
-        if np.absolute(new_bias) > 10:
-            new_bias = 10 * (new_bias / np.absolute(new_bias))
-            self.biasSetpntLine.setText(str(new_bias))
-            
-        if flag == False:
-            tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [self.setpointDict['bias']], [new_bias], steps, delay)
-            self.setpointDict['bias'] = new_bias
-            self.currBiasLbl.setText('Current Bias: '+ str(new_bias) + 'V')
-            self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
-        else:
-            yield self.sleep(0.5)
-            
-    @inlineCallbacks    
-    def blinkOutFunc(self, c = None):
-        yield self.window.blinkFunc()
-        
-    def moveDefault(self):
-        self.move(550,10)
-        
-    def sleep(self,secs):
-        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
-        other operations to be done elsewhere while paused."""
-        d = Deferred()
-        self.reactor.callLater(secs,d.callback,'Sleeping')
-        return d
-
-    def closeEvent(self, e):
-        self.window.startSweep.setEnabled(True)
-        self.window.prelim.setEnabled(True)
-        self.window.gotoSetBtn.setEnabled(True)
-        self.window.setpntDict = self.setpointDict
-
-    def exitFunc(self):
-        self.window.startSweep.setEnabled(True)
-        self.window.prelim.setEnabled(True)        
-        self.window.gotoSetBtn.setEnabled(True)
-        self.window.setpntDict = self.setpointDict
-        self.close()
 
 #Main characterization window with plots, sweep paramteres, etc.
 class Window(QtGui.QMainWindow, Ui_MainWindow):
+    changedConnectionSettings = QtCore.pyqtSignal(dict)
+    #add a signal to have changes in input settings go to the gotosetpoint window TODO
+    
     def __init__(self, reactor, parent = None):
         super(Window, self).__init__(parent)
         #QtGui.QDialog.__init__(self)
@@ -252,21 +44,33 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.setUpPlots()
         self.magnetPower.clear()
     
-        #Dictionaries of DACADC input/output channels (and AC voltage characteristics, though this functionality is no longer fully set up with the Zurich lockin) 
-        self.dcOutputsDict = {'blink' : 2, 'nsot bias' : 1, 'toe volts' : 4, 'toe current' : 3}
-        self.dcInputsDict = {'bias ref' : 1, 'feedback' : 2, 'noise' : 3, 'lockin' : 4}
+        #Dictionaries of the wiring and instrument settings
+        self.settingsDict = {
+                'blink':                2, #1 index DAC or DC box channel
+                'blink device':         'DAC ADC', #Device to be used to blink, DAC ADC by default
+                'nsot bias output':     1, #1 index bias output on the DAC ADC
+                'toellner volts':       4, #1 indexed output on the DAC ADC to control Toellner power supply voltage
+                'toellner current':     3, #1 indexed output on the DAC ADC to control Toellner power supply current
+                'nsot bias input':      4, #1 indexed input on the DAC ADC to read the nsot bias voltage
+                'feedback DC input':    3, #1 indexed input on the DAC ADC to read the DC feedback signal
+                'noise input':          2, #1 indexed input on the DAC ADC to read the noise
+                'feedback AC input':    1, #1 indexed input on the DAC ADC to read the AC signal (should be coming from a lockin)
+                'Magnet device':        'Toellner 8851', #Device used to control the magnetic field 
+        }
+        
+        # AC voltage characteristics, though this functionality is no longer fully set up with the Zurich lockin
+        # If this is ever used again, it should be combined with the previous dictionary
         self.acSettingsDict = {'freq' : 4.0, 'amp' : 2.0}
+        
         #Dictionary of parameters defining the nSOT sweep
-        self.sweepParamDict = {'B_min' : 0, 'B_max' : 0.1, 'B_pnts' : 100, 'B_rate' : 0.1, 'V_min' : 0, 'V_max' : 1, 'V_pnts' : 500, 'delay' : 1,'volt mode' : 'min/max', 'blink mode' : 'on', 'mag power' : None}
+        self.sweepParamDict = {'B_min' : 0, 'B_max' : 0.1, 'B_pnts' : 100, 'B_rate' : 0.1, 'V_min' : 0, 'V_max' : 1, 'V_pnts' : 500, 'delay' : 1,'volt mode' : 'min/max', 'Magnet device' : 'Toellner 8851', 'blink mode' : 'on'}
         #Dictionary the keeps track of the setpoints in magnetic field and bias voltage that are set by the 'Go To Setpoint' window
         self.setpntDict = {'field' : 0, 'bias' : 0}
         #Flag that tells the main window whether the nSOT is at a field or bias setpoint
         self.atSetpoint = False
         self.fieldPos = 0
-        self.plotNoPlot = 0        
+        self.plotNoPlot = 0
         
-        #Opens the Go To Setpoint window
-        self.gotoSetBtn.clicked.connect(self.initGotoSetFunc)
         #Open the window reminding the user to turn on the Toellner output, or goes straight to the window used to confirm the sweep parameters if using the IPS
         self.startSweep.clicked.connect(self.toeCheck)
         #Flag used to initiate an abort function in the middle of a sweep
@@ -349,32 +153,14 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         
         self.lockInterface()
 
-    #Opens the Go To Setpoint Window
-    def initGotoSetFunc(self):
-        if self.sweepParamDict['mag power'] == 'ips':
-            magPower = self.ips
-        elif self.sweepParamDict['mag power'] == 'toe':
-            magPower = self.dac
-
-        if self.blinkDevice == 'DAC ADC':
-            blinkDev = self.dac
-        elif self.blinkDevice == 'DC BOX':
-            blinkDev = self.dcbox
-            
-        self.startSweep.setEnabled(False)
-        self.prelim.setEnabled(False)
-        self.gotoSetBtn.setEnabled(False)
-
-        self.initGotoSetWin = gotoSetWindow(self.reactor, magPower, self.dac, blinkDev, self.sweepParamDict, self.dcOutputsDict, self.dcInputsDict, self)
-
-        self.initGotoSetWin.show()
-
-    #Changes the magnet power supply in the sweep parameter dictionary when the corresponding option is changed in the dropdown menu
+    #Changes the magnet power supply in the settings dictionary when the corresponding option is changed in the dropdown menu, and emits that change to 
+    #other modules
     def updateMagPower(self):
         if self.magnetPower.currentText() == 'IPS 120-10':
-            self.sweepParamDict['mag power'] = 'ips'
+            self.settingsDict['Magnet device'] = 'IPS 120-10'
         elif self.magnetPower.currentText() == 'Toellner 8851':
-            self.sweepParamDict['mag power'] = 'toe'
+            self.settingsDict['Magnet device'] = 'Toellner 8851'
+        self.changedConnectionSettings.emit(self.settingsDict)
 
     def moveDefault(self):
         self.move(550,10)
@@ -412,15 +198,10 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             self.magnetPower.addItem('Toellner 8851')
             self.unlockInterface()
-
+            
         try:
             self.dcbox = dict['dc_box']
         except:
-            pass
-        if not not self.dcbox:
-            pass
-        else:
-            #TODO let know somehow that can use DC box
             pass
         
     def connectRemoteLabRAD(self,dict):
@@ -456,17 +237,17 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     #Opens the preliminary sweep window
     def runPrelimSweep(self):
         self.prelim.setEnabled(False)
-        self.prelimSweep = preliminarySweep(self.reactor, self.dv, self.dac, self.dcOutputsDict, self.dcInputsDict, self)
+        self.prelimSweep = preliminarySweep(self.reactor, self.dv, self.dac, self.settingsDict, self)
         self.prelimSweep.show()
     
     #Opens window to adjust the DAC-ADC channels
     def dacSet(self):
         self.dacSetOpen.setEnabled(False)
-        self.dacSettings = dacSettings(self.dcOutputsDict, self.dcInputsDict, self)
+        self.dacSettings = dacSettings(self.settingsDict, self)
         if self.dacSettings.exec_():
-            print 'DC Outputs: ', self.dcOutputsDict
-            print 'DC Inputs: ', self.dcInputsDict
-    
+            print 'New Settings: ', self.settingsDict
+            self.changedConnectionSettings.emit(self.settingsDict)
+           
     #Opens window to adjust the AC response settings
     def acSet(self):
         self.acSetOpen.setEnabled(False)
@@ -637,7 +418,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         elif speed == 'speed':
             pass
         #Keeps the field value within 1.25T for the dipper magnet    
-        elif self.magnetPower.currentText() == 'Toellner 8851':
+        elif self.settingsDict['Magnet device'] == 'Toellner 8851':
             if float(ans) < 0:
                 lineEdit.setText('0')
 
@@ -652,7 +433,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 lineEdit.setText('-1.25')
                         
         #Keeps the field value within 5T for the cryostat magnet
-        elif self.magnetPower.currentText() == 'IPS 120-10':
+        elif self.settingsDict['Magnet device'] == 'IPS 120-10':
             if -5 <= float(ans) <= 5:
                 pass
             elif float(ans) >= 5:
@@ -815,7 +596,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     def toeCheck(self):
         self.checkToe = toellnerReminder()
         self.startSweep.setEnabled(False)
-        if self.magnetPower.currentText() != 'Toellner 8851':
+        if self.settingsDict['Magnet device'] != 'Toellner 8851':
             self.checkSweep()
         else:
             self.checkToe.show()
@@ -825,10 +606,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     def checkSweep(self):
         sweepMod = self.biasSweepMode.currentIndex()
         blinkMod = self.blink.currentIndex()
-        if self.magnetPower.currentText() == 'IPS 120-10':
-            magPower = 'ips'
-        elif self.magnetPower.currentText() == 'Toellner 8851':
-            magPower = 'toe'
+
         b_min = self.siFormat(self.fieldMinSetValue.text(), 3)
         b_max = self.siFormat(self.fieldMaxSetValue.text(), 3)
         if self.fieldSIStat == 'num pnts':
@@ -889,15 +667,13 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         else:
             TotalTime = "infinite"
         
-        self.sweepParamDict = {'B_min' : b_min, 'B_max' : b_max, 'B_pnts' : b_pnts, 'B_rate' : b_speed, 'V_min' : v_min, 'V_max' : v_max, 'V_pnts' : v_pnts, 'delay' : v_speed, 'sweep mode' : sweepMod, 'blink mode' : blinkMod, 'mag power' : magPower, 'sweep time' : TotalTime} 
+        self.sweepParamDict = {'B_min' : b_min, 'B_max' : b_max, 'B_pnts' : b_pnts, 'B_rate' : b_speed, 'V_min' : v_min, 'V_max' : v_max, 'V_pnts' : v_pnts, 'delay' : v_speed, 'sweep mode' : sweepMod, 'blink mode' : blinkMod, 'Magnet device' : self.settingsDict['Magnet device'], 'sweep time' : TotalTime} 
         
         print '------------------------------------------------------------------------------------'
         print 'Sweep Parameters'
         print self.sweepParamDict
-        print 'DAC Output Settings'
-        print self.dcOutputsDict
-        print 'DAC Input Settings'
-        print self.dcInputsDict
+        print 'General Input Settings'
+        print self.settingsDict
         print '-------------------------------------------------------------------------------------'
         self.dialog = DialogBox(self.sweepParamDict, self)
         self.dialog.show()    
@@ -1365,7 +1141,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         return d
 
     def initSweep(self):
-        #self.sweepParamDict = {'B_min' : b_min, 'B_max' : b_max, 'B_pnts' : b_pnts, 'B_rate' : b_speed, 'V_min' : v_min, 'V_max' : v_max, 'V_pnts' : v_pnts, 'delay' : v_speed, 'sweep mode' : sweepMod, 'blink mode' : blinkMod, 'mag power' : magpower, 'sweep time' : TotalTime}
         b_min, b_max = self.sweepParamDict['B_min'], self.sweepParamDict['B_max']
         v_min, v_max = self.sweepParamDict['V_min'], self.sweepParamDict['V_max']
         b_pnts, v_pnts = self.sweepParamDict['B_pnts'], self.sweepParamDict['V_pnts']
@@ -1391,7 +1166,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.magnetPower.setEnabled(False)
         self.blink.setEnabled(False)
         self.biasSweepMode.setEnabled(False)
-        self.gotoSetBtn.setEnabled(False)
         self.prelim.setEnabled(False)
         self.fieldMinSetValue.setReadOnly(True)
         self.fieldMaxSetValue.setReadOnly(True)
@@ -1413,11 +1187,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.abortFlag = False
         if self.sweepParamDict['sweep mode'] == 0:
             self.isData = True
-            self.sweepMinMax(self.sweepParamDict['mag power'])
+            self.sweepMinMax(self.settingsDict['Magnet device'])
             
         elif  self.sweepParamDict['sweep mode'] == 1:
             self.isData = True
-            self.sweepFromZero(self.sweepParamDict['mag power'])
+            self.sweepFromZero(self.settingsDict['Magnet device'])
 
 
     @inlineCallbacks
@@ -1426,20 +1200,18 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         #DAC OUTPUTS
         
         #DAC out channel that outputs DC bias (1 through 4)
-        DAC_out = self.dcOutputsDict['nsot bias'] - 1
+        DAC_out = self.settingsDict['nsot bias output'] - 1
         #DAC out channel that switches between 0 and 5 volts to toggle feedback off then on (aka blink)
-        DAC_blink = self.dcOutputsDict['blink'] - 1
+        DAC_blink = self.settingsDict['blink'] - 1
         #DAC channel that sets the voltage setpoint for the Toellner power supply
-        DAC_set_volt = self.dcOutputsDict['toe volts'] - 1
+        DAC_set_volt = self.settingsDict['toellner volts'] - 1
         #DAC channel that sets the current setpoint for the Toellner power supply
-        DAC_set_current = self.dcOutputsDict['toe current'] - 1
-        
+        DAC_set_current = self.settingsDict['toellner current'] - 1
         
         #DAC INPUTS
         
         #DAC in channel that reads DC bias (1 through 4)
-        DAC_in_ref = self.dcInputsDict['bias ref'] - 1
-
+        DAC_in_ref = self.settingsDict['nsot bias input'] - 1
 
         print 'Aborting sweep from applied field of ', bVal,'T and nSOT bias of ', vVal, 'V' 
         print 'Ramping nSOT bias to zero'
@@ -1449,7 +1221,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             pass
         yield self.sleep(1)
         print 'Sweeping magnetic field back to zero'
-        if magpower == 'ips':
+        if magpower == 'IPS 120-10':
             if bVal != 0:
                 yield self.ips.set_control(3)
                 #Go to 0 field
@@ -1460,13 +1232,14 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             else:
                 pass
         
-        elif magpower == 'toe':
+        elif magpower == 'Toellner 8851':
             if bVal != 0:
                 yield sweep_field(bVal, 0, 0.1)
                 yield self.dac.set_voltage(DAC_set_volt, 0)
                 yield self.dac.set_voltage(DAC_set_current, 0)
             else:
                 pass
+                
         self.refreshInterface()
             
     def refreshInterface(self):
@@ -1474,7 +1247,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.abortSweep.setEnabled(False)
         self.magnetPower.setEnabled(True)
         self.blink.setEnabled(True)
-        self.gotoSetBtn.setEnabled(True)
         self.biasSweepMode.setEnabled(True)
 
         self.prelim.setEnabled(True)
@@ -1503,25 +1275,25 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         #DAC OUTPUTS
         
         #DAC out channel that outputs DC bias (1 through 4)
-        DAC_out = self.dcOutputsDict['nsot bias'] - 1
+        DAC_out = self.settingsDict['nsot bias output'] - 1
         #DAC out channel that switches between 0 and 5 volts to toggle feedback off then on (aka blink)
-        DAC_blink = self.dcOutputsDict['blink'] - 1
+        DAC_blink = self.settingsDict['blink'] - 1
         #DAC channel that sets the voltage setpoint for the Toellner power supply
-        DAC_set_volt = self.dcOutputsDict['toe volts'] - 1
+        DAC_set_volt = self.settingsDict['toellner volts'] - 1
         #DAC channel that sets the current setpoint for the Toellner power supply
-        DAC_set_current = self.dcOutputsDict['toe current'] - 1
+        DAC_set_current = self.settingsDict['toellner current'] - 1
         
         
         #DAC INPUTS
         
         #DAC in channel that reads DC bias (1 through 4)
-        DAC_in_ref = self.dcInputsDict['bias ref'] - 1
+        DAC_in_ref = self.settingsDict['nsot bias input'] - 1
         #DAC in channel that read DC signal (1 through 4)
-        V_out = self.dcInputsDict['feedback'] - 1
+        V_out = self.settingsDict['feedback DC input'] - 1
         #DAC in channel that read DC signal proportional to AC signal (1 through 4)
-        dIdV_out = self.dcInputsDict['lockin'] - 1
+        dIdV_out = self.settingsDict['feedback AC input'] - 1
         #DAC in channel to read noise measurement
-        noise = self.dcInputsDict['noise'] - 1
+        noise = self.settingsDict['noise input'] - 1
 
 
         #AC excitation information for quasi dI/dV measurement. Frequency should be larger than 
@@ -1541,7 +1313,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.lineEdit_ImageDir.setText(r'\.datavault' + session)
         print 'DataVault setup complete'
 
-        if magpower == 'toellner':
+        if magpower == 'Toellner 8851':
             yield self.dac.set_voltage(DAC_out, 0)
             #If minimum bias voltage is not zero, sweep bias to minimum value, 1mV per step with a reasonably short delay
             if V_min != 0:
@@ -1556,7 +1328,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                     if self.abortFlag == False:
                         pass
                     else:
-                        yield self.abortSweepFunc('toe', 0, V_min)
+                        yield self.abortSweepFunc(magpower, 0, V_min)
                         break
                     
                     if B_space[0] != 0:
@@ -1568,7 +1340,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                     if self.abortFlag == False:
                         pass
                     else:
-                        yield self.abortSweepFunc('toe', B_space[i-1], V_min)
+                        yield self.abortSweepFunc(magpower, B_space[i-1], V_min)
                         break
                     yield self.toeSweepField(B_space[i-1], B_space[i], B_rate)
                     
@@ -1580,7 +1352,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('toe', B_space[i], V_min)
+                    yield self.abortSweepFunc(magpower, B_space[i], V_min)
                     break
                         
                 #Sweep from minimum to maximum bias voltage
@@ -1598,7 +1370,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('toe', B_space[i], V_max)
+                    yield self.abortSweepFunc(magpower, B_space[i], V_max)
                     break
                 
                 #Sweep from maximum to minimum bias voltage
@@ -1616,7 +1388,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('toe', B_space[i], V_min)
+                    yield self.abortSweepFunc(magpower, B_space[i], V_min)
                     break
                 
             #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
@@ -1632,10 +1404,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.dac.set_voltage(DAC_set_volt, 0)
             yield self.dac.set_voltage(DAC_set_current, 0)
         
-        elif magpower == 'ips':
-            
-
-            
+        elif magpower == 'IPS 120-10':
             yield self.ips.set_control(3)
             yield self.ips.set_comm_protocol(6)
             yield self.ips.set_control(2)
@@ -1697,7 +1466,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('ips', B_space[i], V_min)
+                    yield self.abortSweepFunc(magpower, B_space[i], V_min)
                     break
 
                 #Sweep from minimum to maximum bias voltage
@@ -1715,7 +1484,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('ips', B_space[i], V_max)
+                    yield self.abortSweepFunc(magpower, B_space[i], V_max)
                     break
 
                 #Sweep from maximum to minimum bias voltage
@@ -1734,7 +1503,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('ips', B_space[i],V_min)
+                    yield self.abortSweepFunc(magpower, B_space[i],V_min)
                     break
             
             #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
@@ -1802,25 +1571,25 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         #DAC OUTPUTS
         
         #DAC out channel that outputs DC bias (1 through 4)
-        DAC_out = self.dcOutputsDict['nsot bias'] - 1
+        DAC_out = self.settingsDict['nsot bias output'] - 1
         #DAC out channel that switches between 0 and 5 volts to toggle feedback off then on (aka blink)
-        DAC_blink = self.dcOutputsDict['blink'] - 1
+        DAC_blink = self.settingsDict['blink'] - 1
         #DAC channel that sets the voltage setpoint for the Toellner power supply
-        DAC_set_volt = self.dcOutputsDict['toe volts'] - 1
+        DAC_set_volt = self.settingsDict['toellner volts'] - 1
         #DAC channel that sets the current setpoint for the Toellner power supply
-        DAC_set_current = self.dcOutputsDict['toe current'] - 1
+        DAC_set_current = self.settingsDict['toellner current'] - 1
         
         
         #DAC INPUTS
         
         #DAC in channel that reads DC bias (1 through 4)
-        DAC_in_ref = self.dcInputsDict['bias ref'] - 1
+        DAC_in_ref = self.settingsDict['nsot bias input'] - 1
         #DAC in channel that read DC signal (1 through 4)
-        V_out = self.dcInputsDict['feedback'] - 1
+        V_out = self.settingsDict['feedback DC input'] - 1
         #DAC in channel that read DC signal proportional to AC signal (1 through 4)
-        dIdV_out = self.dcInputsDict['lockin'] - 1
+        dIdV_out = self.settingsDict['feedback AC input'] - 1
         #DAC in channel to read noise measurement
-        noise = self.dcInputsDict['noise'] - 1
+        noise = self.settingsDict['noise input'] - 1
         
         #ramp voltage to zero if still at setpoint
         if np.absolute(self.setpntDict['bias']) > 0.01:
@@ -1845,7 +1614,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.lineEdit_ImageDir.setText(r'\.datavault' + session)
         print 'DataVault setup complete'
         
-        if magpower == 'toellner':
+        if magpower == 'Toellner 8851':
             for i in range (0, B_pnts):
             
                 if i == 0:
@@ -1866,7 +1635,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('toe', B_space[i], 0)
+                    yield self.abortSweepFunc(magpower, B_space[i], 0)
                     break
                 
                 #Sweep from zero volts to maximum bias voltage
@@ -1885,7 +1654,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('toe', B_space[i], V_max)
+                    yield self.abortSweepFunc(magpower, B_space[i], V_max)
                     break
 
                 
@@ -1905,7 +1674,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('toe', B_space[i], 0)
+                    yield self.abortSweepFunc(magpower, B_space[i], 0)
                     break
                 
                 #Sweep from zero volts to minimum bias voltage
@@ -1925,7 +1694,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('toe', B_space[i], V_min)
+                    yield self.abortSweepFunc(magpower, B_space[i], V_min)
                     break
                 
                 #Sweep from minimum bias voltage to zero volts
@@ -1935,7 +1704,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('toe', B_space[i], 0)
+                    yield self.abortSweepFunc(magpower, B_space[i], 0)
                     break
 
                 #Reform data and add to data vault
@@ -1960,7 +1729,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             yield self.toeSweepField(B_space[-1], 0, B_rate)
             yield self.dac.set_voltage(DAC_set_volt, 0)
         
-        elif magpower == 'ips': 
+        elif magpower == 'IPS 120-10': 
             yield self.ips.set_control(3)
             yield self.ips.set_comm_protocol(6)
             yield self.ips.set_control(2)
@@ -2002,7 +1771,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('ips', B_space[i], 0)
+                    yield self.abortSweepFunc(magpower, B_space[i], 0)
                     break
 
 
@@ -2022,7 +1791,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('ips', B_space[i], V_max)
+                    yield self.abortSweepFunc(magpower, B_space[i], V_max)
                     break
        
                 #Sweep from maximum bias voltage to zero volts and blink
@@ -2037,7 +1806,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('ips', B_space[i], 0)
+                    yield self.abortSweepFunc(magpower, B_space[i], 0)
                     break
 
                 yield self.blinkFunc()
@@ -2058,7 +1827,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('ips', B_space[i],V_min)
+                    yield self.abortSweepFunc(magpower, B_space[i],V_min)
                     break
                 
                 #Sweep from minimum bias voltage to zero volts
@@ -2083,7 +1852,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 if self.abortFlag == False:
                     pass
                 else:
-                    yield self.abortSweepFunc('ips', B_space[i], 0)
+                    yield self.abortSweepFunc(magpower, B_space[i], 0)
                     break
 
             yield self.dac.set_voltage(DAC_out, 0)
@@ -2128,22 +1897,22 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     @inlineCallbacks
     def blinkFunc(self, c = None):
         
-        if self.blinkDevice == 'DAC ADC':
-            yield self.dac.set_voltage(self.dcOutputsDict['blink'] - 1, 5)
+        if self.settingsDict['blink device'] == 'DAC ADC':
+            yield self.dac.set_voltage(self.settingsDict['blink'] - 1, 5)
             yield self.sleep(0.25)
-            yield self.dac.set_voltage(self.dcOutputsDict['blink'] - 1, 0)
+            yield self.dac.set_voltage(self.settingsDict['blink'] - 1, 0)
             yield self.sleep(0.25)
-        elif self.blinkDevice == 'DC BOX':
-            yield self.dcbox.set_voltage(self.dcOutputsDict['blink'] - 1, 5)
+        elif self.settingsDict['blink device'] == 'DC BOX':
+            yield self.dcbox.set_voltage(self.settingsDict['blink'] - 1, 5)
             yield self.sleep(0.25)
-            yield self.dcbox.set_voltage(self.dcOutputsDict['blink'] - 1, 0)
+            yield self.dcbox.set_voltage(self.settingsDict['blink'] - 1, 0)
             yield self.sleep(0.25)
             print 'blinked'
 
     @inlineCallbacks
     def toeSweepField(B_i, B_f, B_speed, c = None):
-        DAC_set_volt, DAC_set_current = self.dcOutputsDict['toe volts'] - 1, self.dcOutputsDict['toe current'] - 1
-        DAC_in_ref = self.dcInputsDict['bias ref']
+        DAC_set_volt, DAC_set_current = self.settingsDict['toellner volts'] - 1, self.settingsDict['toellner current'] - 1
+        DAC_in_ref = self.settingsDict['nsot bias input']
         #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
         VV_conv = 3.20
         #Toellner current set point / DAC voltage out conversion [I_Toellner / V_DAC]
@@ -2216,53 +1985,46 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
 #Window for setting the DAC channels for setting/reading nSOT characterization voltages on the DAC ADC
 class dacSettings(QtGui.QDialog, Ui_dacSet):
-    def __init__(self, dcOut, dcIn, parent = None):
+    def __init__(self, settings, parent = None):
         super(dacSettings, self).__init__(parent)
         
-        self.dcOutDict = copy.copy(dcOut)#dcOut
-        self.dcInDict = copy.copy(dcIn)# dcIn
+        self.settingsDict = copy.copy(settings)
         self.window = parent
         self.setupUi(self)
         self.updateVals()
         self.connectBoxes()
         
-        #self.dcOutputsDict = {'blink' : 2, 'nsot bias' : 1, 'toe volts' : 4, 'toe current' : 3}
-        #self.dcInputsDict = {'bias ref' : 1, 'feedback' : 2, 'noise' : 3, 'lockin' : 4}
-        
-        self.spinboxDict = {'nsot bias' : self.biasOutChannel, 'blink' : self.blinkOutChannel, 'toe volts' : self.voltsOutChannel, 'toe current' : self.currentOutChannel, 'bias ref' : self.biasInChannel, 'feedback' : self.dcInChannel, 'lockin' : self.acInChannel, 'noise' : self.noiseInChannel}
-        
-
         if not not self.window.dcbox:
-            
             self.comboBox_blinkDevice.addItem('DC BOX')
-            if self.window.blinkDevice == 'DC BOX':
+            if self.settingsDict['blink device'] == 'DC BOX':
                 self.comboBox_blinkDevice.setCurrentIndex(1)
         else:
             print 'no dc box'
 
+        self.comboBox_blinkDevice.currentIndexChanged.connect(self.updateBlinkDevice)
+            
         self.cancelDAC.clicked.connect(self._close)
         self.okDAC.clicked.connect(self._ok)
 
-        
-    def updateVals(self):
-            self.biasInChannel.setValue(self.dcInDict['bias ref'])
-            self.dcInChannel.setValue(self.dcInDict['feedback'])
-            self.acInChannel.setValue(self.dcInDict['lockin'])
-            self.noiseInChannel.setValue(self.dcInDict['noise'])
-            self.biasOutChannel.setValue(self.dcOutDict['nsot bias'])
-            self.blinkOutChannel.setValue(self.dcOutDict['blink'])
-            self.voltsOutChannel.setValue(self.dcOutDict['toe volts'])
-            self.currentOutChannel.setValue(self.dcOutDict['toe current'])
+    def updateVals(self): 
+            self.biasInChannel.setValue(self.settingsDict['nsot bias input'])
+            self.dcInChannel.setValue(self.settingsDict['feedback DC input'])
+            self.acInChannel.setValue(self.settingsDict['feedback AC input'])
+            self.noiseInChannel.setValue(self.settingsDict['noise input'])
+            self.biasOutChannel.setValue(self.settingsDict['nsot bias output'])
+            self.blinkOutChannel.setValue(self.settingsDict['blink'])
+            self.voltsOutChannel.setValue(self.settingsDict['toellner volts'])
+            self.currentOutChannel.setValue(self.settingsDict['toellner current'])
 
     def connectBoxes(self):
-            self.biasInChannel.valueChanged.connect(lambda: self.correctInVals(self.biasInChannel, 'bias ref'))
-            self.dcInChannel.valueChanged.connect(lambda: self.correctInVals(self.dcInChannel, 'feedback'))
-            self.acInChannel.valueChanged.connect(lambda: self.correctInVals(self.acInChannel, 'lockin'))
-            self.noiseInChannel.valueChanged.connect(lambda: self.correctInVals(self.noiseInChannel, 'noise'))
-            self.biasOutChannel.valueChanged.connect(lambda: self.correctOutVals(self.biasOutChannel, 'nsot bias'))
+            self.biasInChannel.valueChanged.connect(lambda: self.correctInVals(self.biasInChannel, 'nsot bias input'))
+            self.dcInChannel.valueChanged.connect(lambda: self.correctInVals(self.dcInChannel, 'feedback DC input'))
+            self.acInChannel.valueChanged.connect(lambda: self.correctInVals(self.acInChannel, 'feedback AC input'))
+            self.noiseInChannel.valueChanged.connect(lambda: self.correctInVals(self.noiseInChannel, 'noise input'))
+            self.biasOutChannel.valueChanged.connect(lambda: self.correctOutVals(self.biasOutChannel, 'nsot bias output'))
             self.blinkOutChannel.valueChanged.connect(lambda: self.correctOutVals(self.blinkOutChannel, 'blink'))
-            self.voltsOutChannel.valueChanged.connect(lambda: self.correctOutVals(self.voltsOutChannel, 'toe volts'))
-            self.currentOutChannel.valueChanged.connect(lambda: self.correctOutVals(self.currentOutChannel, 'toe current'))
+            self.voltsOutChannel.valueChanged.connect(lambda: self.correctOutVals(self.voltsOutChannel, 'toellner volts'))
+            self.currentOutChannel.valueChanged.connect(lambda: self.correctOutVals(self.currentOutChannel, 'toellner current'))
 
     def disconnectBoxes(self):
             self.biasInChannel.valueChanged.disconnect()
@@ -2276,33 +2038,48 @@ class dacSettings(QtGui.QDialog, Ui_dacSet):
 
     def correctInVals(self, obox, item):
         val = copy.copy(obox.value())
-        old_val = copy.copy(self.dcInDict[item])
-        for key in self.dcInDict.keys():
-            if self.dcInDict[key] == val:
-                self.dcInDict[key] = old_val
-                self.dcInDict[item] = val
+        old_val = copy.copy(self.settingsDict[item])
+        inputDictionary = {
+            'feedback DC input':     self.settingsDict['feedback DC input'],
+            'feedback AC input':     self.settingsDict['feedback AC input'],
+            'noise input':     self.settingsDict['noise input'],
+            'nsot bias input':     self.settingsDict['nsot bias input'],
+        }
+        for key in inputDictionary.keys():
+            if inputDictionary[key] == val:
+                self.settingsDict[key] = old_val
+                self.settingsDict[item] = val
                 self.disconnectBoxes()
                 self.updateVals()
                 self.connectBoxes()
                 break
     
     def correctOutVals(self, obox, item):
-        if self.comboBox_blinkDevice.currentText() == 'DC BOX' and item == 'blink':
+        if self.settingsDict['blink device'] == 'DC BOX' and item == 'blink':
             pass
         else:
             val = copy.copy(obox.value())
-            old_val = copy.copy(self.dcOutDict[item])
-            for key in self.dcOutDict.keys():
-                if self.dcOutDict[key] == val:
-                    if self.comboBox_blinkDevice.currentText() == 'DC BOX' and key == 'blink':
-                        self.dcOutDict[item] = val
+            old_val = copy.copy(self.settingsDict[item])
+            outputDictionary = {
+                'blink':        self.settingsDict['blink'],
+                'nsot bias output':        self.settingsDict['nsot bias output'],
+                'toellner volts':        self.settingsDict['toellner volts'],
+                'toellner current':        self.settingsDict['toellner current']
+            }
+            for key in outputDictionary.keys():
+                if outputDictionary[key] == val:
+                    if self.settingsDict['blink device'] == 'DC BOX' and key == 'blink':
+                        self.settingsDict[item] = val
                     else:
-                        self.dcOutDict[key] = old_val
-                        self.dcOutDict[item] = val
+                        self.settingsDict[key] = old_val
+                        self.settingsDict[item] = val
                         self.disconnectBoxes()
                         self.updateVals()
                         self.connectBoxes()
                         break
+        
+    def updateBlinkDevice(self):
+        self.settingsDict['blink device'] = str(self.comboBox_blinkDevice.currentText())
         
     def closeEvent(self, e):
         self.window.dacSetOpen.setEnabled(True)
@@ -2329,9 +2106,7 @@ class dacSettings(QtGui.QDialog, Ui_dacSet):
         
         else:
             print self.comboBox_blinkDevice.currentText()
-            self.window.dcOutputsDict = copy.copy(self.dcOutDict)
-            self.window.dcInputsDict = copy.copy(self.dcInDict)
-            self.window.blinkDevice = self.comboBox_blinkDevice.currentText()
+            self.window.settingsDict = copy.copy(self.settingsDict)
             
             self.window.dacSetOpen.setEnabled(True)
             self.accept()
@@ -2391,14 +2166,10 @@ class DialogBox(QtGui.QDialog, Ui_DialogBox):
     def __init__(self, sweepParams, parent = None):
         super(DialogBox, self).__init__(parent)
         
-        
-        #self.sweepParamDict = {'B_min' : b_min, 'B_max' : b_max, 'B_pnts' : b_pnts, 'B_rate' : b_speed, 'V_min' : v_min, 'V_max' : v_max, 'V_pnts' : v_pnts, 'delay' : v_speed, 'sweep mode' : sweepMod, 'blink mode' : blinkMod, 'mag power' : magpower, 'sweep time' : TotalTime}
         self.sweepParamDict = sweepParams
         
         self.window = parent
         self.setupUi(self)
-        #self.sweepParameters = sweepParameters
-        #self.magnetPower = magPower
         
         self.fieldMinValue.setText(str(self.sweepParamDict['B_min']))
         self.fieldMinValue.setStyleSheet("QLabel#fieldMinValue {color: rgb(168,168,168); font-size: 10pt}")
@@ -2418,10 +2189,10 @@ class DialogBox(QtGui.QDialog, Ui_DialogBox):
         self.biasSpeedValue.setText(str(self.sweepParamDict['delay']))
         self.biasSpeedValue.setStyleSheet("QLabel#biasSpeedValue {color: rgb(168,168,168); font-size: 10pt}")
         
-        if self.sweepParamDict['mag power'] == 'IPS 120-10':
+        if self.sweepParamDict['Magnet device'] == 'IPS 120-10':
             self.magnetPowerSupply.setText('Oxford IPS 120-10 Magnet Power Supply')
             self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168); font-size: 10pt}")
-        elif self.sweepParamDict['mag power'] == 'Toellner 8851':
+        elif self.sweepParamDict['Magnet device'] == 'Toellner 8851':
             self.magnetPowerSupply.setText('Toellner 8851 Power Supply')
             self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168); font-size: 10pt}")
         if self.sweepParamDict['sweep mode'] == 0:
@@ -2462,7 +2233,7 @@ class DialogBox(QtGui.QDialog, Ui_DialogBox):
 
 #Window for doing preliminary sweeps of the nSOT
 class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
-    def __init__(self, reactor, dv, dac, dcOut, dcIn, parent = None):
+    def __init__(self, reactor, dv, dac, settings, parent = None):
         super(preliminarySweep, self).__init__(parent)
         self.window = parent
         self.reactor = reactor
@@ -2472,8 +2243,7 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         self.dv = dv
         self.dac = dac
         
-        self.dcOutDict = dcOut
-        self.dcInDict = dcIn
+        self.settingsDict = settings
         
         self.data = None
         self.fitPoints = 1
@@ -2481,12 +2251,11 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         self.dataPlotItem = pg.PlotCurveItem()
         self.critCurrLine.setReadOnly(True)
         self.parRes.setReadOnly(True)
-        #self.newSweep.setEnabled(False)
 
         self.startSweep.clicked.connect(lambda: self.sweep(self.reactor))
         self.showFitBtn.clicked.connect(self.showFitFunc)
         self.btnAction = 'sweep'
-        #self.newSweep.clicked.connect(self.refreshSweep)
+
         self.closeWin.clicked.connect(self._close)
 
     def refreshSweep(self):
@@ -2645,12 +2414,12 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                 delay = int(self.delay.value() * 1000)
                 
                 #Sets DAC Channels
-                DAC_out = self.dcOutDict['nsot bias'] - 1
-                DAC_blink = self.dcOutDict['blink'] - 1
+                DAC_out = self.settingsDict['nsot bias output'] - 1
+                DAC_blink = self.settingsDict['blink'] - 1
                 
-                DAC_in_ref = self.dcInDict['bias ref'] - 1
-                DAC_in_sig = self.dcInDict['feedback'] - 1
-                DAC_in_noise = self.dcInDict['noise'] - 1
+                DAC_in_ref = self.settingsDict['nsot bias input'] - 1
+                DAC_in_sig = self.settingsDict['feedback DC input'] - 1
+                DAC_in_noise = self.settingsDict['noise input'] - 1
                 print DAC_in_sig, DAC_in_ref
                 
                 file_info = yield self.dv.new("nSOT Preliminary Sweep", ['Bias Voltage Index','Bias Voltage'],['DC SSAA Output','Noise'])

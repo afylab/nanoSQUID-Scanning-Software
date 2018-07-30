@@ -115,7 +115,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.setupUi(self)
 
         self.showGrad.hide()
-        self.diamFrame.hide()
+#        self.diamFrame.hide()
         self.trSelect.hide()
 
         self.setupPlots()
@@ -784,23 +784,23 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.YZPlot.showAxis('right', show = True)
         self.YZPlot.showAxis('top', show = True)
 
-    def hideDiamFrame(self):
-        self.diamFrame.hide()
-        self.diamCalc.clicked.connect(self.calculateDiam)
-        self.diamCalc.clicked.disconnect(self.hideDiamFrame)
-        self.checkFourier.stateChanged.disconnect(self.showFourier)
-        self.checkAvg.stateChanged.disconnect(self.showAvg)
-        if self.checkFourier.isChecked():
-            self.checkFourier.setCheckState(False)
-            self.mainPlot.removeItem(self.rect)
-        if self.checkAvg.isChecked():
-            for i in self.avgLines:
-                self.mainPlot.removeItem(i)
-            self.avgLines = []
-            self.avgLinePos = []
-            self.checkAvg.setCheckState(False)    
-            self.mainPlot.addItem(self.vLine)
-            self.mainPlot.addItem(self.hLine)    
+    # def hideDiamFrame(self):
+        # self.diamFrame.hide()
+        # self.diamCalc.clicked.connect(self.calculateDiam)
+        # self.diamCalc.clicked.disconnect(self.hideDiamFrame)
+        # self.checkFourier.stateChanged.disconnect(self.showFourier)
+        # self.checkAvg.stateChanged.disconnect(self.showAvg)
+        # if self.checkFourier.isChecked():
+            # self.checkFourier.setCheckState(False)
+            # self.mainPlot.removeItem(self.rect)
+        # if self.checkAvg.isChecked():
+            # for i in self.avgLines:
+                # self.mainPlot.removeItem(i)
+            # self.avgLines = []
+            # self.avgLinePos = []
+            # self.checkAvg.setCheckState(False)    
+            # self.mainPlot.addItem(self.vLine)
+            # self.mainPlot.addItem(self.hLine)    
 
     def calculateDiam(self):
         self.diamCalc.clicked.disconnect(self.calculateDiam)

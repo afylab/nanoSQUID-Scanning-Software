@@ -51,3 +51,9 @@ asynchronous connection and its connection to data vault, and pass it with an ap
 into the dictionary. 
 
 
+General naming conventions:
+All GUI items should have their type in their name. For example, a pushButton should be called push_XXX.
+A comboBox should be comboBox_XXX. Etc... This makes the code infinitely more readable for future users. 
+
+
+

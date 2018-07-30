@@ -21,6 +21,7 @@ sys.path.append(path+'\Field Control')
 sys.path.append(path+'\ScriptingModule')
 sys.path.append(path+'\TemperatureControl')
 sys.path.append(path+'\QRreader')
+sys.path.append(path+'\GoToSetpoint')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -39,6 +40,7 @@ import FieldControl
 import Scripting
 import TemperatureControl
 import QRreader
+import gotoSetpoint
 
 import exceptions
 
@@ -70,6 +72,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.FieldControl = FieldControl.Window(self.reactor, None)
         self.TempControl = TemperatureControl.Window(self.reactor,None)
         self.QRreader = QRreader.Window(self.reactor,None)
+        self.GoToSetpoint = gotoSetpoint.Window(self.reactor, None)
         
         #This module should always be initialized last, and have the modules
         #That are desired to be scriptable be input
@@ -90,6 +93,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.actionRun_Scripts.triggered.connect(self.openScriptingModule)
         self.actionTemperature_Control.triggered.connect(self.openTempControlWindow)
         self.actionQR_Reader.triggered.connect(self.openQRreaderWindow)
+        self.actionNSOT_Setpoint.triggered.connect(self.openSetpointWindow)
         
         #Connectors all layout buttons
         self.push_Layout1.clicked.connect(self.setLayout1)
@@ -97,7 +101,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.push_Logo.clicked.connect(self.toggleLogo)
         self.isRedEyes = False
         
-        #Connect 
+        #Connect signals between modules
         self.LabRAD.cxnLocal.connect(self.distributeLocalLabRADConnections)
         self.LabRAD.cxnRemote.connect(self.distributeRemoteLabRADConnections)
         self.LabRAD.cxnDisconnected.connect(self.disconnectLabRADConnections)
@@ -113,12 +117,16 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Approach.updateFeedbackStatus.connect(self.ScanControl.updateFeedbackStatus)
         self.Approach.updateConstantHeightStatus.connect(self.ScanControl.updateConstantHeightStatus)
         self.Approach.updateApproachStatus.connect(self.JPEControl.updateApproachStatus)
+        self.Approach.updateJPEConnectStatus.connect(self.JPEControl.updateJPEConnected)
         
         self.PosCalibration.newTemperatureCalibration.connect(self.setVoltageCalibration)
         
         self.ScanControl.updateScanningStatus.connect(self.Approach.updateScanningStatus)
 
         self.JPEControl.newJPESettings.connect(self.Approach.updateJPESettings)
+        self.JPEControl.updateJPEConnectStatus.connect(self.Approach.updateJPEConnected)
+        
+        self.nSOTChar.changedConnectionSettings.connect(self.GoToSetpoint.updateSetpointSettings)
         
         #Make sure default calibration is emitted 
         self.PosCalibration.emitCalibration()
@@ -126,6 +134,9 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         #Make sure default session flder is emitted
         self.LabRAD.newSessionFolder.emit(self.LabRAD.session_2)
 
+        #Make sure default wiring connections and settings are emitted (eventually this will be a centralized window taking care of it)
+        self.nSOTChar.changedConnectionSettings.emit(self.nSOTChar.settingsDict)
+        
         #Open by default the LabRAD Connect Module
         self.openLabRADConnectWindow()
         
@@ -204,6 +215,11 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.QRreader.showNormal()
         self.QRreader.moveDefault()
         self.QRreader.raise_()
+        
+    def openSetpointWindow(self):
+        self.GoToSetpoint.showNormal()
+        self.GoToSetpoint.moveDefault()
+        self.GoToSetpoint.raise_()
             
 #----------------------------------------------------------------------------------------------#
     """ The following section connects actions related to passing LabRAD connections."""
@@ -217,6 +233,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Approach.connectLabRAD(dict)
         self.JPEControl.connectLabRAD(dict)
         self.Scripting.connectLabRAD(dict)
+        self.GoToSetpoint.connectLabRAD(dict)
         
     def distributeRemoteLabRADConnections(self,dict):
         #Call connectRemoteLabRAD functions for relevant modules
@@ -224,7 +241,8 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Scripting.connectRemoteLabRAD(dict)
         self.nSOTChar.connectRemoteLabRAD(dict)
         self.TempControl.connectRemoteLabRAD(dict)
-
+        self.GoToSetpoint.connectRemoteLabRAD(dict)
+        
     def disconnectLabRADConnections(self):
         self.Plot.disconnectLabRAD()
         self.nSOTChar.disconnectLabRAD()

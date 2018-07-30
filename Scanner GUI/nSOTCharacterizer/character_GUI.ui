@@ -250,7 +250,7 @@ background-color: rgb(0, 0, 0);
    <widget class="QPushButton" name="abortSweep">
     <property name="geometry">
      <rect>
-      <x>1130</x>
+      <x>1180</x>
       <y>50</y>
       <width>75</width>
       <height>23</height>
@@ -1149,7 +1149,7 @@ border-radius: 5px
    <widget class="QPushButton" name="dacSetOpen">
     <property name="geometry">
      <rect>
-      <x>1170</x>
+      <x>1180</x>
       <y>80</y>
       <width>35</width>
       <height>23</height>
@@ -1380,7 +1380,7 @@ border-radius: 5px
    <widget class="QPushButton" name="acSetOpen">
     <property name="geometry">
      <rect>
-      <x>1210</x>
+      <x>1220</x>
       <y>80</y>
       <width>35</width>
       <height>23</height>
@@ -1690,44 +1690,10 @@ border-radius: 5px
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QPushButton" name="gotoSetBtn">
-    <property name="geometry">
-     <rect>
-      <x>1220</x>
-      <y>50</y>
-      <width>75</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="focusPolicy">
-     <enum>Qt::NoFocus</enum>
-    </property>
-    <property name="toolTip">
-     <string/>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton:pressed#gotoSetBtn{
-color: rgb(95,107,166);
-background-color:rgb(168,168,168);
-border: 1px solid rgb(95,107,166);
-border-radius: 5px
-}
-
-QPushButton#gotoSetBtn{
-color: rgb(216,83,25);
-background-color:rgb(0,0,0);
-border: 2px solid  rgb(216,83,25);
-border-radius: 5px
-}</string>
-    </property>
-    <property name="text">
-     <string>Go To Set</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_ImageNum">
     <property name="geometry">
      <rect>
-      <x>1140</x>
+      <x>1130</x>
       <y>110</y>
       <width>51</width>
       <height>20</height>
@@ -1745,9 +1711,9 @@ color: rgb(168, 168, 168)
    <widget class="QLineEdit" name="lineEdit_ImageNum">
     <property name="geometry">
      <rect>
-      <x>1190</x>
+      <x>1180</x>
       <y>110</y>
-      <width>101</width>
+      <width>121</width>
       <height>20</height>
      </rect>
     </property>
@@ -1773,9 +1739,9 @@ border: grey;
    <widget class="QLineEdit" name="lineEdit_ImageDir">
     <property name="geometry">
      <rect>
-      <x>1190</x>
+      <x>1180</x>
       <y>140</y>
-      <width>101</width>
+      <width>121</width>
       <height>20</height>
      </rect>
     </property>
@@ -1801,7 +1767,7 @@ border: grey;
    <widget class="QLabel" name="label_ImageDir">
     <property name="geometry">
      <rect>
-      <x>1140</x>
+      <x>1130</x>
       <y>140</y>
       <width>51</width>
       <height>20</height>
@@ -1895,7 +1861,6 @@ color: rgb(168, 168, 168)
    <zorder>line_13</zorder>
    <zorder>line_14</zorder>
    <zorder>line_15</zorder>
-   <zorder>gotoSetBtn</zorder>
    <zorder>label_ImageNum</zorder>
    <zorder>lineEdit_ImageNum</zorder>
    <zorder>lineEdit_ImageDir</zorder>

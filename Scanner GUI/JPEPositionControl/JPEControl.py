@@ -11,7 +11,8 @@ from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
     newJPESettings = QtCore.pyqtSignal(dict)
-
+    updateJPEConnectStatus = QtCore.pyqtSignal(bool)
+    
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
         
@@ -19,30 +20,36 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.setupUi(self)
         self.setupAdditionalUi()
 
-        self.moveDefault()        
+        self.moveDefault()
 
         #initialize default values
         self.JPESettings = {
         'temp'                  : 293, #Experiment temperature
         'module_address'        : 1,   #Pretty sure this is always 1 unless we add more modules to the JPE controller
+        'toggle_channel'        : 3,   #DC Box channel use to toggle the JPEs between connected and not. 1 indexed
         }
-
+        #By default JPEs are disconnected when voltage is 0
+        self.JPEConnected = False
+        
         self.steps = 1000        #Number of step forward in z direction taken by JPEs after attocube fully extend and retract
         self.size = 100          #relative step size of jpe steps
         self.freq = 600          #Frequency of steps on JPE approach
         self.weight_for = [1.0, 1.0, 1.0]
         self.weight_back = [1.0, 1.0, 1.0]
         self.tip_height = 24 #Tip height from JPE stage in millimeters. 
+        
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
         
         #Initialize all the labrad connections as False
         self.cxn = False
         self.cpsc = False
-
+        self.dcbox = False
+        
         self.lineEdit_Temperature.editingFinished.connect(self.setTemperature)
         self.lineEdit_Tip_Height.editingFinished.connect(self.setJPE_Tip_Height)
         self.comboBox_JPE_Address.currentIndexChanged.connect(self.setJPE_Address)
+        self.comboBox_JPE_Toggle.currentIndexChanged.connect(self.setJPE_Toggle_Channel)
         
         self.lineEdit_JPE_Approach_Steps.editingFinished.connect(self.setJPE_Approach_Steps)
         self.lineEdit_JPE_Approach_Size.editingFinished.connect(self.setJPE_Approach_Size)
@@ -55,6 +62,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_weight_back_B.editingFinished.connect(self.setBackwardJPEWeightB)
         self.lineEdit_weight_back_C.editingFinished.connect(self.setBackwardJPEWeightC)
         
+        self.push_JPEConnect.clicked.connect(self.toggleJPEConnection)
+        
         self.push_movePosX.clicked.connect(self.movePosX)
         self.push_moveNegX.clicked.connect(self.moveNegX)
         self.push_movePosY.clicked.connect(self.movePosY)
@@ -64,13 +73,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         self.lockInterface()
         
-    def moveDefault(self):    
+    def moveDefault(self):
         self.move(550,10)
         
     def connectLabRAD(self, dict):
         try:
             self.cxn = dict['cxn']
             self.cpsc = dict['cpsc']
+            self.dcbox = dict['dc_box']
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
@@ -78,6 +88,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
         elif not self.cpsc:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+        elif not self.dcbox:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
         else:
@@ -134,7 +147,50 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         if isinstance(val,float):
             self.freq = int(val)
         self.lineEdit_JPE_Approach_Freq.setText(formatNum(self.freq))
+        
+    def setJPE_Toggle_Channel(self):
+        self.JPESettings['toggle_channel'] = self.comboBox_JPE_Toggle.currentIndex()+1
+        self.newJPESettings.emit(self.JPESettings)
+        
+    @inlineCallbacks
+    def toggleJPEConnection(self, c = None):
+        if not self.JPEConnected:
+            yield self.dcbox.set_voltage(self.JPESettings['toggle_channel'] - 1, 10)
+            style = '''#push_JPEConnect{
+                    image: url(:/nSOTScanner/Pictures/Connected.png);
+                    background: black;
+                    }
+                    '''
+            self.push_JPEConnect.setStyleSheet(style)
+            self.JPEConnected = True
+        else: 
+            yield self.dcbox.set_voltage(self.JPESettings['toggle_channel'] - 1, 0)
+            style = '''#push_JPEConnect{
+                    image: url(:/nSOTScanner/Pictures/Disconnected.png);
+                    background: black;
+                    }
+                    '''
+            self.push_JPEConnect.setStyleSheet(style)
+            self.JPEConnected = False
+        self.updateJPEConnectStatus.emit(self.JPEConnected)
 
+    def updateJPEConnected(self, connected):
+        self.JPEConnected = connected
+        if connected:
+            style = '''#push_JPEConnect{
+                    image: url(:/nSOTScanner/Pictures/Connected.png);
+                    background: black;
+                    }
+                    '''
+            self.push_JPEConnect.setStyleSheet(style)
+        else:
+            style = '''#push_JPEConnect{
+                    image: url(:/nSOTScanner/Pictures/Disconnected.png);
+                    background: black;
+                    }
+                    '''
+            self.push_JPEConnect.setStyleSheet(style)
+            
     @inlineCallbacks
     def movePosX(self, c = None):
         self.lockInterface()
@@ -286,6 +342,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_movePosY.setEnabled(False)
         self.push_moveNegX.setEnabled(False)
         self.push_movePosX.setEnabled(False)
+        
+        self.push_JPEConnect.setEnabled(False)
 
         self.checkBox_Torque.setEnabled(False)
         
@@ -310,6 +368,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_movePosY.setEnabled(True)
         self.push_moveNegX.setEnabled(True)
         self.push_movePosX.setEnabled(True)
+        
+        self.push_JPEConnect.setEnabled(True)
 
         self.checkBox_Torque.setEnabled(True)
         
