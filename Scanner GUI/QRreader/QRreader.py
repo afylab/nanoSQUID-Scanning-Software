@@ -140,7 +140,7 @@ class Window(QtGui.QMainWindow, QRreaderWindowUI):
         Length=float(H)*11/12
         x = readNum(str(self.LineEdit_Xposition.text()),self)
         y = readNum(str(self.LineEdit_Yposition.text()),self)
-        self.Frame_TFTP.move(int(x/(256*30)*(10**6)*Length+W/2-70),int(-y/(256*30*(10**6))*Length-60+Length/2))
+        self.Frame_TFTP.move(int(x/(256*30)*(10**6)*Length+W/2-70),int(-y/(256*30)*(10**6)*Length-60+Length/2))
         self.Frame_TFTP.raise_()
 
     def ASQUID(self):
