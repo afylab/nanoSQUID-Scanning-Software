@@ -22,6 +22,7 @@ sys.path.append(path+'\ScriptingModule')
 sys.path.append(path+'\TemperatureControl')
 sys.path.append(path+'\QRreader')
 sys.path.append(path+'\GoToSetpoint')
+sys.path.append(path+'\DeviceSelect')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -41,11 +42,12 @@ import Scripting
 import TemperatureControl
 import QRreader
 import gotoSetpoint
+import DeviceSelect
 
 import exceptions
 
 class MainWindow(QtGui.QMainWindow, MainWindowUI):
-            
+    test = 0
     """ The following section initializes, or defines the initialization of the GUI and 
     connecting to servers."""
     def __init__(self, reactor, parent=None):
@@ -62,6 +64,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         #Intialize all widgets. 
         self.ScanControl = ScanControl.Window(self.reactor, None)
         self.LabRAD = LabRADConnect.Window(self.reactor, None)
+        self.DeviceSelect = DeviceSelect.Window(self.reactor, None)
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor, None)
         self.Plot = plotter.Plotter(self.reactor, None)
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
@@ -94,6 +97,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.actionTemperature_Control.triggered.connect(self.openTempControlWindow)
         self.actionQR_Reader.triggered.connect(self.openQRreaderWindow)
         self.actionNSOT_Setpoint.triggered.connect(self.openSetpointWindow)
+        self.actionDevice_Select.triggered.connect(self.openDeviceSelectWindow)
         
         #Connectors all layout buttons
         self.push_Layout1.clicked.connect(self.setLayout1)
@@ -102,8 +106,13 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.isRedEyes = False
         
         #Connect signals between modules
-        self.LabRAD.cxnLocal.connect(self.distributeLocalLabRADConnections)
-        self.LabRAD.cxnRemote.connect(self.distributeRemoteLabRADConnections)
+        #When LabRAD Connect module emits all the local and remote labRAD connections, it goes to the device
+        #select module. This module selects appropriate devices for things. That is then emitted and is distributed
+        #among all the other modules
+        self.LabRAD.cxnLocal.connect(self.DeviceSelect.connectLabRAD)
+        self.LabRAD.cxnRemote.connect(self.DeviceSelect.connectRemoteLabRAD)
+        self.DeviceSelect.newDeviceInfo.connect(self.distributeDeviceInfo)
+        
         self.LabRAD.cxnDisconnected.connect(self.disconnectLabRADConnections)
         self.LabRAD.newSessionFolder.connect(self.distributeSessionFolder)
         
@@ -137,8 +146,10 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         #Make sure default wiring connections and settings are emitted (eventually this will be a centralized window taking care of it)
         self.nSOTChar.changedConnectionSettings.emit(self.nSOTChar.settingsDict)
         
-        #Open by default the LabRAD Connect Module
+        #Open by default the LabRAD Connect Module and Device Select
         self.openLabRADConnectWindow()
+        self.openDeviceSelectWindow()
+        
         
     def setupAdditionalUi(self):
         """Some UI elements would not set properly from Qt Designer. These initializations are done here."""
@@ -220,11 +231,16 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.GoToSetpoint.showNormal()
         self.GoToSetpoint.moveDefault()
         self.GoToSetpoint.raise_()
-            
+        
+    def openDeviceSelectWindow(self):
+        self.DeviceSelect.showNormal()
+        self.DeviceSelect.moveDefault()
+        self.DeviceSelect.raise_()
+        
 #----------------------------------------------------------------------------------------------#
     """ The following section connects actions related to passing LabRAD connections."""
     
-    def distributeLocalLabRADConnections(self,dict):
+    def distributeDeviceInfo(self,dict):
         #Call connectLabRAD functions for relevant modules
         self.Plot.connectLabRAD(dict)
         self.nSOTChar.connectLabRAD(dict)
@@ -234,16 +250,10 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.JPEControl.connectLabRAD(dict)
         self.Scripting.connectLabRAD(dict)
         self.GoToSetpoint.connectLabRAD(dict)
-        
-    def distributeRemoteLabRADConnections(self,dict):
-        #Call connectRemoteLabRAD functions for relevant modules
-        self.FieldControl.connectRemoteLabRAD(dict)
-        self.Scripting.connectRemoteLabRAD(dict)
-        self.nSOTChar.connectRemoteLabRAD(dict)
-        self.TempControl.connectRemoteLabRAD(dict)
-        self.GoToSetpoint.connectRemoteLabRAD(dict)
+
         
     def disconnectLabRADConnections(self):
+        self.DeviceSelect.disconnectLabRAD()
         self.Plot.disconnectLabRAD()
         self.nSOTChar.disconnectLabRAD()
         self.ScanControl.disconnectLabRAD()
@@ -306,6 +316,10 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.ApproachMonitor.hide()
         self.JPEControl.hide()
         self.PosCalibration.hide()
+        self.GoToSetpoint.hide()
+        self.QRreader.hide()
+        self.TempControl.hide()
+        
             
     def closeEvent(self, e):
         try:

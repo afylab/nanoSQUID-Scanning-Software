@@ -112,35 +112,25 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def connectLabRAD(self, dict):
         try:
-            self.cxn = dict['cxn']
+            self.cxn = dict['servers']['local']['cxn']
+            self.gen_dv = dict['servers']['local']['dv']
+            
             #Create another connection for the connection to data vault to prevent 
             #problems of multiple windows trying to write the data vault at the same
             #time
-            self.gen_dv = dict['dv']
 
             from labrad.wrappers import connectAsync
-            self.cxn_dv = yield connectAsync(host = '127.0.0.1', password = 'pass')
-            self.dv = yield self.cxn_dv.data_vault
+            self.cxn_tf = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            self.dv = yield self.cxn_tf.data_vault
             curr_folder = yield self.gen_dv.cd()
             yield self.dv.cd(curr_folder)
 
-            self.hf = dict['hf2li']
+            self.hf = yield self.cxn_tf.hf2li_server
+            self.hf.select_device(dict['devices']['approach and TF']['hf2li'])
+            
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
-        except Exception as inst:
-            print inst
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")  
-        if not self.cxn: 
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif not self.dv:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif not self.hf:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        else:
+            
             try:
                 self.reinitSweep()
             except Exception as inst:
@@ -158,6 +148,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             except Exception as inst:
                 print inst
             self.unlockInterface()
+        except Exception as inst:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")  
+            print 'nsot labrad connect', inst
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            print 'line num ', exc_tb.tb_lineno
         
     def disconnectLabRAD(self):
         if self.hf is not False:

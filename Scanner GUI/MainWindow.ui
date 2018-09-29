@@ -224,6 +224,7 @@ background: black;
      <string>System</string>
     </property>
     <addaction name="actionLabRAD_Connect"/>
+    <addaction name="actionDevice_Select"/>
    </widget>
    <widget class="QMenu" name="menuGraphs">
     <property name="title">
@@ -360,6 +361,11 @@ background: black;
   <action name="actionNSOT_Setpoint">
    <property name="text">
     <string>nSOT Setpoint</string>
+   </property>
+  </action>
+  <action name="actionDevice_Select">
+   <property name="text">
+    <string>Device Select</string>
    </property>
   </action>
  </widget>

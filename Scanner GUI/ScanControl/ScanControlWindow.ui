@@ -336,7 +336,7 @@ qproperty-alignment: 'AlignVCenter | AlignCenter';
              </property>
              <property name="maximumSize">
               <size>
-               <width>40</width>
+               <width>60</width>
                <height>20</height>
               </size>
              </property>
@@ -374,7 +374,7 @@ qproperty-alignment: 'AlignVCenter | AlignCenter';
              </property>
              <property name="maximumSize">
               <size>
-               <width>40</width>
+               <width>60</width>
                <height>20</height>
               </size>
              </property>
@@ -1477,9 +1477,6 @@ border: 1px solid rgb(168,168,168)
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
-         <property name="margin">
-          <number>5</number>
-         </property>
          <item>
           <widget class="QLabel" name="label_Saving_2">
            <property name="sizePolicy">
@@ -1607,6 +1604,9 @@ color: rgb(168, 168, 168)
                <height>23</height>
               </size>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Moves to specified position. If in constant height scanning mode, will maintain the plane of the constant height scanning. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Set</string>
              </property>
@@ -1630,12 +1630,12 @@ color: rgb(168, 168, 168)
 }</string>
              </property>
              <property name="text">
-              <string>Zero Attocube Voltages:</string>
+              <string>Zero Attocube X-Y Voltages:</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="push_Zero">
+            <widget class="QPushButton" name="push_ZeroXY">
              <property name="minimumSize">
               <size>
                <width>70</width>
@@ -1648,8 +1648,55 @@ color: rgb(168, 168, 168)
                <height>23</height>
               </size>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Moves to the zero voltage position in X and Y. If in constant height scanning mode, will maintain the plane of the constant height scanning. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
-              <string>Zero</string>
+              <string>Zero X-Y</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_15">
+           <item>
+            <widget class="QLabel" name="label_Lines_4">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">#label_Lines{
+color: rgb(168, 168, 168)
+}</string>
+             </property>
+             <property name="text">
+              <string>Zero Attocube Z Voltage:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="push_ZeroZ">
+             <property name="minimumSize">
+              <size>
+               <width>70</width>
+               <height>23</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>70</width>
+               <height>23</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CAUTION: this zeros the DAC voltage that contributes to the height of the tip. Pressing this CAN crash the tip. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>Zero Z</string>
              </property>
             </widget>
            </item>
@@ -3387,7 +3434,7 @@ background:black
   <tabstop>lineEdit_FileName</tabstop>
   <tabstop>lineEdit_ImageNum</tabstop>
   <tabstop>comboBox_blinkMode</tabstop>
-  <tabstop>push_Zero</tabstop>
+  <tabstop>push_ZeroXY</tabstop>
   <tabstop>lineEdit_Xset</tabstop>
   <tabstop>lineEdit_Yset</tabstop>
   <tabstop>push_Set</tabstop>

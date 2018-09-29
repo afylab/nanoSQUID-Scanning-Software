@@ -47,11 +47,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.move(550,10)
         self.resize(700,510)
         
+    @inlineCallbacks
     def connectLabRAD(self, dict):
-        self.cxn =  dict['cxn']
-            
-    def connectRemoteLabRAD(self, dict):
-        self.cxnr = dict['cxn']
+        from labrad.wrappers import connectAsync
+        self.cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
+        
+        self.cxnr = yield connectAsync(host = '4KMonitor', password = 'pass')
         
     def disconnectLabRAD(self):
         self.cxn = None
@@ -143,7 +144,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         return line[0:num]
         
     def loadFile(self):
-        file = str(QtGui.QFileDialog.getOpenFileName(self, directory = 'C:\\Users\\cltschirhart'))
+        file = str(QtGui.QFileDialog.getOpenFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts'))
         if file:
             f = open(file,'r')
             message = f.read()
@@ -151,7 +152,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             f.close()
         
     def saveFile(self):
-        file = str(QtGui.QFileDialog.getSaveFileName(self, directory = 'C:\\Users\\cltschirhart'))
+        file = str(QtGui.QFileDialog.getSaveFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts'))
         if file:
             f = open(file,'w')
             message = self.codeEditor.toPlainText()
