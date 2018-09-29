@@ -12,7 +12,7 @@ sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
 
 #Window for going to a particular nSOT bias or magnetic field 
-class Window(QtGui.QDialog, GoToSetpointUI):
+class Window(QtGui.QMainWindow, GoToSetpointUI):
     def __init__(self, reactor, parent = None):
         super(Window, self).__init__(parent)
         
@@ -37,33 +37,43 @@ class Window(QtGui.QDialog, GoToSetpointUI):
 
         self.lockInterface()
         
+    @inlineCallbacks
     def connectLabRAD(self, dict):
         try:
-            self.cxn = dict['cxn']
-            self.dac = dict['dac_adc']
-            self.dcbox = dict['dc_box']
+            self.cxn = dict['servers']['local']['cxn']
+
+            #Eventually make this module compatible with Toellner, for now it is not
+            if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
+                self.dac_toe = dict['servers']['local']['dac_adc']
+            elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
+                self.ips = dict['servers']['remote']['ips120']
+            
+            '''
+            Create another connection to labrad in order to have a set of servers opened up in a context
+            specific to this module. This allows multiple datavault connections to be editted at the same
+            time, or communication with multiple DACs / other devices 
+            '''
+            from labrad.wrappers import connectAsync
+            self.cxn_nsot = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            
+            self.dac = yield self.cxn_nsot.dac_adc
+            self.dac.select_device(dict['devices']['nsot']['dac_adc'])
+                
+            #Eventually check here is blink is done with DC Box or DAC ADC
+            #If it's DAC ADC, skip next line
+            self.dcbox = yield self.cxn_nsot.ad5764_dcbox
+            self.dcbox.select_device(dict['devices']['nsot']['dc_box'])
+
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
-        except:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")  
-        if not self.cxn: 
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif not self.dac:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif not self.dcbox:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        else:
+            
             self.unlockInterface()
-        
-    def connectRemoteLabRAD(self,dict):
-        try:
-            self.ips = dict['ips120']
-        except:
-            pass
+        except Exception as inst:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+            print 'nsot labrad connect', inst
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            print 'line num ', exc_tb.tb_lineno
         
     def updateSetpointSettings(self, newSettings):
         self.magDevice = newSettings['Magnet device']
@@ -106,39 +116,39 @@ class Window(QtGui.QDialog, GoToSetpointUI):
             
     @inlineCallbacks
     def ipsGoToFieldFunc(self, field, rate, c = None):
-        yield self.magDev.set_control(3)
-        yield self.magDev.set_comm_protocol(6)
-        yield self.magDev.set_control(2)
+        yield self.ips.set_control(3)
+        yield self.ips.set_comm_protocol(6)
+        yield self.ips.set_control(2)
         yield self.sleep(0.1)
 
-        yield self.magDev.set_control(3)
-        yield self.magDev.set_targetfield(field)
-        yield self.magDev.set_control(2)
+        yield self.ips.set_control(3)
+        yield self.ips.set_targetfield(field)
+        yield self.ips.set_control(2)
         yield self.sleep(0.1)
 
-        yield self.magDev.set_control(3)
-        yield self.magDev.set_fieldsweep_rate(rate)
-        yield self.magDev.set_control(2)
+        yield self.ips.set_control(3)
+        yield self.ips.set_fieldsweep_rate(rate)
+        yield self.ips.set_control(2)
         yield self.sleep(0.1)
         
-        yield self.magDev.set_control(3)
-        yield self.magDev.set_activity(1)
-        yield self.magDev.set_control(2)
+        yield self.ips.set_control(3)
+        yield self.ips.set_activity(1)
+        yield self.ips.set_control(2)
         yield self.sleep(0.1)
 
         
         t0 = time.time()
         self.currStatusLbl.setText('Status: Ramping Field')
         while True:
-            yield self.magDev.set_control(3)
-            curr_field = yield self.magDev.read_parameter(7)
-            yield self.magDev.set_control(2)
+            yield self.ips.set_control(3)
+            curr_field = yield self.ips.read_parameter(7)
+            yield self.ips.set_control(2)
             if float(curr_field[1:]) <= field + 0.00001 and float(curr_field[1:]) >= field -0.00001:
                 break
             if time.time() - t0 > 1:
-                yield self.magDev.set_control(3)
-                yield self.magDev.set_targetfield(float(field))
-                yield self.magDev.set_control(2)
+                yield self.ips.set_control(3)
+                yield self.ips.set_targetfield(float(field))
+                yield self.ips.set_control(2)
                 t0 = time.time()
             yield self.sleep(0.25)
         
@@ -148,7 +158,7 @@ class Window(QtGui.QDialog, GoToSetpointUI):
 
     @inlineCallbacks
     def zeroFieldFunc(self, c = None):
-        if self.magPowerStr == 'ips':
+        if self.magDevice == 'IPS 120-10':
             try:
                 rate = float(self.fieldRampRateLine.text())
                 yield self.ipsGoToFieldFunc(0, rate, self.reactor)
@@ -168,19 +178,20 @@ class Window(QtGui.QDialog, GoToSetpointUI):
     @inlineCallbacks
     def gotoFieldFunc(self, c = None):
         flag = False
-        if self.magPowerStr == 'ips':
-            try:
-                field = float(self.window.siFormat(self.fieldSetpntLine.text(), 3))
-            except:
+        if self.magDevice == 'IPS 120-10':
+            field = readNum(self.fieldSetpntLine.text(), self, False)
+            if not isinstance(field, float):
                 self.fieldSetpntLine.setText('FORMAT')
                 flag = True
-            try:
-                rate = np.absolute(float(self.window.siFormat(self.fieldRampRateLine.text(), 3)))
-            except:
+
+            rate = np.absolute(readNum(self.fieldRampRateLine.text(), self, False))
+            if not isinstance(rate, float):
                 self.fieldRampRateLine.setText('FORMAT')
                 flag = True
+                
             if np.absolute(field) > 5:
                 field  = 5 * (field / np.absolute(field))
+                
             if flag == False:
                 yield self.ipsGoToFieldFunc(field, rate)
         
@@ -188,23 +199,20 @@ class Window(QtGui.QDialog, GoToSetpointUI):
     def gotoBiasFunc(self, c = None):
         flag = False
         
-        try:
-            new_bias = float(self.window.siFormat(self.biasSetpntLine.text(), 3))
-        except:
-            self.baisSetpntLine.setText('FORAMT')
+        new_bias = readNum(self.biasSetpntLine.text(), self, False)
+        if not isinstance(new_bias, float):
             flag = True
+            self.biasSetpntLine.setText('FORMAT ERROR')
             
-        try:
-            steps = np.absolute(int(self.window.siFormat(self.biasPntsLine.text(), 3)))
-        except:
-            self.biasPntsLine.setText('FORMAT')
+        steps = np.absolute(int(readNum(self.biasPntsLine.text(), self, False)))
+        if not isinstance(steps, int):
             flag = True
+            self.biasSetpntLine.setText('FORMAT ERROR')
             
-        try:
-            delay = np.absolute(int(self.window.siFormat(self.biasDelayLine.text(), 3))) * 1000
-        except:
-            self.biasDelayLine.setText('FORMAT')
+        delay = np.absolute(int(readNum(self.biasDelayLine.text(), self, False))) * 1000
+        if not isinstance(delay, int):
             flag = True
+            self.biasSetpntLine.setText('FORMAT ERROR')
             
         print self.setpointDict
         if np.absolute(new_bias) > 10:
@@ -221,7 +229,10 @@ class Window(QtGui.QDialog, GoToSetpointUI):
             
     @inlineCallbacks
     def blinkOutFunc(self, c = None):
-        yield self.window.blinkFunc()
+        a = yield self.dcbox.set_voltage(self.blinkChan, 5)
+        yield self.sleep(0.25)
+        b = yield self.dcbox.set_voltage(self.blinkChan, 0)
+        yield self.sleep(0.25)
         
     def lockInterface(self):
         pass
