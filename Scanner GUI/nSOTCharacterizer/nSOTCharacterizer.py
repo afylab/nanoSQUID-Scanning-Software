@@ -144,10 +144,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         
         #Initialize the servers to False
         self.cxn = False
-        self.cxn_dv = False
-        self.dv = False
         self.gen_dv = False
+        self.cxn_nsot = False
+        self.dv = False
         self.dac = False
+        self.dac_toe = False
         self.ips = False
         self.dcbox = False
         
@@ -168,59 +169,56 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     @inlineCallbacks
     def connectLabRAD(self, dict):
         try:
-            self.cxn = dict['cxn']
-            #Create another connection for the connection to data vault to prevent 
-            #problems of multiple windows trying to write the data vault at the same
-            #time
-            self.gen_dv = dict['dv']
+            self.cxn = dict['servers']['local']['cxn']
+            self.gen_dv = dict['servers']['local']['dv']
+
+            if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
+                self.dac_toe = dict['servers']['local']['dac_adc']
+                self.magnetPower.addItem('Toellner 8851')
+            elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
+                self.ips = dict['servers']['remote']['ips120']
+                self.magnetPower.addItem('IPS 120-10')
+            
+            '''
+            Create another connection to labrad in order to have a set of servers opened up in a context
+            specific to this module. This allows multiple datavault connections to be editted at the same
+            time, or communication with multiple DACs / other devices 
+            '''
+            
             from labrad.wrappers import connectAsync
-            self.cxn_dv = yield connectAsync(host = '127.0.0.1', password = 'pass')
-            self.dv = yield self.cxn_dv.data_vault
+            self.cxn_nsot = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            self.dv = yield self.cxn_nsot.data_vault
             curr_folder = yield self.gen_dv.cd()
             yield self.dv.cd(curr_folder)
-            self.dac = dict['dac_adc']
+            
+            self.dac = yield self.cxn_nsot.dac_adc
+            self.dac.select_device(dict['devices']['nsot']['dac_adc'])
+                
+            #Eventually check here is blink is done with DC Box or DAC ADC
+            #If it's DAC ADC, skip next line
+            self.dcbox = yield self.cxn_nsot.ad5764_dcbox
+            self.dcbox.select_device(dict['devices']['nsot']['dc_box'])
+
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
-        except:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        if not self.cxn: 
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif not self.dac:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif not self.dv:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        else:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(0, 170, 0);border-radius: 4px;}")
-            self.magnetPower.addItem('Toellner 8851')
+            
             self.unlockInterface()
+        except Exception as inst:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+            print 'nsot labrad connect', inst
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            print 'line num ', exc_tb.tb_lineno
             
-        try:
-            self.dcbox = dict['dc_box']
-        except:
-            pass
-        
-    def connectRemoteLabRAD(self,dict):
-        try:
-            self.ips = dict['ips120']
-        except:
-            pass
-        if not not self.ips:
-            self.magnetPower.addItem('IPS 120-10')
-            
+
     def disconnectLabRAD(self):
         self.magnetPower.removeItem(0)
-        if not not self.ips:
-            self.magnetPower.removeItem(0)
-        self.dv = False
-        self.gen_dv = False
         self.cxn = False
-        self.cxn_dv = False
+        self.gen_dv = False
+        self.cxn_nsot = False
+        self.dv = False
         self.dac = False
+        self.dac_toe = False
         self.ips = False
         self.dcbox = False
         self.push_Servers.setStyleSheet("#push_Servers{" + 
@@ -371,6 +369,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.showRetraceGrad.raise_()
 
     #Formats line edits with SI suffixes and/or scientific notation
+    #Why the fuck Avi... I told you this existed already. 
+    #TODO implement the version of this that already exists and is used everywhere else in
+    #the code
     def siFormat(self, string, digits = None):
         siDict = {'T': 12, 'G' : 9, 'M' : 6, 'k' : 3, 'c': -2, 'm' : -3, 'u' : -6, 'n' : -9, 'p' : -12}
         string = str(string)
@@ -538,7 +539,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
         self.view2.addItem(self.vRetraceLine, ignoreBounds = True)
         self.view2.addItem(self.hRetraceLine, ignoreBounds =True)
-
 
         self.view3 = pg.PlotItem(name = "Field-Bias-Noise")
         self.view3.setLabel('left', text='Bias Voltage', units = 'V')
@@ -757,6 +757,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                     self.updateBottomRetracePlot()
                 else:
                     pass
+                    
     def updateHLineBox(self):
         if self.liveTracePlotStatus is True:
             pass
@@ -866,6 +867,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                     self.updateBottomRetracePlot()
                 else:
                     pass
+                    
     def toggleTracePlots(self):
         self.currentBiasTraceSelect.currentIndexChanged.disconnect(self.toggle_bottomTracePlot)
         self.updateHLineBox()
@@ -980,6 +982,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.updateBottomTracePlot()
             else:
                 pass
+                
     def toggle_bottomRetracePlot(self):
         if self.tabsRetrace.currentIndex() == 0 and self.retracePlotNow == "field":
             self.retracePlotNow = "bias"
@@ -1234,7 +1237,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         
         elif magpower == 'Toellner 8851':
             if bVal != 0:
-                yield sweep_field(bVal, 0, 0.1)
+                yield self.toeSweepField(bVal, 0, 0.1)
                 yield self.dac.set_voltage(DAC_set_volt, 0)
                 yield self.dac.set_voltage(DAC_set_current, 0)
             else:
@@ -1896,7 +1899,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     
     @inlineCallbacks
     def blinkFunc(self, c = None):
-        
         if self.settingsDict['blink device'] == 'DAC ADC':
             yield self.dac.set_voltage(self.settingsDict['blink'] - 1, 5)
             yield self.sleep(0.25)
@@ -1952,11 +1954,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         #Ramps the DAC such that the Toellner voltage setpoint stays in constant current mode
         ramp_steps = int(np.absolute(V_setpoint - V_initial) * 1000)
         ramp_delay = 1000
-        yield self.dac.buffer_ramp([DAC_set_volt], [DAC_in_ref], [V_initial], [V_setpoint], ramp_steps, ramp_delay)
+        yield self.dac_toe.buffer_ramp([DAC_set_volt], [DAC_in_ref], [V_initial], [V_setpoint], ramp_steps, ramp_delay)
         
         #Sweeps field from B_i to B_f
         print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
-        yield self.dac.buffer_ramp([DAC_set_current],[DAC_in_ref],[v_start],[v_end], sweep_steps, magnet_delay)
+        yield self.dac_toe.buffer_ramp([DAC_set_current],[DAC_in_ref],[v_start],[v_end], sweep_steps, magnet_delay)
 
         
     def setSessionFolder(self, folder):

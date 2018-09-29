@@ -200,40 +200,30 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     @inlineCallbacks
     def connectLabRAD(self, dict):
         try:
-            self.cxn = dict['cxn']
+            self.cxn = dict['servers']['local']['cxn']
+            self.gen_dv = dict['servers']['local']['dv']
             
-            self.gen_dv = dict['dv']
             from labrad.wrappers import connectAsync
             self.cxn_dv = yield connectAsync(host = '127.0.0.1', password = 'pass')
             self.dv = yield self.cxn_dv.data_vault
 
-            #self.push_Servers.setStyleSheet("#push_Servers{" + 
-            #"background: rgb(0, 170, 0);border-radius: 4px;}")
+            self.unlockInterface()
         except:
             pass
-            #self.push_Servers.setStyleSheet("#push_Servers{" + 
-            #"background: rgb(161, 0, 0);border-radius: 4px;}")
-        if not self.cxn: 
-            pass
-            #self.push_Servers.setStyleSheet("#push_Servers{" + 
-            #"background: rgb(161, 0, 0);border-radius: 4px;}")
-
-        elif not self.dv:
-            pass
-            #self.push_Servers.setStyleSheet("#push_Servers{" + 
-            #"background: rgb(161, 0, 0);border-radius: 4px;}")
-        else:
-            pass
-            #self.push_Servers.setStyleSheet("#push_Servers{" + 
-            #"background: rgb(0, 170, 0);border-radius: 4px;}")
 
     def disconnectLabRAD(self):
         self.cxn = False
         self.cxn_dv = False
         self.gen_dv = False
         self.dv = False
-        #self.push_Servers.setStyleSheet("#push_Servers{" +     
-            #"background: rgb(144, 140, 9);border-radius: 4px;}")
+        
+        self.lockInterface()
+
+    def lockInterface(self):
+        pass
+        
+    def unlockInterface(self):
+        pass
         
     def matLinePlot(self):
         if not self.plotData is None:
@@ -968,7 +958,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.numPlots += 1
         self.newPlot = subPlot(self.dv, self.numPlots, self.reactor, self)
         self.newPlot.show()
-
+        
 class editDataInfo(QtGui.QDialog, Ui_EditDataInfo):
     def __init__(self, dataset, dv, reactor, parent = None):
         QtGui.QDialog.__init__(self, parent)

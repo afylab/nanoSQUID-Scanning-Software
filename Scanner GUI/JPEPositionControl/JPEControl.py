@@ -76,29 +76,29 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def moveDefault(self):
         self.move(550,10)
         
+    @inlineCallbacks
     def connectLabRAD(self, dict):
         try:
-            self.cxn = dict['cxn']
-            self.cpsc = dict['cpsc']
-            self.dcbox = dict['dc_box']
-        except:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")  
-        if not self.cxn:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif not self.cpsc:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif not self.dcbox:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        else:
+            self.cxn = dict['servers']['local']['cxn']
+            self.cpsc = dict['servers']['local']['cpsc']
+            
+            #Create another connection for the connection to data vault to prevent 
+            #problems of multiple windows trying to write the data vault at the same
+            #time
+            from labrad.wrappers import connectAsync
+            self.cxn_jpe = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            
+            self.dcbox = yield self.cxn_jpe.ad5764_dcbox
+            self.dcbox.select_device(dict['devices']['approach and TF']['dc_box'])
+            
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             self.serversConnected = True
             self.unlockInterface()
             self.cpsc.set_height(self.tip_height+33.9)
+        except:
+            self.push_Servers.setStyleSheet("#push_Servers{" + 
+            "background: rgb(161, 0, 0);border-radius: 4px;}")  
 
     def disconnectLabRAD(self):
         self.cpsc = False
@@ -335,7 +335,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_weight_back_C.setEnabled(False)
         
         self.comboBox_JPE_Address.setEnabled(False)
-
+        self.comboBox_JPE_Toggle.setEnabled(False)
+        
         self.push_moveNegZ.setEnabled(False)
         self.push_movePosZ.setEnabled(False)
         self.push_moveNegY.setEnabled(False)
@@ -361,7 +362,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_weight_back_C.setEnabled(True)
         
         self.comboBox_JPE_Address.setEnabled(True)
-
+        self.comboBox_JPE_Toggle.setEnabled(True)
+        
         self.push_moveNegZ.setEnabled(True)
         self.push_movePosZ.setEnabled(True)
         self.push_moveNegY.setEnabled(True)

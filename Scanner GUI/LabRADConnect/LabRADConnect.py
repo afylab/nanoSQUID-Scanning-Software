@@ -797,7 +797,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 
                     
     def chooseSession_2(self):
-        folder = str(QtGui.QFileDialog.getExistingDirectory(self, directory = 'C:\\Users\\cltschirhart'))
+        folder = str(QtGui.QFileDialog.getExistingDirectory(self, directory = 'C:\\Users\\cltschirhart\\Data Sets\\ScanData'))
         if folder:
             self.session_2 = folder
             self.lineEdit_Session_2.setText(self.session_2)
