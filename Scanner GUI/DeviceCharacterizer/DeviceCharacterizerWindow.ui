@@ -77,15 +77,15 @@ background: rgb(144, 140, 9);
    <widget class="QWidget" name="horizontalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>59</x>
-      <y>240</y>
+      <x>40</x>
+      <y>320</y>
       <width>921</width>
       <height>391</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QFrame" name="PlotArea">
+      <widget class="QFrame" name="PreliminaryPlot">
        <property name="styleSheet">
         <string notr="true">#PlotArea{
 background:black
@@ -104,8 +104,8 @@ background:black
    <widget class="QComboBox" name="comboBox_Output2">
     <property name="geometry">
      <rect>
-      <x>674</x>
-      <y>110</y>
+      <x>594</x>
+      <y>90</y>
       <width>59</width>
       <height>22</height>
      </rect>
@@ -318,8 +318,8 @@ color: rgb(168,168,168)
    <widget class="QLineEdit" name="lineEdit_Output2Name">
     <property name="geometry">
      <rect>
-      <x>670</x>
-      <y>80</y>
+      <x>590</x>
+      <y>60</y>
       <width>59</width>
       <height>18</height>
      </rect>
@@ -356,14 +356,193 @@ color: rgb(168,168,168)
    <widget class="QPushButton" name="PushButton_StartSweep">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>110</y>
+      <x>840</x>
+      <y>130</y>
       <width>75</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
      <string>Start Sweep</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="Lineedit_MinVoltage">
+    <property name="geometry">
+     <rect>
+      <x>830</x>
+      <y>170</y>
+      <width>113</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>-1</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="Lineedit_MaxVoltage">
+    <property name="geometry">
+     <rect>
+      <x>830</x>
+      <y>200</y>
+      <width>113</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_MinVoltage">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>170</y>
+      <width>100</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Min</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_MaxVoltage">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>200</y>
+      <width>100</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Max</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_Numberofstep">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>230</y>
+      <width>100</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Number of step</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="Lineedit_Numberofstep">
+    <property name="geometry">
+     <rect>
+      <x>830</x>
+      <y>230</y>
+      <width>113</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>10000</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="Lineedit_Delay">
+    <property name="geometry">
+     <rect>
+      <x>830</x>
+      <y>260</y>
+      <width>113</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>10</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_Delay">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>260</y>
+      <width>100</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Delay</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="PushButton_done">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>170</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>dn</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="SQUID">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>20</y>
+      <width>161</width>
+      <height>91</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="contextMenuPolicy">
+     <enum>Qt::ActionsContextMenu</enum>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">image: url(:/nSOTScanner/Pictures/SQUIDRotated2.png);
+background-color: rgb(3, 3, 3);</string>
+    </property>
+    <property name="text">
+     <string>PushButton</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_MinVoltage_Unit">
+    <property name="geometry">
+     <rect>
+      <x>960</x>
+      <y>170</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>(V)</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_MaxVoltage_Unit">
+    <property name="geometry">
+     <rect>
+      <x>960</x>
+      <y>200</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>(V)</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_Delay_Unit">
+    <property name="geometry">
+     <rect>
+      <x>960</x>
+      <y>260</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>(ms)</string>
     </property>
    </widget>
   </widget>
