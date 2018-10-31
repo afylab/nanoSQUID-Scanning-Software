@@ -10,6 +10,12 @@ import time
 import threading
 import copy
 from scipy.signal import detrend
+#importing a bunch of stuff
+
+
+################################################################################################################################
+#Test everything is still working, test currentindex
+
 
 
 path = sys.path[0] + r"\DeviceCharacterizer"
@@ -39,32 +45,62 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
         self.reactor = reactor
         self.setupUi(self)
         
-        self.setupPlot()
-        
-        self.inputs = {
-                'Input 1'                : 1,         # 1 Indexed DAC input into which the voltage corresponding to the Z atto motion 
-                }
-                
-        self.outputs = {
-                'Output 1'               : 1,         # 1 indexed DAC output that goes to constant gain on Z 
-                'Output 2'               : 2,         # 1 indexed DAC output that goes to constant gain on Z 
+        self.setupPreliminaryPlot()
 
+        self.Dict_LockIn= {  #A dictionary for lock in amplifier settings
+         'V':1,
+         'mV':10**-3,
+         'uV':10**-6,
+         'nV':10**-9,
+         'uA':10**-6,
+         'nA':10**-9,
+         'pA':10**-12,
+         'fA':10**-15,
+         }
+        
+        
+        self.DAC_Channel= {
+         'DAC 1':0,
+         'DAC 2':1,
+         'DAC 3':2,
+         'DAC 4':3,
+         'ADC 1':0,# Defining Channel to Number
+         'ADC 2':1,
+         'ADC 3':2,
+         'ADC 4':3,
+         }
+         
+        self.inputs = {
+                'Input 1'                : 1,        
+                }
+        self.outputs = {
+                'Output 1'               : 1,          #dictionary not yet used
+                'Output 2'               : 2,         
         }
         
         self.randomFill = -0.987654321
         self.numberfastdata=100
         self.numberslowdata=100
         self.lineTime = 64e-3
+#do not know what it means
 
 
+        self.Preliminary_SweepChannel=[]
+        self.Preliminary_MinVoltage=float(-1)
+        self.Preliminary_MaxVoltage=float(1)
+        self.Preliminary_Numberofstep=int(1000)
+        self.Preliminary_Delay=int(10)
+        #preliminary sweep basic parameter
+        
+        self.MainMagneticFieldSetting_MinimumField=float(0)
+        self.MainMagneticFieldSetting_MaximumField=float(0)
+        self.MainMagneticFieldSetting_NumberofstepsandMilifieldperTesla=int(1000)
+        self.MainMagneticFieldSetting_FieldSweepSpeed=int(10)
 
-        self.SweepChannel=int(0)
-        self.MinVoltage=float(-1)
-        self.MaxVoltage=float(1)
-        self.Numberofstep=int(1000)
-        self.Delay=int(10)
+        #Magnetic field sweep basic parameter
 
-#        self.setupAdditionalUi()
+        
+#        self.setupAdditionalUi()    #throwing an error
 
         self.moveDefault()
 
@@ -72,21 +108,36 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
         self.push_Servers.clicked.connect(self.showServersList)
         
 #######################################
-        self.comboBox_Input1.currentIndexChanged.connect(self.setInput1)
-        self.comboBox_Output1.currentIndexChanged.connect(self.setOutput1)
-        self.comboBox_Output2.currentIndexChanged.connect(self.setOutput2)
         self.PushButton_StartSweep.clicked.connect(self.Sweep)
 #######################################
 
 #######################################
-        self.Lineedit_MinVoltage.editingFinished.connect(self.UpdateMinVoltage)
-        self.Lineedit_MaxVoltage.editingFinished.connect(self.UpdateMaxVoltage)
-        self.Lineedit_Numberofstep.editingFinished.connect(self.UpdateNumberofstep)
-        self.Lineedit_Delay.editingFinished.connect(self.UpdateDelay)
+        self.Lineedit_Preliminary_MinVoltage.editingFinished.connect(self.UpdatePreliminary_MinVoltage)
+        self.Lineedit_Preliminary_MaxVoltage.editingFinished.connect(self.UpdatePreliminary_MaxVoltage)
+        self.Lineedit_Preliminary_Numberofstep.editingFinished.connect(self.UpdatePreliminary_Numberofstep)
+        self.Lineedit_Preliminary_Delay.editingFinished.connect(self.UpdatePreliminary_Delay)
+        self.Lineedit_MainMagneticFieldSetting_MinimumField.editingFinished.connect(self.UpdatePreliminary_MinVoltage)
+        self.Lineedit_MainMagneticFieldSetting_MaximumField.editingFinished.connect(self.UpdatePreliminary_MaxVoltage)
+        self.Lineedit_MainMagneticFieldSetting_NumberofstepsandMilifieldperTesla.editingFinished.connect(self.UpdatePreliminary_Numberofstep)
+        self.Lineedit_MainMagneticFieldSetting_FieldSweepSpeed.editingFinished.connect(self.UpdatePreliminary_Delay)
 #######################################
+
         # self.Lineedit_Channel.editingFinished.connect(self.UpdateChannel)
+        
+#######################################
+        self.comboBox_Preliminary_Output1.currentIndexChanged.connect(self.ChangePreliminary_Output1_Channel)
+        self.comboBox_Preliminary_Input1.currentIndexChanged.connect(self.ChangePreliminary_Input1_Channel)
+        self.comboBox_Preliminary_Input2.currentIndexChanged.connect(self.ChangePreliminary_Input2_Channel)
+        self.comboBox_Preliminary_Input3.currentIndexChanged.connect(self.ChangePreliminary_Input3_Channel)
+#######################################
 
+#######################################
+        self.comboBox_Voltage_LI_Sensitivity_1stdigit.currentIndexChanged.connect(self.ChangeVoltage_LI_Sensitivity_1stdigit)
+        self.comboBox_Voltage_LI_Sensitivity_2nddigit.currentIndexChanged.connect(self.ChangeVoltage_LI_Sensitivity_2nddigit)
+        self.comboBox_Voltage_LI_Sensitivity_Unit.currentIndexChanged.connect(self.ChangeVoltage_LI_Sensitivity_Unit)
+        self.comboBox_Voltage_LI_Expand.currentIndexChanged.connect(self.ChangeVoltage_LI_Expand)
 
+#######################################
         self.PushButton_done.clicked.connect(self.dummy)
 
         #Initialize all the labrad connections as none
@@ -99,18 +150,36 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
         #self.lockInterface()
 
         
-    def setupPlot(self):
-        self.sweepPlot = pg.PlotWidget(parent = self.PreliminaryPlot)
-        self.sweepPlot.setGeometry(QtCore.QRect(0, 0, 435, 290))
-        self.sweepPlot.setLabel('left', 'DC Feedback Voltage', units = 'V')
-        self.sweepPlot.setLabel('bottom', 'Bias Voltage', units = 'V')
-        self.sweepPlot.showAxis('right', show = True)
-        self.sweepPlot.showAxis('top', show = True)
-        self.sweepPlot.setXRange(0,1)
-        self.sweepPlot.setYRange(0,2)
-        self.sweepPlot.enableAutoRange(enable = True)
+    def setupPreliminaryPlot(self):
+        self.sweepPreliminary_Plot1 = pg.PlotWidget(parent = self.PreliminaryPlot1)
+        self.sweepPreliminary_Plot1.setGeometry(QtCore.QRect(0, 0, 435, 290))
+        self.sweepPreliminary_Plot1.setLabel('left', 'DC Feedback Voltage', units = 'V')
+        self.sweepPreliminary_Plot1.setLabel('bottom', 'Bias Voltage', units = 'V')
+        self.sweepPreliminary_Plot1.showAxis('right', show = True)
+        self.sweepPreliminary_Plot1.showAxis('top', show = True)
+        self.sweepPreliminary_Plot1.setXRange(0,1)
+        self.sweepPreliminary_Plot1.setYRange(0,2)
+        self.sweepPreliminary_Plot1.enableAutoRange(enable = True)
         
+        self.sweepPreliminary_Plot2 = pg.PlotWidget(parent = self.PreliminaryPlot2)
+        self.sweepPreliminary_Plot2.setGeometry(QtCore.QRect(0, 0, 435, 290))
+        self.sweepPreliminary_Plot2.setLabel('left', 'DC Feedback Voltage', units = 'V')
+        self.sweepPreliminary_Plot2.setLabel('bottom', 'Bias Voltage', units = 'V')
+        self.sweepPreliminary_Plot2.showAxis('right', show = True)
+        self.sweepPreliminary_Plot2.showAxis('top', show = True)
+        self.sweepPreliminary_Plot2.setXRange(0,1)
+        self.sweepPreliminary_Plot2.setYRange(0,2)
+        self.sweepPreliminary_Plot2.enableAutoRange(enable = True)
         
+        self.sweepPreliminary_Plot3 = pg.PlotWidget(parent = self.PreliminaryPlot3)
+        self.sweepPreliminary_Plot3.setGeometry(QtCore.QRect(0, 0, 435, 290))
+        self.sweepPreliminary_Plot3.setLabel('left', 'DC Feedback Voltage', units = 'V')
+        self.sweepPreliminary_Plot3.setLabel('bottom', 'Bias Voltage', units = 'V')
+        self.sweepPreliminary_Plot3.showAxis('right', show = True)
+        self.sweepPreliminary_Plot3.showAxis('top', show = True)
+        self.sweepPreliminary_Plot3.setXRange(0,1)
+        self.sweepPreliminary_Plot3.setYRange(0,2)
+        self.sweepPreliminary_Plot3.enableAutoRange(enable = True)
         
         
     def moveDefault(self):
@@ -202,21 +271,20 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
     # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous 
     # delay that allows other labrad / pyqt methods to run   
 
-    def setInput1(self):
-        self.inputs['Input 1'] = self.comboBox_Input1.currentIndex()+1
-        print self.inputs
-        
-    def setOutput1(self):
-        self.outputs['Output 1'] = self.comboBox_Output1.currentIndex()+1
-        print self.outputs
-        
-    def setOutput2(self):
-        self.outputs['Output 2'] = self.comboBox_Output2.currentIndex()+1
-        print self.outputs
 
 
     @inlineCallbacks
     def Sweep(self,c=None):
+        self.sweepPreliminary_Plot1.clear()
+        self.sweepPreliminary_Plot2.clear()
+        self.sweepPreliminary_Plot3.clear()
+
+        self.Preliminary_SweepChannel=[]
+        self.Preliminary_SweepChannel.append(self.Preliminary_Input1)
+        self.Preliminary_SweepChannel.append(self.Preliminary_Input2)
+        if self.Preliminary_Input3!=5
+            self.Preliminary_SweepChannel.append(self.Preliminary_Input3)# Create the list of Channel that we read while sweep
+            
         yield self.sleep(0.1)
         a = yield self.dac.read()
         while a != '':
@@ -235,46 +303,61 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
         
         # except Exception as inst:
             # print inst
-        self.dac.ramp1(self.SweepChannel,0,self.MinVoltage,10000,100)    #ramp to initial value
-        print self.SweepChannel
-        print self.MinVoltage
-        print self.MaxVoltage
-        print self.Numberofstep
-        print self.Delay
+        self.dac.ramp1(self.Preliminary_SweepChannel,0,self.Preliminary_MinVoltage,10000,100)    #ramp to initial value
+        print self.Preliminary_SweepChannel
+        print self.Preliminary_MinVoltage
+        print self.Preliminary_MaxVoltage
+        print self.Preliminary_Numberofstep
+        print self.Preliminary_Delay
 
-        dac_read= yield self.dac.buffer_ramp([self.SweepChannel],[0,1],[self.MinVoltage],[self.MaxVoltage],self.Numberofstep,self.Delay)
+        dac_read= yield self.dac.buffer_ramp([self.Preliminary_SweepChannel],self.Preliminary_SweepChannel,[self.Preliminary_MinVoltage],[self.Preliminary_MaxVoltage],self.Preliminary_Numberofstep,self.Preliminary_Delay)
         
         formatted_data = []
-        for j in range(0, self.Numberofstep):
+        for j in range(0, self.Preliminary_Numberofstep):
             formatted_data.append((j, dac_read[0][j], dac_read[1][j]))
+            if self.Preliminary_Input1!=5  #add additional data if Input2 is not None
+                formatted_data[j]+=(dac_read[2][j])
+                resistance=dac_read[1]/dac_read[2]
+                formatted_data[j]+=(resistance)  #proccessing to Resistance
         yield self.dv.add(formatted_data)
+        self.plotPreliminary_Data1(formatted_data)
+
         
-        
-        print self.SweepChannel
-        print self.MaxVoltage
-        self.dac.ramp1(self.SweepChannel,self.MaxVoltage,0.0,10000,100)
+        self.dac.ramp1(self.Preliminary_SweepChannel,self.Preliminary_MaxVoltage,0.0,10000,100)
         
         print "done"
-        self.plotSweepData(formatted_data)
+        self.plotPreliminary_Data1(formatted_data)
+        if self.Preliminary_Input1!=5
+             self.plotPreliminary_Data2(formatted_data)
+             self.plotPreliminary_Data3(formatted_data)
 
     def dummy(self):
-        print self.MinVoltage
-        self.dac.set_voltage(self.SweepChannel,0)
+        print self.Preliminary_MinVoltage
+        self.dac.set_voltage(self.Preliminary_SweepChannel,0)
         print "done2"
 
-    def plotSweepData(self, data):
+    def plotPreliminary_Data1(self, data):
         self.data = data
         xVals = [x[1] for x in self.data]
-        print xVals
         yVals = [x[2] for x in self.data]
-        print yVals
         # try:
-        self.sweepPlot.plot(x = xVals, y = yVals, pen = 0.5)
+        self.sweepPreliminary_Plot1.plot(x = xVals, y = yVals, pen = 0.5)
             
         # except Exception as inst:
             # print inst
-
+    def plotPreliminary_Data2(self, data):
+        self.data = data
+        xVals = [x[1] for x in self.data]
+        yVals = [x[3] for x in self.data]
+        # try:
+        self.sweepPreliminary_Plot2.plot(x = xVals, y = yVals, pen = 0.5)
         
+    def plotPreliminary_Data3(self, data):
+        self.data = data
+        xVals = [x[1] for x in self.data]
+        yVals = [x[4] for x in self.data]
+        # try:
+        self.sweepPreliminary_Plot3.plot(x = xVals, y = yVals, pen = 0.5)
         
     @inlineCallbacks
     def update_data(self):
@@ -302,7 +385,7 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
                 stopfast = self.stopOutput1
                 out_list = [self.outputs['Output 1']-1]
                 in_list = [self.inputs['Input 1']-1]
-                newData = yield self.dac.buffer_ramp(out_list,in_list,[startx],[stopx], self.numberfastdata, self.delay)
+                newData = yield self.dac.buffer_ramp(out_list,in_list,[startx],[stopx], self.numberfastdata, self.Preliminary_Delay)
 
             for j in range(0, self.pixels):
                 #Putting in 0 for SSAA voltage (last entry) because not yet being used/read
@@ -313,22 +396,59 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
 
             
 ##########################Update All the parameters#################
-    def UpdateMinVoltage(self):
-        self.MinVoltage=float(str(self.Lineedit_MinVoltage.text()))
-        print self.MinVoltage
+    def UpdatePreliminary_MinVoltage(self):
+        self.Preliminary_MinVoltage=float(str(self.Lineedit_Preliminary_MinVoltage.text()))
         
-    def UpdateMaxVoltage(self):
-        self.MaxVoltage=float(str(self.Lineedit_MaxVoltage.text()))
+    def UpdatePreliminary_MaxVoltage(self):
+        self.Preliminary_MaxVoltage=float(str(self.Lineedit_Preliminary_MaxVoltage.text()))
         
-    def UpdateNumberofstep(self):
-        self.Numberofstep=int(str(self.Lineedit_Numberofstep.text()))
+    def UpdatePreliminary_Numberofstep(self):
+        self.Preliminary_Numberofstep=int(str(self.Lineedit_Preliminary_Numberofstep.text()))
  
-    def UpdateDelay(self):
-        self.Delay=int(str(self.Lineedit_Delay.text()))
-            
-##########################Update All the parameters#################
-
+    def UpdatePreliminary_Delay(self):
+        self.Preliminary_Delay=int(str(self.Lineedit_Preliminary_Delay.text()))
         
+    def UpdateMainMagneticFieldSetting_MinimumField(self):
+        self.MainMagneticFieldSetting_MinimumField=float(str(self.Lineedit_MainMagneticFieldSetting_MinimumField.text()))
+        
+    def UpdatePreliminary_MaxVoltage(self):
+        self.MainMagneticFieldSetting_MaximumField=float(str(self.Lineedit_MainMagneticFieldSetting_MaximumField.text()))
+        
+    def UpdatePreliminary_Numberofstep(self):
+        self.MainMagneticFieldSetting_NumberofstepsandMilifieldperTesla=int(str(self.Lineedit_MainMagneticFieldSetting_NumberofstepsandMilifieldperTesla.text()))
+ 
+    def UpdatePreliminary_Delay(self):
+        self.MainMagneticFieldSetting_FieldSweepSpeed=int(str(self.Lineedit_MainMagneticFieldSetting_FieldSweepSpeed.text()))
+        
+    def ChangePreliminary_Output1_Channel(self):
+        self.Preliminary_Output1=self.comboBox_Preliminary_Output1.currentIndex()
+        
+    def ChangePreliminary_Input1_Channel(self):
+        self.Preliminary_Input1=self.comboBox_Preliminary_Input1.currentIndex()
+        
+    def ChangePreliminary_Input2_Channel(self):
+        self.Preliminary_Input2=self.comboBox_Preliminary_Input2.currentIndex()
+        
+    def ChangePreliminary_Input3_Channel(self):
+        self.Preliminary_Input3=self.comboBox_Preliminary_Input3.currentIndex()
+        
+    def ChangeVoltage_LI_Sensitivity_1stdigit(self):
+        self.Voltage_LI_Multiplier1=int(self.comboBox_Voltage_LI_Sensitivity_1stdigit.currentText())
+        
+    def ChangeVoltage_LI_Sensitivity_2nddigit(self):
+        self.Voltage_LI_Multiplier2=int(self.comboBox_Voltage_LI_Sensitivity_2nddigit.currentText())
+        
+    def ChangeVoltage_LI_Sensitivity_Unit(self):
+        self.Voltage_LI_Multiplier3=int(Dict_LockIn(str(self.comboBox_Voltage_LI_Sensitivity_Unit.currentText())))
+
+    def ChangeVoltage_LI_Expand(self):
+        self.Voltage_LI_Multiplier4=int(self.comboBox_Voltage_LI_Expand.currentText())
+
+       
+
+        ##########################Update All the parameters#################
+
+
     def updateHistogramLevels(self, hist):
         mn, mx = hist.getLevels()
         self.Plot2D.ui.histogram.setLevels(mn, mx)
