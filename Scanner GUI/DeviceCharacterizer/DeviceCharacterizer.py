@@ -82,7 +82,7 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
         self.numberfastdata=100
         self.numberslowdata=100
         self.lineTime = 64e-3
-#do not know what it means
+        #do not know what it means
 
 
         self.Preliminary_SweepChannel=[]
@@ -188,18 +188,13 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
     @inlineCallbacks
     def connectLabRAD(self, dict):
         try:
-            self.cxn = dict['cxn']
-            self.dac = dict['dac_adc']
-            #Create another connection for the connection to data vault to prevent 
-            #problems of multiple windows trying to write the data vault at the same
-            #time
-            self.gen_dv = dict['dv']
             from labrad.wrappers import connectAsync
-            self.cxn_dv = yield connectAsync(host = '127.0.0.1', password = 'pass')
-            self.dv = yield self.cxn_dv.data_vault
-            curr_folder = yield self.gen_dv.cd()
-            yield self.dv.cd(curr_folder)
-            self.dcbox = dict['dc_box']
+            self.cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            self.dv = yield self.cxn.data_vault
+            self.dac = yield self.cxn.dac_adc
+            yield self.dac.select_device('DA16_16_06')
+            self.dcbox = yield self.cxn.ad5764_dcbox
+            
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
         except:
@@ -282,7 +277,7 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
         self.Preliminary_SweepChannel=[]
         self.Preliminary_SweepChannel.append(self.Preliminary_Input1)
         self.Preliminary_SweepChannel.append(self.Preliminary_Input2)
-        if self.Preliminary_Input3!=5
+        if self.Preliminary_Input3!=5:
             self.Preliminary_SweepChannel.append(self.Preliminary_Input3)# Create the list of Channel that we read while sweep
             
         yield self.sleep(0.1)
@@ -315,7 +310,7 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
         formatted_data = []
         for j in range(0, self.Preliminary_Numberofstep):
             formatted_data.append((j, dac_read[0][j], dac_read[1][j]))
-            if self.Preliminary_Input1!=5  #add additional data if Input2 is not None
+            if self.Preliminary_Input1!=5:  #add additional data if Input2 is not None
                 formatted_data[j]+=(dac_read[2][j])
                 resistance=dac_read[1]/dac_read[2]
                 formatted_data[j]+=(resistance)  #proccessing to Resistance
@@ -327,7 +322,7 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
         
         print "done"
         self.plotPreliminary_Data1(formatted_data)
-        if self.Preliminary_Input1!=5
+        if self.Preliminary_Input1!=5:
              self.plotPreliminary_Data2(formatted_data)
              self.plotPreliminary_Data3(formatted_data)
 
@@ -338,8 +333,9 @@ class Window(QtGui.QMainWindow, DeviceCharacterizerWindowUI):
 
     def plotPreliminary_Data1(self, data):
         self.data = data
-        xVals = [x[1] for x in self.data]
-        yVals = [x[2] for x in self.data]
+        gateVoltage = [x[1] for x in self.data]
+        voltage = [x[2] for x in self.data]
+        yVals = [x[3] for x in self.data]
         # try:
         self.sweepPreliminary_Plot1.plot(x = xVals, y = yVals, pen = 0.5)
             
