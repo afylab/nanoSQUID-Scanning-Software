@@ -3,8 +3,12 @@ from PyQt4 import QtGui, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import time 
 from array import array
+import pyqtgraph as pg
 import numpy
+import decimal #required for more digits
 from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData, ScanImageView
+import threading
+from scipy.signal import detrend
 
 
 path = sys.path[0] 
@@ -18,26 +22,40 @@ class Window(QtGui.QMainWindow, QRreaderWindowUI):
         self.setupUi(self)
         self.setupAdditionalUi()
 
-        self.PushBotton_qrcode00.clicked.connect(lambda: self.toggleqrcode((0,0),self.PushBotton_qrcode00))
-        self.PushBotton_qrcode01.clicked.connect(lambda: self.toggleqrcode((0,1),self.PushBotton_qrcode01))
-        self.PushBotton_qrcode02.clicked.connect(lambda: self.toggleqrcode((0,2),self.PushBotton_qrcode02))
-        self.PushBotton_qrcode03.clicked.connect(lambda: self.toggleqrcode((0,3),self.PushBotton_qrcode03))
-        self.PushBotton_qrcode10.clicked.connect(lambda: self.toggleqrcode((1,0),self.PushBotton_qrcode10))
-        self.PushBotton_qrcode11.clicked.connect(lambda: self.toggleqrcode((1,1),self.PushBotton_qrcode11))
-        self.PushBotton_qrcode12.clicked.connect(lambda: self.toggleqrcode((1,2),self.PushBotton_qrcode12))
-        self.PushBotton_qrcode13.clicked.connect(lambda: self.toggleqrcode((1,3),self.PushBotton_qrcode13))
-        self.PushBotton_qrcode20.clicked.connect(lambda: self.toggleqrcode((2,0),self.PushBotton_qrcode20))
-        self.PushBotton_qrcode21.clicked.connect(lambda: self.toggleqrcode((2,1),self.PushBotton_qrcode21))
-        self.PushBotton_qrcode22.clicked.connect(lambda: self.toggleqrcode((2,2),self.PushBotton_qrcode22))
-        self.PushBotton_qrcode23.clicked.connect(lambda: self.toggleqrcode((2,3),self.PushBotton_qrcode23))
-        self.PushBotton_qrcode30.clicked.connect(lambda: self.toggleqrcode((3,0),self.PushBotton_qrcode30))
-        self.PushBotton_qrcode31.clicked.connect(lambda: self.toggleqrcode((3,1),self.PushBotton_qrcode31))
-        self.PushBotton_qrcode32.clicked.connect(lambda: self.toggleqrcode((3,2),self.PushBotton_qrcode32))
-        self.PushBotton_qrcode33.clicked.connect(lambda: self.toggleqrcode((3,3),self.PushBotton_qrcode33))
+        self.pushButton_qrcode00.clicked.connect(lambda: self.toggleqrcode((0,0),self.pushButton_qrcode00))
+        self.pushButton_qrcode01.clicked.connect(lambda: self.toggleqrcode((0,1),self.pushButton_qrcode01))
+        self.pushButton_qrcode02.clicked.connect(lambda: self.toggleqrcode((0,2),self.pushButton_qrcode02))
+        self.pushButton_qrcode03.clicked.connect(lambda: self.toggleqrcode((0,3),self.pushButton_qrcode03))
+        self.pushButton_qrcode10.clicked.connect(lambda: self.toggleqrcode((1,0),self.pushButton_qrcode10))
+        self.pushButton_qrcode11.clicked.connect(lambda: self.toggleqrcode((1,1),self.pushButton_qrcode11))
+        self.pushButton_qrcode12.clicked.connect(lambda: self.toggleqrcode((1,2),self.pushButton_qrcode12))
+        self.pushButton_qrcode13.clicked.connect(lambda: self.toggleqrcode((1,3),self.pushButton_qrcode13))
+        self.pushButton_qrcode20.clicked.connect(lambda: self.toggleqrcode((2,0),self.pushButton_qrcode20))
+        self.pushButton_qrcode21.clicked.connect(lambda: self.toggleqrcode((2,1),self.pushButton_qrcode21))
+        self.pushButton_qrcode22.clicked.connect(lambda: self.toggleqrcode((2,2),self.pushButton_qrcode22))
+        self.pushButton_qrcode23.clicked.connect(lambda: self.toggleqrcode((2,3),self.pushButton_qrcode23))
+        self.pushButton_qrcode30.clicked.connect(lambda: self.toggleqrcode((3,0),self.pushButton_qrcode30))
+        self.pushButton_qrcode31.clicked.connect(lambda: self.toggleqrcode((3,1),self.pushButton_qrcode31))
+        self.pushButton_qrcode32.clicked.connect(lambda: self.toggleqrcode((3,2),self.pushButton_qrcode32))
+        self.pushButton_qrcode33.clicked.connect(lambda: self.toggleqrcode((3,3),self.pushButton_qrcode33))
+        
+        self.lineEdit_Xpositioncenter.editingFinished.connect(self.UpdateCenterX)
+        self.lineEdit_Ypositioncenter.editingFinished.connect(self.UpdateCenterY)
+        
+        self.CenterX=83
+        self.CenterY=83
+        self.TotalX=166
+        self.TotalY=166
+        self.QRpictureX=200
+        self.QRpictureY=200
+        self.lineEdit_Xpositioncenter.setText(str(self.CenterX))
+        self.lineEdit_Ypositioncenter.setText(str(self.CenterY))
+
         
         self.fill=numpy.zeros((4,4))
         
-        self.PushBotton_Gotobutton.clicked.connect(self.GoTo)
+        #self.pushButton_Gotobutton.clicked.connect(self.GoTo)    #Obsolete
+        self.pushButton_SetupCenter.clicked.connect(self.SetupCenter)
 
         self.moveDefault()
 
@@ -49,14 +67,17 @@ class Window(QtGui.QMainWindow, QRreaderWindowUI):
 
     def moveDefault(self):
         self.move(550,10)
+
+        
         
     def Updateposition(self):
         self.xposition=int(self.fill[0,0])*2**7+int(self.fill[0,1])*2**6+int(self.fill[0,2])*2**5+int(self.fill[0,3])*2**4+int(self.fill[1,0])*2**3+int(self.fill[1,1])*2**2+int(self.fill[1,2])*2**1+int(self.fill[1,3])*2**0
-        valx=formatNum(self.inttonum(self.xposition))
-        self.LineEdit_Xposition.setText(valx)
+        #This convert the QR code to the integer it correspond to
+        valx=formatNum(self.inttonum(self.xposition)-float(decimal.Decimal(self.CenterX*30)/decimal.Decimal(10**6)))
+        self.lineEdit_Xposition.setText(valx)
         self.yposition=int(self.fill[2,0])*2**7+int(self.fill[2,1])*2**6+int(self.fill[2,2])*2**5+int(self.fill[2,3])*2**4+int(self.fill[3,0])*2**3+int(self.fill[3,1])*2**2+int(self.fill[3,2])*2**1+int(self.fill[3,3])*2**0
-        valy=formatNum(self.inttonum(self.yposition))
-        self.LineEdit_Yposition.setText(valy)
+        valy=formatNum(self.inttonum(self.yposition)-float(decimal.Decimal(self.CenterY*30)/decimal.Decimal(10**6)))
+        self.lineEdit_Yposition.setText(valy)
 
     def colorButton(self, button, fill):
         fillstatus ="background-color: red;color:black"
@@ -65,35 +86,32 @@ class Window(QtGui.QMainWindow, QRreaderWindowUI):
             button.setStyleSheet(fillstatus)
         else:
             button.setStyleSheet(notfillstatus)
+            # This just change the color of the button
 
     def colorAllButton(self):
         for i in range(0,4):
             for j in range (0,4):
                 Status=self.fill[i,j]
-                self.colorButton(eval("self.PushBotton_qrcode"+str(i)+str(j)),Status)
-            
-#    def Updatedistancetocenter(self):
-#        x = readNum(str(self.LineEdit_Xposition.text()),self)
-#        y = readNum(str(self.LineEdit_Yposition.text()),self)
-#        self.LineEdit_Xposition.setText(formatNum(x-127.5*30/(10**6)))
-#        self.LineEdit_Yposition.setText(formatNum(y-127.5*30/(10**6)))
+                self.colorButton(eval("self.pushButton_qrcode"+str(i)+str(j)),Status)
+                #this change the color of all the button
 
     def numtoint(self,num):
-        val=int((num*10**6)/30.0+127.5)
+        val=int((num*10**6)/30.0)
         return val
+        #convert the distance to the actual number
 
     def inttonum(self,int):
-        val=float((int*30-127.5*30)/(10**6))
+        val=float(decimal.Decimal(int*30)/decimal.Decimal((10**6)))
         return val
-        
+        #convert the number to the actual distance
         
     def GoTo(self):
-        if self.LineEdit_Xposition.text()=="SQUID":
+        if self.lineEdit_Xposition.text()=="SQUID":
             print("yes")
             self.ASQUID()
         else:  
-            valx=readNum(str(self.LineEdit_Xposition.text()),self)
-            valy=readNum(str(self.LineEdit_Yposition.text()),self)
+            valx=readNum(str(self.lineEdit_Xposition.text()),self)
+            valy=readNum(str(self.lineEdit_Yposition.text()),self)#read the position from entered value
             x = self.numtoint(valx)
             y = self.numtoint(valy)
             xbinaryarray=list('{0:08b}'.format(x))
@@ -108,7 +126,37 @@ class Window(QtGui.QMainWindow, QRreaderWindowUI):
             self.colorAllButton()
             self.UpdateTipTF()
 
-            
+    def SetupCenter(self):
+        self.CenterX=int(self.fill[0,0])*2**7+int(self.fill[0,1])*2**6+int(self.fill[0,2])*2**5+int(self.fill[0,3])*2**4+int(self.fill[1,0])*2**3+int(self.fill[1,1])*2**2+int(self.fill[1,2])*2**1+int(self.fill[1,3])*2**0
+        self.CenterY=int(self.fill[2,0])*2**7+int(self.fill[2,1])*2**6+int(self.fill[2,2])*2**5+int(self.fill[2,3])*2**4+int(self.fill[3,0])*2**3+int(self.fill[3,1])*2**2+int(self.fill[3,2])*2**1+int(self.fill[3,3])*2**0
+        self.TotalX=2*self.CenterX
+        self.TotalY=2*self.CenterY#read the configuration of QRCode
+        self.lineEdit_Xpositioncenter.setText(str(self.CenterX))
+        self.lineEdit_Ypositioncenter.setText(str(self.CenterY))
+        self.Updateposition()
+        self.UpdateTipTF()
+        
+    def UpdateCenterX(self):
+        new_CenterX=readNum(self.lineEdit_Xpositioncenter.text(),self,False)
+        if new_CenterX>0 and new_CenterX<129 and isinstance(new_CenterX, float):
+            self.CenterX=int(str(self.lineEdit_Xpositioncenter.text()))
+            self.TotalX=2*self.CenterX
+        self.lineEdit_Xpositioncenter.setText(str(self.CenterX))
+        self.Updateposition()
+        self.UpdateTipTF()
+
+
+        
+    def UpdateCenterY(self):
+        new_CenterY=readNum(self.lineEdit_Ypositioncenter.text(),self,False)
+        if new_CenterY>0 and new_CenterY<129 and isinstance(new_CenterY, float):
+            self.CenterY=int(str(self.lineEdit_Ypositioncenter.text()))
+            self.TotalY=2*self.CenterY
+        self.lineEdit_Ypositioncenter.setText(str(self.CenterY))
+        self.Updateposition()
+        self.UpdateTipTF()
+
+
     def setupAdditionalUi(self):
     #Set up UI that isn't easily done from Qt Designer
         pass
@@ -130,17 +178,17 @@ class Window(QtGui.QMainWindow, QRreaderWindowUI):
             self.fill[location] = False
             self.colorButton(button, False)
         self.Updateposition()
-        x = readNum((self.LineEdit_Xposition.text()),self)
-        y = readNum((self.LineEdit_Yposition.text()),self)
+        x = readNum((self.lineEdit_Xposition.text()),self)
+        y = readNum((self.lineEdit_Yposition.text()),self)
         self.UpdateTipTF()
 
     def UpdateTipTF(self):
-        W=float(self.Frame_Minimap.width())
-        H=self.Frame_Minimap.height()
-        Length=float(H)*11/12
-        x = readNum(str(self.LineEdit_Xposition.text()),self)
-        y = readNum(str(self.LineEdit_Yposition.text()),self)
-        self.Frame_TFTP.move(int(x/(256*30)*(10**6)*Length+W/2-70),int(-y/(256*30)*(10**6)*Length-60+Length/2))
+        W=float(self.Frame_Minimap.width())#specific to picture
+        H=self.Frame_Minimap.height()#specific to picture
+        Length=float(H)*11/12#specific to picture
+        x = readNum(str(self.lineEdit_Xposition.text()),self)
+        y = readNum(str(self.lineEdit_Yposition.text()),self)
+        self.Frame_TFTP.move(int(x/(self.TotalX*30)*(10**6)*Length+W/2-70),int(-y/(self.TotalY*30)*(10**6)*Length-60+Length/2))#formula is empirical
         self.Frame_TFTP.raise_()
 
     def ASQUID(self):
@@ -179,5 +227,3 @@ if __name__=="__main__":
     window.show()
     reactor.runReturn()
     sys.exit(app.exec_())
-
-
