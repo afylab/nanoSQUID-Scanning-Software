@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1000</width>
-    <height>854</height>
+    <width>1257</width>
+    <height>981</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -55,7 +55,7 @@ background-color:rgb(230,230,230);
 
 </string>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_3" stretch="1,10">
+   <layout class="QVBoxLayout" name="verticalLayout_3" stretch="1,7">
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_Main_Top">
       <item>
@@ -71,7 +71,7 @@ border:1px solid rgb(168,168,168)
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,3,6,5">
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_Main_Basic1">
            <item>
@@ -236,238 +236,851 @@ background-color: rgb(3, 3, 3);</string>
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QFrame" name="frame_MainBasic_DACOUTPUT">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="layoutDirection">
+            <enum>Qt::LeftToRight</enum>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">#frame_MainBasic_DACOUTPUT{
+border:1px solid rgb(168,168,168)
+}</string>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_MainBasic_DACOUTPUT" rowstretch="1,0,0,0" columnstretch="3,3,1,2,3,0">
+            <item row="3" column="3">
+             <widget class="QPushButton" name="pushButton_MainBasic_DACOUTPUT4">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Set DAC4</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="lineEdit_MainBasic_DACOUTPUT4">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QPushButton" name="pushButton_MainBasic_DACOUTPUT3">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Set DAC3</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QPushButton" name="pushButton_MainBasic_DACOUTPUT1">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Set DAC1</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_MainBasic_DACOUTPUT3">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DAC3</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_MainBasic_DACOUTPUT1">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DAC1</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_MainBasic_DACOUTPUT4">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DAC4</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_MainBasic_DACOUTPUT2">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DAC2</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="lineEdit_MainBasic_DACOUTPUT1">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="lineEdit_MainBasic_DACOUTPUT3">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QPushButton" name="pushButton_MainBasic_DACOUTPUT2">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Set DAC2</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="lineEdit_MainBasic_DACOUTPUT2">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4">
+             <widget class="QLabel" name="label_MainBasic_DACOUTPUT1_Current">
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="4">
+             <widget class="QLabel" name="label_MainBasic_DACOUTPUT2_Current">
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="2">
+             <widget class="QLabel" name="label_MinVoltage_Unit_5">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QLabel" name="label_MinVoltage_Unit_2">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QLabel" name="label_MinVoltage_Unit_3">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="4">
+             <widget class="QLabel" name="label_MainBasic_DACOUTPUT4_Current">
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <widget class="QLabel" name="label_MinVoltage_Unit_4">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="4">
+             <widget class="QLabel" name="label_MainBasic_DACOUTPUT3_Current">
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="5">
+             <widget class="QLabel" name="label_MinVoltage_Unit_6">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="5">
+             <widget class="QLabel" name="label_MinVoltage_Unit_7">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="5">
+             <widget class="QLabel" name="label_MinVoltage_Unit_8">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="5">
+             <widget class="QLabel" name="label_MinVoltage_Unit_9">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
-      <item>
-       <widget class="QFrame" name="frame_Lockin_Settings">
-        <property name="styleSheet">
-         <string notr="true">#frame_Lockin_Settings{
+     </layout>
+    </item>
+    <item>
+     <widget class="QTabWidget" name="tabWidget_Main">
+      <property name="styleSheet">
+       <string notr="true">QTabWidget::pane { border: 0; }
+QTabBar::tab{background: black;
+color: rgb(168,168,168);
+}
+QTabBar::tab:selected {background: rgb(50,50,50);}</string>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab_FourTerminal">
+       <property name="styleSheet">
+        <string notr="true">#tab_FourTerminal{
+background-color: rgb(0, 0, 0);
+}
+
+
+
+</string>
+       </property>
+       <attribute name="title">
+        <string>FourTerminal</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,1">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_FourTerminalDummyLeft">
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalPlot1">
+            <item>
+             <widget class="QFrame" name="FourTerminalPlot1">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">#PlotArea{
+background:black
+}</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalPlot2">
+            <item>
+             <widget class="QFrame" name="FourTerminalPlot2">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">#PlotArea{
+background:black
+}</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalPlot3">
+            <item>
+             <widget class="QFrame" name="FourTerminalPlot3">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">#PlotArea{
+background:black
+}</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_FourTerminalDummyRight" stretch="3,0,3,3,3,4">
+          <item>
+           <widget class="QFrame" name="frame_FourTerminalPicture">
+            <property name="styleSheet">
+             <string notr="true">image: url(:/nSOTScanner/Pictures/Four Terminal.png);
+background-color: rgb(3, 3, 3);</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <zorder></zorder>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_FourTerminal_DummyRight_Sweep" stretch="1,1,1">
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_StartFourTerminalSweep">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Start Sweep</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QFrame" name="frame_Voltage_Lockin_Setting">
+            <property name="styleSheet">
+             <string notr="true">#frame_Voltage_Lockin_Setting{
 border:1px solid rgb(168,168,168)
 }</string>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-        <property name="lineWidth">
-         <number>1</number>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-          <layout class="QGridLayout" name="Layout_Voltage_Lockin_Setting" rowstretch="1,1,1" rowminimumheight="1,1,1">
-           <item row="1" column="1">
-            <widget class="QComboBox" name="comboBox_Voltage_LI_Sensitivity_1stdigit">
-             <property name="minimumSize">
-              <size>
-               <width>30</width>
-               <height>20</height>
-              </size>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QGridLayout" name="Layout_Voltage_Lockin_Setting_2" rowstretch="1,1,1" columnstretch="2,1,1,1">
+             <property name="horizontalSpacing">
+              <number>2</number>
              </property>
-             <property name="maximumSize">
-              <size>
-               <width>500</width>
-               <height>100</height>
-              </size>
+             <property name="margin">
+              <number>5</number>
              </property>
-             <property name="currentIndex">
-              <number>0</number>
-             </property>
-             <item>
-              <property name="text">
-               <string>5</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>2</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>1</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="3">
-            <widget class="QComboBox" name="comboBox_Voltage_LI_Sensitivity_Unit">
-             <property name="minimumSize">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>500</width>
-               <height>100</height>
-              </size>
-             </property>
-             <property name="currentIndex">
-              <number>0</number>
-             </property>
-             <item>
-              <property name="text">
-               <string>V</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>mV</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>uV</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>nV</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_Voltage_LI_Sensitivity">
-             <property name="minimumSize">
-              <size>
-               <width>60</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">#label_ImageNum{
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_Voltage_LI_Expand">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>500</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">#label_ImageNum{
 color: rgb(168, 168, 168)
 }</string>
-             </property>
-             <property name="text">
-              <string>Sensitivity</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QComboBox" name="comboBox_Voltage_LI_Sensitivity_2nddigit">
-             <property name="minimumSize">
-              <size>
-               <width>50</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>500</width>
-               <height>100</height>
-              </size>
-             </property>
-             <property name="currentIndex">
-              <number>0</number>
-             </property>
-             <item>
-              <property name="text">
-               <string>100</string>
-              </property>
+               </property>
+               <property name="text">
+                <string>Expand</string>
+               </property>
+              </widget>
              </item>
-             <item>
-              <property name="text">
-               <string>10</string>
-              </property>
+             <item row="1" column="2">
+              <widget class="QComboBox" name="comboBox_Voltage_LI_Sensitivity_2nddigit">
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>500</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>100</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>10</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>1</string>
+                </property>
+               </item>
+              </widget>
              </item>
-             <item>
-              <property name="text">
-               <string>1</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="0" column="0" colspan="4">
-            <widget class="QLabel" name="label_Voltage_LI_Settings">
-             <property name="minimumSize">
-              <size>
-               <width>60</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">#label_ImageNum{
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_Voltage_LI_Sensitivity">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">#label_ImageNum{
 color: rgb(168, 168, 168)
 }</string>
-             </property>
-             <property name="text">
-              <string>Voltage Lock In Amplifier Settings</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_Voltage_LI_Expand">
-             <property name="minimumSize">
-              <size>
-               <width>60</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>500</width>
-               <height>100</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">#label_ImageNum{
+               </property>
+               <property name="text">
+                <string>Sensitivity</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1" colspan="3">
+              <widget class="QComboBox" name="comboBox_Voltage_LI_Expand">
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>500</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>1</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>10</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>100</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QComboBox" name="comboBox_Voltage_LI_Sensitivity_1stdigit">
+               <property name="minimumSize">
+                <size>
+                 <width>30</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>500</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>5</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>2</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>1</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QComboBox" name="comboBox_Voltage_LI_Sensitivity_Unit">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>500</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>V</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>mV</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>uV</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>nV</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="0" column="0" colspan="4">
+              <widget class="QLabel" name="label_Voltage_LI_Settings">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">#label_ImageNum{
 color: rgb(168, 168, 168)
 }</string>
-             </property>
-             <property name="text">
-              <string>Expand</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1" colspan="3">
-            <widget class="QComboBox" name="comboBox_Voltage_LI_Expand">
-             <property name="minimumSize">
-              <size>
-               <width>50</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>500</width>
-               <height>100</height>
-              </size>
-             </property>
-             <property name="currentIndex">
-              <number>0</number>
-             </property>
-             <item>
-              <property name="text">
-               <string>1</string>
-              </property>
+               </property>
+               <property name="text">
+                <string>Voltage Lock In Amplifier Settings</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
              </item>
-             <item>
-              <property name="text">
-               <string>10</string>
-              </property>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="frame_Current_Lockin_Setting">
+            <property name="styleSheet">
+             <string notr="true">#frame_Current_Lockin_Setting{
+border:1px solid rgb(168,168,168)
+}</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,1,1" columnstretch="2,1,1,1">
+             <property name="horizontalSpacing">
+              <number>2</number>
+             </property>
+             <property name="margin">
+              <number>5</number>
+             </property>
+             <item row="1" column="3">
+              <widget class="QComboBox" name="comboBox_Current_LI_Sensitivity_Unit">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>500</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>uA</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>nA</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>pA</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>fA</string>
+                </property>
+               </item>
+              </widget>
              </item>
-             <item>
-              <property name="text">
-               <string>100</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QVBoxLayout" name="Layout_Current_Lockin_Setting" stretch="0">
-           <item>
-            <layout class="QGridLayout" name="gridLayout">
              <item row="1" column="1">
               <widget class="QComboBox" name="comboBox_Current_LI_Sensitivity_1stdigit">
                <property name="minimumSize">
@@ -518,66 +1131,6 @@ color: rgb(168, 168, 168)
                <property name="text">
                 <string>Sensitivity</string>
                </property>
-              </widget>
-             </item>
-             <item row="0" column="0" colspan="4">
-              <widget class="QLabel" name="label_Current_LI_Settings">
-               <property name="minimumSize">
-                <size>
-                 <width>60</width>
-                 <height>20</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">#label_ImageNum{
-color: rgb(168, 168, 168)
-}</string>
-               </property>
-               <property name="text">
-                <string>Current Lock In Amplifier Settings</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="3">
-              <widget class="QComboBox" name="comboBox_Current_LI_Sensitivity_Unit">
-               <property name="minimumSize">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>500</width>
-                 <height>100</height>
-                </size>
-               </property>
-               <property name="currentIndex">
-                <number>0</number>
-               </property>
-               <item>
-                <property name="text">
-                 <string>uA</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>nA</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>pA</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>fA</string>
-                </property>
-               </item>
               </widget>
              </item>
              <item row="1" column="2">
@@ -666,33 +1219,611 @@ color: rgb(168, 168, 168)
                </item>
               </widget>
              </item>
+             <item row="0" column="0" colspan="4">
+              <widget class="QLabel" name="label_Current_LI_Settings">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">#label_ImageNum{
+color: rgb(168, 168, 168)
+}</string>
+               </property>
+               <property name="text">
+                <string>Current Lock In Amplifier Settings</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
             </layout>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <widget class="QTabWidget" name="tabWidget_Main">
-      <property name="styleSheet">
-       <string notr="true">#tabWidget_Main{
-background-color: rgb(0, 0, 0);
-}
-
-
-
-</string>
-      </property>
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <widget class="QWidget" name="FourTerminal">
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="frame_FourTerminal_ChannelSettings">
+            <property name="styleSheet">
+             <string notr="true">#frame_FourTerminal_ChannelSettings{
+border:1px solid rgb(168,168,168)
+}</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QGridLayout" name="Layout_FourTerminal_ChannelSettings_2" rowstretch="1,1,1" columnstretch="2,1,1">
+             <item row="0" column="0">
+              <widget class="QLineEdit" name="lineEdit_FourTerminal_NameOutput1">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>300</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="toolTip">
+                <string>Click to edit name</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">#label_Basename{
+color: rgb(168, 168, 168)
+}</string>
+               </property>
+               <property name="text">
+                <string>Gate Voltage</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="label_FourTerminal_Input1">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Input V</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="label_FourTerminal_Output1">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Output</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLineEdit" name="lineEdit_FourTerminal_NameInput1">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>300</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="toolTip">
+                <string>Click to edit name</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">#label_Basename{
+color: rgb(168, 168, 168)
+}</string>
+               </property>
+               <property name="text">
+                <string>Voltage</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QComboBox" name="comboBox_FourTerminal_Output1">
+               <property name="minimumSize">
+                <size>
+                 <width>59</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>150</width>
+                 <height>22</height>
+                </size>
+               </property>
+               <property name="currentIndex">
+                <number>1</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>DAC 1</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>DAC 2</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>DAC 3</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>DAC 4</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLineEdit" name="lineEdit_FourTerminal_NameInput2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>300</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="toolTip">
+                <string>Click to edit name</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">#label_Basename{
+color: rgb(168, 168, 168)
+}</string>
+               </property>
+               <property name="text">
+                <string>Current</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLabel" name="label_FourTerminal_Input2">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Input I</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QComboBox" name="comboBox_FourTerminal_Input1">
+               <property name="minimumSize">
+                <size>
+                 <width>59</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>150</width>
+                 <height>22</height>
+                </size>
+               </property>
+               <item>
+                <property name="text">
+                 <string>ADC 1</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 2</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 3</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 4</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>None</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QComboBox" name="comboBox_FourTerminal_Input2">
+               <property name="minimumSize">
+                <size>
+                 <width>59</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>150</width>
+                 <height>22</height>
+                </size>
+               </property>
+               <item>
+                <property name="text">
+                 <string>ADC 1</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 2</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 3</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 4</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>None</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="frame_FourTerminal_SweepSettings">
+            <property name="styleSheet">
+             <string notr="true">#frame_Preliminary_SweepSettings{
+border:1px solid rgb(168,168,168)
+}</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QGridLayout" name="Layout_Preliminary_SweepSettings_2" rowstretch="1,1,1,1" columnstretch="2,2,1">
+             <property name="horizontalSpacing">
+              <number>2</number>
+             </property>
+             <property name="margin">
+              <number>5</number>
+             </property>
+             <item row="2" column="2">
+              <widget class="QPushButton" name="pushButton_FourTerminal_NoSmTpTSwitch">
+               <property name="minimumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Toggle Field Steps/Increment</string>
+               </property>
+               <property name="text">
+                <string>↺</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_MinVoltage">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Min</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="label_MinVoltage_Unit">
+               <property name="minimumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>(V)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLineEdit" name="lineEdit_FourTerminal_MinVoltage">
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>-1</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_MaxVoltage">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Max</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLineEdit" name="lineEdit_FourTerminal_MaxVoltage">
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>1</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_FourTerminalNumberofstep">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Number of Step</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QLabel" name="label_MaxVoltage_Unit">
+               <property name="minimumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>(V)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLineEdit" name="lineEdit_FourTerminal_Numberofstep">
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>10000</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_Delay">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Delay</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLineEdit" name="lineEdit_FourTerminal_Delay">
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>10</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QLabel" name="label_Delay_Unit">
+               <property name="minimumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>(ms)</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+            <zorder></zorder>
+            <zorder>label_MinVoltage</zorder>
+            <zorder>lineEdit_FourTerminal_MinVoltage</zorder>
+            <zorder>label_MaxVoltage</zorder>
+            <zorder>label_MinVoltage_Unit</zorder>
+            <zorder>lineEdit_FourTerminal_MaxVoltage</zorder>
+            <zorder>label_MaxVoltage_Unit</zorder>
+            <zorder>label_FourTerminalNumberofstep</zorder>
+            <zorder>lineEdit_FourTerminal_Numberofstep</zorder>
+            <zorder>pushButton_FourTerminal_NoSmTpTSwitch</zorder>
+            <zorder>label_Delay</zorder>
+            <zorder>lineEdit_FourTerminal_Delay</zorder>
+            <zorder>label_Delay_Unit</zorder>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+       <zorder>frame_Lockin_Settings</zorder>
+       <zorder>verticalLayoutWidget</zorder>
+       <zorder>frame_FourTerminalPicture</zorder>
+       <zorder>verticalLayoutWidget_2</zorder>
+      </widget>
+      <widget class="QWidget" name="tab_FourTerminalMagneticField">
        <property name="styleSheet">
-        <string notr="true">#FourTerminal{
+        <string notr="true">#tab_FourTerminalMagneticField{
+
 background-color: rgb(0, 0, 0);
+
 }
 
 
@@ -700,660 +1831,9 @@ background-color: rgb(0, 0, 0);
 </string>
        </property>
        <attribute name="title">
-        <string>FourTerminal</string>
+        <string>FourTerminal MagneticField</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,1,8,8,8">
-        <item>
-         <layout class="QGridLayout" name="Layout_Preliminary_DummyCombine" columnstretch="2,2,1,2">
-          <item row="0" column="3">
-           <layout class="QGridLayout" name="Layout_Preliminary_SweepSettings" rowstretch="1,1,1,1" columnstretch="2,2,1">
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_MinVoltage">
-              <property name="minimumSize">
-               <size>
-                <width>80</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Min</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="2">
-             <widget class="QLabel" name="label_MinVoltage_Unit">
-              <property name="minimumSize">
-               <size>
-                <width>20</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>(V)</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLineEdit" name="lineEdit_FourTerminal_MinVoltage">
-              <property name="minimumSize">
-               <size>
-                <width>50</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-1</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_Numberofstep">
-              <property name="minimumSize">
-               <size>
-                <width>80</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Number of Step</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_MaxVoltage">
-              <property name="minimumSize">
-               <size>
-                <width>80</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Max</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QLineEdit" name="lineEdit_FourTerminal_MaxVoltage">
-              <property name="minimumSize">
-               <size>
-                <width>50</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>1</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QLineEdit" name="lineEdit_FourTerminal_Numberofstep">
-              <property name="minimumSize">
-               <size>
-                <width>50</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>10000</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="2">
-             <widget class="QPushButton" name="PushButton_Preliminary_NoSmTpTSwitch_2">
-              <property name="minimumSize">
-               <size>
-                <width>20</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>20</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="toolTip">
-               <string>Toggle Field Steps/Increment</string>
-              </property>
-              <property name="text">
-               <string>↺</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="2">
-             <widget class="QLabel" name="label_MaxVoltage_Unit">
-              <property name="minimumSize">
-               <size>
-                <width>20</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>(V)</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_Delay">
-              <property name="minimumSize">
-               <size>
-                <width>80</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Delay</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QLineEdit" name="lineEdit_FourTerminal_Delay">
-              <property name="minimumSize">
-               <size>
-                <width>50</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>10</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="2">
-             <widget class="QLabel" name="label_Delay_Unit">
-              <property name="minimumSize">
-               <size>
-                <width>20</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>(ms)</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item row="0" column="2">
-           <widget class="Line" name="line">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <layout class="QGridLayout" name="Layout_Preliminary_ChannelSettings" rowstretch="1,1,1" columnstretch="3,2,2">
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <property name="horizontalSpacing">
-             <number>6</number>
-            </property>
-            <item row="1" column="2">
-             <widget class="QComboBox" name="comboBox_FourTerminal_Input1">
-              <property name="minimumSize">
-               <size>
-                <width>59</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>150</width>
-                <height>22</height>
-               </size>
-              </property>
-              <item>
-               <property name="text">
-                <string>ADC 1</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>ADC 2</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>ADC 3</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>ADC 4</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>None</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLineEdit" name="lineEdit_FourTerminal_NameInput1">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>60</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>300</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Click to edit name</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">#label_Basename{
-color: rgb(168, 168, 168)
-}</string>
-              </property>
-              <property name="text">
-               <string>Voltage</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="2">
-             <widget class="QComboBox" name="comboBox_FourTerminal_Output1">
-              <property name="minimumSize">
-               <size>
-                <width>59</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>150</width>
-                <height>22</height>
-               </size>
-              </property>
-              <property name="currentIndex">
-               <number>1</number>
-              </property>
-              <item>
-               <property name="text">
-                <string>DAC 1</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>DAC 2</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>DAC 3</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>DAC 4</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QLabel" name="label_FourTerminal_Input1">
-              <property name="minimumSize">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Input V</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLabel" name="label_FourTerminal_Output1">
-              <property name="minimumSize">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Output</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLineEdit" name="lineEdit_FourTerminal_NameInput2">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>60</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>300</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Click to edit name</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">#label_Basename{
-color: rgb(168, 168, 168)
-}</string>
-              </property>
-              <property name="text">
-               <string>Current</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QLabel" name="label_FourTerminal_Input2">
-              <property name="minimumSize">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Input I</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="2">
-             <widget class="QComboBox" name="comboBox_FourTerminal_Input2">
-              <property name="minimumSize">
-               <size>
-                <width>59</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>150</width>
-                <height>22</height>
-               </size>
-              </property>
-              <item>
-               <property name="text">
-                <string>ADC 1</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>ADC 2</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>ADC 3</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>ADC 4</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>None</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-            <item row="0" column="0">
-             <widget class="QLineEdit" name="lineEdit_FourTerminal_NameOutput1">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>60</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>300</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Click to edit name</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">#label_Basename{
-color: rgb(168, 168, 168)
-}</string>
-              </property>
-              <property name="text">
-               <string>Gate Voltage</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item row="0" column="0">
-           <widget class="QFrame" name="frame_FourTerminalPicture">
-            <property name="styleSheet">
-             <string notr="true">image: url(:/nSOTScanner/Pictures/Four Terminal.png);
-background-color: rgb(3, 3, 3);</string>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Raised</enum>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton_StartFourTerminalSweep">
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Test</string>
-          </property>
-          <property name="text">
-           <string>Start Sweep</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="Layout_FourTerminalPlot1">
-          <item>
-           <widget class="QFrame" name="FourTerminalPlot1">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">#PlotArea{
-background:black
-}</string>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Raised</enum>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="Layout_FourTerminalPlot2">
-          <item>
-           <widget class="QFrame" name="FourTerminalPlot2">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">#PlotArea{
-background:black
-}</string>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Raised</enum>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="Layout_FourTerminalPlot3">
-          <item>
-           <widget class="QFrame" name="FourTerminalPlot3">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">#PlotArea{
-background:black
-}</string>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Raised</enum>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_2">
-       <attribute name="title">
-        <string>Tab 2</string>
-       </attribute>
-       <widget class="QFrame" name="frame_Magnetic_Field_Settings">
+       <widget class="QFrame" name="frame_FourTerminalMagneticField_Settings">
         <property name="geometry">
          <rect>
           <x>30</x>
@@ -1374,22 +1854,13 @@ border:1px solid rgb(168,168,168)
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
+         <property name="margin">
           <number>0</number>
          </property>
          <item>
-          <layout class="QGridLayout" name="Layout_MagneticFieldSettings" rowstretch="0,0,0,0,0,0">
-           <item row="3" column="0">
-            <widget class="QLabel" name="Label_MainMagneticFieldSetting_MaximumField">
+          <layout class="QGridLayout" name="Layout_MagneticFieldSettings" rowstretch="0,0,0,0,0">
+           <item row="2" column="0">
+            <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_MaximumField">
              <property name="minimumSize">
               <size>
                <width>110</width>
@@ -1404,7 +1875,7 @@ border:1px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="5" column="2">
+           <item row="4" column="2">
             <widget class="QLabel" name="label_14">
              <property name="minimumSize">
               <size>
@@ -1421,7 +1892,7 @@ border:1px solid rgb(168,168,168)
             </widget>
            </item>
            <item row="0" column="0" colspan="3">
-            <widget class="QLabel" name="Label_MainMagneticFieldSetting">
+            <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting">
              <property name="minimumSize">
               <size>
                <width>150</width>
@@ -1436,7 +1907,7 @@ border:1px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="3" column="2">
+           <item row="2" column="2">
             <widget class="QLabel" name="label_11">
              <property name="minimumSize">
               <size>
@@ -1452,8 +1923,8 @@ border:1px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="4" column="2">
-            <widget class="QPushButton" name="PushButton_MainMagneticFieldSetting_NoSmTpTSwitch">
+           <item row="3" column="2">
+            <widget class="QPushButton" name="pushButton_FourTerminalMagneticFieldSetting_NoSmTpTSwitch">
              <property name="minimumSize">
               <size>
                <width>20</width>
@@ -1471,8 +1942,8 @@ border:1px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
-            <widget class="QLineEdit" name="Lineedit_MainMagneticFieldSetting_MaximumField">
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_MaximumField">
              <property name="text">
               <string>0.100</string>
              </property>
@@ -1484,8 +1955,8 @@ border:1px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="Label_MainMagneticFieldSetting_NumberofSteps">
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_FourTerminalMagneticFieldSetting_NumberofSteps">
              <property name="minimumSize">
               <size>
                <width>110</width>
@@ -1496,12 +1967,12 @@ border:1px solid rgb(168,168,168)
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Number of Steps&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </item>
-           <item row="5" column="1">
-            <widget class="QLineEdit" name="Lineedit_MainMagneticFieldSetting_FieldSweepSpeed">
+           <item row="4" column="1">
+            <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed">
              <property name="text">
               <string>0.100</string>
              </property>
@@ -1513,8 +1984,8 @@ border:1px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="4" column="1">
-            <widget class="QLineEdit" name="Lineedit_MainMagneticFieldSetting_NumberofstepsandMilifieldperTesla">
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla">
              <property name="focusPolicy">
               <enum>Qt::StrongFocus</enum>
              </property>
@@ -1535,8 +2006,8 @@ border:1px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="Label_MainMagneticFieldSetting_FieldSweepSpeed">
+           <item row="4" column="0">
+            <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_FieldSweepSpeed">
              <property name="minimumSize">
               <size>
                <width>110</width>
@@ -1551,8 +2022,8 @@ border:1px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="Label_MainMagneticFieldSetting_MinimumField">
+           <item row="1" column="0">
+            <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_MinimumField">
              <property name="minimumSize">
               <size>
                <width>110</width>
@@ -1567,7 +2038,7 @@ border:1px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="2" column="2">
+           <item row="1" column="2">
             <widget class="QLabel" name="label_12">
              <property name="minimumSize">
               <size>
@@ -1583,8 +2054,8 @@ border:1px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
-            <widget class="QLineEdit" name="Lineedit_MainMagneticFieldSetting_MinimumField">
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_MinimumField">
              <property name="text">
               <string>0.000</string>
              </property>
@@ -1593,24 +2064,6 @@ border:1px solid rgb(168,168,168)
              </property>
              <property name="placeholderText">
               <string>0.0</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLabel" name="label_ImageNum_2">
-             <property name="minimumSize">
-              <size>
-               <width>60</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">#label_ImageNum{
-color: rgb(168, 168, 168)
-}</string>
-             </property>
-             <property name="text">
-              <string>DeviceName</string>
              </property>
             </widget>
            </item>
@@ -1629,7 +2082,7 @@ color: rgb(168, 168, 168)
         </property>
         <layout class="QHBoxLayout" name="Layout_Main2DPlot">
          <item>
-          <widget class="QFrame" name="Frame_MainPlot">
+          <widget class="QFrame" name="Frame_FourTerminalMagneticFieldPlot1">
            <property name="styleSheet">
             <string notr="true">background-color:black;</string>
            </property>
@@ -1643,11 +2096,16 @@ color: rgb(168, 168, 168)
          </item>
         </layout>
        </widget>
+      </widget>
+      <widget class="QWidget" name="tab_3">
+       <attribute name="title">
+        <string>Page</string>
+       </attribute>
        <widget class="QPushButton" name="pushButton_DummyConnect">
         <property name="geometry">
          <rect>
-          <x>500</x>
-          <y>20</y>
+          <x>380</x>
+          <y>80</y>
           <width>93</width>
           <height>28</height>
          </rect>
@@ -1656,11 +2114,6 @@ color: rgb(168, 168, 168)
          <string>PushButton</string>
         </property>
        </widget>
-      </widget>
-      <widget class="QWidget" name="tab_3">
-       <attribute name="title">
-        <string>Page</string>
-       </attribute>
       </widget>
      </widget>
     </item>

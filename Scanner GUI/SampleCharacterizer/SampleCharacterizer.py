@@ -25,15 +25,13 @@ Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 
 #Not required, but strongly recommended functions used to format numbers in a particular way.
 sys.path.append(sys.path[0]+'\Resources')
-#from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData, ScanImageView                #this part not sure, it was throwing an error
+from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData, ScanImageView
 
 
 class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
-
-
 
         self.aspectLocked = True
         self.FrameLocked = True
@@ -44,10 +42,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.dataProcessing = 'Raw'
         self.dataPostProcessing = 'Raw'
 
-
         self.reactor = reactor
         self.setupUi(self)
-
 
         self.Dict_LockIn= {  #A dictionary for lock in amplifier settings
          'V':1,
@@ -60,54 +56,73 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
          'fA':10**-15,
          }
 
-
+        #Might be useful later, currently not in use
+        #Defining Channel to Number
         self.DAC_Channel= {
          'DAC 1':0,
          'DAC 2':1,
          'DAC 3':2,
          'DAC 4':3,
-         'ADC 1':0,# Defining Channel to Number
+         'ADC 1':0,
          'ADC 2':1,
          'ADC 3':2,
          'ADC 4':3,
          }
 
-        self.randomFill = -0.987654321
-        self.numberfastdata=100
-        self.numberslowdata=100
-        self.lineTime = 64e-3
-        #do not know what it means
+###########################################initialize the DAC and set all the Output to 0##################
+        self.currentDAC_Output1=0.0
+        self.currentDAC_Output2=0.0
+        self.currentDAC_Output3=0.0
+        self.currentDAC_Output4=0.0
+        # for i in range(4):                                              Can be implemented when labradconnect is done
+            # self.dac.set_voltage(i,0,0)
+        self.label_MainBasic_DACOUTPUT1_Current.setText(formatNum(self.currentDAC_Output1,6))
+        self.label_MainBasic_DACOUTPUT2_Current.setText(formatNum(self.currentDAC_Output2,6))
+        self.label_MainBasic_DACOUTPUT3_Current.setText(formatNum(self.currentDAC_Output3,6))
+        self.label_MainBasic_DACOUTPUT4_Current.setText(formatNum(self.currentDAC_Output4,6))
+        
+        self.lineEdit_MainBasic_DACOUTPUT1.editingFinished.connect(self.Update_MainBasic_DACOUTPUT1)
 
-        self.FourTerminal_ChannelInput=[]
+        self.pushButton_MainBasic_DACOUTPUT1.clicked.connect(self.Set_MainBasic_DACOUTPUT1)
+        
+        
+        
+        #FourTerminal sweep default parameter
+        self.FourTerminal_ChannelInput=[] 
         self.FourTerminal_ChannelOutput=[]
-        self.FourTerminal_MinVoltage=float(-1)
-        self.FourTerminal_MaxVoltage=float(1)
-        self.FourTerminal_Numberofstep=int(100)
-        self.FourTerminal_Delay=int(10)
-        self.lineEdit_FourTerminal_MinVoltage.setText(str(self.FourTerminal_MinVoltage))
-        self.lineEdit_FourTerminal_MaxVoltage.setText(str(self.FourTerminal_MaxVoltage))
-        self.lineEdit_FourTerminal_Numberofstep.setText(str(self.FourTerminal_Numberofstep))
-        self.lineEdit_FourTerminal_Delay.setText(str(self.FourTerminal_Delay))
+        self.FourTerminal_MinVoltage=-1.0
+        self.FourTerminal_MaxVoltage=1.0
+        self.FourTerminal_Numberofstep=100
+        self.FourTerminalSetting_Numberofsteps_Status="Numberofsteps"
+        self.FourTerminal_Delay=10
+        self.lineEdit_FourTerminal_MinVoltage.setText(formatNum(self.FourTerminal_MinVoltage,6))
+        self.lineEdit_FourTerminal_MaxVoltage.setText(formatNum(self.FourTerminal_MaxVoltage,6))
+        self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(self.FourTerminal_Numberofstep,6))
+        self.lineEdit_FourTerminal_Delay.setText(formatNum(self.FourTerminal_Delay,6))
 
-        #FourTerminal sweep basic parameter
-
-        self.MainMagneticFieldSetting_MinimumField=float(0)
-        self.MainMagneticFieldSetting_MaximumField=float(0)
-        self.MainMagneticFieldSetting_NumberofstepsandMilifieldperTesla=int(1000)
-        self.MainMagneticFieldSetting_FieldSweepSpeed=int(10)
-
-        #Magnetic field sweep basic parameter
-
+        #Magnetic field sweep default parameter
+        self.FourTerminalMagneticFieldSetting_MinimumField=0.0
+        self.FourTerminalMagneticFieldSetting_MaximumField=1.0
+        self.FourTerminalMagneticFieldSetting_Numberofsteps=100
+        self.FourTerminalMagneticFieldSetting_Numberofsteps_Status="Numberofsteps"
+        self.FourTerminalMagneticFieldSetting_FieldSweepSpeed=10
+        self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.setText(formatNum(self.FourTerminalMagneticFieldSetting_MinimumField,6))
+        self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.setText(formatNum(self.FourTerminalMagneticFieldSetting_MaximumField,6))
+        self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.FourTerminalMagneticFieldSetting_Numberofsteps,6))
+        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.setText(formatNum(self.FourTerminalMagneticFieldSetting_FieldSweepSpeed,6))
+        
+        
         self.comboBox_FourTerminal_Output1.setCurrentIndex(0)
         self.comboBox_FourTerminal_Input1.setCurrentIndex(1)
         self.comboBox_FourTerminal_Input2.setCurrentIndex(0)
         self.FourTerminal_Output1=self.comboBox_FourTerminal_Output1.currentIndex()
         self.FourTerminal_Input1=self.comboBox_FourTerminal_Input1.currentIndex()
         self.FourTerminal_Input2=self.comboBox_FourTerminal_Input2.currentIndex()
-
-
-
-#        self.setupAdditionalUi()    #throwing an error
+        
+        self.randomFill = -0.987654321
+        #do not know what it means
+        self.numberfastdata=100
+        self.numberslowdata=100
 
         self.moveDefault()
 
@@ -115,7 +130,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.push_Servers.clicked.connect(self.showServersList)
 
 #######################################
-        self.pushButton_StartFourTerminalSweep.clicked.connect(self.Sweep)
+        self.pushButton_StartFourTerminalSweep.clicked.connect(self.FourTerminalSweep)
         self.pushButton_DummyConnect.clicked.connect(self.connectLabRAD)
 
 #######################################
@@ -138,13 +153,16 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_FourTerminal_MaxVoltage.editingFinished.connect(self.UpdateFourTerminal_MaxVoltage)
         self.lineEdit_FourTerminal_Numberofstep.editingFinished.connect(self.UpdateFourTerminal_Numberofstep)
         self.lineEdit_FourTerminal_Delay.editingFinished.connect(self.UpdateFourTerminal_Delay)
-        self.Lineedit_MainMagneticFieldSetting_MinimumField.editingFinished.connect(self.UpdateMainMagneticFieldSetting_MinimumField)
-        self.Lineedit_MainMagneticFieldSetting_MaximumField.editingFinished.connect(self.UpdateMainMagneticFieldSetting_MaximumField)
-        self.Lineedit_MainMagneticFieldSetting_NumberofstepsandMilifieldperTesla.editingFinished.connect(self.UpdateMainMagneticFieldSetting_NumberofstepsandMilifieldperTesla)
-        self.Lineedit_MainMagneticFieldSetting_FieldSweepSpeed.editingFinished.connect(self.UpdateMainMagneticFieldSetting_FieldSweepSpeed)
+        self.pushButton_FourTerminal_NoSmTpTSwitch.clicked.connect(self.ToggleFourTerminalFourTerminal_Numberofstep)
+
+        self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.editingFinished.connect(self.UpdateFourTerminalMagneticFieldSetting_MinimumField)
+        self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.editingFinished.connect(self.UpdateFourTerminalMagneticFieldSetting_MaximumField)
+        self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.editingFinished.connect(self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla)
+        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.editingFinished.connect(self.UpdateFourTerminalMagneticFieldSetting_FieldSweepSpeed)
+        self.pushButton_FourTerminalMagneticFieldSetting_NoSmTpTSwitch.clicked.connect(self.ToggleFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla)
 #######################################
 
-        # self.Lineedit_Channel.editingFinished.connect(self.UpdateChannel)
+        # self.lineEdit_Channel.editingFinished.connect(self.UpdateChannel)
 
 #######################################
         self.comboBox_FourTerminal_Output1.currentIndexChanged.connect(self.ChangeFourTerminal_Output1_Channel)
@@ -186,17 +204,19 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         #Initialize all the labrad connections as none
         self.cxn = None
         self.dv = None
+        
+        self.setupAdditionalUi()
+
+        self.lockInterface()
+
+    def setupAdditionalUi(self):
         self.setupFourTerminalPlot()
-
-
-
-
-        #self.lockInterface()
-
+        #self.setupMagneticFieldPlot() #change name to something better
 
     def setupFourTerminalPlot(self):
         self.sweepFourTerminal_Plot1 = pg.PlotWidget(parent = self.FourTerminalPlot1)
         self.sweepFourTerminal_Plot1.setGeometry(QtCore.QRect(0, 0, 400, 200))
+        self.sweepFourTerminal_Plot1.setTitle( self.FourTerminal_NameInput1)
         self.sweepFourTerminal_Plot1.setLabel('left', self.FourTerminal_NameInput1, units = 'V')
         self.sweepFourTerminal_Plot1.setLabel('bottom', self.FourTerminal_NameOutput1, units = 'V')
         self.sweepFourTerminal_Plot1.showAxis('right', show = True)
@@ -208,6 +228,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         self.sweepFourTerminal_Plot2 = pg.PlotWidget(parent = self.FourTerminalPlot2)
         self.sweepFourTerminal_Plot2.setGeometry(QtCore.QRect(0, 0, 400, 200))
+        self.sweepFourTerminal_Plot2.setTitle( self.FourTerminal_NameInput2)
         self.sweepFourTerminal_Plot2.setLabel('left', self.FourTerminal_NameInput2, units = 'A')
         self.sweepFourTerminal_Plot2.setLabel('bottom', self.FourTerminal_NameOutput1, units = 'V')
         self.sweepFourTerminal_Plot2.showAxis('right', show = True)
@@ -219,6 +240,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         self.sweepFourTerminal_Plot3 = pg.PlotWidget(parent = self.FourTerminalPlot3)
         self.sweepFourTerminal_Plot3.setGeometry(QtCore.QRect(0, 0, 400, 200))
+        self.sweepFourTerminal_Plot3.setTitle( 'Resistance')
         self.sweepFourTerminal_Plot3.setLabel('left', 'Resistance', units = 'Ohm')
         self.sweepFourTerminal_Plot3.setLabel('bottom', self.FourTerminal_NameOutput1, units = 'V')
         self.sweepFourTerminal_Plot3.showAxis('right', show = True)
@@ -229,12 +251,12 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.Layout_FourTerminalPlot3.addWidget(self.sweepFourTerminal_Plot3)
 
     def updateFourTerminalPlotLabel(self):
-        self.sweepFourTerminal_Plot1.setLabel('left', self.FourTerminal_NameInput2, units = 'V')
+        self.sweepFourTerminal_Plot1.setLabel('left', self.FourTerminal_NameInput1, units = 'V')
         self.sweepFourTerminal_Plot1.setLabel('bottom', self.FourTerminal_NameOutput1, units = 'V')
-        self.sweepFourTerminal_Plot2.setLabel('left', 'DC Feedback Voltage', units = 'V')
-        self.sweepFourTerminal_Plot2.setLabel('bottom', 'Bias Voltage', units = 'V')
-        self.sweepFourTerminal_Plot3.setLabel('left', 'DC Feedback Voltage', units = 'V')
-        self.sweepFourTerminal_Plot3.setLabel('bottom', 'Bias Voltage', units = 'V')
+        self.sweepFourTerminal_Plot2.setLabel('left', self.FourTerminal_NameInput2, units = 'V')
+        self.sweepFourTerminal_Plot2.setLabel('bottom', self.FourTerminal_NameOutput1, units = 'V')
+        self.sweepFourTerminal_Plot3.setLabel('left', 'Resistance', units = 'V')
+        self.sweepFourTerminal_Plot3.setLabel('bottom', self.FourTerminal_NameOutput1, units = 'V')
 
     def moveDefault(self):
         self.move(550,10)
@@ -293,24 +315,6 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         curr_folder = yield self.gen_dv.cd()
         yield self.dv.cd(curr_folder)
 
-
-    # def setupAdditionalUi(self):
-        # #Set up UI that isn't easily done from Qt Designer
-        # self.view = pg.PlotItem(title="Plot")
-# #        self.view.setLabel('left',text='Y position',units = 'm')
-# #        self.view.setLabel('right',text='Y position',units = 'm')
-# #        self.view.setLabel('top',text='X position',units = 'm')
-# #        self.view.setLabel('bottom',text='X position',units = 'm')
-        # self.Plot2D = ScanImageView(parent = self.centralwidget, view = self.view, randFill = self.randomFill)
-        # self.view.invertY(False)
-        # self.view.setAspectLocked(self.aspectLocked)
-        # self.Plot2D.ui.roiBtn.hide()
-        # self.Plot2D.ui.menuBtn.hide()
-        # self.Plot2D.ui.histogram.item.gradient.loadPreset('bipolar')
-        # self.Plot2D.lower()
-        # self.PlotArea.close()
-        # self.horizontalLayout.addWidget(self.Plot2D)
-
     def updateHistogramLevels(self, hist):
         mn, mx = hist.getLevels()
         self.Plot2D.ui.histogram.setLevels(mn, mx)
@@ -321,7 +325,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
 
     @inlineCallbacks
-    def Sweep(self,c=None):
+    def FourTerminalSweep(self,c=None):
         self.lockInterface()
 
         try:
@@ -360,8 +364,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
 
 
-            file_info = yield self.dv.new(self.Device_Name, self.datavaultXaxis,self.datavaultYaxis)
-            self.dvFileName = file_info[1]
+            file_info = yield self.dv.new('FourTerminal ' + self.Device_Name, self.datavaultXaxis,self.datavaultYaxis) #define file_info for data vault with name, input and output
+            self.dvFileName = file_info[1] # read the name
             self.lineEdit_ImageNumber.setText(file_info[1][0:5])
             session  = ''
             for folder in file_info[0][1:]:
@@ -386,9 +390,6 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             while a != '':
                 print a
                 a = yield self.dac.read() #necessary for long ramp(ramp function does not read all the data)
-
-            yield self.sleep(1)
-
 
             formatted_data = []
             for j in range(0, self.FourTerminal_Numberofstep):
@@ -486,24 +487,93 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.MultiplierVoltage=self.Voltage_LI_Multiplier1*self.Voltage_LI_Multiplier2*self.Voltage_LI_Multiplier3*self.Voltage_LI_Multiplier4
         self.MultiplierCurrent=self.Current_LI_Multiplier1*self.Current_LI_Multiplier2*self.Current_LI_Multiplier3*self.Current_LI_Multiplier4
 
+##########################Peculiar Function only defined in SampleCharacterizer#############
 
+    @inlineCallbacks
+    def Set_MainBasic_DACOUTPUT1(self,c=None):  #bufferramp to the point in 1s 
+        yield self.dac.ramp1(0,self.currentDAC_Output1,self.SetpointDAC_Output1,10000,100)  
+        self.currentDAC_Output1=self.SetpointDAC_Output1
+        self.label_MainBasic_DACOUTPUT1_Current.setText(formatNum(self.currentDAC_Output1,6))#Set the current voltage
+        
+    @inlineCallbacks
+    def Set_MainBasic_DACOUTPUT2(self,c=None):  #bufferramp to the point in 1s 
+        yield self.dac.ramp1(1,self.currentDAC_Output2,self.SetpointDAC_Output1,10000,100)  
+        self.currentDAC_Output2=self.SetpointDAC_Output2
+        self.label_MainBasic_DACOUTPUT2_Current.setText(formatNum(self.currentDAC_Output2,6))
+        
+    @inlineCallbacks
+    def Set_MainBasic_DACOUTPUT3(self,c=None):  #bufferramp to the point in 1s 
+        yield self.dac.ramp1(2,self.currentDAC_Output3,self.SetpointDAC_Output1,10000,100)  
+        self.currentDAC_Output3=self.SetpointDAC_Output3
+        self.label_MainBasic_DACOUTPUT3_Current.setText(formatNum(self.currentDAC_Output3,6))
+
+    @inlineCallbacks
+    def Set_MainBasic_DACOUTPUT4(self,c=None):  #bufferramp to the point in 1s 
+        yield self.dac.ramp1(3,self.currentDAC_Output4,self.SetpointDAC_Output1,10000,100)  
+        self.currentDAC_Output4=self.SetpointDAC_Output4
+        self.label_MainBasic_DACOUTPUT4_Current.setText(formatNum(self.currentDAC_Output4,6))
+        
+###############################
 
 ##########################Update All the parameters#################
+    def Update_MainBasic_DACOUTPUT1(self):     #Set the OutputValue
+        dummystr=str(self.lineEdit_MainBasic_DACOUTPUT1.text())
+        dummyval=readNum(dummystr, self , False)        
+        if isinstance(dummyval,float) and dummyval<=10.0 and dummyval >=-10.0:
+            self.SetpointDAC_Output1=dummyval
+        self.lineEdit_MainBasic_DACOUTPUT1.setText(formatNum(self.SetpointDAC_Output1,6))
+
     def UpdateFourTerminal_MinVoltage(self):
-        self.FourTerminal_MinVoltage=float(str(self.lineEdit_FourTerminal_MinVoltage.text()))
+        dummystr=str(self.lineEdit_FourTerminal_MinVoltage.text())
+        dummyval=readNum(dummystr, self , False)
+        if isinstance(dummyval,float) and dummyval<=10.0 and dummyval >=-10.0:
+            self.FourTerminal_MinVoltage=dummyval
+        self.lineEdit_FourTerminal_MinVoltage.setText(formatNum(self.FourTerminal_MinVoltage,6))
 
     def UpdateFourTerminal_MaxVoltage(self):
-        self.FourTerminal_MaxVoltage=float(str(self.lineEdit_FourTerminal_MaxVoltage.text()))
-
+        dummystr=str(self.lineEdit_FourTerminal_MaxVoltage.text())
+        dummyval=readNum(dummystr, self , False)
+        if isinstance(dummyval,float) and dummyval<=10.0 and dummyval >=-10.0:
+            self.FourTerminal_MaxVoltage=dummyval
+        self.lineEdit_FourTerminal_MaxVoltage.setText(formatNum(self.FourTerminal_MaxVoltage,6))
+        
     def UpdateFourTerminal_Numberofstep(self):
-        self.FourTerminal_Numberofstep=int(str(self.lineEdit_FourTerminal_Numberofstep.text()))
+        dummystr=str(self.lineEdit_FourTerminal_Numberofstep.text())   #read the text
+        dummyval=readNum(dummystr, self , False)
+        if isinstance(dummyval,float):
+            if self.FourTerminalSetting_Numberofsteps_Status == "Numberofsteps":   #based on status, dummyval is deterimined and update the Numberof steps parameters
+                self.FourTerminal_Numberofstep=int(round(dummyval)) #round here is necessary, without round it cannot do 1001 steps back and force
+            if self.FourTerminalSetting_Numberofsteps_Status == "StepSize":
+                self.FourTerminal_Numberofstep=int(self.StepSizetoNumberofsteps_Convert(self.FourTerminal_MaxVoltage,self.FourTerminal_MinVoltage,float(dummyval)))
+        self.RefreshFourTerminal_Numberofstep()
 
+    def RefreshFourTerminal_Numberofstep(self): #Refresh based on the status change the lineEdit text
+        if self.FourTerminalSetting_Numberofsteps_Status == "Numberofsteps":
+            self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(self.FourTerminal_Numberofstep,6))
+        else:
+            self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(self.NumberofstepstoStepSize_Convert(self.FourTerminal_MaxVoltage,self.FourTerminal_MinVoltage,self.FourTerminal_Numberofstep),6))
+        
+    def ToggleFourTerminalFourTerminal_Numberofstep(self):
+        if self.FourTerminalSetting_Numberofsteps_Status == "Numberofsteps":
+            self.label_FourTerminalNumberofstep.setText('Volt per Steps')
+            self.FourTerminalSetting_Numberofsteps_Status = "StepSize"
+            self.RefreshFourTerminal_Numberofstep() #Change the text first
+            self.UpdateFourTerminal_Numberofstep()
+        else:
+            self.label_FourTerminalNumberofstep.setText('Number of Steps')
+            self.FourTerminalSetting_Numberofsteps_Status = "Numberofsteps"
+            self.RefreshFourTerminal_Numberofstep() #Change the text first
+            self.UpdateFourTerminal_Numberofstep()
+            
     def UpdateFourTerminal_Delay(self):
-        self.FourTerminal_Delay=int(str(self.lineEdit_FourTerminal_Delay.text()))
+        dummystr=str(self.lineEdit_FourTerminal_Delay.text())
+        dummyval=readNum(dummystr, self , False)
+        if isinstance(dummyval,float):
+            self.FourTerminal_Delay=int(dummyval)
+        self.lineEdit_FourTerminal_Delay.setText(formatNum(self.FourTerminal_Delay,6))
 
     def UpdateDevice_Name(self):
         self.Device_Name=str(self.lineEdit_Device_Name.text())
-
 
     def UpdateFourTerminal_NameOutput1(self):
         self.FourTerminal_NameOutput1=str(self.lineEdit_FourTerminal_NameOutput1.text())
@@ -517,17 +587,64 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.FourTerminal_NameInput2=str(self.lineEdit_FourTerminal_NameInput2.text())
         self.updateFourTerminalPlotLabel()
 
-    def UpdateMainMagneticFieldSetting_MinimumField(self):
-        self.MainMagneticFieldSetting_MinimumField=float(str(self.Lineedit_MainMagneticFieldSetting_MinimumField.text()))
+    def UpdateFourTerminalMagneticFieldSetting_MinimumField(self):
+        dummystr=str(self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.text())
+        dummyval=readNum(dummystr, self , False)
+        if isinstance(dummyval,float):
+            self.FourTerminalMagneticFieldSetting_MinimumField=dummyval
+        self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.setText(formatNum(self.FourTerminalMagneticFieldSetting_MinimumField,6))
+        self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla()
 
-    def UpdateMainMagneticFieldSetting_MaximumField(self):
-        self.MainMagneticFieldSetting_MaximumField=float(str(self.Lineedit_MainMagneticFieldSetting_MaximumField.text()))
+    def UpdateFourTerminalMagneticFieldSetting_MaximumField(self):
+        dummystr=str(self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.text())
+        dummyval=readNum(dummystr, self , False)
+        if isinstance(dummyval,float):
+            self.FourTerminalMagneticFieldSetting_MaximumField=dummyval
+        self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.setText(formatNum(self.FourTerminalMagneticFieldSetting_MaximumField,6))
+        self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla()
 
-    def UpdateMainMagneticFieldSetting_NumberofstepsandMilifieldperTesla(self):
-        self.MainMagneticFieldSetting_NumberofstepsandMilifieldperTesla=int(str(self.Lineedit_MainMagneticFieldSetting_NumberofstepsandMilifieldperTesla.text()))
+    def UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla(self):
+        dummystr=str(self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.text())   #read the text
+        dummyval=readNum(dummystr, self , False)
+        if isinstance(dummyval,float):
+            if self.FourTerminalMagneticFieldSetting_Numberofsteps_Status == "Numberofsteps":   #based on status, dummyval is deterimined and update the Numberof steps parameters
+                self.FourTerminalMagneticFieldSetting_Numberofsteps=int(dummyval)
+            if self.FourTerminalMagneticFieldSetting_Numberofsteps_Status == "StepSize":
+                self.FourTerminalMagneticFieldSetting_Numberofsteps=int(self.StepSizetoNumberofsteps_Convert(self.FourTerminalMagneticFieldSetting_MaximumField,self.FourTerminalMagneticFieldSetting_MinimumField,float(dummyval)))
+        self.RefreshFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla()
 
-    def UpdateMainMagneticFieldSetting_FieldSweepSpeed(self):
-        self.MainMagneticFieldSetting_FieldSweepSpeed=int(str(self.Lineedit_MainMagneticFieldSetting_FieldSweepSpeed.text()))
+    def RefreshFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla(self): #Refresh based on the status change the lineEdit text
+        if self.FourTerminalMagneticFieldSetting_Numberofsteps_Status == "Numberofsteps":
+            self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.FourTerminalMagneticFieldSetting_Numberofsteps,6))
+        else:
+            self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.NumberofstepstoStepSize_Convert(self.FourTerminalMagneticFieldSetting_MaximumField,self.FourTerminalMagneticFieldSetting_MinimumField,self.FourTerminalMagneticFieldSetting_Numberofsteps),6))
+        
+    def ToggleFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla(self):
+        if self.FourTerminalMagneticFieldSetting_Numberofsteps_Status == "Numberofsteps":
+            self.label_FourTerminalMagneticFieldSetting_NumberofSteps.setText('Tesla per Steps')
+            self.FourTerminalMagneticFieldSetting_Numberofsteps_Status = "StepSize"
+            self.RefreshFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla() #Change the text first
+            self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla()
+        else:
+            self.label_FourTerminalMagneticFieldSetting_NumberofSteps.setText('Number of Steps')
+            self.FourTerminalMagneticFieldSetting_Numberofsteps_Status = "Numberofsteps"
+            self.RefreshFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla() #Change the text first
+            self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla()
+
+    def NumberofstepstoStepSize_Convert(self,Max,Min,NoS):
+        StepSize=float((Max-Min)/float(NoS-1.0))
+        return StepSize
+        
+    def StepSizetoNumberofsteps_Convert(self,Max,Min,SS):
+        Numberofsteps=int((Max-Min)/float(SS)+1)
+        return Numberofsteps
+            
+    def UpdateFourTerminalMagneticFieldSetting_FieldSweepSpeed(self):
+        dummystr=str(self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.text())
+        dummyval=readNum(dummystr, self , False)
+        if isinstance(dummyval,float):
+            self.FourTerminalMagneticFieldSetting_FieldSweepSpeed=dummyval
+        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.setText(formatNum(self.FourTerminalMagneticFieldSetting_FieldSweepSpeed,6))
 
     def ChangeFourTerminal_Output1_Channel(self):
         self.FourTerminal_Output1=self.comboBox_FourTerminal_Output1.currentIndex()
@@ -571,6 +688,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.UpdateMultiplier()
 
 
+        
         ##########################Update All the parameters#################
 
 
@@ -600,8 +718,14 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_FourTerminal_MaxVoltage.setEnabled(False)
         self.lineEdit_FourTerminal_Numberofstep.setEnabled(False)
         self.lineEdit_FourTerminal_Delay.setEnabled(False)
-        self.PushButton_Preliminary_NoSmTpTSwitch_2.setEnabled(False)
-
+        self.pushButton_FourTerminal_NoSmTpTSwitch.setEnabled(False)
+        
+        self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.setEnabled(False)
+        self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.setEnabled(False)
+        self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setEnabled(False)
+        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.setEnabled(False)
+        self.pushButton_FourTerminalMagneticFieldSetting_NoSmTpTSwitch.setEnabled(False)
+        
         self.comboBox_FourTerminal_Output1.setEnabled(False)
         self.comboBox_FourTerminal_Input1.setEnabled(False)
         self.comboBox_FourTerminal_Input2.setEnabled(False)
@@ -612,9 +736,18 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.comboBox_Current_LI_Sensitivity_2nddigit.setEnabled(False)
         self.comboBox_Current_LI_Sensitivity_Unit.setEnabled(False)
         self.comboBox_Current_LI_Expand.setEnabled(False)
-
         self.pushButton_StartFourTerminalSweep.setEnabled(False)
-
+        
+        self.lineEdit_MainBasic_DACOUTPUT1.setEnabled(False)
+        self.lineEdit_MainBasic_DACOUTPUT2.setEnabled(False)
+        self.lineEdit_MainBasic_DACOUTPUT3.setEnabled(False)
+        self.lineEdit_MainBasic_DACOUTPUT4.setEnabled(False)
+        self.pushButton_MainBasic_DACOUTPUT1.setEnabled(False)
+        self.pushButton_MainBasic_DACOUTPUT2.setEnabled(False)
+        self.pushButton_MainBasic_DACOUTPUT3.setEnabled(False)
+        self.pushButton_MainBasic_DACOUTPUT4.setEnabled(False)
+        
+        
     def unlockInterface(self):
         self.lineEdit_FourTerminal_NameOutput1.setEnabled(True)
         self.lineEdit_FourTerminal_NameInput1.setEnabled(True)
@@ -623,8 +756,14 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_FourTerminal_MaxVoltage.setEnabled(True)
         self.lineEdit_FourTerminal_Numberofstep.setEnabled(True)
         self.lineEdit_FourTerminal_Delay.setEnabled(True)
-        self.PushButton_Preliminary_NoSmTpTSwitch_2.setEnabled(True)
+        self.pushButton_FourTerminal_NoSmTpTSwitch.setEnabled(True)
 
+        self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.setEnabled(True)
+        self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.setEnabled(True)
+        self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setEnabled(True)
+        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.setEnabled(True)
+        self.pushButton_FourTerminalMagneticFieldSetting_NoSmTpTSwitch.setEnabled(True)
+        
         self.comboBox_FourTerminal_Output1.setEnabled(True)
         self.comboBox_FourTerminal_Input1.setEnabled(True)
         self.comboBox_FourTerminal_Input2.setEnabled(True)
@@ -635,9 +774,17 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.comboBox_Current_LI_Sensitivity_2nddigit.setEnabled(True)
         self.comboBox_Current_LI_Sensitivity_Unit.setEnabled(True)
         self.comboBox_Current_LI_Expand.setEnabled(True)
-
         self.pushButton_StartFourTerminalSweep.setEnabled(True)
-
+        
+        self.lineEdit_MainBasic_DACOUTPUT1.setEnabled(True)
+        self.lineEdit_MainBasic_DACOUTPUT2.setEnabled(True)
+        self.lineEdit_MainBasic_DACOUTPUT3.setEnabled(True)
+        self.lineEdit_MainBasic_DACOUTPUT4.setEnabled(True)
+        self.pushButton_MainBasic_DACOUTPUT1.setEnabled(True)
+        self.pushButton_MainBasic_DACOUTPUT2.setEnabled(True)
+        self.pushButton_MainBasic_DACOUTPUT3.setEnabled(True)
+        self.pushButton_MainBasic_DACOUTPUT4.setEnabled(True)
+        
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)
