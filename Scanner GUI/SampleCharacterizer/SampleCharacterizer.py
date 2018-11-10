@@ -2,7 +2,7 @@ from __future__ import division
 import sys
 import twisted
 from PyQt4 import QtCore, QtGui, QtTest, uic
-from twisted.internet.defer import inlineCallbacks, Deferred
+from twisted.internet.defer import inlineCallbacks, Deferred , returnValue
 import numpy as np
 import pyqtgraph as pg
 import exceptions
@@ -70,25 +70,31 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
          }
 
 ###########################################initialize the DAC and set all the Output to 0##################
-        self.currentDAC_Output1=0.0
-        self.currentDAC_Output2=0.0
-        self.currentDAC_Output3=0.0
-        self.currentDAC_Output4=0.0
+        self.currentDAC_Output=[0.0,0.0,0.0,0.0]
+        self.SetpointDAC_Output=[0.0,0.0,0.0,0.0]
+
+
         # for i in range(4):                                              Can be implemented when labradconnect is done
             # self.dac.set_voltage(i,0,0)
-        self.label_MainBasic_DACOUTPUT1_Current.setText(formatNum(self.currentDAC_Output1,6))
-        self.label_MainBasic_DACOUTPUT2_Current.setText(formatNum(self.currentDAC_Output2,6))
-        self.label_MainBasic_DACOUTPUT3_Current.setText(formatNum(self.currentDAC_Output3,6))
-        self.label_MainBasic_DACOUTPUT4_Current.setText(formatNum(self.currentDAC_Output4,6))
-        
-        self.lineEdit_MainBasic_DACOUTPUT1.editingFinished.connect(self.Update_MainBasic_DACOUTPUT1)
+        self.label_MainBasic_DACOUTPUT1_Current.setText(formatNum(self.currentDAC_Output[0],6))
+        self.label_MainBasic_DACOUTPUT2_Current.setText(formatNum(self.currentDAC_Output[1],6))
+        self.label_MainBasic_DACOUTPUT3_Current.setText(formatNum(self.currentDAC_Output[2],6))
+        self.label_MainBasic_DACOUTPUT4_Current.setText(formatNum(self.currentDAC_Output[3],6))
 
-        self.pushButton_MainBasic_DACOUTPUT1.clicked.connect(self.Set_MainBasic_DACOUTPUT1)
-        
-        
-        
+        self.lineEdit_MainBasic_DACOUTPUT1.editingFinished.connect(lambda:self.Update_MainBasic_DACOUTPUT(0))
+        self.lineEdit_MainBasic_DACOUTPUT2.editingFinished.connect(lambda:self.Update_MainBasic_DACOUTPUT(1))
+        self.lineEdit_MainBasic_DACOUTPUT3.editingFinished.connect(lambda:self.Update_MainBasic_DACOUTPUT(2))
+        self.lineEdit_MainBasic_DACOUTPUT4.editingFinished.connect(lambda:self.Update_MainBasic_DACOUTPUT(3))
+
+        self.pushButton_MainBasic_DACOUTPUT1.clicked.connect(lambda:self.Set_MainBasic_DACOUTPUT(0))
+        self.pushButton_MainBasic_DACOUTPUT2.clicked.connect(lambda:self.Set_MainBasic_DACOUTPUT(1))
+        self.pushButton_MainBasic_DACOUTPUT3.clicked.connect(lambda:self.Set_MainBasic_DACOUTPUT(2))
+        self.pushButton_MainBasic_DACOUTPUT4.clicked.connect(lambda:self.Set_MainBasic_DACOUTPUT(3))
+
+
+
         #FourTerminal sweep default parameter
-        self.FourTerminal_ChannelInput=[] 
+        self.FourTerminal_ChannelInput=[]
         self.FourTerminal_ChannelOutput=[]
         self.FourTerminal_MinVoltage=-1.0
         self.FourTerminal_MaxVoltage=1.0
@@ -110,15 +116,15 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.setText(formatNum(self.FourTerminalMagneticFieldSetting_MaximumField,6))
         self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.FourTerminalMagneticFieldSetting_Numberofsteps,6))
         self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.setText(formatNum(self.FourTerminalMagneticFieldSetting_FieldSweepSpeed,6))
-        
-        
+
+
         self.comboBox_FourTerminal_Output1.setCurrentIndex(0)
         self.comboBox_FourTerminal_Input1.setCurrentIndex(1)
         self.comboBox_FourTerminal_Input2.setCurrentIndex(0)
         self.FourTerminal_Output1=self.comboBox_FourTerminal_Output1.currentIndex()
         self.FourTerminal_Input1=self.comboBox_FourTerminal_Input1.currentIndex()
         self.FourTerminal_Input2=self.comboBox_FourTerminal_Input2.currentIndex()
-        
+
         self.randomFill = -0.987654321
         #do not know what it means
         self.numberfastdata=100
@@ -204,7 +210,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         #Initialize all the labrad connections as none
         self.cxn = None
         self.dv = None
-        
+
         self.setupAdditionalUi()
 
         self.lockInterface()
@@ -268,7 +274,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
             self.dv = yield self.cxn.data_vault
             self.dac = yield self.cxn.dac_adc
-            yield self.dac.select_device(0L)
+            yield self.dac.select_device(0L)   #################################you should change this
 
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -343,11 +349,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             if self.FourTerminal_Input2!=4:
                 self.FourTerminal_ChannelInput.append(self.FourTerminal_Input2)# Create the list of Channel that we read while sweep #setup for bufferramp function
 
-            yield self.sleep(0.1)
-            a = yield self.dac.read()
-            while a != '':
-                print a
-                a = yield self.dac.read() #necessary for long ramp(ramp function does not read all the data)
+            yield self.ClearBufferedData()
 
             self.datavaultXaxis=[]
             self.datavaultXaxis.append(self.FourTerminal_NameOutput1+' index')# This part is for setting correct datavault input
@@ -372,24 +374,14 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 session = session + '\\' + folder
             self.lineEdit_ImageDir.setText(r'\.datavault' + session)
 
-            yield self.dac.ramp1(self.FourTerminal_ChannelOutput[0],0.0,self.FourTerminal_MinVoltage,10000,100)    #ramp to initial value
-
-            yield self.sleep(0.1)
-            a = yield self.dac.read()
-            while a != '':
-                print a
-                a = yield self.dac.read() #necessary for long ramp(ramp function does not read all the data)
+            yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.currentDAC_Output[self.FourTerminal_ChannelOutput[0]],self.FourTerminal_MinVoltage,10000,100)    #ramp to initial value
 
             yield self.sleep(1)
 
             FourTerminalXaxis=np.linspace(self.FourTerminal_MinVoltage,self.FourTerminal_MaxVoltage,self.FourTerminal_Numberofstep)  #generating list of voltage at which sweeped
-            dac_read= yield self.dac.buffer_ramp(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.FourTerminal_MinVoltage],[self.FourTerminal_MaxVoltage],self.FourTerminal_Numberofstep,self.FourTerminal_Delay) #dac_read[0] is voltage,dac_read[1] is current potentially
+            dac_read= yield self.Buffer_Ramp_Display(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.FourTerminal_MinVoltage],[self.FourTerminal_MaxVoltage],self.FourTerminal_Numberofstep,self.FourTerminal_Delay) #dac_read[0] is voltage,dac_read[1] is current potentially
 
-            yield self.sleep(0.1)
-            a = yield self.dac.read()
-            while a != '':
-                print a
-                a = yield self.dac.read() #necessary for long ramp(ramp function does not read all the data)
+
 
             formatted_data = []
             for j in range(0, self.FourTerminal_Numberofstep):
@@ -406,7 +398,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             yield self.plotFourTerminal_Data1(formatted_data)
 
 
-            yield self.dac.ramp1(self.FourTerminal_ChannelOutput[0],self.FourTerminal_MaxVoltage,0.0,10000,100)
+            yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.FourTerminal_MaxVoltage,0.0,10000,100)
 
             if self.FourTerminal_Input2!=4:
                  yield self.plotFourTerminal_Data2(formatted_data)
@@ -461,10 +453,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.lineEdit_ImageDir.setText(r'\.datavault' + session)
 
 
-            a = yield self.dac.read()
-            while a != '':
-                print a
-                a = yield self.dac.read()
+            yield self.ClearBufferedData()
+
 
             startfast = self.startOutput1
 
@@ -488,40 +478,99 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.MultiplierCurrent=self.Current_LI_Multiplier1*self.Current_LI_Multiplier2*self.Current_LI_Multiplier3*self.Current_LI_Multiplier4
 
 ##########################Peculiar Function only defined in SampleCharacterizer#############
+    @inlineCallbacks
+    def Ramp1_Display(self,SweepPort,Startingpoint,Endpoint,Numberofsteps,Delay,c=None): #this is a function that morph ramp1 and add codes for controlling the display
+        try:
+            yield self.ClearBufferedData()
+
+            self.UpdateDAC_Current_Label(SweepPort,'Sweeping')
+            yield self.dac.ramp1(SweepPort,Startingpoint,Endpoint,Numberofsteps,Delay)
+            self.UpdatecurrentDAC_Output(SweepPort,Endpoint)
+            self.UpdateDAC_Current_Label(SweepPort,self.currentDAC_Output[SweepPort])
+
+            yield self.ClearBufferedData()
+        except Exception as inst:
+            print inst
 
     @inlineCallbacks
-    def Set_MainBasic_DACOUTPUT1(self,c=None):  #bufferramp to the point in 1s 
-        yield self.dac.ramp1(0,self.currentDAC_Output1,self.SetpointDAC_Output1,10000,100)  
-        self.currentDAC_Output1=self.SetpointDAC_Output1
-        self.label_MainBasic_DACOUTPUT1_Current.setText(formatNum(self.currentDAC_Output1,6))#Set the current voltage
-        
-    @inlineCallbacks
-    def Set_MainBasic_DACOUTPUT2(self,c=None):  #bufferramp to the point in 1s 
-        yield self.dac.ramp1(1,self.currentDAC_Output2,self.SetpointDAC_Output1,10000,100)  
-        self.currentDAC_Output2=self.SetpointDAC_Output2
-        self.label_MainBasic_DACOUTPUT2_Current.setText(formatNum(self.currentDAC_Output2,6))
-        
-    @inlineCallbacks
-    def Set_MainBasic_DACOUTPUT3(self,c=None):  #bufferramp to the point in 1s 
-        yield self.dac.ramp1(2,self.currentDAC_Output3,self.SetpointDAC_Output1,10000,100)  
-        self.currentDAC_Output3=self.SetpointDAC_Output3
-        self.label_MainBasic_DACOUTPUT3_Current.setText(formatNum(self.currentDAC_Output3,6))
+    def Buffer_Ramp_Display(self,ChannelOutput,ChannelInput,Min,Max,Numberofsteps,Delay):
+        try:
+            self.ClearBufferedData()
+            self.UpdateDAC_Current_Label(ChannelOutput[0],'Sweeping')
+            data= yield self.dac.buffer_ramp(ChannelOutput,ChannelInput,Min,Max,Numberofsteps,Delay)
+            self.UpdateDAC_Current_Label(ChannelOutput[0],Max)
+            self.ClearBufferedData()
+            returnValue(data)
+        except Exception as inst:
+            print inst
 
     @inlineCallbacks
-    def Set_MainBasic_DACOUTPUT4(self,c=None):  #bufferramp to the point in 1s 
-        yield self.dac.ramp1(3,self.currentDAC_Output4,self.SetpointDAC_Output1,10000,100)  
-        self.currentDAC_Output4=self.SetpointDAC_Output4
-        self.label_MainBasic_DACOUTPUT4_Current.setText(formatNum(self.currentDAC_Output4,6))
-        
+    def ClearBufferedData(self):
+        yield self.sleep(0.1)
+        a = yield self.dac.read()
+        while a != '':
+            print a
+            a = yield self.dac.read() #necessary for long ramp(ramp function does not read all the data)
+
+    def UpdatecurrentDAC_Output(self, Port, voltage): #This is a function that update the current Port Output within the software
+        self.currentDAC_Output[Port]=voltage
+
+    def UpdateDAC_Current_Label(self,Channel,Content):
+        if isinstance(Content,float):
+            if Channel==0:
+                self.label_MainBasic_DACOUTPUT1_Current.setText(formatNum(self.currentDAC_Output[Channel],6))
+            if Channel==1:
+                self.label_MainBasic_DACOUTPUT2_Current.setText(formatNum(self.currentDAC_Output[Channel],6))
+            if Channel==2:
+                self.label_MainBasic_DACOUTPUT3_Current.setText(formatNum(self.currentDAC_Output[Channel],6))
+            if Channel==3:
+                self.label_MainBasic_DACOUTPUT4_Current.setText(formatNum(self.currentDAC_Output[Channel],6))
+        if Content=='Sweeping':
+            if Channel==0:
+                self.label_MainBasic_DACOUTPUT1_Current.setText('Sweeping')
+            if Channel==1:
+                self.label_MainBasic_DACOUTPUT2_Current.setText('Sweeping')
+            if Channel==2:
+                self.label_MainBasic_DACOUTPUT3_Current.setText('Sweeping')
+            if Channel==3:
+                self.label_MainBasic_DACOUTPUT4_Current.setText('Sweeping')
+
+
+    @inlineCallbacks
+    def Set_MainBasic_DACOUTPUT(self,ChannelPort,c=None):  #bufferramp to the point in 1s
+        try:
+            yield self.Ramp1_Display(ChannelPort,self.currentDAC_Output[ChannelPort],self.SetpointDAC_Output[ChannelPort],10000,100)
+        except Exception as inst:
+            print inst
+
 ###############################
 
 ##########################Update All the parameters#################
-    def Update_MainBasic_DACOUTPUT1(self):     #Set the OutputValue
-        dummystr=str(self.lineEdit_MainBasic_DACOUTPUT1.text())
-        dummyval=readNum(dummystr, self , False)        
-        if isinstance(dummyval,float) and dummyval<=10.0 and dummyval >=-10.0:
-            self.SetpointDAC_Output1=dummyval
-        self.lineEdit_MainBasic_DACOUTPUT1.setText(formatNum(self.SetpointDAC_Output1,6))
+    def Update_MainBasic_DACOUTPUT(self,ChannelPort):     #Set the OutputValue
+        if ChannelPort==0:
+            dummystr=str(self.lineEdit_MainBasic_DACOUTPUT1.text())
+            dummyval=readNum(dummystr, self , False)
+            if isinstance(dummyval,float) and dummyval<=10.0 and dummyval >=-10.0:
+                self.SetpointDAC_Output[ChannelPort]=dummyval
+            self.lineEdit_MainBasic_DACOUTPUT1.setText(formatNum(self.SetpointDAC_Output[ChannelPort],6))
+        if ChannelPort==1:
+            dummystr=str(self.lineEdit_MainBasic_DACOUTPUT2.text())
+            dummyval=readNum(dummystr, self , False)
+            if isinstance(dummyval,float) and dummyval<=10.0 and dummyval >=-10.0:
+                self.SetpointDAC_Output[ChannelPort]=dummyval
+            self.lineEdit_MainBasic_DACOUTPUT2.setText(formatNum(self.SetpointDAC_Output[ChannelPort],6))
+        if ChannelPort==2:
+            dummystr=str(self.lineEdit_MainBasic_DACOUTPUT3.text())
+            dummyval=readNum(dummystr, self , False)
+            if isinstance(dummyval,float) and dummyval<=10.0 and dummyval >=-10.0:
+                self.SetpointDAC_Output[ChannelPort]=dummyval
+            self.lineEdit_MainBasic_DACOUTPUT3.setText(formatNum(self.SetpointDAC_Output[ChannelPort],6))
+        if ChannelPort==3:
+            dummystr=str(self.lineEdit_MainBasic_DACOUTPUT4.text())
+            dummyval=readNum(dummystr, self , False)
+            if isinstance(dummyval,float) and dummyval<=10.0 and dummyval >=-10.0:
+                self.SetpointDAC_Output[ChannelPort]=dummyval
+            self.lineEdit_MainBasic_DACOUTPUT4.setText(formatNum(self.SetpointDAC_Output[ChannelPort],6))
 
     def UpdateFourTerminal_MinVoltage(self):
         dummystr=str(self.lineEdit_FourTerminal_MinVoltage.text())
@@ -536,7 +585,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         if isinstance(dummyval,float) and dummyval<=10.0 and dummyval >=-10.0:
             self.FourTerminal_MaxVoltage=dummyval
         self.lineEdit_FourTerminal_MaxVoltage.setText(formatNum(self.FourTerminal_MaxVoltage,6))
-        
+
     def UpdateFourTerminal_Numberofstep(self):
         dummystr=str(self.lineEdit_FourTerminal_Numberofstep.text())   #read the text
         dummyval=readNum(dummystr, self , False)
@@ -552,7 +601,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(self.FourTerminal_Numberofstep,6))
         else:
             self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(self.NumberofstepstoStepSize_Convert(self.FourTerminal_MaxVoltage,self.FourTerminal_MinVoltage,self.FourTerminal_Numberofstep),6))
-        
+
     def ToggleFourTerminalFourTerminal_Numberofstep(self):
         if self.FourTerminalSetting_Numberofsteps_Status == "Numberofsteps":
             self.label_FourTerminalNumberofstep.setText('Volt per Steps')
@@ -564,7 +613,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.FourTerminalSetting_Numberofsteps_Status = "Numberofsteps"
             self.RefreshFourTerminal_Numberofstep() #Change the text first
             self.UpdateFourTerminal_Numberofstep()
-            
+
     def UpdateFourTerminal_Delay(self):
         dummystr=str(self.lineEdit_FourTerminal_Delay.text())
         dummyval=readNum(dummystr, self , False)
@@ -618,7 +667,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.FourTerminalMagneticFieldSetting_Numberofsteps,6))
         else:
             self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.NumberofstepstoStepSize_Convert(self.FourTerminalMagneticFieldSetting_MaximumField,self.FourTerminalMagneticFieldSetting_MinimumField,self.FourTerminalMagneticFieldSetting_Numberofsteps),6))
-        
+
     def ToggleFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla(self):
         if self.FourTerminalMagneticFieldSetting_Numberofsteps_Status == "Numberofsteps":
             self.label_FourTerminalMagneticFieldSetting_NumberofSteps.setText('Tesla per Steps')
@@ -634,11 +683,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
     def NumberofstepstoStepSize_Convert(self,Max,Min,NoS):
         StepSize=float((Max-Min)/float(NoS-1.0))
         return StepSize
-        
+
     def StepSizetoNumberofsteps_Convert(self,Max,Min,SS):
         Numberofsteps=int((Max-Min)/float(SS)+1)
         return Numberofsteps
-            
+
     def UpdateFourTerminalMagneticFieldSetting_FieldSweepSpeed(self):
         dummystr=str(self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.text())
         dummyval=readNum(dummystr, self , False)
@@ -688,7 +737,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.UpdateMultiplier()
 
 
-        
+
         ##########################Update All the parameters#################
 
 
@@ -719,25 +768,26 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_FourTerminal_Numberofstep.setEnabled(False)
         self.lineEdit_FourTerminal_Delay.setEnabled(False)
         self.pushButton_FourTerminal_NoSmTpTSwitch.setEnabled(False)
-        
+
         self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.setEnabled(False)
         self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.setEnabled(False)
         self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setEnabled(False)
         self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.setEnabled(False)
         self.pushButton_FourTerminalMagneticFieldSetting_NoSmTpTSwitch.setEnabled(False)
-        
+
         self.comboBox_FourTerminal_Output1.setEnabled(False)
         self.comboBox_FourTerminal_Input1.setEnabled(False)
         self.comboBox_FourTerminal_Input2.setEnabled(False)
         self.comboBox_Voltage_LI_Sensitivity_1stdigit.setEnabled(False)
         self.comboBox_Voltage_LI_Sensitivity_2nddigit.setEnabled(False)
         self.comboBox_Voltage_LI_Expand.setEnabled(False)
+        self.comboBox_Voltage_LI_Sensitivity_Unit.setEnabled(False)
         self.comboBox_Current_LI_Sensitivity_1stdigit.setEnabled(False)
         self.comboBox_Current_LI_Sensitivity_2nddigit.setEnabled(False)
         self.comboBox_Current_LI_Sensitivity_Unit.setEnabled(False)
         self.comboBox_Current_LI_Expand.setEnabled(False)
         self.pushButton_StartFourTerminalSweep.setEnabled(False)
-        
+
         self.lineEdit_MainBasic_DACOUTPUT1.setEnabled(False)
         self.lineEdit_MainBasic_DACOUTPUT2.setEnabled(False)
         self.lineEdit_MainBasic_DACOUTPUT3.setEnabled(False)
@@ -746,8 +796,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.pushButton_MainBasic_DACOUTPUT2.setEnabled(False)
         self.pushButton_MainBasic_DACOUTPUT3.setEnabled(False)
         self.pushButton_MainBasic_DACOUTPUT4.setEnabled(False)
-        
-        
+
+
     def unlockInterface(self):
         self.lineEdit_FourTerminal_NameOutput1.setEnabled(True)
         self.lineEdit_FourTerminal_NameInput1.setEnabled(True)
@@ -763,19 +813,20 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setEnabled(True)
         self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.setEnabled(True)
         self.pushButton_FourTerminalMagneticFieldSetting_NoSmTpTSwitch.setEnabled(True)
-        
+
         self.comboBox_FourTerminal_Output1.setEnabled(True)
         self.comboBox_FourTerminal_Input1.setEnabled(True)
         self.comboBox_FourTerminal_Input2.setEnabled(True)
         self.comboBox_Voltage_LI_Sensitivity_1stdigit.setEnabled(True)
         self.comboBox_Voltage_LI_Sensitivity_2nddigit.setEnabled(True)
+        self.comboBox_Voltage_LI_Sensitivity_Unit.setEnabled(True)
         self.comboBox_Voltage_LI_Expand.setEnabled(True)
         self.comboBox_Current_LI_Sensitivity_1stdigit.setEnabled(True)
         self.comboBox_Current_LI_Sensitivity_2nddigit.setEnabled(True)
         self.comboBox_Current_LI_Sensitivity_Unit.setEnabled(True)
         self.comboBox_Current_LI_Expand.setEnabled(True)
         self.pushButton_StartFourTerminalSweep.setEnabled(True)
-        
+
         self.lineEdit_MainBasic_DACOUTPUT1.setEnabled(True)
         self.lineEdit_MainBasic_DACOUTPUT2.setEnabled(True)
         self.lineEdit_MainBasic_DACOUTPUT3.setEnabled(True)
@@ -784,7 +835,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.pushButton_MainBasic_DACOUTPUT2.setEnabled(True)
         self.pushButton_MainBasic_DACOUTPUT3.setEnabled(True)
         self.pushButton_MainBasic_DACOUTPUT4.setEnabled(True)
-        
+
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)
