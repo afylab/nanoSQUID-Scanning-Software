@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1257</width>
-    <height>981</height>
+    <height>983</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -260,7 +260,7 @@ border:1px solid rgb(168,168,168)
            </property>
            <layout class="QGridLayout" name="gridLayout_MainBasic_DACOUTPUT" rowstretch="1,0,0,0" columnstretch="3,3,1,2,3,0">
             <item row="3" column="3">
-             <widget class="QPushButton" name="pushButton_MainBasic_DACOUTPUT4">
+             <widget class="QPushButton" name="pushButton_CentralDAC_DACOUTPUT4">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -276,7 +276,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="3" column="1">
-             <widget class="QLineEdit" name="lineEdit_MainBasic_DACOUTPUT4">
+             <widget class="QLineEdit" name="lineEdit_CentralDAC_DACOUTPUT4">
               <property name="minimumSize">
                <size>
                 <width>50</width>
@@ -298,7 +298,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="2" column="3">
-             <widget class="QPushButton" name="pushButton_MainBasic_DACOUTPUT3">
+             <widget class="QPushButton" name="pushButton_CentralDAC_DACOUTPUT3">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -314,7 +314,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="0" column="3">
-             <widget class="QPushButton" name="pushButton_MainBasic_DACOUTPUT1">
+             <widget class="QPushButton" name="pushButton_CentralDAC_DACOUTPUT1">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -330,7 +330,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="2" column="0">
-             <widget class="QLabel" name="label_MainBasic_DACOUTPUT3">
+             <widget class="QLabel" name="label_CentralDAC_DACOUTPUT3">
               <property name="minimumSize">
                <size>
                 <width>40</width>
@@ -346,7 +346,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="0" column="0">
-             <widget class="QLabel" name="label_MainBasic_DACOUTPUT1">
+             <widget class="QLabel" name="label_CentralDAC_DACOUTPUT1">
               <property name="minimumSize">
                <size>
                 <width>40</width>
@@ -362,7 +362,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="3" column="0">
-             <widget class="QLabel" name="label_MainBasic_DACOUTPUT4">
+             <widget class="QLabel" name="label_CentralDAC_DACOUTPUT4">
               <property name="minimumSize">
                <size>
                 <width>40</width>
@@ -378,7 +378,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="1" column="0">
-             <widget class="QLabel" name="label_MainBasic_DACOUTPUT2">
+             <widget class="QLabel" name="label_CentralDAC_DACOUTPUT2">
               <property name="minimumSize">
                <size>
                 <width>40</width>
@@ -394,7 +394,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QLineEdit" name="lineEdit_MainBasic_DACOUTPUT1">
+             <widget class="QLineEdit" name="lineEdit_CentralDAC_DACOUTPUT1">
               <property name="minimumSize">
                <size>
                 <width>50</width>
@@ -416,7 +416,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="2" column="1">
-             <widget class="QLineEdit" name="lineEdit_MainBasic_DACOUTPUT3">
+             <widget class="QLineEdit" name="lineEdit_CentralDAC_DACOUTPUT3">
               <property name="minimumSize">
                <size>
                 <width>50</width>
@@ -438,7 +438,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="1" column="3">
-             <widget class="QPushButton" name="pushButton_MainBasic_DACOUTPUT2">
+             <widget class="QPushButton" name="pushButton_CentralDAC_DACOUTPUT2">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -454,7 +454,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QLineEdit" name="lineEdit_MainBasic_DACOUTPUT2">
+             <widget class="QLineEdit" name="lineEdit_CentralDAC_DACOUTPUT2">
               <property name="minimumSize">
                <size>
                 <width>50</width>
@@ -476,7 +476,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="0" column="4">
-             <widget class="QLabel" name="label_MainBasic_DACOUTPUT1_Current">
+             <widget class="QLabel" name="label_CentralDAC_DACOUTPUT1_Current">
               <property name="text">
                <string>0.0</string>
               </property>
@@ -486,7 +486,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="1" column="4">
-             <widget class="QLabel" name="label_MainBasic_DACOUTPUT2_Current">
+             <widget class="QLabel" name="label_CentralDAC_DACOUTPUT2_Current">
               <property name="text">
                <string>0.0</string>
               </property>
@@ -535,7 +535,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="3" column="4">
-             <widget class="QLabel" name="label_MainBasic_DACOUTPUT4_Current">
+             <widget class="QLabel" name="label_CentralDAC_DACOUTPUT4_Current">
               <property name="text">
                <string>0.0</string>
               </property>
@@ -558,7 +558,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="2" column="4">
-             <widget class="QLabel" name="label_MainBasic_DACOUTPUT3_Current">
+             <widget class="QLabel" name="label_CentralDAC_DACOUTPUT3_Current">
               <property name="text">
                <string>0.0</string>
               </property>
@@ -637,7 +637,7 @@ color: rgb(168,168,168);
 QTabBar::tab:selected {background: rgb(50,50,50);}</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_FourTerminal">
        <property name="styleSheet">
@@ -1836,8 +1836,8 @@ background-color: rgb(0, 0, 0);
        <widget class="QFrame" name="frame_FourTerminalMagneticField_Settings">
         <property name="geometry">
          <rect>
-          <x>30</x>
-          <y>10</y>
+          <x>870</x>
+          <y>40</y>
           <width>327</width>
           <height>149</height>
          </rect>
@@ -2071,33 +2071,243 @@ border:1px solid rgb(168,168,168)
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="horizontalLayoutWidget_2">
+       <widget class="QTabWidget" name="tabWidget_FourTerminalMagneticField">
         <property name="geometry">
          <rect>
-          <x>30</x>
-          <y>210</y>
-          <width>351</width>
-          <height>311</height>
+          <x>10</x>
+          <y>10</y>
+          <width>841</width>
+          <height>741</height>
          </rect>
         </property>
-        <layout class="QHBoxLayout" name="Layout_Main2DPlot">
-         <item>
-          <widget class="QFrame" name="Frame_FourTerminalMagneticFieldPlot1">
-           <property name="styleSheet">
-            <string notr="true">background-color:black;</string>
-           </property>
-           <property name="frameShape">
-            <enum>QFrame::StyledPanel</enum>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QTabWidget::pane { border: 0; }
+QTabBar::tab{background: black;
+color: rgb(168,168,168);
+}
+QTabBar::tab:selected {background: rgb(50,50,50);}</string>
+        </property>
+        <property name="currentIndex">
+         <number>1</number>
+        </property>
+        <widget class="QWidget" name="tab_Resistance">
+         <property name="styleSheet">
+          <string notr="true">#tab_Resistance{
+background-color: rgb(0, 0, 0);
+}
+
+
+
+</string>
+         </property>
+         <attribute name="title">
+          <string>Resistance</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="4,1,1">
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Resistance_2DPlot">
+            <item>
+             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Resistance_2DPlot">
+              <property name="styleSheet">
+               <string notr="true">background-color:black;</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Resistance_VersusField">
+            <item>
+             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Resistance_VersusField">
+              <property name="styleSheet">
+               <string notr="true">background-color:black;</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Resistance_VersusGateVoltage">
+            <item>
+             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Resistance_VersusGateVoltage">
+              <property name="styleSheet">
+               <string notr="true">background-color:black;</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_Voltage">
+         <property name="styleSheet">
+          <string notr="true">#tab_Voltage{
+background-color: rgb(0, 0, 0);
+}
+
+
+
+</string>
+         </property>
+         <attribute name="title">
+          <string>Voltage</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_4" stretch="4,1,1">
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Voltage_2DPlot">
+            <item>
+             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Voltage_2DPlot">
+              <property name="styleSheet">
+               <string notr="true">background-color:black;</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Voltage_VersusField">
+            <item>
+             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Voltage_VersusField">
+              <property name="styleSheet">
+               <string notr="true">background-color:black;</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Voltage_VersusGateVoltage">
+            <item>
+             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Voltage_VersusGateVoltage">
+              <property name="styleSheet">
+               <string notr="true">background-color:black;</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_Current">
+         <property name="styleSheet">
+          <string notr="true">#tab_Current{
+background-color: rgb(0, 0, 0);
+}
+
+
+
+</string>
+         </property>
+         <attribute name="title">
+          <string>Current</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_5" stretch="4,1,1">
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Current_2DPlot">
+            <item>
+             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Current_2DPlot">
+              <property name="styleSheet">
+               <string notr="true">background-color:black;</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Current_VersusField">
+            <item>
+             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Current_VersusField">
+              <property name="styleSheet">
+               <string notr="true">background-color:black;</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Current_VersusGateVoltage">
+            <item>
+             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Current_VersusGateVoltage">
+              <property name="styleSheet">
+               <string notr="true">background-color:black;</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </widget>
-      <widget class="QWidget" name="tab_3">
+      <widget class="QWidget" name="tab_TwoTerminal">
+       <property name="styleSheet">
+        <string notr="true">#tab_TwoTerminal{
+
+background-color: rgb(0, 0, 0);
+
+}
+
+
+
+</string>
+       </property>
        <attribute name="title">
         <string>Page</string>
        </attribute>
