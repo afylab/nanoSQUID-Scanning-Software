@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1257</width>
-    <height>983</height>
+    <width>1343</width>
+    <height>1098</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -55,9 +55,9 @@ background-color:rgb(230,230,230);
 
 </string>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_3" stretch="1,7">
+   <layout class="QVBoxLayout" name="verticalLayout_3" stretch="1,8">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_Main_Top">
+     <layout class="QHBoxLayout" name="horizontalLayout_Main_Top" stretch="0">
       <item>
        <widget class="QFrame" name="frame_Main_Basic">
         <property name="styleSheet">
@@ -258,7 +258,7 @@ border:1px solid rgb(168,168,168)
            <property name="frameShadow">
             <enum>QFrame::Raised</enum>
            </property>
-           <layout class="QGridLayout" name="gridLayout_MainBasic_DACOUTPUT" rowstretch="1,0,0,0" columnstretch="3,3,1,2,3,0">
+           <layout class="QGridLayout" name="gridLayout_MainBasic_DACOUTPUT" rowstretch="1,0,0,0" columnstretch="3,0,0,0,0,0">
             <item row="3" column="3">
              <widget class="QPushButton" name="pushButton_CentralDAC_DACOUTPUT4">
               <property name="maximumSize">
@@ -652,9 +652,9 @@ background-color: rgb(0, 0, 0);
        <attribute name="title">
         <string>FourTerminal</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,1">
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="4,1">
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_FourTerminalDummyLeft">
+         <layout class="QVBoxLayout" name="verticalLayout_FourTerminalDummyLeft" stretch="1,1,1">
           <item>
            <layout class="QHBoxLayout" name="Layout_FourTerminalPlot1">
             <item>
@@ -746,7 +746,6 @@ background-color: rgb(3, 3, 3);</string>
             <property name="frameShadow">
              <enum>QFrame::Raised</enum>
             </property>
-            <zorder></zorder>
            </widget>
           </item>
           <item>
@@ -774,6 +773,21 @@ background-color: rgb(3, 3, 3);</string>
               </property>
               <property name="toolTip">
                <string>Test</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton:pressed#pushButton_StartFourTerminalSweep{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#pushButton_StartFourTerminalSweep{
+color: rgb(0,255,0);
+background-color:rgb(0,0,0);
+border: 2px solid rgb(0,255,0);
+border-radius: 5px
+}</string>
               </property>
               <property name="text">
                <string>Start Sweep</string>
@@ -808,7 +822,7 @@ border:1px solid rgb(168,168,168)
             <property name="frameShadow">
              <enum>QFrame::Raised</enum>
             </property>
-            <layout class="QGridLayout" name="Layout_Voltage_Lockin_Setting_2" rowstretch="1,1,1" columnstretch="2,1,1,1">
+            <layout class="QGridLayout" name="Layout_Voltage_Lockin_Setting_2" rowstretch="1,1,1,0,0" columnstretch="2,1,1,1">
              <property name="horizontalSpacing">
               <number>2</number>
              </property>
@@ -854,7 +868,7 @@ color: rgb(168, 168, 168)
                 </size>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>2</number>
                </property>
                <item>
                 <property name="text">
@@ -940,7 +954,7 @@ color: rgb(168, 168, 168)
                 </size>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>2</number>
                </property>
                <item>
                 <property name="text">
@@ -1019,6 +1033,119 @@ color: rgb(168, 168, 168)
                </property>
               </widget>
              </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_Voltage_LI_Timeconstant">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">#label_ImageNum{
+color: rgb(168, 168, 168)
+}</string>
+               </property>
+               <property name="text">
+                <string>Time Constant</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1" colspan="2">
+              <widget class="QLineEdit" name="lineEdit_Voltage_LI_Timeconstant">
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>1</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="3">
+              <widget class="QLabel" name="label_MinVoltage_Unit_10">
+               <property name="minimumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string notr="true"/>
+               </property>
+               <property name="text">
+                <string>(s)</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1" colspan="2">
+              <widget class="QLineEdit" name="lineEdit_Lockin_Info_Frequency">
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>17.777</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_Lockin_Info_Frequency">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Frequency</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="3">
+              <widget class="QLabel" name="label_MinVoltage_Unit_12">
+               <property name="minimumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string notr="true"/>
+               </property>
+               <property name="text">
+                <string>(Hz)</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
             </layout>
            </widget>
           </item>
@@ -1035,7 +1162,7 @@ border:1px solid rgb(168,168,168)
             <property name="frameShadow">
              <enum>QFrame::Raised</enum>
             </property>
-            <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,1,1" columnstretch="2,1,1,1">
+            <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,1,1,0" columnstretch="2,1,1,1">
              <property name="horizontalSpacing">
               <number>2</number>
              </property>
@@ -1057,7 +1184,7 @@ border:1px solid rgb(168,168,168)
                 </size>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <item>
                 <property name="text">
@@ -1096,7 +1223,7 @@ border:1px solid rgb(168,168,168)
                 </size>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>2</number>
                </property>
                <item>
                 <property name="text">
@@ -1234,6 +1361,62 @@ color: rgb(168, 168, 168)
                </property>
                <property name="text">
                 <string>Current Lock In Amplifier Settings</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_Current_LI_Timeconstant">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">#label_ImageNum{
+color: rgb(168, 168, 168)
+}</string>
+               </property>
+               <property name="text">
+                <string>Time Constant</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1" colspan="2">
+              <widget class="QLineEdit" name="lineEdit_Current_LI_Timeconstant">
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>1</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="3">
+              <widget class="QLabel" name="label_MinVoltage_Unit_11">
+               <property name="minimumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string notr="true"/>
+               </property>
+               <property name="text">
+                <string>(s)</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1561,7 +1744,7 @@ color: rgb(168, 168, 168)
           <item>
            <widget class="QFrame" name="frame_FourTerminal_SweepSettings">
             <property name="styleSheet">
-             <string notr="true">#frame_Preliminary_SweepSettings{
+             <string notr="true">#frame_FourTerminal_SweepSettings{
 border:1px solid rgb(168,168,168)
 }</string>
             </property>
@@ -1795,7 +1978,6 @@ border:1px solid rgb(168,168,168)
               </widget>
              </item>
             </layout>
-            <zorder></zorder>
             <zorder>label_MinVoltage</zorder>
             <zorder>lineEdit_FourTerminal_MinVoltage</zorder>
             <zorder>label_MaxVoltage</zorder>
@@ -1813,10 +1995,6 @@ border:1px solid rgb(168,168,168)
          </layout>
         </item>
        </layout>
-       <zorder>frame_Lockin_Settings</zorder>
-       <zorder>verticalLayoutWidget</zorder>
-       <zorder>frame_FourTerminalPicture</zorder>
-       <zorder>verticalLayoutWidget_2</zorder>
       </widget>
       <widget class="QWidget" name="tab_FourTerminalMagneticField">
        <property name="styleSheet">
@@ -1833,468 +2011,778 @@ background-color: rgb(0, 0, 0);
        <attribute name="title">
         <string>FourTerminal MagneticField</string>
        </attribute>
-       <widget class="QFrame" name="frame_FourTerminalMagneticField_Settings">
-        <property name="geometry">
-         <rect>
-          <x>870</x>
-          <y>40</y>
-          <width>327</width>
-          <height>149</height>
-         </rect>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">#frame_Magnetic_Field_Settings{
-border:1px solid rgb(168,168,168)
-}</string>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout">
-         <property name="margin">
-          <number>0</number>
-         </property>
-         <item>
-          <layout class="QGridLayout" name="Layout_MagneticFieldSettings" rowstretch="0,0,0,0,0">
-           <item row="2" column="0">
-            <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_MaximumField">
-             <property name="minimumSize">
-              <size>
-               <width>110</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Maximum Field&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="2">
-            <widget class="QLabel" name="label_14">
-             <property name="minimumSize">
-              <size>
-               <width>50</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(T/min)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0" colspan="3">
-            <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting">
-             <property name="minimumSize">
-              <size>
-               <width>150</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; color:#a8a8a8;&quot;&gt;Magnetic Field Settings&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="2">
-            <widget class="QLabel" name="label_11">
-             <property name="minimumSize">
-              <size>
-               <width>20</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(T)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="2">
-            <widget class="QPushButton" name="pushButton_FourTerminalMagneticFieldSetting_NoSmTpTSwitch">
-             <property name="minimumSize">
-              <size>
-               <width>20</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="focusPolicy">
-              <enum>Qt::NoFocus</enum>
-             </property>
-             <property name="toolTip">
-              <string>Toggle Field Steps/Increment</string>
-             </property>
-             <property name="text">
-              <string>↺</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_MaximumField">
-             <property name="text">
-              <string>0.100</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-             <property name="placeholderText">
-              <string>0.0</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_FourTerminalMagneticFieldSetting_NumberofSteps">
-             <property name="minimumSize">
-              <size>
-               <width>110</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Number of Steps&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed">
-             <property name="text">
-              <string>0.100</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-             <property name="placeholderText">
-              <string>0.0</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla">
-             <property name="focusPolicy">
-              <enum>Qt::StrongFocus</enum>
-             </property>
-             <property name="text">
-              <string>100</string>
-             </property>
-             <property name="frame">
-              <bool>true</bool>
-             </property>
-             <property name="cursorPosition">
-              <number>3</number>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-             <property name="placeholderText">
-              <string>0.0</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_FieldSweepSpeed">
-             <property name="minimumSize">
-              <size>
-               <width>110</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Field Sweep Speed&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_MinimumField">
-             <property name="minimumSize">
-              <size>
-               <width>110</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Minimum Field&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QLabel" name="label_12">
-             <property name="minimumSize">
-              <size>
-               <width>20</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(T)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_MinimumField">
-             <property name="text">
-              <string>0.000</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-             <property name="placeholderText">
-              <string>0.0</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QTabWidget" name="tabWidget_FourTerminalMagneticField">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>841</width>
-          <height>741</height>
-         </rect>
-        </property>
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QTabWidget::pane { border: 0; }
+       <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="4,1">
+        <item>
+         <widget class="QTabWidget" name="tabWidget_FourTerminalMagneticField">
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QTabWidget::pane { border: 0; }
 QTabBar::tab{background: black;
 color: rgb(168,168,168);
 }
 QTabBar::tab:selected {background: rgb(50,50,50);}</string>
-        </property>
-        <property name="currentIndex">
-         <number>1</number>
-        </property>
-        <widget class="QWidget" name="tab_Resistance">
-         <property name="styleSheet">
-          <string notr="true">#tab_Resistance{
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="tab_Resistance">
+           <property name="styleSheet">
+            <string notr="true">#tab_Resistance{
 background-color: rgb(0, 0, 0);
 }
 
 
 
 </string>
-         </property>
-         <attribute name="title">
-          <string>Resistance</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="4,1,1">
-          <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Resistance_2DPlot">
+           </property>
+           <attribute name="title">
+            <string>Resistance</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_2" stretch="4,1,1">
             <item>
-             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Resistance_2DPlot">
-              <property name="styleSheet">
-               <string notr="true">background-color:black;</string>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Resistance_2DPlot">
+              <item>
+               <widget class="QFrame" name="Frame_FourTerminalMagneticField_Resistance_2DPlot">
+                <property name="styleSheet">
+                 <string notr="true">background-color:black;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Resistance_VersusField">
+              <item>
+               <widget class="QFrame" name="Frame_FourTerminalMagneticField_Resistance_VersusField">
+                <property name="styleSheet">
+                 <string notr="true">background-color:black;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Resistance_VersusGateVoltage">
+              <item>
+               <widget class="QFrame" name="Frame_FourTerminalMagneticField_Resistance_VersusGateVoltage">
+                <property name="styleSheet">
+                 <string notr="true">background-color:black;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Resistance_VersusField">
-            <item>
-             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Resistance_VersusField">
-              <property name="styleSheet">
-               <string notr="true">background-color:black;</string>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Resistance_VersusGateVoltage">
-            <item>
-             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Resistance_VersusGateVoltage">
-              <property name="styleSheet">
-               <string notr="true">background-color:black;</string>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="tab_Voltage">
-         <property name="styleSheet">
-          <string notr="true">#tab_Voltage{
+          </widget>
+          <widget class="QWidget" name="tab_Voltage">
+           <property name="styleSheet">
+            <string notr="true">#tab_Voltage{
 background-color: rgb(0, 0, 0);
 }
 
 
 
 </string>
-         </property>
-         <attribute name="title">
-          <string>Voltage</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_4" stretch="4,1,1">
-          <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Voltage_2DPlot">
+           </property>
+           <attribute name="title">
+            <string>Voltage</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_4" stretch="4,1,1">
             <item>
-             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Voltage_2DPlot">
-              <property name="styleSheet">
-               <string notr="true">background-color:black;</string>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Voltage_2DPlot">
+              <item>
+               <widget class="QFrame" name="Frame_FourTerminalMagneticField_Voltage_2DPlot">
+                <property name="styleSheet">
+                 <string notr="true">background-color:black;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Voltage_VersusField">
+              <item>
+               <widget class="QFrame" name="Frame_FourTerminalMagneticField_Voltage_VersusField">
+                <property name="styleSheet">
+                 <string notr="true">background-color:black;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Voltage_VersusGateVoltage">
+              <item>
+               <widget class="QFrame" name="Frame_FourTerminalMagneticField_Voltage_VersusGateVoltage">
+                <property name="styleSheet">
+                 <string notr="true">background-color:black;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Voltage_VersusField">
-            <item>
-             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Voltage_VersusField">
-              <property name="styleSheet">
-               <string notr="true">background-color:black;</string>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Voltage_VersusGateVoltage">
-            <item>
-             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Voltage_VersusGateVoltage">
-              <property name="styleSheet">
-               <string notr="true">background-color:black;</string>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="tab_Current">
-         <property name="styleSheet">
-          <string notr="true">#tab_Current{
+          </widget>
+          <widget class="QWidget" name="tab_Current">
+           <property name="styleSheet">
+            <string notr="true">#tab_Current{
 background-color: rgb(0, 0, 0);
 }
 
 
 
 </string>
-         </property>
-         <attribute name="title">
-          <string>Current</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_5" stretch="4,1,1">
-          <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Current_2DPlot">
+           </property>
+           <attribute name="title">
+            <string>Current</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_5" stretch="4,1,1">
             <item>
-             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Current_2DPlot">
-              <property name="styleSheet">
-               <string notr="true">background-color:black;</string>
+             <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Current_2DPlot">
+              <item>
+               <widget class="QFrame" name="Frame_FourTerminalMagneticField_Current_2DPlot">
+                <property name="styleSheet">
+                 <string notr="true">background-color:black;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Current_VersusField">
+              <item>
+               <widget class="QFrame" name="Frame_FourTerminalMagneticField_Current_VersusField">
+                <property name="styleSheet">
+                 <string notr="true">background-color:black;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Current_VersusGateVoltage">
+              <item>
+               <widget class="QFrame" name="Frame_FourTerminalMagneticField_Current_VersusGateVoltage">
+                <property name="styleSheet">
+                 <string notr="true">background-color:black;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout" stretch="5,3,2,2">
+          <item>
+           <widget class="QFrame" name="frame_FourTerminalMagneticField_Settings">
+            <property name="styleSheet">
+             <string notr="true">#frame_FourTerminalMagneticField_Settings{
+border:1px solid rgb(168,168,168)
+}</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QGridLayout" name="gridLayout">
+             <property name="margin">
+              <number>0</number>
+             </property>
+             <item row="1" column="0">
+              <layout class="QGridLayout" name="Layout_MagneticFieldSettings" rowstretch="2,1,1,1,1,3,3,0,0" columnstretch="3,1,1" rowminimumheight="2,1,1,1,1,3,3,0,0">
+               <item row="2" column="0">
+                <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_MaximumField">
+                 <property name="minimumSize">
+                  <size>
+                   <width>110</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Maximum Field&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="2">
+                <widget class="QLabel" name="label_14">
+                 <property name="minimumSize">
+                  <size>
+                   <width>50</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(T/min)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0" colspan="3">
+                <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting">
+                 <property name="minimumSize">
+                  <size>
+                   <width>150</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; color:#a8a8a8;&quot;&gt;Magnetic Field Sweep Settings&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="2">
+                <widget class="QLabel" name="label_11">
+                 <property name="minimumSize">
+                  <size>
+                   <width>20</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(T)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="2">
+                <widget class="QPushButton" name="pushButton_FourTerminalMagneticFieldSetting_NoSmTpTSwitch">
+                 <property name="minimumSize">
+                  <size>
+                   <width>20</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="focusPolicy">
+                  <enum>Qt::NoFocus</enum>
+                 </property>
+                 <property name="toolTip">
+                  <string>Toggle Field Steps/Increment</string>
+                 </property>
+                 <property name="text">
+                  <string>↺</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_MaximumField">
+                 <property name="text">
+                  <string>0.100</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 </property>
+                 <property name="placeholderText">
+                  <string>0.0</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="label_FourTerminalMagneticFieldSetting_NumberofSteps">
+                 <property name="minimumSize">
+                  <size>
+                   <width>110</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Number of Steps&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="1">
+                <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed">
+                 <property name="text">
+                  <string>0.100</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 </property>
+                 <property name="placeholderText">
+                  <string>0.0</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla">
+                 <property name="focusPolicy">
+                  <enum>Qt::StrongFocus</enum>
+                 </property>
+                 <property name="text">
+                  <string>100</string>
+                 </property>
+                 <property name="frame">
+                  <bool>true</bool>
+                 </property>
+                 <property name="cursorPosition">
+                  <number>3</number>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 </property>
+                 <property name="placeholderText">
+                  <string>0.0</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="0">
+                <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_FieldSweepSpeed">
+                 <property name="minimumSize">
+                  <size>
+                   <width>110</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Field Sweep Speed&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_MinimumField">
+                 <property name="minimumSize">
+                  <size>
+                   <width>110</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Minimum Field&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="2">
+                <widget class="QLabel" name="label_12">
+                 <property name="minimumSize">
+                  <size>
+                   <width>20</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(T)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_MinimumField">
+                 <property name="text">
+                  <string>0.000</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 </property>
+                 <property name="placeholderText">
+                  <string>0.0</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="0" colspan="3">
+                <widget class="QPushButton" name="pushButton_StartFourTerminalMagneticFieldAbort">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Test</string>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">QPushButton:pressed#pushButton_StartFourTerminalMagneticFieldAbort{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#pushButton_StartFourTerminalMagneticFieldAbort{
+color: rgb(255,0, 0);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(255,0, 0);
+border-radius: 5px
+}</string>
+                 </property>
+                 <property name="text">
+                  <string>Abort Sweep</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="0" colspan="3">
+                <widget class="QPushButton" name="pushButton_StartFourTerminalMagneticFieldSweep">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Test</string>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">QPushButton:pressed#pushButton_StartFourTerminalMagneticFieldSweep{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#pushButton_StartFourTerminalMagneticFieldSweep{
+color: rgb(0,255,0);
+background-color:rgb(0,0,0);
+border: 2px solid rgb(0,255,0);
+border-radius: 5px
+}</string>
+                 </property>
+                 <property name="text">
+                  <string>Start Sweep</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="frame_FourTerminalMagneticField_Details">
+            <property name="styleSheet">
+             <string notr="true">#frame_FourTerminalMagneticField_Details{
+border:1px solid rgb(168,168,168)
+}</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_3" rowstretch="2,0,0,0,0" columnstretch="3,0">
+             <item row="1" column="0">
+              <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_MoveLineCut">
+               <property name="minimumSize">
+                <size>
+                 <width>110</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Move LineCut&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0" colspan="2">
+              <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_2">
+               <property name="minimumSize">
+                <size>
+                 <width>150</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt;&quot;&gt;Live Update Settings&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_AutoLevel">
+               <property name="minimumSize">
+                <size>
+                 <width>110</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Auto Level&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QCheckBox" name="checkBox_FourTerminalMagneticFieldSetting_AutoLevel">
+               <property name="layoutDirection">
+                <enum>Qt::LeftToRight</enum>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">setStyleSheet(&quot;margin-left:50%; margin-right:50%;&quot;);
+</string>
+               </property>
+               <property name="text">
+                <string>CheckBox</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QCheckBox" name="checkBox_FourTerminalMagneticFieldSetting_MoveLineCut">
+               <property name="styleSheet">
+                <string notr="true">QCheckBox#checkBox_FourTerminalMagneticFieldSetting_MoveLineCut{
+&quot;margin-left:50%; margin-right:50%;&quot;
+}</string>
+               </property>
+               <property name="text">
+                <string>CheckBox</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0" colspan="2">
+              <widget class="QPushButton" name="pushButton_FourTerminal2D_AutoLevel">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Test</string>
+               </property>
+               <property name="text">
+                <string>Auto Level</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="Label_FourTerminalMagneticFieldSetting_MoveLineCut_2">
+               <property name="minimumSize">
+                <size>
+                 <width>110</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Back To Zero&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QCheckBox" name="checkBox_FourTerminalMagneticFieldSetting_BacktoZero">
+               <property name="layoutDirection">
+                <enum>Qt::LeftToRight</enum>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">setStyleSheet(&quot;margin-left:50%; margin-right:50%;&quot;);
+</string>
+               </property>
+               <property name="text">
+                <string>CheckBox</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_MagneticFiledLinecut">
+            <item>
+             <widget class="QLabel" name="label__FourTerminalMagneticFieldSetting_MagneticFieldValue">
+              <property name="minimumSize">
+               <size>
+                <width>80</width>
+                <height>20</height>
+               </size>
               </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
+              <property name="text">
+               <string>Magnetic Field Value</string>
               </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_MagneticFieldValue">
+              <property name="text">
+               <string>0.000</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              </property>
+              <property name="placeholderText">
+               <string>0.0</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_13">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(T)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Current_VersusField">
+           <layout class="QHBoxLayout" name="horizontalLayout_GateVoltage_Linecut">
             <item>
-             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Current_VersusField">
-              <property name="styleSheet">
-               <string notr="true">background-color:black;</string>
+             <widget class="QLabel" name="label__FourTerminalMagneticFieldSetting_GateVoltageValue">
+              <property name="minimumSize">
+               <size>
+                <width>80</width>
+                <height>20</height>
+               </size>
               </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
+              <property name="text">
+               <string>Gate Voltage Value</string>
               </property>
              </widget>
             </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Current_VersusGateVoltage">
             <item>
-             <widget class="QFrame" name="Frame_FourTerminalMagneticField_Current_VersusGateVoltage">
-              <property name="styleSheet">
-               <string notr="true">background-color:black;</string>
+             <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_GateVoltageValue">
+              <property name="text">
+               <string>0.000</string>
               </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
               </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
+              <property name="placeholderText">
+               <string>0.0</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_15">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(V)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
            </layout>
           </item>
          </layout>
-        </widget>
-       </widget>
+        </item>
+       </layout>
+       <zorder>tabWidget_FourTerminalMagneticField</zorder>
+       <zorder>verticalLayoutWidget_2</zorder>
+       <zorder></zorder>
+       <zorder>verticalLayoutWidget_2</zorder>
       </widget>
       <widget class="QWidget" name="tab_TwoTerminal">
        <property name="styleSheet">
