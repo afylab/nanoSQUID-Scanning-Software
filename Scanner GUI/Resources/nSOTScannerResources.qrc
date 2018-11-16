@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="nSOTScanner">
+    <file>Pictures/Landaul Fan.PNG</file>
+    <file>Pictures/Four Terminal.png</file>
     <file>Pictures/tiptf.png</file>
     <file>Pictures/Connected.png</file>
     <file>Pictures/Disconnected.png</file>
