@@ -113,42 +113,6 @@ color: rgb(168,168,168)
     <string>•  DAC ADC</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_7">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>130</y>
-     <width>131</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#label_7{
-color: rgb(168,168,168)
-}</string>
-   </property>
-   <property name="text">
-    <string>•  HF2LI Zurich Lock in</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_8">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>150</y>
-     <width>131</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">#label_8{
-color: rgb(168,168,168)
-}</string>
-   </property>
-   <property name="text">
-    <string>•  DC Box</string>
-   </property>
-  </widget>
  </widget>
  <resources>
   <include location="../Resources/nSOTScannerResources.qrc"/>
