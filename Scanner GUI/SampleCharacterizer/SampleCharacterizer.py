@@ -291,9 +291,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             #Creates a new datavault file and updates the image# labels
             yield self.newDataVaultFile("No Magnetic Field")
 
-            """Block for testing
             yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.currentDAC_Output[self.FourTerminal_ChannelOutput[0]],self.FourTerminal_MinVoltage,10000,100)    #ramp to initial value
-            """
             
             #Give a second after the ramp to allow transients to settle before starting the sweep
             yield self.sleep(1)
@@ -567,7 +565,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         dummystr=str(self.lineEdit_FourTerminal_Delay.text())
         dummyval=readNum(dummystr, self , True)
         if isinstance(dummyval,float):
-            self.FourTerminal_Delay=int(dummyval)
+            self.FourTerminal_Delay=float(dummyval)
         self.lineEdit_FourTerminal_Delay.setText(formatNum(self.FourTerminal_Delay,6))
 
     def UpdateDevice_Name(self):
