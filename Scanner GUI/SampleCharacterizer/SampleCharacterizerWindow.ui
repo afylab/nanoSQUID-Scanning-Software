@@ -640,7 +640,7 @@ color: rgb(168,168,168);
 QTabBar::tab:selected {background: rgb(50,50,50);}</string>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="usesScrollButtons">
        <bool>false</bool>
@@ -661,13 +661,13 @@ background-color: rgb(0, 0, 0);
        <attribute name="title">
         <string>FourTerminal</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout" stretch="4,1">
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,1">
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_FourTerminalDummyLeft" stretch="1,1,1">
+         <layout class="QVBoxLayout" name="verticalLayout_7">
           <item>
            <layout class="QHBoxLayout" name="Layout_FourTerminalPlot1">
             <item>
-             <widget class="QFrame" name="FourTerminalPlot1">
+             <widget class="QFrame" name="frame_FourTerminalPlot1">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -692,7 +692,33 @@ background:black
           <item>
            <layout class="QHBoxLayout" name="Layout_FourTerminalPlot2">
             <item>
-             <widget class="QFrame" name="FourTerminalPlot2">
+             <widget class="QFrame" name="frame_FourTerminalPlot2">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">#PlotArea{
+background:black
+}</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+              <zorder></zorder>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="Layout_FourTerminalPlot3">
+            <item>
+             <widget class="QFrame" name="frame_FourTerminalPlot3">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -715,9 +741,9 @@ background:black
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalPlot3">
+           <layout class="QHBoxLayout" name="Layout_FourTerminalPlot4">
             <item>
-             <widget class="QFrame" name="FourTerminalPlot3">
+             <widget class="QFrame" name="frame_FourTerminalPlot4">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -2022,16 +2048,18 @@ background-color: rgb(0, 0, 0);
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="4,1">
         <item>
-         <widget class="QTabWidget" name="tabWidget_FourTerminalMagneticField">
+         <widget class="QTabWidget" name="tab">
           <property name="autoFillBackground">
            <bool>false</bool>
           </property>
           <property name="styleSheet">
-           <string notr="true">QTabWidget::pane { border: 0; }
-QTabBar::tab{background: black;
-color: rgb(168,168,168);
+           <string notr="true">#tab{
+background-color: rgb(0, 0, 0);
 }
-QTabBar::tab:selected {background: rgb(50,50,50);}</string>
+
+
+
+</string>
           </property>
           <property name="currentIndex">
            <number>0</number>
@@ -2149,6 +2177,120 @@ background-color: rgb(0, 0, 0);
             </item>
            </layout>
           </widget>
+          <widget class="QWidget" name="tab_Conductance">
+           <property name="styleSheet">
+            <string notr="true">#tab_Conductance{
+background-color: rgb(0, 0, 0);
+}
+
+
+
+</string>
+           </property>
+           <attribute name="title">
+            <string>Conductance</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_7" rowstretch="3,1" columnstretch="1,3">
+            <item row="0" column="0" rowspan="2">
+             <layout class="QVBoxLayout" name="verticalLayout_6" stretch="3,1">
+              <item>
+               <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Conductance_VersusField">
+                <item>
+                 <widget class="QFrame" name="Frame_FourTerminalMagneticField_Conductance_VersusField">
+                  <property name="styleSheet">
+                   <string notr="true">background-color:black;</string>
+                  </property>
+                  <property name="frameShape">
+                   <enum>QFrame::StyledPanel</enum>
+                  </property>
+                  <property name="frameShadow">
+                   <enum>QFrame::Raised</enum>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Minimum</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item row="0" column="1">
+             <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Conductance_2DPlot">
+              <item>
+               <widget class="QFrame" name="Frame_FourTerminalMagneticField_Conductance_2DPlot">
+                <property name="styleSheet">
+                 <string notr="true">background-color:black;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <zorder>Frame_FourTerminalMagneticField_Current_2DPlot_2</zorder>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="1" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="4,1">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetNoConstraint</enum>
+              </property>
+              <item>
+               <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Conductance_VersusGateVoltage" stretch="0">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetNoConstraint</enum>
+                </property>
+                <item>
+                 <widget class="QFrame" name="Frame_FourTerminalMagneticField_Conductance_VersusGateVoltage">
+                  <property name="styleSheet">
+                   <string notr="true">background-color:green;</string>
+                  </property>
+                  <property name="frameShape">
+                   <enum>QFrame::StyledPanel</enum>
+                  </property>
+                  <property name="frameShadow">
+                   <enum>QFrame::Raised</enum>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_6">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>140</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
           <widget class="QWidget" name="tab_Voltage">
            <property name="styleSheet">
             <string notr="true">#tab_Voltage{
@@ -2178,7 +2320,6 @@ background-color: rgb(0, 0, 0);
                   <property name="frameShadow">
                    <enum>QFrame::Raised</enum>
                   </property>
-                  <zorder>verticalSpacer_2</zorder>
                  </widget>
                 </item>
                </layout>
@@ -2853,7 +2994,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_MagneticFieldValue">
+             <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_GateVoltageValue">
               <property name="text">
                <string>0.000</string>
               </property>
@@ -2899,7 +3040,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_GateVoltageValue">
+             <widget class="QLineEdit" name="lineEdit_FourTerminalMagneticFieldSetting_MagneticFieldValue">
               <property name="text">
                <string>0.000</string>
               </property>
@@ -2932,7 +3073,7 @@ border:1px solid rgb(168,168,168)
          </layout>
         </item>
        </layout>
-       <zorder>tabWidget_FourTerminalMagneticField</zorder>
+       <zorder>tab</zorder>
        <zorder></zorder>
       </widget>
      </widget>
