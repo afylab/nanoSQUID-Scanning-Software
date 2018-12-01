@@ -39,6 +39,8 @@ Ui_ZoomWindow, QtBaseClass = uic.loadUiType(zoomWindow)
 sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
 
+
+#####GradSet
 class gradSet(QtGui.QDialog, Ui_GradSet):
     def __init__(self, reactor, dataPct):
         super(gradSet, self).__init__()
@@ -56,6 +58,9 @@ class gradSet(QtGui.QDialog, Ui_GradSet):
         self.reject()
     def closeEvent(self, e):
         self.reject()
+
+        
+#####Sensitivity
 
 class Sensitivity(QtGui.QDialog, Ui_SensitivityPrompt):
     def __init__(self, dep, ind, reactor):
@@ -107,6 +112,8 @@ class Sensitivity(QtGui.QDialog, Ui_SensitivityPrompt):
     def closeEvent(self, e):
         self.reject()
 
+#####Plotter
+
 class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def __init__(self, reactor, parent = None):
         super(Plotter, self).__init__()
@@ -114,14 +121,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.reactor = reactor
         self.setupUi(self)
 
-        self.showGrad.hide()
-#        self.diamFrame.hide()
         self.trSelect.hide()
 
         self.setupPlots()
-
-        self.hideGrad.clicked.connect(self.shrink)
-        self.showGrad.clicked.connect(self.enlarge)
 
         self.refresh.setEnabled(False)
         self.diamCalc.setEnabled(False)
@@ -130,13 +132,19 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.sensitivity.setEnabled(False)
         self.zoom.setEnabled(False)
         
+        self.lineEdit_vCutPos.editingFinished.connect(self.SetupLineCutverticalposition)
+        self.lineEdit_hCutPos.editingFinished.connect(self.SetupLineCuthorizontalposition)
+
         self.saveMenu = QtGui.QMenu()
         twoDSave = QtGui.QAction("Save 2D plot", self)
-        oneDSave = QtGui.QAction("Save line cut", self)
-        oneDSave.triggered.connect(self.matLinePlot)
         twoDSave.triggered.connect(self.matPlot)
+        oneDSaveh = QtGui.QAction("Save horizontal line cut", self)
+        oneDSaveh.triggered.connect(self.matLinePloth)
+        oneDSavev = QtGui.QAction("Save vertical line cut", self)
+        oneDSavev.triggered.connect(self.matLinePlotv)
         self.saveMenu.addAction(twoDSave)
-        self.saveMenu.addAction(oneDSave)
+        self.saveMenu.addAction(oneDSaveh)
+        self.saveMenu.addAction(oneDSavev)
         self.savePlot.setMenu(self.saveMenu)
 
         self.gradMenu = QtGui.QMenu()
@@ -174,18 +182,14 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.trSelect.setMenu(self.trSelectMenu)
 
 
-        self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
-        self.diamCalc.clicked.connect(self.calculateDiam)
+        # self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
         self.sensitivity.clicked.connect(self.promptSensitivity)
         self.zoom.clicked.connect(self.zoomArea)
         self.browse.clicked.connect(self.browseDV)
         self.refresh.clicked.connect(self.refreshPlot)
         self.addPlot.clicked.connect(self.newPlot)
-        self.vCutPos.valueChanged.connect(self.changeVertLine)
-        self.hCutPos.valueChanged.connect(self.changeHorLine)
+
         
-        self.showGrad.hide()
-        self.hideGrad.hide()
 
         self.Data = None
         self.plotData = None
@@ -224,21 +228,47 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         
     def unlockInterface(self):
         pass
+
         
-    def matLinePlot(self):
+    ###This part is awfully wierd, revise when see it.
+    def matLinePloth(self):
         if not self.plotData is None:
             fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
-                self.genLineMatFile(fold)
+                self.genLineMatFileh(fold)
                 
-    def genLineMatFile(self, fold):
-        yData = np.asarray(self.lineYVals)
-        xData = np.asarray(self.lineXVals)
+    def genLineMatFileh(self, fold):
+        XZyData = np.asarray(self.LineCutXZYVals)
+        XZxData = np.asarray(self.LineCutXZXVals)
+        YZyData = np.asarray(self.LineCutYZYVals)
+        YZxData = np.asarray(self.LineCutYZXVals)
+        
+        xData, yData = XZxData, XZyData ###This part need to be modified
         
         matData = np.transpose(np.vstack((xData, yData)))
         savename = fold.split("/")[-1].split('.mat')[0]
         sio.savemat(fold,{savename:matData})
         matData = None
+        
+    def matLinePlotv(self):
+        if not self.plotData is None:
+            fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
+            if fold:
+                self.genLineMatFilev(fold)
+                
+    def genLineMatFilev(self, fold):
+        XZyData = np.asarray(self.LineCutXZYVals)
+        XZxData = np.asarray(self.LineCutXZXVals)
+        YZyData = np.asarray(self.LineCutYZYVals)
+        YZxData = np.asarray(self.LineCutYZXVals)
+        
+        xData, yData = YZxData, YZyData ###This part need to be modified
+        
+        matData = np.transpose(np.vstack((xData, yData)))
+        savename = fold.split("/")[-1].split('.mat')[0]
+        sio.savemat(fold,{savename:matData})
+        matData = None
+        
 
     def matPlot(self):
         if not self.plotData is None:
@@ -322,8 +352,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.sensPrompt = Sensitivity(self.depVars, self.indVars, self.reactor)
         self.sensPrompt.show()
         self.sensPrompt.accepted.connect(self.plotSens)
+        
     def plotSens(self):
-
         self.sensIndex = self.sensPrompt.sensIndicies()
         l = int(len(self.indVars) / 2)
         x = self.sensIndex[0]
@@ -381,8 +411,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.mainPlot.addItem(self.hLine)
         self.vLine.setValue(self.xMin)
         self.hLine.setValue(self.yMin)    
-        self.vCutPos.setValue(self.xMin)
-        self.hCutPos.setValue(self.yMin)
         if self.NSselect == 1:
             self.plotType.setText('Plotted sensitivity.')
             self.vhSelect.addItem('Maximum Sensitivity')
@@ -679,10 +707,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             QtGui.QToolTip.showText(pt, 'Data set format is incompatible with the plotter.')
 
     def refreshPlot(self):
-        if self.vhSelect.count() > 2: 
-            self.vhSelect.setCurrentIndex(0)
-            while self.vhSelect.count()>2:                
-                self.vhSelect.removeItem(2)
+
         l = int(len(self.indVars) / 2)
         x = self.xAxis.currentIndex()
         y = self.yAxis.currentIndex()
@@ -735,22 +760,67 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         else:
             self.vLine.setValue(self.xMin)
             self.hLine.setValue(self.yMin)
-            self.vCutPos.setValue(self.xMin)
-            self.hCutPos.setValue(self.yMin)
-            self.YZPlot.clear()
-            self.XZPlot.clear()
+            self.verticalposition=self.xMin
+            self.horizontalposition=self.yMin
+            self.ClearLineCutPlot()
             
+    def SetupLineCutverticalposition(self):
+        dummystr=str(self.lineEdit_vCutPos.text())
+        dummyval=readNum(dummystr, self , False)
+        if isinstance(dummyval,float):
+            self.verticalposition=dummyval
+        self.ChangeLineCutValue("")
+ 
+    def SetupLineCuthorizontalposition(self):
+        dummystr=str(self.lineEdit_hCutPos.text())
+        dummyval=readNum(dummystr, self , False)
+        if isinstance(dummyval,float):
+            self.horizontalposition=dummyval
+        self.ChangeLineCutValue("")
+        
+    def ChangeLineCutValue(self, LineCut):
+        if LineCut == self.vLine:
+            self.verticalposition=LineCut.value()
+        if LineCut == self.hLine:
+            self.horizontalposition=LineCut.value()
+            
+        self.lineEdit_vCutPos.setText(formatNum(self.verticalposition))
+        self.lineEdit_hCutPos.setText(formatNum(self.horizontalposition))
+        self.MoveLineCut()
+        self.updateLineCutPlot()
+
+    def MoveLineCut(self):
+        self.vLine.setValue(float(self.verticalposition))
+        self.hLine.setValue(float(self.horizontalposition))
+        
+    def ClearLineCutPlot(self):
+        self.XZPlot.clear()
+        self.YZPlot.clear()
+        
+    def ConnectLineCut(self):
+        self.vLine.sigPositionChangeFinished.connect(lambda:self.ChangeLineCutValue(self.vLine))
+        self.hLine.sigPositionChangeFinished.connect(lambda:self.ChangeLineCutValue(self.hLine))
+        
+    def SetupLineCut(self):
+        self.viewBig.addItem(self.vLine, ignoreBounds = True)
+        self.viewBig.addItem(self.hLine, ignoreBounds =True)
+        
+    def Setup1DPlot(self, Plot, Layout ):
+        Plot.setGeometry(QtCore.QRect(0, 0, 635, 200))
+        Plot.showAxis('right', show = True)
+        Plot.showAxis('top', show = True)
+        Layout.addWidget(Plot)
+        
+
     def setupPlots(self):
         self.vLine = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
         self.hLine = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
-        self.vLine.sigPositionChangeFinished.connect(self.updateVLineBox)
-        self.hLine.sigPositionChangeFinished.connect(self.updateHLineBox)
 
         self.viewBig = pg.PlotItem(name = "Plot")
         self.viewBig.showAxis('top', show = True)
         self.viewBig.showAxis('right', show = True)
         self.viewBig.setAspectLocked(lock = False, ratio = 1)
-        self.mainPlot = pg.ImageView(parent = self.mainPlotArea, view = self.viewBig)
+        self.mainPlot = pg.ImageView(parent = self.frame_mainPlotArea, view = self.viewBig)
         self.mainPlot.setGeometry(QtCore.QRect(0, 0, 750, 450))
         self.mainPlot.ui.menuBtn.hide()
         self.mainPlot.ui.histogram.item.gradient.loadPreset('bipolar')
@@ -760,199 +830,36 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.viewBig.invertY(False)
         self.viewBig.setXRange(-1.25, 1.25)
         self.viewBig.setYRange(-10, 10)
+        self.frame_mainPlotArea.close()
+        self.Layout_mainPlotArea.addWidget(self.mainPlot)
 
-        self.viewBig.addItem(self.vLine, ignoreBounds = True)
-        self.viewBig.addItem(self.hLine, ignoreBounds =True)
+        self.XZPlot = pg.PlotWidget(parent = self.frame_XZPlotArea)
+        self.Setup1DPlot(self.XZPlot ,self.Layout_XZPlotArea)
 
-        self.XZPlot = pg.PlotWidget(parent = self.XZPlotArea)
-        self.XZPlot.setGeometry(QtCore.QRect(0, 0, 635, 200))
-        self.XZPlot.showAxis('right', show = True)
-        self.XZPlot.showAxis('top', show = True)
-
-        self.YZPlot = pg.PlotWidget(parent = self.YZPlotArea)
-        self.YZPlot.setGeometry(QtCore.QRect(0, 0, 635, 200))
-        self.YZPlot.showAxis('right', show = True)
-        self.YZPlot.showAxis('top', show = True)
-
-    # def hideDiamFrame(self):
-        # self.diamFrame.hide()
-        # self.diamCalc.clicked.connect(self.calculateDiam)
-        # self.diamCalc.clicked.disconnect(self.hideDiamFrame)
-        # self.checkFourier.stateChanged.disconnect(self.showFourier)
-        # self.checkAvg.stateChanged.disconnect(self.showAvg)
-        # if self.checkFourier.isChecked():
-            # self.checkFourier.setCheckState(False)
-            # self.mainPlot.removeItem(self.rect)
-        # if self.checkAvg.isChecked():
-            # for i in self.avgLines:
-                # self.mainPlot.removeItem(i)
-            # self.avgLines = []
-            # self.avgLinePos = []
-            # self.checkAvg.setCheckState(False)    
-            # self.mainPlot.addItem(self.vLine)
-            # self.mainPlot.addItem(self.hLine)    
-
-    def calculateDiam(self):
-        self.diamCalc.clicked.disconnect(self.calculateDiam)
-        self.diamCalc.clicked.connect(self.hideDiamFrame)
-        self.phi_0 = float(2.0678338e-15)
-        self.diamFrame.show()
-        self.fourierEst.setReadOnly(True)
-        self.avgEst.setReadOnly(True)
-        self.checkFourier.stateChanged.connect(self.showFourier)
-        self.checkAvg.stateChanged.connect(self.showAvg)
+        self.YZPlot = pg.PlotWidget(parent = self.frame_YZPlotArea)
+        self.Setup1DPlot(self.YZPlot ,self.Layout_YZPlotArea)
         
-    def showFourier(self):
-        if self.checkFourier.isChecked():
-            xAxis = self.viewBig.getAxis('bottom')
-            yAxis = self.viewBig.getAxis('left')
-            a1, a2 = xAxis.range[0], xAxis.range[1]
-            b1, b2 = yAxis.range[0], yAxis.range[1]
-            self.rect = pg.RectROI(((a2 + a1) / 2, (b2 + b1) / 2),((a2 - a1) / 2, (b2 - b1) / 2), movable = True)
-            self.rect.addScaleHandle((1,1), (.5,.5), lockAspect = False)
-            self.mainPlot.addItem(self.rect)
-            self.fourierCalc.clicked.connect(self.rectCoords)
-        else:
-            self.mainPlot.removeItem(self.rect)
-            
-    def rectCoords(self):
-        bounds = self.rect.parentBounds()
-
-        x1 = int((bounds.x() - self.xMin) / self.xscale)
-        y1 = int((bounds.y() - self.yMin) / self.yscale)
-        x2 = int((bounds.x() + bounds.width() - self.xMin) / self.xscale)
-        y2 = int((bounds.y() + bounds.height() - self.yMin) / self.yscale)
-
-        dataSubSet = self.plotData[x1:x2, y1:y2]
-        h = self.xPoints / (self.xMax - self.xMin)
-        f = np.array([])
-        for i in range(0, dataSubSet.shape[1]):
-            spect, freq = signal.welch(dataSubSet[:,i], h, nperseg = dataSubSet.shape[0])
-            peak = argmax(freq)
-            max_f = spect[peak]
-            f = np.append(f, max_f)
-        f = stats.mode(f)[0]
-        diameter = int(np.round(2 * 10e8 * np.sqrt(self.phi_0 * f / np.pi), decimals = 0))
-        self.fourierEst.setText(str(diameter))
+        self.SetupLineCut()
+        self.ConnectLineCut()
         
-    def showAvg(self):
-        if self.checkAvg.isChecked() is True:
-            self.mainPlot.removeItem(self.vLine)
-            self.mainPlot.removeItem(self.hLine)
-            self.avgAddLine.clicked.connect(self.addAvgLine)
-            xAxis = self.viewBig.getAxis('bottom')
-            a1, a2 = xAxis.range[0], xAxis.range[1]
-            self.line0 = pg.InfiniteLine(pos = 0.625 * (a2 - a1) + a1 , angle = 90, movable = True)
-            self.line1 = pg.InfiniteLine(pos = 0.375 * (a2 - a1) + a1 , angle = 90, movable = True)
-            #self.line2 = pg.InfiniteLine(pos = 0.625 * self.deltaX + self.xMin , angle = 90, movable = True)
-            #self.line3 = pg.InfiniteLine(pos = 0.75 * self.deltaX + self.xMin , angle = 90, movable = True)
-            self.avgLines = [self.line0, self.line1]
-            self.updateAvgLinePos()
-            self.avgCalc.clicked.connect(self.updateAvgEst)
-            for i in self.avgLines:
-                self.mainPlot.addItem(i)
-            self.updateAvgLinePos()
-        else:
-            for i in self.avgLines:
-                self.mainPlot.removeItem(i)
-            self.avgLines = []
-            self.avgLinePos = np.asarray([])
-            self.avgAddLine.clicked.disconnect(self.addAvgLine)
-            self.mainPlot.addItem(self.vLine)
-            self.mainPlot.addItem(self.hLine)
-
-    def updateAvgLinePos(self):
-        self.avgLinePos = np.sort(np.asarray([i.pos()[0] for i in self.avgLines]))
-
-    def addAvgLine(self):
-        i = 'self.line' + str(len(self.avgLines))
-        i = pg.InfiniteLine(pos = self.avgLinePos[0] - 0.1 * (self.avgLinePos[-1] - self.avgLinePos[0]), angle = 90, movable = True)
-        self.mainPlot.addItem(i)
-        self.avgLines.append(i)
-        self.updateAvgLinePos()
-
-    def updateAvgEst(self):
-        self.updateAvgLinePos()
-        self.avgDist = np.average(np.absolute(np.diff(self.avgLinePos, axis = 0)))
-        diameter = int(np.round(2 * 10e8 * np.sqrt(self.phi_0 / (self.avgDist * np.pi)), decimals = 0))
-        self.avgEst.setText(str(diameter))
-
-    def shrink(self):
-        self.resize(650, 740)
-        #self.mainPlot.ui.histogram.hide()
-        self.hideGrad.hide()
-        self.showGrad.show()
-    def enlarge(self):
-        self.resize(790, 740)
-        #self.mainPlot.ui.histogram.show()
-        self.hideGrad.show()
-        self.showGrad.hide()
-
-    def toggleBottomPlot(self):
-        if self.vhSelect.currentIndex() == 0:
-            pos = self.hLine.value()
-            self.YZPlotArea.lower()
-            self.updateXZPlot(pos)
-        elif self.vhSelect.currentIndex() == 1:
-            pos = self.vLine.value()
-            self.XZPlotArea.lower()
-            self.updateYZPlot(pos)    
-        elif self.vhSelect.currentIndex() ==2:
-            self.YZPlotArea.lower()
-            self.plotMaxSens()
-        elif self.vhSelect.currentIndex() ==3:
-            self.YZPlotArea.lower()
-            self.plotOptBias()                
-
-    def changeVertLine(self):
-        pos = self.vCutPos.value()
-        self.vLine.setValue(pos)
-        self.updateYZPlot(pos)
-    def changeHorLine(self):
-        pos = self.hCutPos.value()
-        self.hLine.setValue(pos)
-        self.updateXZPlot(pos)
-
-    def updateVLineBox(self):
-        pos = self.vLine.value()
-        self.vCutPos.setValue(float(pos))
-        self.updateYZPlot(pos)
-    def updateHLineBox(self):
-        pos = self.hLine.value()
-        self.hCutPos.setValue(float(pos))
-        self.updateXZPlot(pos)
-
-    def updateXZPlot(self, pos):
-        index = self.vhSelect.currentIndex()
-        if index == 1:
-            pass
-        elif index == 0:
+    def updateLineCutPlot(self):
+        self.ClearLineCutPlot()
+        if self.horizontalposition > self.y1 or self.horizontalposition < self.y0:
             self.XZPlot.clear()
-            if pos > self.y1 or pos < self.y0:
-                self.XZPlot.clear()
-            else:
-                p = int(abs((pos - self.y0)) / self.yscale)
-                xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
-                yVals = self.plotData[:,p]
-                self.XZPlot.plot(x = xVals, y = yVals, pen = 0.5)
-                self.lineYVals = yVals
-                self.lineXVals = xVals
+        else:
+            yindex = int(abs((self.horizontalposition - self.y0)) / self.yscale)
+            self.LineCutXZXVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
+            self.LineCutXZYVals = self.plotData[:,yindex]
+            self.XZPlot.plot(x = self.LineCutXZXVals, y = self.LineCutXZYVals, pen = 0.5)
 
-    def updateYZPlot(self, pos):
-        index = self.vhSelect.currentIndex()
-        if index == 0:
-            pass
-        elif index == 1:
+        if self.verticalposition > self.x1 or self.verticalposition < self.x0:
             self.YZPlot.clear()
-            if pos > self.x1 or pos < self.x0:
-                self.YZPlot.clear()
-            else:
-                p = int(abs((pos - self.x0)) / self.xscale)
-                xVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
-                yVals = self.plotData[p]
-                self.YZPlot.plot(x = xVals, y = yVals, pen = 0.5)
-                self.lineYVals = yVals
-                self.lineXVals = xVals
+            print self.horizontal
+        else:
+            xindex = int(abs((self.verticalposition - self.x0)) / self.xscale)
+            self.LineCutYZXVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
+            self.LineCutYZYVals = self.plotData[xindex]
+            self.YZPlot.plot(x = self.LineCutYZXVals, y = self.LineCutYZYVals, pen = 0.5)
 
     def newPlot(self):
         self.numPlots += 1
@@ -1156,7 +1063,6 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         self.window = parent
         self.setWindowTitle('Subplot ' + str(self.numPlots))
 
-        self.showGrad.hide()
         self.diamFrame.hide()
         self.trSelect.hide()
 
@@ -1164,8 +1070,6 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         self.setupPlots()
 
 
-        self.hideGrad.clicked.connect(self.shrink)
-        self.showGrad.clicked.connect(self.enlarge)
 
         self.refresh.setEnabled(False)
         self.diamCalc.setEnabled(False)
@@ -1228,11 +1132,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         self.browse.clicked.connect(self.browseDV)
         self.refresh.clicked.connect(self.refreshPlot)
         self.addPlot.clicked.connect(self.newPlot)
-        self.vCutPos.valueChanged.connect(self.changeVertLine)
-        self.hCutPos.valueChanged.connect(self.changeHorLine)
         
-        self.showGrad.hide()
-        self.hideGrad.hide()
 
         self.Data = None
         self.plotData = None
@@ -1770,7 +1670,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         self.viewBig.showAxis('top', show = True)
         self.viewBig.showAxis('right', show = True)
         self.viewBig.setAspectLocked(lock = False, ratio = 1)
-        self.mainPlot = pg.ImageView(parent = self.mainPlotArea, view = self.viewBig)
+        self.mainPlot = pg.ImageView(parent = self.frame_mainPlotArea, view = self.viewBig)
         self.mainPlot.setGeometry(QtCore.QRect(0, 0, 750, 450))
         self.mainPlot.ui.menuBtn.hide()
         self.mainPlot.ui.histogram.item.gradient.loadPreset('bipolar')
@@ -1784,142 +1684,31 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         self.viewBig.addItem(self.vLine, ignoreBounds = True)
         self.viewBig.addItem(self.hLine, ignoreBounds =True)
 
-        self.XZPlot = pg.PlotWidget(parent = self.XZPlotArea)
+        self.XZPlot = pg.PlotWidget(parent = self.frame_XZPlotArea)
         self.XZPlot.setGeometry(QtCore.QRect(0, 0, 635, 200))
         self.XZPlot.showAxis('right', show = True)
         self.XZPlot.showAxis('top', show = True)
 
-        self.YZPlot = pg.PlotWidget(parent = self.YZPlotArea)
+        self.YZPlot = pg.PlotWidget(parent = self.frame_YZPlotArea)
         self.YZPlot.setGeometry(QtCore.QRect(0, 0, 635, 200))
         self.YZPlot.showAxis('right', show = True)
         self.YZPlot.showAxis('top', show = True)
-
-    def hideDiamFrame(self):
-        self.diamFrame.hide()
-        self.diamCalc.clicked.connect(self.calculateDiam)
-        self.diamCalc.clicked.disconnect(self.hideDiamFrame)
-        self.checkFourier.stateChanged.disconnect(self.showFourier)
-        self.checkAvg.stateChanged.disconnect(self.showAvg)
-        if self.checkFourier.isChecked():
-            self.checkFourier.setCheckState(False)
-            self.mainPlot.removeItem(self.rect)
-        if self.checkAvg.isChecked():
-            for i in self.avgLines:
-                self.mainPlot.removeItem(i)
-            self.avgLines = []
-            self.avgLinePos = []
-            self.checkAvg.setCheckState(False)    
-            self.mainPlot.addItem(self.vLine)
-            self.mainPlot.addItem(self.hLine)    
-
-    def calculateDiam(self):
-        self.diamCalc.clicked.disconnect(self.calculateDiam)
-        self.diamCalc.clicked.connect(self.hideDiamFrame)
-        self.phi_0 = float(2.0678338e-15)
-        self.diamFrame.show()
-        self.fourierEst.setReadOnly(True)
-        self.avgEst.setReadOnly(True)
-        self.checkFourier.stateChanged.connect(self.showFourier)
-        self.checkAvg.stateChanged.connect(self.showAvg)
-        
-    def showFourier(self):
-        if self.checkFourier.isChecked():
-            xAxis = self.viewBig.getAxis('bottom')
-            yAxis = self.viewBig.getAxis('left')
-            a1, a2 = xAxis.range[0], xAxis.range[1]
-            b1, b2 = yAxis.range[0], yAxis.range[1]
-            self.rect = pg.RectROI(((a2 + a1) / 2, (b2 + b1) / 2),((a2 - a1) / 2, (b2 - b1) / 2), movable = True)
-            self.rect.addScaleHandle((1,1), (.5,.5), lockAspect = False)
-            self.mainPlot.addItem(self.rect)
-            self.fourierCalc.clicked.connect(self.rectCoords)
-        else:
-            self.mainPlot.removeItem(self.rect)
-            
-    def rectCoords(self):
-        bounds = self.rect.parentBounds()
-
-        x1 = int((bounds.x() - self.xMin) / self.xscale)
-        y1 = int((bounds.y() - self.yMin) / self.yscale)
-        x2 = int((bounds.x() + bounds.width() - self.xMin) / self.xscale)
-        y2 = int((bounds.y() + bounds.height() - self.yMin) / self.yscale)
-
-        dataSubSet = self.plotData[x1:x2, y1:y2]
-        h = self.xPoints / (self.xMax - self.xMin)
-        f = np.array([])
-        for i in range(0, dataSubSet.shape[1]):
-            spect, freq = signal.welch(dataSubSet[:,i], h, nperseg = dataSubSet.shape[0])
-            peak = argmax(freq)
-            max_f = spect[peak]
-            f = np.append(f, max_f)
-        f = stats.mode(f)[0]
-        diameter = int(np.round(2 * 10e8 * np.sqrt(self.phi_0 * f / np.pi), decimals = 0))
-        self.fourierEst.setText(str(diameter))
-        
-    def showAvg(self):
-        if self.checkAvg.isChecked() is True:
-            self.mainPlot.removeItem(self.vLine)
-            self.mainPlot.removeItem(self.hLine)
-            self.avgAddLine.clicked.connect(self.addAvgLine)
-            xAxis = self.viewBig.getAxis('bottom')
-            a1, a2 = xAxis.range[0], xAxis.range[1]
-            self.line0 = pg.InfiniteLine(pos = 0.625 * (a2 - a1) + a1 , angle = 90, movable = True)
-            self.line1 = pg.InfiniteLine(pos = 0.375 * (a2 - a1) + a1 , angle = 90, movable = True)
-            #self.line2 = pg.InfiniteLine(pos = 0.625 * self.deltaX + self.xMin , angle = 90, movable = True)
-            #self.line3 = pg.InfiniteLine(pos = 0.75 * self.deltaX + self.xMin , angle = 90, movable = True)
-            self.avgLines = [self.line0, self.line1]
-            self.updateAvgLinePos()
-            self.avgCalc.clicked.connect(self.updateAvgEst)
-            for i in self.avgLines:
-                self.mainPlot.addItem(i)
-            self.updateAvgLinePos()
-        else:
-            for i in self.avgLines:
-                self.mainPlot.removeItem(i)
-            self.avgLines = []
-            self.avgLinePos = np.asarray([])
-            self.avgAddLine.clicked.disconnect(self.addAvgLine)
-            self.mainPlot.addItem(self.vLine)
-            self.mainPlot.addItem(self.hLine)
-
-    def updateAvgLinePos(self):
-        self.avgLinePos = np.sort(np.asarray([i.pos()[0] for i in self.avgLines]))
-
-    def addAvgLine(self):
-        i = 'self.line' + str(len(self.avgLines))
-        i = pg.InfiniteLine(pos = self.avgLinePos[0] - 0.1 * (self.avgLinePos[-1] - self.avgLinePos[0]), angle = 90, movable = True)
-        self.mainPlot.addItem(i)
-        self.avgLines.append(i)
-        self.updateAvgLinePos()
-
-    def updateAvgEst(self):
-        self.updateAvgLinePos()
-        self.avgDist = np.average(np.absolute(np.diff(self.avgLinePos, axis = 0)))
-        diameter = int(np.round(2 * 10e8 * np.sqrt(self.phi_0 / (self.avgDist * np.pi)), decimals = 0))
-        self.avgEst.setText(str(diameter))
-
-    def shrink(self):
-        self.resize(650, 740)
-        self.hideGrad.hide()
-        self.showGrad.show()
-    def enlarge(self):
-        self.resize(790, 740)
-        self.hideGrad.show()
-        self.showGrad.hide()
+         
 
     def toggleBottomPlot(self):
         if self.vhSelect.currentIndex() == 0:
             pos = self.hLine.value()
-            self.YZPlotArea.lower()
+            self.frame_YZPlotArea.lower()
             self.updateXZPlot(pos)
         elif self.vhSelect.currentIndex() == 1:
             pos = self.vLine.value()
-            self.XZPlotArea.lower()
+            self.frame_XZPlotArea.lower()
             self.updateYZPlot(pos)    
         elif self.vhSelect.currentIndex() ==2:
-            self.YZPlotArea.lower()
+            self.frame_YZPlotArea.lower()
             self.plotMaxSens()
         elif self.vhSelect.currentIndex() ==3:
-            self.YZPlotArea.lower()
+            self.frame_YZPlotArea.lower()
             self.plotOptBias()                
 
     def changeVertLine(self):
@@ -1969,7 +1758,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
                 xVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
                 yVals = self.plotData[p]
                 self.YZPlot.plot(x = xVals, y = yVals, pen = 0.5)
-                self.lineYVals = yVals
+                self.lineYVals = yVals 
                 self.lineXVals = xVals
 
     def newPlot(self):
@@ -1990,7 +1779,6 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 
         self.window = parent
 
-        self.showGrad.hide()
         self.diamFrame.hide()
 
         self.Data = copy.copy(dataSubset)
@@ -2024,8 +1812,6 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         
         self.back.clicked.connect(self.revert)
 
-        self.hideGrad.clicked.connect(self.shrink)
-        self.showGrad.clicked.connect(self.enlarge)
         
         self.plotTitle.setText(title)
         self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
@@ -2054,8 +1840,6 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         self.saveMenu.addAction(oneDSave)
         self.savePlot.setMenu(self.saveMenu)
         
-        self.showGrad.hide()
-        self.hideGrad.hide()
 
         self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
         self.sensitivity.clicked.connect(self.promptSensitivity)
@@ -2122,7 +1906,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         self.viewBig.showAxis('top', show = True)
         self.viewBig.showAxis('right', show = True)
         self.viewBig.setAspectLocked(lock = False, ratio = 1)
-        self.mainPlot = pg.ImageView(parent = self.mainPlotArea, view = self.viewBig)
+        self.mainPlot = pg.ImageView(parent = self.frame_mainPlotArea, view = self.viewBig)
         self.mainPlot.setGeometry(QtCore.QRect(0, 0, 750, 450))
         self.mainPlot.ui.menuBtn.hide()
         self.mainPlot.ui.histogram.item.gradient.loadPreset('bipolar')
@@ -2137,12 +1921,12 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         self.vLine.sigPositionChangeFinished.connect(self.updateVLineBox)
         self.hLine.sigPositionChangeFinished.connect(self.updateHLineBox)
 
-        self.XZPlot = pg.PlotWidget(parent = self.XZPlotArea)
+        self.XZPlot = pg.PlotWidget(parent = self.frame_XZPlotArea)
         self.XZPlot.setGeometry(QtCore.QRect(0, 0, 635, 200))
         self.XZPlot.showAxis('right', show = True)
         self.XZPlot.showAxis('top', show = True)
 
-        self.YZPlot = pg.PlotWidget(parent = self.YZPlotArea)
+        self.YZPlot = pg.PlotWidget(parent = self.frame_YZPlotArea)
         self.YZPlot.setGeometry(QtCore.QRect(0, 0, 635, 200))
         self.YZPlot.showAxis('right', show = True)
         self.YZPlot.showAxis('top', show = True)
@@ -2366,32 +2150,24 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         self.lineYVals = minNoise
         self.lineXVals = bVals
 
-    def shrink(self):
-        self.resize(640, 740)
-        self.hideGrad.hide()
-        self.showGrad.show()
-    def enlarge(self):
-        self.resize(790, 740)
-        self.hideGrad.show()
-        self.showGrad.hide()
 
     def toggleBottomPlot(self):
         if self.vhSelect.currentIndex() == 0:
             pos = self.hLine.value()
-            self.YZPlotArea.lower()
+            self.frame_YZPlotArea.lower()
             self.updateXZPlot(pos)
 
         elif self.vhSelect.currentIndex() == 1:
             pos = self.vLine.value()
-            self.XZPlotArea.lower()
+            self.frame_XZPlotArea.lower()
             self.updateYZPlot(pos)    
 
         elif self.vhSelect.currentIndex() ==2:
-            self.YZPlotArea.lower()
+            self.frame_YZPlotArea.lower()
             self.plotMaxSens()
 
         elif self.vhSelect.currentIndex() ==3:
-            self.YZPlotArea.lower()
+            self.frame_YZPlotArea.lower()
             self.plotOptBias()
             
 
