@@ -17,6 +17,7 @@ import threading
 import copy
 import time
 import scipy.io as sio
+from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData, ScanImageView
 
 path = sys.path[0] + r"\Plotter"
 
@@ -121,11 +122,11 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.reactor = reactor
         self.setupUi(self)
 
-        self.trSelect.hide()
+        self.pushButton_trSelect.hide()
 
         self.setupPlots()
 
-        self.refresh.setEnabled(False)
+        self.pushButton_refresh.setEnabled(False)
         self.diamCalc.setEnabled(False)
         self.gradient.setEnabled(False)
         self.subtract.setEnabled(False)
@@ -161,15 +162,27 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.datPct = 0.1
 
         self.subtractMenu = QtGui.QMenu()
-        subAvg = QtGui.QAction( "Subtract constant offset", self)
+        subOverallAvg = QtGui.QAction( "Subtract overall average", self)
+        subXAvg = QtGui.QAction( "Subtract X average", self)
+        subYAvg = QtGui.QAction( "Subtract Y average", self)
         subPlane = QtGui.QAction( "Subtract planar fit", self)
-        subQuad = QtGui.QAction( "Subtract quadratic fit", self)
-        subAvg.triggered.connect(self.subtractAvg)
+        subOverallQuad = QtGui.QAction( "Subtract overall quadratic fit", self)
+        subXQuad = QtGui.QAction( "Subtract X quadratic fit", self)
+        subYQuad = QtGui.QAction( "Subtract Y quadratic fit", self)
+        subOverallAvg.triggered.connect(self.subtractOverallAvg)
+        subXAvg.triggered.connect(self.subtractXAvg)
+        subYAvg.triggered.connect(self.subtractYAvg)
         subPlane.triggered.connect(self.subtractPlane)
-        subQuad.triggered.connect(self.subtractQuad)
-        self.subtractMenu.addAction(subAvg)
+        subOverallQuad.triggered.connect(self.subtractOverallQuad)
+        subXQuad.triggered.connect(self.subtractXQuad)
+        subYQuad.triggered.connect(self.subtractYQuad)
+        self.subtractMenu.addAction(subOverallAvg)
+        self.subtractMenu.addAction(subXAvg)
+        self.subtractMenu.addAction(subYAvg)
         self.subtractMenu.addAction(subPlane)
-        self.subtractMenu.addAction(subQuad)
+        self.subtractMenu.addAction(subOverallQuad)
+        self.subtractMenu.addAction(subXQuad)
+        self.subtractMenu.addAction(subYQuad)
         self.subtract.setMenu(self.subtractMenu)
         
         self.trSelectMenu = QtGui.QMenu()
@@ -179,17 +192,15 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.trSelectMenu.addAction(showRetrace)
         showTrace.triggered.connect(self.plotTrace)
         showRetrace.triggered.connect(self.plotRetrace)
-        self.trSelect.setMenu(self.trSelectMenu)
+        self.pushButton_trSelect.setMenu(self.trSelectMenu)
 
 
         # self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
         self.sensitivity.clicked.connect(self.promptSensitivity)
         self.zoom.clicked.connect(self.zoomArea)
-        self.browse.clicked.connect(self.browseDV)
-        self.refresh.clicked.connect(self.refreshPlot)
+        self.pushButton_loadData.clicked.connect(self.browseDV)
+        self.pushButton_refresh.clicked.connect(self.refreshPlot)
         self.addPlot.clicked.connect(self.newPlot)
-
-        
 
         self.Data = None
         self.plotData = None
@@ -211,7 +222,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.cxn_dv = yield connectAsync(host = '127.0.0.1', password = 'pass')
             self.dv = yield self.cxn_dv.data_vault
 
-            self.unlockInterface()
         except:
             pass
 
@@ -221,16 +231,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.gen_dv = False
         self.dv = False
         
-        self.lockInterface()
+    def moveDefault(self):
+        self.move(550,10)
 
-    def lockInterface(self):
-        pass
-        
-    def unlockInterface(self):
-        pass
-
-        
-    ###This part is awfully wierd, revise when see it.
+######This part is awfully wierd, revise when see it.############
     def matLinePloth(self):
         if not self.plotData is None:
             fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
@@ -289,10 +293,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         savename = fold.split("/")[-1].split('.mat')[0]
         sio.savemat(fold,{savename:matData})
         matData = None
+##################
 
-    def moveDefault(self):
-        self.move(550,10)
+
+
         
+################## This part create a window on the plot and you can drage it around, click on it will rescale the plot
     def zoomArea(self):
         self.zoom.clicked.disconnect(self.zoomArea)
         self.zoom.clicked.connect(self.rmvZoomArea)
@@ -309,7 +315,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def rmvZoomArea(self):
         self.mainPlot.removeItem(self.zoomRect)
         self.zoom.clicked.connect(self.zoomArea)
-        
+
     def QMouseEvent(self, thing, button):
         button = int(str(button)[-2])
 
@@ -336,17 +342,18 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 else:
                     self.dataZoom = np.vstack((self.dataZoom, self.Data[int(k*self.yPoints + y1) :int(k*self.yPoints + y2)]))
                 
-            for i in range(0, self.xAxis.count()):
-                self.indZoomVars.append(self.xAxis.itemText(i))
-            for i in range(0, self.zAxis.count()):
-                self.depZoomVars.append(self.zAxis.itemText(i))
+            for i in range(0, self.comboBox_xAxis.count()):
+                self.indZoomVars.append(self.comboBox_xAxis.itemText(i))
+            for i in range(0, self.comboBox_zAxis.count()):
+                self.depZoomVars.append(self.comboBox_zAxis.itemText(i))
             title= str(self.plotTitle.text())
-            self.indXVar, self.indYVar, self.depVar = self.xAxis.currentText(), self.yAxis.currentText(), self.zAxis.currentText()
-            self.currentIndex = [self.xAxis.currentIndex(), self.yAxis.currentIndex(), self.zAxis.currentIndex()]        
+            self.indXVar, self.indYVar, self.depVar = self.comboBox_xAxis.currentText(), self.comboBox_yAxis.currentText(), self.comboBox_zAxis.currentText()
+            self.currentIndex = [self.comboBox_xAxis.currentIndex(), self.comboBox_yAxis.currentIndex(), self.comboBox_zAxis.currentIndex()]        
             self.zoomExtent = [bounds.x(), bounds.x() + bounds.width(), bounds.y(), bounds.y() + bounds.height(), self.xscale, self.yscale]
             self.zoomPlot = zoomPlot(self.reactor, self.plotZoom, self.dataZoom, self.zoomExtent, self.indZoomVars, self.depZoomVars, self.currentIndex, title, self)
             self.zoom.setEnabled(False)
             self.zoomPlot.show()
+##################
 
     def promptSensitivity(self):
         self.sensPrompt = Sensitivity(self.depVars, self.indVars, self.reactor)
@@ -412,13 +419,13 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.vLine.setValue(self.xMin)
         self.hLine.setValue(self.yMin)    
         if self.NSselect == 1:
-            self.plotType.setText('Plotted sensitivity.')
+            self.label_plotType.setText('Plotted sensitivity.')
             self.vhSelect.addItem('Maximum Sensitivity')
         else:
-            self.plotType.setText('Plotted field noise.')    
+            self.label_plotType.setText('Plotted field noise.')    
             self.vhSelect.addItem('Minimum Noise')
             self.vhSelect.addItem('Optimal Bias')
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
 
     def plotMaxSens(self):
@@ -466,15 +473,15 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             V_raw = self.plotData[i]
 
         l = int(len(self.indVars) / 2)
-        x = self.xAxis.currentIndex()
-        y = self.yAxis.currentIndex()
-        z = self.zAxis.currentIndex() + len(self.indVars) 
-        self.viewBig.setLabel('left', text=self.yAxis.currentText())
-        self.viewBig.setLabel('bottom', text=self.xAxis.currentText())
-        self.XZPlot.setLabel('left', self.zAxis.currentText())
-        self.XZPlot.setLabel('bottom', self.xAxis.currentText())
-        self.YZPlot.setLabel('left', self.zAxis.currentText())
-        self.YZPlot.setLabel('bottom', self.yAxis.currentText())
+        x = self.comboBox_xAxis.currentIndex()
+        y = self.comboBox_yAxis.currentIndex()
+        z = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
+        self.viewBig.setLabel('left', text=self.comboBox_yAxis.currentText())
+        self.viewBig.setLabel('bottom', text=self.comboBox_xAxis.currentText())
+        self.XZPlot.setLabel('left', self.comboBox_zAxis.currentText())
+        self.XZPlot.setLabel('bottom', self.comboBox_xAxis.currentText())
+        self.YZPlot.setLabel('left', self.comboBox_zAxis.currentText())
+        self.YZPlot.setLabel('bottom', self.comboBox_yAxis.currentText())
         self.xMax = np.amax(self.Data[::,l+x])
         self.xMin = np.amin(self.Data[::,l+x])
         self.yMax = np.amax(self.Data[::,l+y])
@@ -493,23 +500,23 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
     def xDeriv(self):
         if self.plotData is None:
-            self.plotType.setText("Please plot data.")
-            self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+            self.label_plotType.setText("Please plot data.")
+            self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         else:
             self.gradient.setFocusPolicy(QtCore.Qt.StrongFocus)
             xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
             delta = abs(self.xMax - self.xMin) / self.xPoints
             N = int(self.xPoints * self.datPct)
             if N < 2:
-                self.plotType.setText("Lanczos window too \nsmall.")
-                self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+                self.label_plotType.setText("Lanczos window too \nsmall.")
+                self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 
             else:
                 for i in range(0, self.plotData.shape[1]):
                     self.plotData[:, i] = deriv(self.plotData[:,i], xVals, N, delta)    
                 self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-                self.plotType.setText("Plotted gradient along \nx-axis.")
-                self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+                self.label_plotType.setText("Plotted gradient along \nx-axis.")
+                self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
                 self.clearPlots()
                 
     def yDeriv(self):
@@ -519,8 +526,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         for i in range(0, self.plotData.shape[0]):
             self.plotData[i, :] = deriv(self.plotData[i,:], yVals, N, delta)    
         self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted gradient along \ny-axis.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("Plotted gradient along \ny-axis.")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
         
     def derivSettings(self):
@@ -531,51 +538,49 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def setLancWindow(self):
         self.datPct = self.gradSet.dataPercent.value() / 100
 
-    def subtractAvg(self):
-        avg = np.average(self.plotData)
-        self.plotData = self.plotData - avg
-        self.plotType.setText("Plotted offset \nsubtracted data.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-        self.clearPlots()
         
+##################Manipulating Plot Data
+    def subtractOverallAvg(self):
+        self.plotData = processImageData(self.plotData, 'Subtract Image Average')
+        self.ReplotData()
+        
+    def subtractXAvg(self):
+        self.plotData = processImageData(self.plotData, 'Subtract Line Average')
+        self.ReplotData()
+        
+    def subtractYAvg(self):
+        self.plotData = processImageData(self.plotData.T, 'Subtract Line Average').T
+        self.ReplotData()
+
     def subtractPlane(self):
-        l = int(len(self.indVars) / 2)
-        x = self.xAxis.currentIndex()
-        y = self.yAxis.currentIndex()
-        z = self.zAxis.currentIndex() + len(self.indVars) 
-        X = np.c_[self.Data[::, l+x], self.Data[::,l+y], np.ones(self.Data.shape[0])]
-        Y = np.ndarray.flatten(self.plotData)
-        C = np.linalg.lstsq(X, Y)
-        for i in self.Data:
-            self.plotData[int(i[x]), int(i[y])] = self.plotData[int(i[x]), int(i[y])] - np.dot(C[0], [i[x+l], i[y+l], 1])        
-        self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted plane \nsubtracted data.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-        self.clearPlots()
+        self.plotData = processImageData(self.plotData, 'Subtract Image Plane')
+        self.ReplotData()
+
+    def subtractOverallQuad(self):
+        self.plotData = processImageData(self.plotData, 'Subtract Image Quadratic')
+        self.ReplotData()
+
+    def subtractXQuad(self):
+        self.plotData = processImageData(self.plotData, 'Subtract Line Linear')
+        self.ReplotData()
+    
+    def subtractYQuad(self):
+        self.plotData = processImageData(self.plotData.T, 'Subtract Line Linear').T
+        self.ReplotData()
         
-    def subtractQuad(self):
-        l = int(len(self.indVars) / 2)
-        x = self.xAxis.currentIndex()
-        y = self.yAxis.currentIndex()
-        z = self.zAxis.currentIndex() + len(self.indVars) 
-        X = np.c_[np.ones(self.Data.shape[0]), self.Data[::, [l+x, l+y]], np.prod(self.Data[::, [l+x, l+y]], axis = 1), self.Data[::, [l+x, l+y]]**2]
-        Y = np.ndarray.flatten(self.plotData)
-        C = np.linalg.lstsq(X, Y)
-        for i in self.Data:
-            self.plotData[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l]**2, i[y+l]**2, i[l+x]*i[y+l], i[l+x], i[l+y], 1])        
-        self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted quadratic \nsubtracted data.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-        self.clearPlots()
+##################
 
     @inlineCallbacks
     def browseDV(self, c = None):
-        yield self.sleep(0.1)
-        self.refresh.setEnabled(False)
-        self.dvExplorer = dataVaultExplorer(self.dv,self.reactor)
-        self.dvExplorer.show()
-        self.dvExplorer.accepted.connect(lambda: self.loadData(self.reactor))
-        self.dvExplorer.rejected.connect(self.reenableRefresh)
+        try:
+            yield self.sleep(0.1)
+            self.pushButton_refresh.setEnabled(False)
+            self.dvExplorer = dataVaultExplorer(self.dv,self.reactor)
+            self.dvExplorer.show()
+            self.dvExplorer.accepted.connect(lambda: self.loadData(self.reactor))
+            self.dvExplorer.rejected.connect(self.reenableRefresh)
+        except Exception as inst:
+            print inst
 
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
@@ -588,19 +593,24 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         if self.Data is None:
             pass
         else:
-            self.refresh.setEnabled(True)
+            self.pushButton_refresh.setEnabled(True)
 
     def split(self, arr, cond):
       return [arr[cond], arr[~cond]]
 
+    def ClearcomboBox(self):
+        self.comboBox_xAxis.clear()
+        self.comboBox_yAxis.clear()
+        self.comboBox_zAxis.clear()
+      
     @inlineCallbacks
     def loadData(self, c):
-        self.xAxis.clear()
-        self.yAxis.clear()
-        self.zAxis.clear()
+        self.ClearcomboBox()
+        self.comboBox_yAxis.clear()
+        self.comboBox_zAxis.clear()
 
-        self.plotType.setText("\nLoading data...")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("\nLoading data...")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         #Initialized data set to none
         self.Data = None
         self.traceData = None
@@ -611,21 +621,22 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.indVars = result[2][0]
         l = len(self.indVars)
         self.depVars =result[2][1]
+
         self.plotTitle.setText(str(self.file))
         self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
         #Load a data set with no trace/retrace index
         if l % 2 == 0:
             self.dataFlag = None
             for i in self.indVars[int(l / 2) : l]:
-                self.xAxis.addItem(i)
-                self.yAxis.addItem(i)
+                self.comboBox_xAxis.addItem(i)
+                self.comboBox_yAxis.addItem(i)
             for i in self.depVars:
-                self.zAxis.addItem(i)
+                self.comboBox_zAxis.addItem(i)
             t = time.time()
             yield self.dv.open(self.file)
-            print 'opened set'
+            print 'Open Set Finished'
             t1 = time.time()
-            print t1 - t
+            print 'Time taken to open set', t1 - t
             #self.Data = yield self.dv.get()
             #self.Data = np.asarray(self.Data)
 
@@ -644,33 +655,33 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 except:
                     getFlag = False
             
-            print 'got set'
+            print 'Get Set Finished'
             t = time.time()
-            print t - t1
+            print 'Time taken to get set', t - t1
 
             self.mainPlot.clear()
-            self.refresh.setEnabled(True)
+            self.pushButton_refresh.setEnabled(True)
             self.diamCalc.setEnabled(True)
             self.gradient.setEnabled(True)
             self.subtract.setEnabled(True)
             self.sensitivity.setEnabled(True)
-            self.trSelect.hide()
+            self.pushButton_trSelect.hide()
 
             pt = self.mapToGlobal(QtCore.QPoint(410,-10))
-            self.plotType.setText("")
-            self.refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
+            self.label_plotType.setText("")
+            self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
             QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
             self.zoom.setEnabled(False)
             self.clearPlots()
-            self.plotType.clear()
+            self.label_plotType.clear()
         #Load a data set with a trace/retrace index
         elif l % 2 == 1 and self.indVars[0] == 'Trace Index' or self.indVars[0] == 'Retrace Index':
             self.indVars = self.indVars[1::]
             for i in self.indVars[int(l / 2): l]:
-                self.xAxis.addItem(i)
-                self.yAxis.addItem(i)
+                self.comboBox_xAxis.addItem(i)
+                self.comboBox_yAxis.addItem(i)
             for i in self.depVars:
-                self.zAxis.addItem(i)
+                self.comboBox_zAxis.addItem(i)
             t = time.time()
             yield self.dv.open(self.file)
             print 'opened set'
@@ -689,19 +700,19 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.Data = self.traceData
             self.dataFlag = 0
             self.mainPlot.clear()
-            self.refresh.setEnabled(True)
+            self.pushButton_refresh.setEnabled(True)
             self.diamCalc.setEnabled(True)
             self.gradient.setEnabled(True)
             self.subtract.setEnabled(True)
             self.sensitivity.setEnabled(True)
-            self.trSelect.show()
+            self.pushButton_trSelect.show()
             pt = self.mapToGlobal(QtCore.QPoint(410,-10))
-            self.plotType.setText("")
-            self.refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
+            self.label_plotType.setText("")
+            self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
             QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
             self.zoom.setEnabled(False)
             self.clearPlots()
-            self.plotType.clear()            
+            self.label_plotType.clear()            
         else:
             pt = self.mapToGlobal(QtCore.QPoint(410,-10))
             QtGui.QToolTip.showText(pt, 'Data set format is incompatible with the plotter.')
@@ -709,15 +720,17 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def refreshPlot(self):
 
         l = int(len(self.indVars) / 2)
-        x = self.xAxis.currentIndex()
-        y = self.yAxis.currentIndex()
-        z = self.zAxis.currentIndex() + len(self.indVars) 
-        self.viewBig.setLabel('left', text=self.yAxis.currentText())
-        self.viewBig.setLabel('bottom', text=self.xAxis.currentText())
-        self.XZPlot.setLabel('left', self.zAxis.currentText())
-        self.XZPlot.setLabel('bottom', self.xAxis.currentText())
-        self.YZPlot.setLabel('left', self.zAxis.currentText())
-        self.YZPlot.setLabel('bottom', self.yAxis.currentText())
+        x = self.comboBox_xAxis.currentIndex()
+        y = self.comboBox_yAxis.currentIndex()
+        z = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
+        
+        self.viewBig.setLabel('left', text=self.comboBox_yAxis.currentText())
+        self.viewBig.setLabel('bottom', text=self.comboBox_xAxis.currentText())
+        self.XZPlot.setLabel('left', self.comboBox_zAxis.currentText())
+        self.XZPlot.setLabel('bottom', self.comboBox_xAxis.currentText())
+        self.YZPlot.setLabel('left', self.comboBox_zAxis.currentText())
+        self.YZPlot.setLabel('bottom', self.comboBox_yAxis.currentText())
+        
         self.xMax = np.amax(self.Data[::,l+x])
         self.xMin = np.amin(self.Data[::,l+x])
         self.yMax = np.amax(self.Data[::,l+y])
@@ -744,8 +757,11 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
         self.zoom.setEnabled(True)
         self.clearPlots()
-        self.plotType.clear()
-    
+        self.label_plotType.clear()
+        
+    def ReplotData(self):
+        self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+
     def plotTrace(self):
         self.Data = self.traceData
         self.dataFlag = 0
@@ -763,7 +779,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.verticalposition=self.xMin
             self.horizontalposition=self.yMin
             self.ClearLineCutPlot()
-            
+
+##################line Cut Related functions
     def SetupLineCutverticalposition(self):
         dummystr=str(self.lineEdit_vCutPos.text())
         dummyval=readNum(dummystr, self , False)
@@ -854,11 +871,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
         if self.verticalposition > self.x1 or self.verticalposition < self.x0:
             self.YZPlot.clear()
-            print self.horizontal
         else:
             xindex = int(abs((self.verticalposition - self.x0)) / self.xscale)
-            self.LineCutYZXVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
-            self.LineCutYZYVals = self.plotData[xindex]
+            self.LineCutYZXVals = self.plotData[xindex]
+            self.LineCutYZYVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
             self.YZPlot.plot(x = self.LineCutYZXVals, y = self.LineCutYZYVals, pen = 0.5)
 
     def newPlot(self):
@@ -938,7 +954,7 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
         self.fileList.itemDoubleClicked.connect(self.displayInfo)
         self.back.clicked.connect(self.backUp)
         self.home.clicked.connect(self.goHome)
-        self.refresh.clicked.connect(self.popDirs)
+        self.pushButton_dvexplorer_refresh.clicked.connect(self.popDirs)
         self.addDir.clicked.connect(self.makeDir)
         self.select.clicked.connect(self.selectDirFile)
         self.cancelSelect.clicked.connect(self.closeWindow)
@@ -1052,7 +1068,7 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
     def closeWindow(self):
         self.reject()
 
-class subPlot(QtGui.QDialog, Ui_Plotter):
+class subPlot(QtGui.QMainWindow, Ui_Plotter):
     def __init__(self, dv,    numPlots, reactor, parent = None):
         super(subPlot, self).__init__(parent)
         self.setupUi(self)
@@ -1063,15 +1079,14 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         self.window = parent
         self.setWindowTitle('Subplot ' + str(self.numPlots))
 
-        self.diamFrame.hide()
-        self.trSelect.hide()
+        self.pushButton_trSelect.hide()
 
 
         self.setupPlots()
 
 
 
-        self.refresh.setEnabled(False)
+        self.pushButton_refresh.setEnabled(False)
         self.diamCalc.setEnabled(False)
         self.gradient.setEnabled(False)
         self.subtract.setEnabled(False)
@@ -1122,15 +1137,13 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         self.trSelectMenu.addAction(showRetrace)
         showTrace.triggered.connect(self.plotTrace)
         showRetrace.triggered.connect(self.plotRetrace)
-        self.trSelect.setMenu(self.trSelectMenu)
+        self.pushButton_trSelect.setMenu(self.trSelectMenu)
 
 
-        self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
-        self.diamCalc.clicked.connect(self.calculateDiam)
         self.sensitivity.clicked.connect(self.promptSensitivity)
         self.zoom.clicked.connect(self.zoomArea)
-        self.browse.clicked.connect(self.browseDV)
-        self.refresh.clicked.connect(self.refreshPlot)
+        self.pushButton_loadData.clicked.connect(self.browseDV)
+        self.pushButton_refresh.clicked.connect(self.refreshPlot)
         self.addPlot.clicked.connect(self.newPlot)
         
 
@@ -1224,13 +1237,13 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
                 else:
                     self.dataZoom = np.vstack((self.dataZoom, self.Data[int(k*self.yPoints + y1) :int(k*self.yPoints + y2)]))
                 
-            for i in range(0, self.xAxis.count()):
-                self.indZoomVars.append(self.xAxis.itemText(i))
-            for i in range(0, self.zAxis.count()):
-                self.depZoomVars.append(self.zAxis.itemText(i))
+            for i in range(0, self.comboBox_xAxis.count()):
+                self.indZoomVars.append(self.comboBox_xAxis.itemText(i))
+            for i in range(0, self.comboBox_zAxis.count()):
+                self.depZoomVars.append(self.comboBox_zAxis.itemText(i))
             title= str(self.plotTitle.text())
-            self.indXVar, self.indYVar, self.depVar = self.xAxis.currentText(), self.yAxis.currentText(), self.zAxis.currentText()
-            self.currentIndex = [self.xAxis.currentIndex(), self.yAxis.currentIndex(), self.zAxis.currentIndex()]        
+            self.indXVar, self.indYVar, self.depVar = self.comboBox_xAxis.currentText(), self.comboBox_yAxis.currentText(), self.comboBox_zAxis.currentText()
+            self.currentIndex = [self.comboBox_xAxis.currentIndex(), self.comboBox_yAxis.currentIndex(), self.comboBox_zAxis.currentIndex()]        
             self.zoomExtent = [bounds.x(), bounds.x() + bounds.width(), bounds.y(), bounds.y() + bounds.height(), self.xscale, self.yscale]
             self.zoomPlot = zoomPlot(self.reactor, self.plotZoom, self.dataZoom, self.zoomExtent, self.indZoomVars, self.depZoomVars, self.currentIndex, title, self)
             self.zoom.setEnabled(False)
@@ -1301,13 +1314,13 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         self.vCutPos.setValue(self.xMin)
         self.hCutPos.setValue(self.yMin)
         if self.NSselect == 1:
-            self.plotType.setText('Plotted sensitivity.')
+            self.label_plotType.setText('Plotted sensitivity.')
             self.vhSelect.addItem('Maximum Sensitivity')
         else:
-            self.plotType.setText('Plotted field noise.')    
+            self.label_plotType.setText('Plotted field noise.')    
             self.vhSelect.addItem('Minimum Noise')
             self.vhSelect.addItem('Optimal Bias')
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
     def plotMaxSens(self):
         if self.NSselect == 1:
@@ -1354,15 +1367,15 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
             V_raw = self.plotData[i]
 
         l = int(len(self.indVars) / 2)
-        x = self.xAxis.currentIndex()
-        y = self.yAxis.currentIndex()
-        z = self.zAxis.currentIndex() + len(self.indVars) 
-        self.viewBig.setLabel('left', text=self.yAxis.currentText())
-        self.viewBig.setLabel('bottom', text=self.xAxis.currentText())
-        self.XZPlot.setLabel('left', self.zAxis.currentText())
-        self.XZPlot.setLabel('bottom', self.xAxis.currentText())
-        self.YZPlot.setLabel('left', self.zAxis.currentText())
-        self.YZPlot.setLabel('bottom', self.yAxis.currentText())
+        x = self.comboBox_xAxis.currentIndex()
+        y = self.comboBox_yAxis.currentIndex()
+        z = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
+        self.viewBig.setLabel('left', text=self.comboBox_yAxis.currentText())
+        self.viewBig.setLabel('bottom', text=self.comboBox_xAxis.currentText())
+        self.XZPlot.setLabel('left', self.comboBox_zAxis.currentText())
+        self.XZPlot.setLabel('bottom', self.comboBox_xAxis.currentText())
+        self.YZPlot.setLabel('left', self.comboBox_zAxis.currentText())
+        self.YZPlot.setLabel('bottom', self.comboBox_yAxis.currentText())
         self.xMax = np.amax(self.Data[::,l+x])
         self.xMin = np.amin(self.Data[::,l+x])
         self.yMax = np.amax(self.Data[::,l+y])
@@ -1381,23 +1394,23 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
 
     def xDeriv(self):
         if self.plotData is None:
-            self.plotType.setText("Please plot data.")
-            self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+            self.label_plotType.setText("Please plot data.")
+            self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         else:
             self.gradient.setFocusPolicy(QtCore.Qt.StrongFocus)
             xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
             delta = abs(self.xMax - self.xMin) / self.xPoints
             N = int(self.xPoints * self.datPct)
             if N < 2:
-                self.plotType.setText("Lanczos window too \nsmall.")
-                self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+                self.label_plotType.setText("Lanczos window too \nsmall.")
+                self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 
             else:
                 for i in range(0, self.plotData.shape[1]):
                     self.plotData[:, i] = deriv(self.plotData[:,i], xVals, N, delta)    
                 self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-                self.plotType.setText("Plotted gradient along \nx-axis.")
-                self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+                self.label_plotType.setText("Plotted gradient along \nx-axis.")
+                self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
                 self.clearPlots()
                 
     def yDeriv(self):
@@ -1407,8 +1420,8 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         for i in range(0, self.plotData.shape[0]):
             self.plotData[i, :] = deriv(self.plotData[i,:], yVals, N, delta)    
         self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted gradient along \ny-axis.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("Plotted gradient along \ny-axis.")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
         
     def derivSettings(self):
@@ -1422,15 +1435,15 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
     def subtractAvg(self):
         avg = np.average(self.plotData)
         self.plotData = self.plotData - avg
-        self.plotType.setText("Plotted offset \nsubtracted data.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("Plotted offset \nsubtracted data.")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
         
     def subtractPlane(self):
         l = int(len(self.indVars) / 2)
-        x = self.xAxis.currentIndex()
-        y = self.yAxis.currentIndex()
-        z = self.zAxis.currentIndex() + len(self.indVars) 
+        x = self.comboBox_xAxis.currentIndex()
+        y = self.comboBox_yAxis.currentIndex()
+        z = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
         X = np.c_[self.Data[::, l+x], self.Data[::,l+y], np.ones(self.Data.shape[0])]
         Y = np.ndarray.flatten(self.plotData)
         
@@ -1439,29 +1452,29 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         for i in self.Data:
             self.plotData[int(i[x]), int(i[y])] = self.plotData[int(i[x]), int(i[y])] - np.dot(C[0], [i[x+l], i[y+l], 1])        
         self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted plane \nsubtracted data.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("Plotted plane \nsubtracted data.")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
         
     def subtractQuad(self):
         l = int(len(self.indVars) / 2)
-        x = self.xAxis.currentIndex()
-        y = self.yAxis.currentIndex()
-        z = self.zAxis.currentIndex() + len(self.indVars) 
+        x = self.comboBox_xAxis.currentIndex()
+        y = self.comboBox_yAxis.currentIndex()
+        z = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
         X = np.c_[np.ones(self.Data.shape[0]), self.Data[::, [l+x, l+y]], np.prod(self.Data[::, [l+x, l+y]], axis = 1), self.Data[::, [l+x, l+y]]**2]
         Y = np.ndarray.flatten(self.plotData)
         C = np.linalg.lstsq(X, Y)
         for i in self.Data:
             self.plotData[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l]**2, i[y+l]**2, i[l+x]*i[y+l], i[l+x], i[l+y], 1])        
         self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted quadratic \nsubtracted data.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("Plotted quadratic \nsubtracted data.")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
 
     @inlineCallbacks
     def browseDV(self, c = None):
         yield self.sleep(0.1)
-        self.refresh.setEnabled(False)
+        self.pushButton_refresh.setEnabled(False)
         try:
             self.dvExplorer = dataVaultExplorer(self.dv, self.reactor)
             self.dvExplorer.show()
@@ -1485,24 +1498,25 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         if self.Data is None:
             pass
         else:
-            self.refresh.setEnabled(True)
+            self.pushButton_refresh.setEnabled(True)
 
     def split(self, arr, cond):
       return [arr[cond], arr[~cond]]
 
     @inlineCallbacks
     def loadData(self, c):
-        self.xAxis.clear()
-        self.yAxis.clear()
-        self.zAxis.clear()
+        self.comboBox_xAxis.clear()
+        self.comboBox_yAxis.clear()
+        self.comboBox_zAxis.clear()
 
-        self.plotType.setText("\nLoading data...")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("\nLoading data...")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         #Initialized data set to none
         self.Data = None
         self.traceData = None
         selfretraceData = None
         result = self.dvExplorer.dataSetInfo()
+        print result
         self.file = result[0]
         self.directory = result[1]
         self.indVars = result[2][0]
@@ -1514,10 +1528,10 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
         if l % 2 == 0:
             self.dataFlag = None
             for i in self.indVars[int(l / 2) : l]:
-                self.xAxis.addItem(i)
-                self.yAxis.addItem(i)
+                self.comboBox_xAxis.addItem(i)
+                self.comboBox_yAxis.addItem(i)
             for i in self.depVars:
-                self.zAxis.addItem(i)
+                self.comboBox_zAxis.addItem(i)
             t = time.time()
             yield self.dv.open(self.file)
             print 'opened set'
@@ -1541,28 +1555,28 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
             t = time.time()
             print t - t1
             self.mainPlot.clear()
-            self.refresh.setEnabled(True)
+            self.pushButton_refresh.setEnabled(True)
             self.diamCalc.setEnabled(True)
             self.gradient.setEnabled(True)
             self.subtract.setEnabled(True)
             self.sensitivity.setEnabled(True)
-            self.trSelect.hide()
+            self.pushButton_trSelect.hide()
 
             pt = self.mapToGlobal(QtCore.QPoint(410,-10))
-            self.plotType.setText("")
-            self.refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
+            self.label_plotType.setText("")
+            self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
             QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
             self.zoom.setEnabled(False)
             self.clearPlots()
-            self.plotType.clear()
+            self.label_plotType.clear()
         #Load a data set with a trace/retrace index
         elif l % 2 == 1 and self.indVars[0] == 'Trace Index' or self.indVars[0] == 'Retrace Index':
             self.indVars = self.indVars[1::]
             for i in self.indVars[int(l / 2): l]:
-                self.xAxis.addItem(i)
-                self.yAxis.addItem(i)
+                self.comboBox_xAxis.addItem(i)
+                self.comboBox_yAxis.addItem(i)
             for i in self.depVars:
-                self.zAxis.addItem(i)
+                self.comboBox_zAxis.addItem(i)
             t = time.time()
             yield self.dv.open(self.file)
             print 'opened set'
@@ -1581,19 +1595,19 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
             self.Data = self.traceData
             self.dataFlag = 0
             self.mainPlot.clear()
-            self.refresh.setEnabled(True)
+            self.pushButton_refresh.setEnabled(True)
             self.diamCalc.setEnabled(True)
             self.gradient.setEnabled(True)
             self.subtract.setEnabled(True)
             self.sensitivity.setEnabled(True)
-            self.trSelect.show()
+            self.pushButton_trSelect.show()
             pt = self.mapToGlobal(QtCore.QPoint(410,-10))
-            self.plotType.setText("")
-            self.refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
+            self.label_plotType.setText("")
+            self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
             QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
             self.zoom.setEnabled(False)
             self.clearPlots()
-            self.plotType.clear()            
+            self.label_plotType.clear()            
         else:
             pt = self.mapToGlobal(QtCore.QPoint(410,-10))
             QtGui.QToolTip.showText(pt, 'Data set format is incompatible with the plotter.')
@@ -1604,15 +1618,15 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
             while self.vhSelect.count()>2:                
                 self.vhSelect.removeItem(2)
         l = int(len(self.indVars) / 2)
-        x = self.xAxis.currentIndex()
-        y = self.yAxis.currentIndex()
-        z = self.zAxis.currentIndex() + len(self.indVars) 
-        self.viewBig.setLabel('left', text=self.yAxis.currentText())
-        self.viewBig.setLabel('bottom', text=self.xAxis.currentText())
-        self.XZPlot.setLabel('left', self.zAxis.currentText())
-        self.XZPlot.setLabel('bottom', self.xAxis.currentText())
-        self.YZPlot.setLabel('left', self.zAxis.currentText())
-        self.YZPlot.setLabel('bottom', self.yAxis.currentText())
+        x = self.comboBox_xAxis.currentIndex()
+        y = self.comboBox_yAxis.currentIndex()
+        z = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
+        self.viewBig.setLabel('left', text=self.comboBox_yAxis.currentText())
+        self.viewBig.setLabel('bottom', text=self.comboBox_xAxis.currentText())
+        self.XZPlot.setLabel('left', self.comboBox_zAxis.currentText())
+        self.XZPlot.setLabel('bottom', self.comboBox_xAxis.currentText())
+        self.YZPlot.setLabel('left', self.comboBox_zAxis.currentText())
+        self.YZPlot.setLabel('bottom', self.comboBox_yAxis.currentText())
         self.xMax = np.amax(self.Data[::,l+x])
         self.xMin = np.amin(self.Data[::,l+x])
         self.yMax = np.amax(self.Data[::,l+y])
@@ -1639,7 +1653,7 @@ class subPlot(QtGui.QDialog, Ui_Plotter):
             self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
         self.zoom.setEnabled(True)
         self.clearPlots()
-        self.plotType.clear()
+        self.label_plotType.clear()
     
     def plotTrace(self):
         self.Data = self.traceData
@@ -1799,14 +1813,14 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         self.depVars = depVars
 
         for i in self.indVars:
-            self.xAxis.addItem(i)
-            self.yAxis.addItem(i)
+            self.comboBox_xAxis.addItem(i)
+            self.comboBox_yAxis.addItem(i)
         for i in self.depVars:
-            self.zAxis.addItem(i)
+            self.comboBox_zAxis.addItem(i)
         self.initIndex = currentIndex
-        self.xAxis.setCurrentIndex(self.initIndex[0])
-        self.yAxis.setCurrentIndex(self.initIndex[1])
-        self.zAxis.setCurrentIndex(self.initIndex[2])
+        self.comboBox_xAxis.setCurrentIndex(self.initIndex[0])
+        self.comboBox_yAxis.setCurrentIndex(self.initIndex[1])
+        self.comboBox_zAxis.setCurrentIndex(self.initIndex[2])
 
         self.setupPlots()
         
@@ -1843,17 +1857,17 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
 
         self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
         self.sensitivity.clicked.connect(self.promptSensitivity)
-        self.refresh.clicked.connect(self.refreshPlot)
+        self.pushButton_refresh.clicked.connect(self.refreshPlot)
         self.vCutPos.valueChanged.connect(self.changeVertLine)
         self.hCutPos.valueChanged.connect(self.changeHorLine)
         
     def revert(self):
         self.clearPlots()
-        self.plotType.clear()
+        self.label_plotType.clear()
         self.zoomPlot = self.oData
         self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted original \ndata selection.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("Plotted original \ndata selection.")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         if self.vhSelect.count() > 2: 
             self.vhSelect.setCurrentIndex(0)
             while self.vhSelect.count()>2:                
@@ -1866,16 +1880,16 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
             while self.vhSelect.count()>2:                
                 self.vhSelect.removeItem(2)
         l = int(len(self.indVars) * 2)
-        x = self.xAxis.currentIndex()
-        y = self.yAxis.currentIndex()
-        z = self.zAxis.currentIndex() + l
+        x = self.comboBox_xAxis.currentIndex()
+        y = self.comboBox_yAxis.currentIndex()
+        z = self.comboBox_zAxis.currentIndex() + l
         self.xPoints, self.yPoints = int(np.amax(self.Data[::,x])) + 1, int(np.amax(self.Data[::,y])) + 1
-        self.viewBig.setLabel('left', text=self.yAxis.currentText())
-        self.viewBig.setLabel('bottom', text=self.xAxis.currentText())
-        self.XZPlot.setLabel('left', self.zAxis.currentText())
-        self.XZPlot.setLabel('bottom', self.xAxis.currentText())
-        self.YZPlot.setLabel('left', self.zAxis.currentText())
-        self.YZPlot.setLabel('bottom', self.yAxis.currentText())
+        self.viewBig.setLabel('left', text=self.comboBox_yAxis.currentText())
+        self.viewBig.setLabel('bottom', text=self.comboBox_xAxis.currentText())
+        self.XZPlot.setLabel('left', self.comboBox_zAxis.currentText())
+        self.XZPlot.setLabel('bottom', self.comboBox_xAxis.currentText())
+        self.YZPlot.setLabel('left', self.comboBox_zAxis.currentText())
+        self.YZPlot.setLabel('bottom', self.comboBox_yAxis.currentText())
         self.zoomPlot = np.zeros([int(self.xPoints), int(self.yPoints)])
         
         for i in self.Data:
@@ -1883,7 +1897,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
             self.zoomPlot[int(i[x]), int(i[y])] = i[z]
         self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
         self.clearPlots()
-        self.plotType.clear()    
+        self.label_plotType.clear()    
 
     def clearPlots(self):
         if self.zoomPlot is None:
@@ -1974,8 +1988,8 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         for i in range(0, self.zoomPlot.shape[1]):
             self.zoomPlot[:, i] = deriv(self.zoomPlot[:,i], xVals, N, delta)    
         self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted gradient \nalong x-axis.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("Plotted gradient \nalong x-axis.")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
     def yDeriv(self):
 
@@ -1985,8 +1999,8 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         for i in range(0, self.zoomPlot.shape[0]):
             self.zoomPlot[i, :] = deriv(self.zoomPlot[i,:], yVals, N, delta)    
         self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted gradient \nalong y-axis.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("Plotted gradient \nalong y-axis.")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
         
     def derivSettings(self):
@@ -2001,38 +2015,38 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         avg = np.average(self.zoomPlot)
         self.zoomPlot = self.zoomPlot - avg
         self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.xMin, self.yMin],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted offset \nsubtracted data.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("Plotted offset \nsubtracted data.")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
     def subtractPlane(self):
 
         l = int(len(self.indVars) * 2)
-        x = self.xAxis.currentIndex()
-        y = self.yAxis.currentIndex()
-        z = self.zAxis.currentIndex() + l
+        x = self.comboBox_xAxis.currentIndex()
+        y = self.comboBox_yAxis.currentIndex()
+        z = self.comboBox_zAxis.currentIndex() + l
         X = np.c_[self.Data[::, l+x], self.Data[::,l+y], np.ones(self.Data.shape[0])]
         Y = np.ndarray.flatten(self.zoomPlot)
         C = np.linalg.lstsq(X, Y)
         for i in self.Data:
             self.zoomPlot[int(i[x]), int(i[y])] = self.zoomPlot[int(i[x]), int(i[y])] - np.dot(C[0], [i[x+l], i[y+l], 1])        
         self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted plane \nsubtracted data.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("Plotted plane \nsubtracted data.")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
     def subtractQuad(self):
 
         l = int(len(self.indVars) * 2)
-        x = self.xAxis.currentIndex()
-        y = self.yAxis.currentIndex()
-        z = self.zAxis.currentIndex() + l
+        x = self.comboBox_xAxis.currentIndex()
+        y = self.comboBox_yAxis.currentIndex()
+        z = self.comboBox_zAxis.currentIndex() + l
         X = np.c_[np.ones(self.Data.shape[0]), self.Data[::, [l+x, l+y]], np.prod(self.Data[::, [l+x, l+y]], axis = 1), self.Data[::, [l+x, l+y]]**2]
         Y = np.ndarray.flatten(self.plotData)
         C = np.linalg.lstsq(X, Y)
         for i in self.Data:
             self.zoomPlot[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l]**2, i[y+l]**2, i[l+x]*i[y+l], i[l+x], i[l+y], 1])        
         self.mainPlot.setImage(self.zoomPlot, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.plotType.setText("Plotted quadratic \nsubtracted data.")
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.label_plotType.setText("Plotted quadratic \nsubtracted data.")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
         
     def promptSensitivity(self):
@@ -2104,13 +2118,13 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         self.vCutPos.setValue(self.xMin)
         self.hCutPos.setValue(self.yMin)
         if self.NSselect == 1:
-            self.plotType.setText('Plotted sensitivity.')
+            self.label_plotType.setText('Plotted sensitivity.')
             self.vhSelect.addItem('Maximum Sensitivity')
         else:
-            self.plotType.setText('Plotted field noise.')    
+            self.label_plotType.setText('Plotted field noise.')    
             self.vhSelect.addItem('Minimum Noise')
             self.vhSelect.addItem('Optimal Bias')
-        self.plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")    
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")    
         
     def plotMaxSens(self):
         if self.NSselect == 1:

@@ -293,7 +293,7 @@ border-radius: 5px
     <string/>
    </property>
   </widget>
-  <widget class="QPushButton" name="refresh">
+  <widget class="QPushButton" name="pushButton_dvexplorer_refresh">
    <property name="geometry">
     <rect>
      <x>115</x>
@@ -306,7 +306,7 @@ border-radius: 5px
     <string>Refresh</string>
    </property>
    <property name="styleSheet">
-    <string notr="true">#refresh{
+    <string notr="true">#pushButton_dvexplorer_refresh{
 image:url(:/nSOTScanner/Pictures/refreshIcon.png);
 background: black;
 border: 0px solid rgb(95,107,166);

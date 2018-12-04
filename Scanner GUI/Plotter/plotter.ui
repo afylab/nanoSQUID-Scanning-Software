@@ -25,7 +25,7 @@ background-color: rgb(0, 0, 0);
 background-color: rgb(0, 0, 0);
 }</string>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,4,2">
+   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,8,3">
     <item>
      <widget class="QFrame" name="frame_TopBlock">
       <property name="styleSheet">
@@ -41,10 +41,10 @@ border:1px solid rgb(168,168,168)
       </property>
       <layout class="QGridLayout" name="gridLayout_6">
        <item row="1" column="3">
-        <widget class="QComboBox" name="yAxis"/>
+        <widget class="QComboBox" name="comboBox_yAxis"/>
        </item>
        <item row="1" column="6">
-        <widget class="QPushButton" name="refresh">
+        <widget class="QPushButton" name="pushButton_refresh">
          <property name="minimumSize">
           <size>
            <width>20</width>
@@ -55,7 +55,7 @@ border:1px solid rgb(168,168,168)
           <string>Refresh Plot</string>
          </property>
          <property name="styleSheet">
-          <string notr="true">#refresh{
+          <string notr="true">#pushButton_refresh{
 image:url(:/nSOTScanner/Pictures/refresh.png);
 background: black;
 
@@ -170,7 +170,7 @@ border-radius: 5px
         </widget>
        </item>
        <item row="1" column="7">
-        <widget class="QPushButton" name="browse">
+        <widget class="QPushButton" name="pushButton_loadData">
          <property name="minimumSize">
           <size>
            <width>65</width>
@@ -269,7 +269,7 @@ border-radius: 5px
         </widget>
        </item>
        <item row="1" column="5">
-        <widget class="QComboBox" name="zAxis"/>
+        <widget class="QComboBox" name="comboBox_zAxis"/>
        </item>
        <item row="1" column="8">
         <widget class="QPushButton" name="zoom">
@@ -358,10 +358,10 @@ border-radius: 5px
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QComboBox" name="xAxis"/>
+        <widget class="QComboBox" name="comboBox_xAxis"/>
        </item>
        <item row="0" column="6">
-        <widget class="QPushButton" name="trSelect">
+        <widget class="QPushButton" name="pushButton_trSelect">
          <property name="minimumSize">
           <size>
            <width>20</width>
@@ -372,7 +372,7 @@ border-radius: 5px
           <string>Trace/Retrace Select</string>
          </property>
          <property name="styleSheet">
-          <string notr="true">#trSelect{
+          <string notr="true">#pushButton_trSelect{
 image:url(:/nSOTScanner/Pictures/traceIcon.png);
 background: black;
 border: 0px solid rgb(95,107,166);
@@ -391,7 +391,7 @@ border-radius: 5px
         </widget>
        </item>
        <item row="0" column="7" colspan="2">
-        <widget class="QLabel" name="plotType">
+        <widget class="QLabel" name="label_plotType">
          <property name="text">
           <string>Plot Type</string>
          </property>
@@ -558,6 +558,8 @@ border:1px solid rgb(168,168,168)
    </layout>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="../Resources/nSOTScannerResources.qrc"/>
+ </resources>
  <connections/>
 </ui>
