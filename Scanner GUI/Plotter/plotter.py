@@ -724,6 +724,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             try:
                 self.dataFlag = None
                 self.comboBox_xAxis.addItem(self.indVars[1])
+                self.comboBox_yAxis.addItem("None")
                 for i in self.depVars:
                     self.comboBox_zAxis.addItem(i)
                 t = time.time()
@@ -793,19 +794,30 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         
         self.xMax = np.amax(self.Data[::,l+x])
         self.xMin = np.amin(self.Data[::,l+x])
-        self.yMax = np.amax(self.Data[::,l+y])
-        self.yMin = np.amin(self.Data[::,l+y])
         self.deltaX = self.xMax - self.xMin
-        self.deltaY = self.yMax - self.yMin
         self.xPoints = np.amax(self.Data[::,x])+1  #look up the index
-        self.yPoints = np.amax(self.Data[::,y])+1
+
+        if self.comboBox_yAxis.currentText() == "None":
+            self.yMax = 1
+            self.yMin = 0
+            self.deltaY = self.yMax - self.yMin
+            self.yPoints = 1
+        else:
+            self.yMax = np.amax(self.Data[::,l+y])
+            self.yMin = np.amin(self.Data[::,l+y])
+            self.deltaY = self.yMax - self.yMin
+            self.yPoints = np.amax(self.Data[::,y])+1
+        print "xN", self.xPoints, "yPN", self.yPoints
         self.extent = [self.xMin, self.xMax, self.yMin, self.yMax]
         self.x0, self.x1 = self.extent[0], self.extent[1]
         self.y0, self.y1 = self.extent[2], self.extent[3]
         self.xscale, self.yscale = (self.x1-self.x0) / self.xPoints, (self.y1-self.y0) / self.yPoints    
         self.plotData = np.zeros([int(self.xPoints), int(self.yPoints)])
         for i in self.Data:
-            self.plotData[int(i[x]), int(i[y])] = i[z]
+            if self.comboBox_yAxis.currentText() == "None":
+                self.plotData[int(i[x]), 0] = i[z]
+            else:
+                self.plotData[int(i[x]), int(i[y])] = i[z]
         self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
         if self.dataFlag == 0:
             title = self.file + " (Trace)"
