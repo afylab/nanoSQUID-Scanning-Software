@@ -603,29 +603,36 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.comboBox_yAxis.clear()
         self.comboBox_zAxis.clear()
       
+    def ClearData(self):
+        self.Data = None
+        self.traceData = None
+        self.retraceData = None
+
     @inlineCallbacks
     def loadData(self, c):
         self.ClearcomboBox()
-        self.comboBox_yAxis.clear()
-        self.comboBox_zAxis.clear()
 
         self.label_plotType.setText("\nLoading data...")
         self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         #Initialized data set to none
-        self.Data = None
-        self.traceData = None
-        selfretraceData = None
+        
+        self.ClearData()
+
         result = self.dvExplorer.dataSetInfo()
         self.file = result[0]
         self.directory = result[1]
         self.indVars = result[2][0]
         l = len(self.indVars)
+        print l
         self.depVars =result[2][1]
 
+        
+        
         self.plotTitle.setText(str(self.file))
         self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
+        
         #Load a data set with no trace/retrace index
-        if l % 2 == 0:
+        if l % 2 == 0 and l !=2 :
             self.dataFlag = None
             for i in self.indVars[int(l / 2) : l]:
                 self.comboBox_xAxis.addItem(i)
@@ -713,6 +720,56 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.zoom.setEnabled(False)
             self.clearPlots()
             self.label_plotType.clear()            
+        elif l==2:
+            try:
+                self.dataFlag = None
+                self.comboBox_xAxis.addItem(self.indVars[1])
+                for i in self.depVars:
+                    self.comboBox_zAxis.addItem(i)
+                t = time.time()
+                yield self.dv.open(self.file)
+                print 'Open Set Finished'
+                t1 = time.time()
+                print 'Time taken to open set', t1 - t
+
+                getFlag = True
+                self.Data = np.array([])
+                while getFlag == True:
+                    line = yield self.dv.get(1000L)
+
+                    try:
+                        if len(self.Data) != 0 and len(line) > 0:
+                            self.Data = np.vstack((self.Data, line))                        
+                        elif len(self.Data) == 0 and len(line) > 0:
+                            self.Data = np.asarray(line)
+                        else:
+                            getFlag = False
+                    except:
+                        getFlag = False
+            
+                print 'Get Set Finished'
+                print self.Data
+                t = time.time()
+                print 'Time taken to get set', t - t1
+
+                self.mainPlot.clear()
+                self.pushButton_refresh.setEnabled(True)
+                self.diamCalc.setEnabled(True)
+                self.gradient.setEnabled(True)
+                self.subtract.setEnabled(True)
+                self.sensitivity.setEnabled(True)
+                self.pushButton_trSelect.hide()
+
+                pt = self.mapToGlobal(QtCore.QPoint(410,-10))
+                self.label_plotType.setText("")
+                self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
+                QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
+                self.zoom.setEnabled(False)
+                self.clearPlots()
+                self.label_plotType.clear()
+            except exceptions as inst:
+                print inst
+        
         else:
             pt = self.mapToGlobal(QtCore.QPoint(410,-10))
             QtGui.QToolTip.showText(pt, 'Data set format is incompatible with the plotter.')
@@ -720,8 +777,11 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def refreshPlot(self):
 
         l = int(len(self.indVars) / 2)
+        print "l=",l
         x = self.comboBox_xAxis.currentIndex()
+        print 'x=',x
         y = self.comboBox_yAxis.currentIndex()
+        print "y=",y
         z = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
         
         self.viewBig.setLabel('left', text=self.comboBox_yAxis.currentText())
@@ -737,7 +797,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.yMin = np.amin(self.Data[::,l+y])
         self.deltaX = self.xMax - self.xMin
         self.deltaY = self.yMax - self.yMin
-        self.xPoints = np.amax(self.Data[::,x])+1
+        self.xPoints = np.amax(self.Data[::,x])+1  #look up the index
         self.yPoints = np.amax(self.Data[::,y])+1
         self.extent = [self.xMin, self.xMax, self.yMin, self.yMax]
         self.x0, self.x1 = self.extent[0], self.extent[1]
@@ -1514,7 +1574,7 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         #Initialized data set to none
         self.Data = None
         self.traceData = None
-        selfretraceData = None
+        self.retraceData = None
         result = self.dvExplorer.dataSetInfo()
         print result
         self.file = result[0]
