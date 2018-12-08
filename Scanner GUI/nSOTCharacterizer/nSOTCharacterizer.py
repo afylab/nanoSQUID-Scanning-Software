@@ -150,7 +150,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.dac = False
         self.dac_toe = False
         self.ips = False
-        self.dcbox = False
+        self.blink_server = False
         
         self.lockInterface()
 
@@ -193,12 +193,18 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             
             self.dac = yield self.cxn_nsot.dac_adc
             self.dac.select_device(dict['devices']['nsot']['dac_adc'])
-                
-            #Eventually check here is blink is done with DC Box or DAC ADC
-            #If it's DAC ADC, skip next line
-            self.dcbox = yield self.cxn_nsot.ad5764_dcbox
-            self.dcbox.select_device(dict['devices']['nsot']['dc_box'])
-
+            
+            print dict['devices']['system']['blink device']
+            if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
+                self.blink_server = yield self.cxn_nsot.ad5764_dcbox
+                self.blink_server.select_device(dict['devices']['system']['blink device'])
+                print 'DC BOX Blink Device'
+            elif dict['devices']['system']['blink device'].startswith('DA'):
+                self.blink_server = yield self.cxn_nsot.dac_adc
+                self.blink_server.select_device(dict['devices']['system']['blink device'])
+                print 'DAC ADC Blink Device'
+            
+            self.blinkDevice = dict['devices']['system']['blink device']
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             
@@ -220,7 +226,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.dac = False
         self.dac_toe = False
         self.ips = False
-        self.dcbox = False
+        self.blink_server = False
         self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             
@@ -1899,18 +1905,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     
     @inlineCallbacks
     def blinkFunc(self, c = None):
-        if self.settingsDict['blink device'] == 'DAC ADC':
-            yield self.dac.set_voltage(self.settingsDict['blink'] - 1, 5)
-            yield self.sleep(0.25)
-            yield self.dac.set_voltage(self.settingsDict['blink'] - 1, 0)
-            yield self.sleep(0.25)
-        elif self.settingsDict['blink device'] == 'DC BOX':
-            yield self.dcbox.set_voltage(self.settingsDict['blink'] - 1, 5)
-            yield self.sleep(0.25)
-            yield self.dcbox.set_voltage(self.settingsDict['blink'] - 1, 0)
-            yield self.sleep(0.25)
-            print 'blinked'
-
+        yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 5)
+        yield self.sleep(0.25)
+        yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 0)
+        yield self.sleep(0.25)
+    
     @inlineCallbacks
     def toeSweepField(B_i, B_f, B_speed, c = None):
         DAC_set_volt, DAC_set_current = self.settingsDict['toellner volts'] - 1, self.settingsDict['toellner current'] - 1
@@ -1975,12 +1974,44 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             print 'on line: ', sys.exc_traceback.tb_lineno
             
     def lockInterface(self):
-        #TODO Fill in
-        pass
+        self.biasSweepMode.setEnabled(False)
+        self.blink.setEnabled(False)
+        self.magnetPower.setEnabled(False)
+        self.fieldMinSetValue.setEnabled(False)
+        self.fieldMaxSetValue.setEnabled(False)
+        self.fieldPointsSetValue.setEnabled(False)
+        self.fieldStepsInc.setEnabled(False)
+        self.fieldSpeedSetValue.setEnabled(False)
+        self.biasMinSetValue.setEnabled(False)
+        self.biasMaxSetValue.setEnabled(False)
+        self.biasPointsSetValue.setEnabled(False)
+        self.biasStepsInc.setEnabled(False)
+        self.biasSpeedSetValue.setEnabled(False)
+        self.startSweep.setEnabled(False)
+        self.prelim.setEnabled(False)
+        self.abortSweep.setEnabled(False)
+        self.dacSetOpen.setEnabled(False)
+        self.acSetOpen.setEnabled(False)
         
     def unlockInterface(self):
-        #TODO Fill in
-        pass
+        self.biasSweepMode.setEnabled(True)
+        self.blink.setEnabled(True)
+        self.magnetPower.setEnabled(True)
+        self.fieldMinSetValue.setEnabled(True)
+        self.fieldMaxSetValue.setEnabled(True)
+        self.fieldPointsSetValue.setEnabled(True)
+        self.fieldStepsInc.setEnabled(True)
+        self.fieldSpeedSetValue.setEnabled(True)
+        self.biasMinSetValue.setEnabled(True)
+        self.biasMaxSetValue.setEnabled(True)
+        self.biasPointsSetValue.setEnabled(True)
+        self.biasStepsInc.setEnabled(True)
+        self.biasSpeedSetValue.setEnabled(True)
+        self.startSweep.setEnabled(True)
+        self.prelim.setEnabled(True)
+        self.abortSweep.setEnabled(True)
+        self.dacSetOpen.setEnabled(True)
+        self.acSetOpen.setEnabled(True)
             
     def closeEvent(self, e):
         pass
@@ -1996,12 +2027,7 @@ class dacSettings(QtGui.QDialog, Ui_dacSet):
         self.updateVals()
         self.connectBoxes()
         
-        if not not self.window.dcbox:
-            self.comboBox_blinkDevice.addItem('DC BOX')
-            if self.settingsDict['blink device'] == 'DC BOX':
-                self.comboBox_blinkDevice.setCurrentIndex(1)
-        else:
-            print 'no dc box'
+        self.comboBox_blinkDevice.addItem(self.window.blinkDevice)
 
         self.comboBox_blinkDevice.currentIndexChanged.connect(self.updateBlinkDevice)
             

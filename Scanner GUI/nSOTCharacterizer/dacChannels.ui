@@ -641,11 +641,6 @@ border-radius: 5px
      <height>22</height>
     </rect>
    </property>
-   <item>
-    <property name="text">
-     <string>DAC ADC</string>
-    </property>
-   </item>
   </widget>
   <widget class="QLabel" name="warning">
    <property name="geometry">

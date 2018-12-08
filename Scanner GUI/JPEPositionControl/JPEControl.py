@@ -91,11 +91,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.dcbox = yield self.cxn_jpe.ad5764_dcbox
             self.dcbox.select_device(dict['devices']['approach and TF']['dc_box'])
             
+            yield self.cpsc.set_height(self.tip_height+33.9)
+            
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             self.serversConnected = True
             self.unlockInterface()
-            self.cpsc.set_height(self.tip_height+33.9)
+
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
@@ -191,65 +193,86 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     '''
             self.push_JPEConnect.setStyleSheet(style)
             
+    def throwWeightsWarning(self):
+        msgBox = QtGui.QMessageBox(self)
+        msgBox.setIcon(QtGui.QMessageBox.Information)
+        msgBox.setWindowTitle('JPE Step Sizes Set Improperly')
+        msgBox.setText("\r\n The relative step sizes for the JPEs are set improperly. The relative step size for one or more of the knobs is set to 0.")
+        msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+        msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+        msgBox.exec_()
+        
     @inlineCallbacks
     def movePosX(self, c = None):
-        self.lockInterface()
-        if self.checkBox_Torque.isChecked():
-            yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps, 30)
-        else: 
-            yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps)
-        self.unlockInterface()
+        if not self.cpsc.checkweights():
+            self.throwWeightsWarning()
+        else:
+            self.lockInterface()
+            if self.checkBox_Torque.isChecked():
+                yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps, 30)
+            else: 
+                yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps)
+            self.unlockInterface()
 
     @inlineCallbacks
     def moveNegX(self, c = None):
-        self.lockInterface()
-        if self.checkBox_Torque.isChecked():
-            yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, -self.steps, 30)
+        if not self.cpsc.checkweights():
+            self.throwWeightsWarning()
         else:
-            yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, -self.steps)
-        self.unlockInterface()
+            self.lockInterface()
+            if self.checkBox_Torque.isChecked():
+                yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, -self.steps, 30)
+            else:
+                yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, -self.steps)
+            self.unlockInterface()
 
     @inlineCallbacks
     def movePosY(self, c = None):
-        self.lockInterface()
-        if self.checkBox_Torque.isChecked():
-            yield self.cpsc.move_y(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps, 30)
+        if not self.cpsc.checkweights():
+            self.throwWeightsWarning()
         else:
-            yield self.cpsc.move_y(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps)
-        self.unlockInterface()
+            self.lockInterface()
+            if self.checkBox_Torque.isChecked():
+                yield self.cpsc.move_y(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps, 30)
+            else:
+                yield self.cpsc.move_y(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps)
+            self.unlockInterface()
 
     @inlineCallbacks
     def moveNegY(self, c = None):
-        try:
+        if not self.cpsc.checkweights():
+            self.throwWeightsWarning()
+        else:
             self.lockInterface()
             if self.checkBox_Torque.isChecked():
                 yield self.cpsc.move_y(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, -self.steps, 30)
             else:
                 yield self.cpsc.move_y(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, -self.steps)
             self.unlockInterface()
-        except Exception as inst:
-            print inst
 
     @inlineCallbacks
     def movePosZ(self, c = None):
-        self.lockInterface()
-        if self.checkBox_Torque.isChecked():
-            yield self.cpsc.move_z(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps, 30)
+        if not self.cpsc.checkweights():
+            self.throwWeightsWarning()
         else:
-            yield self.cpsc.move_z(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps)
-        self.unlockInterface()
+            self.lockInterface()
+            if self.checkBox_Torque.isChecked():
+                yield self.cpsc.move_z(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps, 30)
+            else:
+                yield self.cpsc.move_z(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps)
+            self.unlockInterface()
 
     @inlineCallbacks
     def moveNegZ(self, c = None):
-        try:
+        if not self.cpsc.checkweights():
+            self.throwWeightsWarning()
+        else:
             self.lockInterface()
             if self.checkBox_Torque.isChecked():
                 yield self.cpsc.move_z(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, -self.steps, 30)
             else:
                 yield self.cpsc.move_z(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, -self.steps)
             self.unlockInterface()
-        except Exception as inst:
-            print inst
 
     def updateApproachStatus(self, status):
         if status:
@@ -260,7 +283,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def setForwardJPEWeightA(self, c = None):
         val = readNum(str(self.lineEdit_weight_for_A.text()), self, False)
-        if isinstance(val,float) and val > 0:
+        if isinstance(val,float):
+            if  val <= 0:
+                val = 0
             self.weight_for[0] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)
         self.lineEdit_weight_for_A.setText(formatNum(self.weight_for[0]))
@@ -268,7 +293,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def setForwardJPEWeightB(self, c = None):
         val = readNum(str(self.lineEdit_weight_for_B.text()), self, False)
-        if isinstance(val,float) and val >0:
+        if isinstance(val,float):
+            if  val <= 0:
+                val = 0
             self.weight_for[1] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)
         self.lineEdit_weight_for_B.setText(formatNum(self.weight_for[1]))
@@ -276,7 +303,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def setForwardJPEWeightC(self, c = None):
         val = readNum(str(self.lineEdit_weight_for_C.text()), self, False)
-        if isinstance(val,float) and val >0:
+        if isinstance(val,float):
+            if  val <= 0:
+                val = 0
             self.weight_for[2] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)
         self.lineEdit_weight_for_C.setText(formatNum(self.weight_for[2]))
@@ -284,7 +313,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def setBackwardJPEWeightA(self, c = None):
         val = readNum(str(self.lineEdit_weight_back_A.text()), self, False)
-        if isinstance(val,float) and val > 0:
+        if isinstance(val,float):
+            if  val <= 0:
+                val = 0
             self.weight_back[0] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)
         self.lineEdit_weight_back_A.setText(formatNum(self.weight_back[0]))
@@ -292,7 +323,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def setBackwardJPEWeightB(self, c = None):
         val = readNum(str(self.lineEdit_weight_back_B.text()), self, False)
-        if isinstance(val,float) and val > 0:
+        if isinstance(val,float):
+            if  val <= 0:
+                val = 0
             self.weight_back[1] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)
         self.lineEdit_weight_back_B.setText(formatNum(self.weight_back[1]))
@@ -300,7 +333,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def setBackwardJPEWeightC(self, c = None):
         val = readNum(str(self.lineEdit_weight_back_C.text()), self, False)
-        if isinstance(val,float) and val > 0:
+        if isinstance(val,float):
+            if  val <= 0:
+                val = 0
             self.weight_back[2] = val
             yield self.cpsc.setrelativestepsize(self.weight_for, self.weight_back)
         self.lineEdit_weight_back_C.setText(formatNum(self.weight_back[2]))

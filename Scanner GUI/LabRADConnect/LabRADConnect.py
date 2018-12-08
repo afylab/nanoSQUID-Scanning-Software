@@ -70,7 +70,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         
         #Saving images of all data taken info
         self.lineEdit_Session_2.setReadOnly(True)
-        self.session_2 = 'C:\\Users\\cltschirhart\\Data Sets\\ScanData\\' + str(datetime.date.today())
+        self.session_2 = 'C:\\Users\\Cthulhu\\Data Sets\\ScanData\\' + str(datetime.date.today())
         self.lineEdit_Session_2.setText(self.session_2)
         
         folderExists = os.path.exists(self.session_2)

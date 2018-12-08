@@ -4,6 +4,7 @@ import twisted
 from PyQt4 import QtCore, QtGui, QtTest, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import numpy as np
+import time
 
 path = sys.path[0] + r"\GoToSetpoint"
 GoToSetpointUI, QtBaseClass = uic.loadUiType(path + r"\gotoSetpoint.ui")
@@ -25,7 +26,7 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
         self.cxn = False
         self.dac = False
         self.ips = False
-        self.dcbox = False
+        self.blink_server = False
         
         self.zeroFieldBtn.clicked.connect(self.zeroFieldFunc)
         self.zeroBiasBtn.clicked.connect(self.zeroBiasFunc)
@@ -59,21 +60,24 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
             self.dac = yield self.cxn_nsot.dac_adc
             self.dac.select_device(dict['devices']['nsot']['dac_adc'])
                 
-            #Eventually check here is blink is done with DC Box or DAC ADC
-            #If it's DAC ADC, skip next line
-            self.dcbox = yield self.cxn_nsot.ad5764_dcbox
-            self.dcbox.select_device(dict['devices']['nsot']['dc_box'])
+            if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
+                self.blink_server = yield self.cxn_nsot.ad5764_dcbox
+                self.blink_server.select_device(dict['devices']['system']['blink device'])
+            elif dict['devices']['system']['blink device'].startswith('DA'):
+                self.blink_server = yield self.cxn_nsot.dac_adc
+                self.blink_server.select_device(dict['devices']['system']['blink device'])
 
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             
             self.unlockInterface()
+            
         except Exception as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-            print 'nsot labrad connect', inst
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print 'line num ', exc_tb.tb_lineno
+            #print 'nsot labrad connect', inst
+            #exc_type, exc_obj, exc_tb = sys.exc_info()
+            #print 'line num ', exc_tb.tb_lineno
         
     def updateSetpointSettings(self, newSettings):
         self.magDevice = newSettings['Magnet device']
@@ -116,46 +120,51 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
             
     @inlineCallbacks
     def ipsGoToFieldFunc(self, field, rate, c = None):
-        yield self.ips.set_control(3)
-        yield self.ips.set_comm_protocol(6)
-        yield self.ips.set_control(2)
-        yield self.sleep(0.1)
-
-        yield self.ips.set_control(3)
-        yield self.ips.set_targetfield(field)
-        yield self.ips.set_control(2)
-        yield self.sleep(0.1)
-
-        yield self.ips.set_control(3)
-        yield self.ips.set_fieldsweep_rate(rate)
-        yield self.ips.set_control(2)
-        yield self.sleep(0.1)
-        
-        yield self.ips.set_control(3)
-        yield self.ips.set_activity(1)
-        yield self.ips.set_control(2)
-        yield self.sleep(0.1)
-
-        
-        t0 = time.time()
-        self.currStatusLbl.setText('Status: Ramping Field')
-        while True:
+        try:
             yield self.ips.set_control(3)
-            curr_field = yield self.ips.read_parameter(7)
+            yield self.ips.set_comm_protocol(6)
             yield self.ips.set_control(2)
-            if float(curr_field[1:]) <= field + 0.00001 and float(curr_field[1:]) >= field -0.00001:
-                break
-            if time.time() - t0 > 1:
-                yield self.ips.set_control(3)
-                yield self.ips.set_targetfield(float(field))
-                yield self.ips.set_control(2)
-                t0 = time.time()
-            yield self.sleep(0.25)
-        
-        self.setpointDict['field'] = field
-        self.currFieldLbl.setText('Current Field: '+ str(field) + 'T')
-        self.currStatusLbl.setText('Status: Idle')
+            yield self.sleep(0.1)
 
+            yield self.ips.set_control(3)
+            yield self.ips.set_targetfield(field)
+            yield self.ips.set_control(2)
+            yield self.sleep(0.1)
+
+            yield self.ips.set_control(3)
+            yield self.ips.set_fieldsweep_rate(rate)
+            yield self.ips.set_control(2)
+            yield self.sleep(0.1)
+            
+            yield self.ips.set_control(3)
+            yield self.ips.set_activity(1)
+            yield self.ips.set_control(2)
+            yield self.sleep(0.1)
+            
+            t0 = time.time()
+            self.currStatusLbl.setText('Status: Ramping Field')
+            while True:
+                yield self.ips.set_control(3)
+                curr_field = yield self.ips.read_parameter(7)
+                yield self.ips.set_control(2)
+                if float(curr_field[1:]) <= field + 0.00001 and float(curr_field[1:]) >= field -0.00001:
+                    break
+                if time.time() - t0 > 1:
+                    yield self.ips.set_control(3)
+                    yield self.ips.set_targetfield(float(field))
+                    yield self.ips.set_control(2)
+                    t0 = time.time()
+                yield self.sleep(0.25)
+            
+            self.setpointDict['field'] = field
+            self.currFieldLbl.setText('Current Field: '+ str(field) + 'T')
+            self.currStatusLbl.setText('Status: Idle')
+        except Exception as inst:
+            print 'nsot labrad connect', inst
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            print 'line num ', exc_tb.tb_lineno
+        
+            
     @inlineCallbacks
     def zeroFieldFunc(self, c = None):
         if self.magDevice == 'IPS 120-10':
@@ -180,6 +189,7 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
         flag = False
         if self.magDevice == 'IPS 120-10':
             field = readNum(self.fieldSetpntLine.text(), self, False)
+            
             if not isinstance(field, float):
                 self.fieldSetpntLine.setText('FORMAT')
                 flag = True
@@ -229,16 +239,42 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
             
     @inlineCallbacks
     def blinkOutFunc(self, c = None):
-        a = yield self.dcbox.set_voltage(self.blinkChan, 5)
+        yield self.blink_server.set_voltage(self.blinkChan, 5)
         yield self.sleep(0.25)
-        b = yield self.dcbox.set_voltage(self.blinkChan, 0)
+        yield self.blink_server.set_voltage(self.blinkChan, 0)
         yield self.sleep(0.25)
         
     def lockInterface(self):
-        pass
+        self.fieldSetpntLine.setEnabled(False)
+        self.fieldRampRateLine.setEnabled(False)
+        self.biasSetpntLine.setEnabled(False)
+        self.biasPntsLine.setEnabled(False)
+        self.biasDelayLine.setEnabled(False)
+        
+        self.gotoFieldBtn.setEnabled(False)
+        self.zeroFieldBtn.setEnabled(False)
+        
+        self.gotoBiasBtn.setEnabled(False)
+        self.zeroBiasBtn.setEnabled(False)
+        
+        self.push_readSetpoint.setEnabled(False)
+        self.blinkBtn.setEnabled(False)
         
     def unlockInterface(self):
-        pass
+        self.fieldSetpntLine.setEnabled(True)
+        self.fieldRampRateLine.setEnabled(True)
+        self.biasSetpntLine.setEnabled(True)
+        self.biasPntsLine.setEnabled(True)
+        self.biasDelayLine.setEnabled(True)
+        
+        self.gotoFieldBtn.setEnabled(True)
+        self.zeroFieldBtn.setEnabled(True)
+        
+        self.gotoBiasBtn.setEnabled(True)
+        self.zeroBiasBtn.setEnabled(True)
+        
+        self.push_readSetpoint.setEnabled(True)
+        self.blinkBtn.setEnabled(True)
         
     def moveDefault(self):
         self.move(550,10)

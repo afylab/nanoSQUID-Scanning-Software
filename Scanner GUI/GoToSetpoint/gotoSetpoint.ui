@@ -151,8 +151,8 @@ Bias</string>
    <widget class="QLineEdit" name="fieldSetpntLine">
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>66</y>
+      <x>130</x>
+      <y>80</y>
       <width>45</width>
       <height>20</height>
      </rect>
@@ -205,8 +205,8 @@ Bias</string>
    <widget class="QLabel" name="label_9">
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>66</y>
+      <x>195</x>
+      <y>80</y>
       <width>19</width>
       <height>16</height>
      </rect>
@@ -321,7 +321,7 @@ Set</string>
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>66</y>
+      <y>80</y>
       <width>96</width>
       <height>16</height>
      </rect>
@@ -389,9 +389,9 @@ Field</string>
    <widget class="QLabel" name="label_14">
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>101</y>
-      <width>44</width>
+      <x>195</x>
+      <y>125</y>
+      <width>51</width>
       <height>16</height>
      </rect>
     </property>
@@ -567,7 +567,7 @@ Bias</string>
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>101</y>
+      <y>125</y>
       <width>91</width>
       <height>16</height>
      </rect>
@@ -724,8 +724,8 @@ Field</string>
    <widget class="QLineEdit" name="fieldRampRateLine">
     <property name="geometry">
      <rect>
-      <x>139</x>
-      <y>101</y>
+      <x>130</x>
+      <y>125</y>
       <width>45</width>
       <height>20</height>
      </rect>

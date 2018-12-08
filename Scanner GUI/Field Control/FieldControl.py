@@ -53,10 +53,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         pass
             
     @inlineCallbacks
-    def connectRemoteLabRAD(self, dict):
+    def connectLabRAD(self, dict):
         try:
-            self.cxn = dict['cxn']
-            self.ips = dict['ips120']
+            self.cxn = dict['servers']['remote']['cxn']
+            self.ips = dict['servers']['remote']['ips120']
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  

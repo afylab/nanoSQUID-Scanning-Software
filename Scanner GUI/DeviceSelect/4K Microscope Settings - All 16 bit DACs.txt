@@ -1,0 +1,5 @@
+approach and TF;dac_adc,DA16_16_03 (COM6);hf2li,dev1022;dc_box,ad5764_dcbox (COM5)
+sample;dac_adc,DA16_16_06 (COM3);dc_box,ad5764_dcbox (COM5)
+nsot;dac_adc,DA16_16_02 (COM4)
+system;blink device,ad5764_dcbox (COM5);magnet supply,IPS 120 Power Supply;specific supply,minint-o9n40pb GPIB Bus - GPIB0::23::INSTR
+scan;dac_adc,DA16_16_03 (COM6)

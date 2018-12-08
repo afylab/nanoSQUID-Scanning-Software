@@ -623,7 +623,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.directory = result[1]
         self.indVars = result[2][0]
         l = len(self.indVars)
-        print l
+        #print l
         self.depVars =result[2][1]
 
         
@@ -749,7 +749,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                         getFlag = False
             
                 print 'Get Set Finished'
-                print self.Data
+                #print self.Data
                 t = time.time()
                 print 'Time taken to get set', t - t1
 
