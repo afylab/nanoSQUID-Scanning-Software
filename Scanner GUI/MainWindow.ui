@@ -241,6 +241,7 @@ background: black;
     <addaction name="actionnSOT_Characterizer"/>
     <addaction name="actionScan_Control"/>
     <addaction name="actionTF_Characterizer"/>
+    <addaction name="actionSample_Characterizer"/>
    </widget>
    <widget class="QMenu" name="menuUser_Channels">
     <property name="title">
@@ -366,6 +367,11 @@ background: black;
   <action name="actionDevice_Select">
    <property name="text">
     <string>Device Select</string>
+   </property>
+  </action>
+  <action name="actionSample_Characterizer">
+   <property name="text">
+    <string>Sample Characterizer</string>
    </property>
   </action>
  </widget>

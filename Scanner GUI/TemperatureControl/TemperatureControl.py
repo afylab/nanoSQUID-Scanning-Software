@@ -66,9 +66,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         pass
             
     @inlineCallbacks
-    def connectRemoteLabRAD(self,dict):
+    def connectLabRAD(self,dict):
         try:
-            self.ls = dict['ls350']
+            self.ls = dict['servers']['remote']['ls350']
             if not self.ls:
                 self.push_Servers.setStyleSheet("#push_Servers{" + 
                 "background: rgb(161, 0, 0);border-radius: 4px;border: 0px;}")
@@ -381,31 +381,31 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.measurementSettings['sample Input'] = 'D5'
             
     def updateP(self):
-        val = readNum(str(self.lineEdit_P.text()), self)
+        val = readNum(str(self.lineEdit_P.text()), self, False)
         if isinstance(val,float):
             self.measurementSettings['p'] = val
         self.lineEdit_P.setText(formatNum(self.measurementSettings['p']))
     
     def updateD(self):
-        val = readNum(str(self.lineEdit_D.text()), self)
+        val = readNum(str(self.lineEdit_D.text()), self, False)
         if isinstance(val,float):
             self.measurementSettings['d'] = val
         self.lineEdit_D.setText(formatNum(self.measurementSettings['d']))
     
     def updateI(self):
-        val = readNum(str(self.lineEdit_I.text()), self)
+        val = readNum(str(self.lineEdit_I.text()), self, False)
         if isinstance(val,float):
             self.measurementSettings['i'] = val
         self.lineEdit_I.setText(formatNum(self.measurementSettings['i']))
         
     def updateTime(self):
-        val = readNum(str(self.lineEdit_time.text()), self)
+        val = readNum(str(self.lineEdit_time.text()), self, False)
         if isinstance(val,float):
             self.measurementSettings['plot record'] = val
         self.lineEdit_time.setText(formatNum(self.measurementSettings['plot record']))
         
     def updateDelay(self):
-        val = readNum(str(self.lineEdit_delay.text()), self)
+        val = readNum(str(self.lineEdit_delay.text()), self, False)
         if isinstance(val,float):
             self.measurementSettings['sample delay'] = val
         self.lineEdit_delay.setText(formatNum(self.measurementSettings['sample delay']))

@@ -151,9 +151,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except Exception as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
-            print 'nsot labrad connect', inst
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print 'line num ', exc_tb.tb_lineno
+            #print 'nsot labrad connect', inst
+            #exc_type, exc_obj, exc_tb = sys.exc_info()
+            #print 'line num ', exc_tb.tb_lineno
         
     def disconnectLabRAD(self):
         if self.hf is not False:

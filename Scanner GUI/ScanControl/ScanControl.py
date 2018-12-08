@@ -20,9 +20,6 @@ from nSOTScannerFormat import readNum, formatNum, processLineData, processImageD
 TODO:
 Check whether or not scanning works with different x and y calibration
 make tilt compatible with stepwise constant height approach - should be done
-Show Scan limits on main plot as a red square, togglable
-Check that it doesn't crash when scanning with super small ranges. Should have
-been fixed
 '''
 
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
@@ -225,7 +222,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.dac = False
         self.gen_dv = False
         self.dv = False
-        self.dc_box = False
+        self.blink_server = False
         
         self.lockInterface()
         
@@ -251,8 +248,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.dac = yield self.cxn_scan.dac_adc
             self.dac.select_device(dict['devices']['scan']['dac_adc'])
                 
-            self.dcbox = yield self.cxn_scan.ad5764_dcbox
-            self.dcbox.select_device(dict['devices']['scan']['dc_box'])
+            if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
+                self.blink_server = yield self.cxn_scan.ad5764_dcbox
+                self.blink_server.select_device(dict['devices']['system']['blink device'])
+            elif dict['devices']['system']['blink device'].startswith('DA'):
+                self.blink_server = yield self.cxn_scan.dac_adc
+                self.blink_server.select_device(dict['devices']['system']['blink device'])
             
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -261,9 +262,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except Exception as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
-            print 'nsot labrad connect', inst
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print 'line num ', exc_tb.tb_lineno
+            #print 'nsot labrad connect', inst
+            #exc_type, exc_obj, exc_tb = sys.exc_info()
+            #print 'line num ', exc_tb.tb_lineno
 
     def disconnectLabRAD(self):
         self.cxn = False
@@ -271,7 +272,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.dac = False
         self.gen_dv = False
         self.dv = False
-        self.dc_box = False
+        self.blink_server = False
 
         self.lockInterface()
 
@@ -1324,9 +1325,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     
     @inlineCallbacks
     def blink(self, c = None):
-        yield self.dcbox.set_voltage(self.blinkOutput-1, 5)
+        yield self.blink_server.set_voltage(self.blinkOutput-1, 5)
         yield self.sleep(0.25)
-        yield self.dcbox.set_voltage(self.blinkOutput-1, 0)
+        yield self.blink_server.set_voltage(self.blinkOutput-1, 0)
         yield self.sleep(0.25)
         
     @inlineCallbacks
@@ -1349,8 +1350,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             #Takes the number of points required for this to be a smooth (300 uV step size)
             points = int(np.maximum(np.absolute((stopx-startx) / (300e-6)), np.absolute((stopy-starty) / (300e-6))))
             #Make sure minimum of 1 point to avoid errors
-            if points == 0:
-                points = 1
+            if points < 2:
+                points = 2
             
             #Find time to travel from current position to zero position at specified linear speed
             delta_x_pos = (startx - stopx)/self.x_volts_to_meters
@@ -1363,11 +1364,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             #Only change the z value when moving around if we're in constant height mode
             if self.scanMode == 'Constant Height' and self.ConstantHeightReady:
                 out_list = [self.outputs['z out']-1, self.outputs['x out']-1,self.outputs['y out']-1]
-                yield self.dac.buffer_ramp_dis(out_list,[0],[startz,startx, starty],[stopz, stopx, stopy], points, delay,1)
+                yield self.dac.buffer_ramp_dis(out_list,[0],[startz,startx, starty],[stopz, stopx, stopy], points, delay,2)
                 self.Atto_Z_Voltage = stopz
             else:
                 out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
-                yield self.dac.buffer_ramp_dis(out_list,[0],[startx, starty],[stopx, stopy], points, delay,1)
+                yield self.dac.buffer_ramp_dis(out_list,[0],[startx, starty],[stopx, stopy], points, delay,2)
                 
             self.Atto_X_Voltage = stopx
             self.Atto_Y_Voltage = stopy
