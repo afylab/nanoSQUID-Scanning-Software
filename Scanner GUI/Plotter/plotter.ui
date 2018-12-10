@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../Resources/nSOTScannerResources.qrc">
+    <normaloff>:/nSOTScanner/Pictures/jj_schema.svg</normaloff>:/nSOTScanner/Pictures/jj_schema.svg</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">#MainWindow{
 background-color: rgb(0, 0, 0);
@@ -26,6 +30,9 @@ background-color: rgb(0, 0, 0);
 }</string>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,8,3">
+    <property name="spacing">
+     <number>3</number>
+    </property>
     <item>
      <widget class="QFrame" name="frame_TopBlock">
       <property name="styleSheet">
@@ -39,12 +46,9 @@ border:1px solid rgb(168,168,168)
       <property name="frameShadow">
        <enum>QFrame::Raised</enum>
       </property>
-      <layout class="QGridLayout" name="gridLayout_6">
-       <item row="1" column="3">
-        <widget class="QComboBox" name="comboBox_yAxis"/>
-       </item>
-       <item row="1" column="6">
-        <widget class="QPushButton" name="pushButton_refresh">
+      <layout class="QGridLayout" name="gridLayout" columnstretch="2,2,2,2,2,2,1,3,1,1,1,1">
+       <item row="0" column="6">
+        <widget class="QPushButton" name="pushButton_trSelect">
          <property name="minimumSize">
           <size>
            <width>20</width>
@@ -52,17 +56,100 @@ border:1px solid rgb(168,168,168)
           </size>
          </property>
          <property name="toolTip">
-          <string>Refresh Plot</string>
+          <string>Trace/Retrace Select</string>
          </property>
          <property name="styleSheet">
-          <string notr="true">#pushButton_refresh{
-image:url(:/nSOTScanner/Pictures/refresh.png);
+          <string notr="true">#pushButton_trSelect{
+image:url(:/nSOTScanner/Pictures/traceIcon.png);
 background: black;
-
+border: 0px solid rgb(95,107,166);
 }
 
-QPushButton:pressed#refresh{
-image:url(:/nSOTScanner/Pictures/refresh.png);
+QPushButton:pressed#trSelect{
+image:url(:/nSOTScanner/Pictures/traceIcon.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="7">
+        <widget class="QLabel" name="label_plotType">
+         <property name="text">
+          <string>Plot Type</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="8">
+        <widget class="QPushButton" name="pushButton_lockratio">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Lock ratio of x and y Axis</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#pushButton_lockratio{menu-indicator:{image:none}}
+
+#pushButton_lockratio{
+image:url(:/nSOTScanner/Pictures/ratio.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#pushButton_lockratio{
+image:url(:/nSOTScanner/Pictures/ratio.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="9">
+        <widget class="QPushButton" name="subtract">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Subtract Fit</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#subtract{menu-indicator:{image:none}}
+
+#subtract{
+image:url(:/nSOTScanner/Pictures/inverseRes.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#subtract{
+image:url(:/nSOTScanner/Pictures/inverseRes.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px
@@ -139,26 +226,56 @@ border-radius: 5px
          </property>
         </widget>
        </item>
-       <item row="1" column="9">
-        <widget class="QPushButton" name="gradient">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;X-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="comboBox_xAxis"/>
+       </item>
+       <item row="1" column="2">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;Y-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="QComboBox" name="comboBox_yAxis"/>
+       </item>
+       <item row="1" column="4">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;Z-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="5">
+        <widget class="QComboBox" name="comboBox_zAxis"/>
+       </item>
+       <item row="1" column="6">
+        <widget class="QPushButton" name="pushButton_refresh">
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
          </property>
          <property name="toolTip">
-          <string>Directional Gradient</string>
+          <string>Refresh Plot</string>
          </property>
          <property name="styleSheet">
-          <string notr="true">#gradient{
-image:url(:/nSOTScanner/Pictures/inverseNabla.png);
+          <string notr="true">#pushButton_refresh{
+image:url(:/nSOTScanner/Pictures/refresh.png);
 background: black;
-border: 0px solid rgb(95,107,166);
+
 }
 
-QPushButton:pressed#gradient{
-image:url(:/nSOTScanner/Pictures/inverseNabla.png);
+QPushButton:pressed#refresh{
+image:url(:/nSOTScanner/Pictures/refresh.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px
@@ -200,14 +317,8 @@ border-radius: 5px
          </property>
         </widget>
        </item>
-       <item row="0" column="9">
-        <widget class="QPushButton" name="subtract">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
+       <item row="1" column="8">
+        <widget class="QPushButton" name="zoom">
          <property name="minimumSize">
           <size>
            <width>20</width>
@@ -215,19 +326,47 @@ border-radius: 5px
           </size>
          </property>
          <property name="toolTip">
-          <string>Subtract Fit</string>
+          <string>Zoom</string>
          </property>
          <property name="styleSheet">
-          <string notr="true">#subtract{menu-indicator:{image:none}}
-
-#subtract{
-image:url(:/nSOTScanner/Pictures/inverseRes.png);
+          <string notr="true">#zoom{
+image:url(:/nSOTScanner/Pictures/zoomIcon.png);
 background: black;
 border: 0px solid rgb(95,107,166);
 }
 
-QPushButton:pressed#subtract{
-image:url(:/nSOTScanner/Pictures/inverseRes.png);
+QPushButton:pressed#zoom{
+image:url(:/nSOTScanner/Pictures/zoomIcon.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="9">
+        <widget class="QPushButton" name="gradient">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Directional Gradient</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#gradient{
+image:url(:/nSOTScanner/Pictures/inverseNabla.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#gradient{
+image:url(:/nSOTScanner/Pictures/inverseNabla.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px
@@ -265,53 +404,6 @@ border-radius: 5px
          </property>
          <property name="text">
           <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="5">
-        <widget class="QComboBox" name="comboBox_zAxis"/>
-       </item>
-       <item row="1" column="8">
-        <widget class="QPushButton" name="zoom">
-         <property name="minimumSize">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string>Zoom</string>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">#zoom{
-image:url(:/nSOTScanner/Pictures/zoomIcon.png);
-background: black;
-border: 0px solid rgb(95,107,166);
-}
-
-QPushButton:pressed#zoom{
-image:url(:/nSOTScanner/Pictures/zoomIcon.png);
-background: black;
-border: 2px rgb(131,131,131);
-border-radius: 5px
-}</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QLabel" name="label_3">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;Y-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="4">
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;Z-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -354,53 +446,6 @@ border-radius: 5px
          </property>
          <property name="autoDefault">
           <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QComboBox" name="comboBox_xAxis"/>
-       </item>
-       <item row="0" column="6">
-        <widget class="QPushButton" name="pushButton_trSelect">
-         <property name="minimumSize">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string>Trace/Retrace Select</string>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">#pushButton_trSelect{
-image:url(:/nSOTScanner/Pictures/traceIcon.png);
-background: black;
-border: 0px solid rgb(95,107,166);
-}
-
-QPushButton:pressed#trSelect{
-image:url(:/nSOTScanner/Pictures/traceIcon.png);
-background: black;
-border: 2px rgb(131,131,131);
-border-radius: 5px
-}</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="7" colspan="2">
-        <widget class="QLabel" name="label_plotType">
-         <property name="text">
-          <string>Plot Type</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;X-Axis&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>

@@ -161,6 +161,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.gradient.setMenu(self.gradMenu)
         self.datPct = 0.1
 
+        #####Functions that subtract the data
         self.subtractMenu = QtGui.QMenu()
         subOverallAvg = QtGui.QAction( "Subtract overall average", self)
         subXAvg = QtGui.QAction( "Subtract X average", self)
@@ -203,7 +204,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.addPlot.clicked.connect(self.newPlot)
 
         self.Data = None
-        self.plotData = None
+        self.PlotData = None
         self.dv = None
         self.cxn = None
         self.file = None
@@ -211,6 +212,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.got_util = False
         self.numPlots = 0
         self.numZoomPlots = 0
+        
 
     @inlineCallbacks
     def connectLabRAD(self, dict):
@@ -236,7 +238,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
 ######This part is awfully wierd, revise when see it.############
     def matLinePloth(self):
-        if not self.plotData is None:
+        if not self.PlotData is None:
             fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
                 self.genLineMatFileh(fold)
@@ -244,8 +246,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def genLineMatFileh(self, fold):
         XZyData = np.asarray(self.LineCutXZYVals)
         XZxData = np.asarray(self.LineCutXZXVals)
-        YZyData = np.asarray(self.LineCutYZYVals)
-        YZxData = np.asarray(self.LineCutYZXVals)
+
         
         xData, yData = XZxData, XZyData ###This part need to be modified
         
@@ -255,14 +256,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         matData = None
         
     def matLinePlotv(self):
-        if not self.plotData is None:
+        if not self.PlotData is None:
             fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
                 self.genLineMatFilev(fold)
                 
     def genLineMatFilev(self, fold):
-        XZyData = np.asarray(self.LineCutXZYVals)
-        XZxData = np.asarray(self.LineCutXZXVals)
         YZyData = np.asarray(self.LineCutYZYVals)
         YZxData = np.asarray(self.LineCutYZXVals)
         
@@ -275,7 +274,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         
 
     def matPlot(self):
-        if not self.plotData is None:
+        if not self.PlotData is None:
             fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
                 self.genMatFile(fold)
@@ -288,16 +287,13 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
         zX, zY, zXI, zYI = np.ones([1,int(self.yPoints)]), np.ones([1,int(self.xPoints)]), np.ones([1,int(self.yPoints)]), np.ones([1,int(self.xPoints)])
         X, Y,  XI, YI = np.outer(xVals, zX), np.outer(zY, yVals), np.outer(xInd, zXI), np.outer(zYI, yInd)
-        XX, YY, XXI, YYI, ZZ = X.flatten(), Y.flatten(), XI.flatten(), YI.flatten(), self.plotData.flatten()
+        XX, YY, XXI, YYI, ZZ = X.flatten(), Y.flatten(), XI.flatten(), YI.flatten(), self.PlotData.flatten()
         matData = np.transpose(np.vstack((XXI, YYI, XX, YY, ZZ)))
         savename = fold.split("/")[-1].split('.mat')[0]
         sio.savemat(fold,{savename:matData})
         matData = None
 ##################
-
-
-
-        
+   
 ################## This part create a window on the plot and you can drage it around, click on it will rescale the plot
     def zoomArea(self):
         self.zoom.clicked.disconnect(self.zoomArea)
@@ -332,7 +328,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         elif button ==2:
             self.mainPlot.removeItem(self.zoomRect)
             self.zoom.clicked.connect(self.zoomArea)
-            self.plotZoom = self.plotData[x1:x2, y1:y2]
+            self.plotZoom = self.PlotData[x1:x2, y1:y2]
             self.dataZoom = np.asarray([])
             self.indZoomVars = []
             self.depZoomVars = []
@@ -381,10 +377,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.y0, self.y1 = self.extent[2], self.extent[3]
         self.xscale, self.yscale = (self.x1-self.x0) / self.xPoints, (self.y1-self.y0) / self.yPoints    
         n = self.sensIndex[3] + len(self.indVars)
-        self.plotData = np.zeros([int(self.xPoints), int(self.yPoints)])
+        self.PlotData = np.zeros([int(self.xPoints), int(self.yPoints)])
         self.noiseData = np.zeros([int(self.xPoints), int(self.yPoints)])
         for i in self.Data:
-            self.plotData[int(i[x]), int(i[y])] = float(i[z])
+            self.PlotData[int(i[x]), int(i[y])] = float(i[z])
             if i[n] != 0:
                 self.noiseData[int(i[x]), int(i[y])] = float(i[n])
             else:
@@ -395,25 +391,25 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         N = int(self.yPoints * self.datPct)
 
 
-        for i in range(0, self.plotData.shape[1]):
-            self.plotData[:, i] = deriv(self.plotData[:, i], xVals, N, delta)
+        for i in range(0, self.PlotData.shape[1]):
+            self.PlotData[:, i] = deriv(self.PlotData[:, i], xVals, N, delta)
 
         if self.NSselect == 1:
-            self.plotData = np.absolute(np.true_divide(self.plotData , self.noiseData))
+            self.PlotData = np.absolute(np.true_divide(self.PlotData , self.noiseData))
         else:
-            self.plotData = np.absolute(np.true_divide(self.noiseData , self.plotData ))
-            self.plotData = np.clip(self.plotData, 0, 1e3)
+            self.PlotData = np.absolute(np.true_divide(self.noiseData , self.PlotData ))
+            self.PlotData = np.clip(self.PlotData, 0, 1e3)
 
             
             if self.unitSelect == 2:
                 gain, bw = self.sensPrompt.sensConv()[0], self.sensPrompt.sensConv()[1]
-                self.plotData = np.true_divide(self.plotData, (gain * np.sqrt(1000 *bw)))
-                self.plotData = np.clip(self.plotData, 0, 1e3)
+                self.PlotData = np.true_divide(self.PlotData, (gain * np.sqrt(1000 *bw)))
+                self.PlotData = np.clip(self.PlotData, 0, 1e3)
                 
-        avg = np.average(self.plotData)
-        std = np.std(self.plotData)
+        avg = np.average(self.PlotData)
+        std = np.std(self.PlotData)
 
-        self.mainPlot.setImage(self.plotData, autoRange = True , levels = (avg - std, avg+std), autoHistogramRange = False, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+        self.mainPlot.setImage(self.PlotData, autoRange = True , levels = (avg - std, avg+std), autoHistogramRange = False, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
         self.mainPlot.addItem(self.vLine)
         self.mainPlot.addItem(self.hLine)
         self.vLine.setValue(self.xMin)
@@ -426,15 +422,15 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.vhSelect.addItem('Minimum Noise')
             self.vhSelect.addItem('Optimal Bias')
         self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-        self.clearPlots()
+        self.ResetLineCutPlots()
 
     def plotMaxSens(self):
         if self.NSselect == 1:
             maxSens = np.array([])
             bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
             self.XZPlot.clear()
-            for i in range(0, self.plotData.shape[0]):
-                maxSens = np.append(maxSens, np.amax(self.plotData[i]))
+            for i in range(0, self.PlotData.shape[0]):
+                maxSens = np.append(maxSens, np.amax(self.PlotData[i]))
             self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
             self.XZPlot.setLabel('left', 'Maximum Relative Sensitivity')
             self.XZPlot.plot(x = bVals, y = maxSens,pen = 0.5)
@@ -444,8 +440,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             minNoise = np.array([])
             bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
             self.XZPlot.clear()
-            for i in range(0, self.plotData.shape[0]):
-                minNoise = np.append(minNoise, np.amin(self.plotData[i]))
+            for i in range(0, self.PlotData.shape[0]):
+                minNoise = np.append(minNoise, np.amin(self.PlotData[i]))
             self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
             self.XZPlot.setLabel('left', 'Minimum field noise')
             self.XZPlot.plot(x = bVals, y = minNoise,pen = 0.5)
@@ -457,8 +453,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
         vVals =np.linspace(self.yMin, self.yMax, self.yPoints)
         self.XZPlot.clear()
-        for i in range(0, self.plotData.shape[0]):
-            arg = np.argmin(self.plotData[i])
+        for i in range(0, self.PlotData.shape[0]):
+            arg = np.argmin(self.PlotData[i])
             minNoise = np.append(minNoise, vVals[arg])
         self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
         self.XZPlot.setLabel('left', 'Optimal Bias', units = 'V')
@@ -469,8 +465,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def Ic_ParaRes(self):
         for i in self.Data:
             pass
-        for i in range(0, self.plotData.shape[0]):
-            V_raw = self.plotData[i]
+        for i in range(0, self.PlotData.shape[0]):
+            V_raw = self.PlotData[i]
 
         l = int(len(self.indVars) / 2)
         x = self.comboBox_xAxis.currentIndex()
@@ -494,12 +490,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.x0, self.x1 = self.extent[0], self.extent[1]
         self.y0, self.y1 = self.extent[2], self.extent[3]
         self.xscale, self.yscale = (self.x1-self.x0) / self.xPoints, (self.y1-self.y0) / self.yPoints    
-        self.plotData = np.zeros([int(self.xPoints), int(self.yPoints)])
+        self.PlotData = np.zeros([int(self.xPoints), int(self.yPoints)])
         for i in self.Data:
-            self.plotData[int(i[x]), int(i[y])] = i[z]
+            self.PlotData[int(i[x]), int(i[y])] = i[z]
 
     def xDeriv(self):
-        if self.plotData is None:
+        if self.PlotData is None:
             self.label_plotType.setText("Please plot data.")
             self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         else:
@@ -512,23 +508,23 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 
             else:
-                for i in range(0, self.plotData.shape[1]):
-                    self.plotData[:, i] = deriv(self.plotData[:,i], xVals, N, delta)    
-                self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+                for i in range(0, self.PlotData.shape[1]):
+                    self.PlotData[:, i] = deriv(self.PlotData[:,i], xVals, N, delta)    
+                self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
                 self.label_plotType.setText("Plotted gradient along \nx-axis.")
                 self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-                self.clearPlots()
+                self.ResetLineCutPlots()
                 
     def yDeriv(self):
         yVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
         delta = abs(self.yMax - self.yMin) / self.yPoints
         N = int(self.yPoints * self.datPct)
-        for i in range(0, self.plotData.shape[0]):
-            self.plotData[i, :] = deriv(self.plotData[i,:], yVals, N, delta)    
-        self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+        for i in range(0, self.PlotData.shape[0]):
+            self.PlotData[i, :] = deriv(self.PlotData[i,:], yVals, N, delta)    
+        self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
         self.label_plotType.setText("Plotted gradient along \ny-axis.")
         self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-        self.clearPlots()
+        self.ResetLineCutPlots()
         
     def derivSettings(self):
         self.gradSet = gradSet(self.reactor, self.datPct)
@@ -541,32 +537,32 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         
 ##################Manipulating Plot Data
     def subtractOverallAvg(self):
-        self.plotData = processImageData(self.plotData, 'Subtract Image Average')
-        self.ReplotData()
+        self.PlotData = processImageData(self.PlotData, 'Subtract Image Average')
+        self.RePlotData()
         
     def subtractXAvg(self):
-        self.plotData = processImageData(self.plotData, 'Subtract Line Average')
-        self.ReplotData()
+        self.PlotData = processImageData(self.PlotData, 'Subtract Line Average')
+        self.RePlotData()
         
     def subtractYAvg(self):
-        self.plotData = processImageData(self.plotData.T, 'Subtract Line Average').T
-        self.ReplotData()
+        self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Average').T
+        self.RePlotData()
 
     def subtractPlane(self):
-        self.plotData = processImageData(self.plotData, 'Subtract Image Plane')
-        self.ReplotData()
+        self.PlotData = processImageData(self.PlotData, 'Subtract Image Plane')
+        self.RePlotData()
 
     def subtractOverallQuad(self):
-        self.plotData = processImageData(self.plotData, 'Subtract Image Quadratic')
-        self.ReplotData()
+        self.PlotData = processImageData(self.PlotData, 'Subtract Image Quadratic')
+        self.RePlotData()
 
     def subtractXQuad(self):
-        self.plotData = processImageData(self.plotData, 'Subtract Line Linear')
-        self.ReplotData()
+        self.PlotData = processImageData(self.PlotData, 'Subtract Line Linear')
+        self.RePlotData()
     
     def subtractYQuad(self):
-        self.plotData = processImageData(self.plotData.T, 'Subtract Line Linear').T
-        self.ReplotData()
+        self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Linear').T
+        self.RePlotData()
         
 ##################
 
@@ -608,45 +604,53 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.traceData = None
         self.retraceData = None
 
+    def ParseDatainfo(self):#Read the data structure and determine the strategy for reading it
+        try:
+            DataInfo = self.dvExplorer.dataSetInfo()
+            self.file = DataInfo[0]
+            print "DataInfo"
+            self.directory = DataInfo[1]
+            self.indVars = DataInfo[2][0]
+            print "Independent Variables:", self.indVars
+            self.depVars =DataInfo[2][1]
+            print "Dependent Variables:", self.depVars
+
+            self.TraceFlag = None #None for no Trace/Retrace, 0 for trace, 1 for retrace
+            self.NumberofindexVariables = 0
+            
+            for i in self.indVars:
+                if i == 'Trace Index' or i == 'Retrace Index':
+                    self.TraceFlag = 0 #default set traceflag to trace
+            for i in self.indVars:
+                if "index" in i or "Index" in i:
+                    self.NumberofindexVariables +=1
+            
+            print "Parsing data finished"
+            
+            if self.TraceFlag != None:
+                print "Contains trace/retrace"
+            elif self.TraceFlag == None:
+                print "No trace/retrace"
+                
+            if self.NumberofindexVariables != 0:
+                print "Contains index", self.NumberofindexVariables
+            else:
+                print "No index"
+
+            if len(self.indVars)-self.NumberofindexVariables == 1:
+                print "Data is 1D"
+                self.DataPlotType = "1DPlot"
+            else:
+                print "Data is 2D"
+                self.DataPlotType = "2DPlot"
+
+        except Exception as inst:
+            print inst
+
     @inlineCallbacks
-    def loadData(self, c):
-        self.ClearcomboBox()
-
-        self.label_plotType.setText("\nLoading data...")
-        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-        #Initialized data set to none
-        
-        self.ClearData()
-
-        result = self.dvExplorer.dataSetInfo()
-        self.file = result[0]
-        self.directory = result[1]
-        self.indVars = result[2][0]
-        l = len(self.indVars)
-        #print l
-        self.depVars =result[2][1]
-
-        
-        
-        self.plotTitle.setText(str(self.file))
-        self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
-        
-        #Load a data set with no trace/retrace index
-        if l % 2 == 0 and l !=2 :
-            self.dataFlag = None
-            for i in self.indVars[int(l / 2) : l]:
-                self.comboBox_xAxis.addItem(i)
-                self.comboBox_yAxis.addItem(i)
-            for i in self.depVars:
-                self.comboBox_zAxis.addItem(i)
-            t = time.time()
-            yield self.dv.open(self.file)
-            print 'Open Set Finished'
+    def ReadData(self):#Read all the data in datavault and stack them in order
+        try:
             t1 = time.time()
-            print 'Time taken to open set', t1 - t
-            #self.Data = yield self.dv.get()
-            #self.Data = np.asarray(self.Data)
-
             getFlag = True
             self.Data = np.array([])
             while getFlag == True:
@@ -665,185 +669,195 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             print 'Get Set Finished'
             t = time.time()
             print 'Time taken to get set', t - t1
+        except Exception as inst:
+            print inst
 
-            self.mainPlot.clear()
-            self.pushButton_refresh.setEnabled(True)
-            self.diamCalc.setEnabled(True)
-            self.gradient.setEnabled(True)
-            self.subtract.setEnabled(True)
-            self.sensitivity.setEnabled(True)
-            self.pushButton_trSelect.hide()
-
-            pt = self.mapToGlobal(QtCore.QPoint(410,-10))
-            self.label_plotType.setText("")
-            self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
-            QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
-            self.zoom.setEnabled(False)
-            self.clearPlots()
-            self.label_plotType.clear()
-        #Load a data set with a trace/retrace index
-        elif l % 2 == 1 and self.indVars[0] == 'Trace Index' or self.indVars[0] == 'Retrace Index':
-            self.indVars = self.indVars[1::]
-            for i in self.indVars[int(l / 2): l]:
-                self.comboBox_xAxis.addItem(i)
-                self.comboBox_yAxis.addItem(i)
+    def AddComboIndex(self):
+        try:
+            if self.DataPlotType == "2DPlot":
+                for i in self.indVars[self.NumberofindexVariables: len(self.indVars)]:
+                    self.comboBox_xAxis.addItem(i)
+                    self.comboBox_yAxis.addItem(i)
+                    
+            if self.DataPlotType == "1DPlot":
+                self.comboBox_xAxis.addItem(self.indVars[self.NumberofindexVariables])
+        
             for i in self.depVars:
-                self.comboBox_zAxis.addItem(i)
-            t = time.time()
-            yield self.dv.open(self.file)
-            print 'opened set'
-            t1 = time.time()
-            print t1 - t
-            self.Data = yield self.dv.get()
-            self.Data = np.asarray(self.Data)
-            print 'got set'
-            t = time.time()
-            print t - t1
-            self.traceData, self.retraceData = self.split(self.Data, self.Data[:,0] == 1)
-            self.traceData = np.delete(self.traceData,0,1)
-            self.retraceData = np.delete(self.retraceData,0,1)
-
-            #Deletes the unsorted data set to free up memory
-            self.Data = self.traceData
-            self.dataFlag = 0
-            self.mainPlot.clear()
-            self.pushButton_refresh.setEnabled(True)
-            self.diamCalc.setEnabled(True)
-            self.gradient.setEnabled(True)
-            self.subtract.setEnabled(True)
-            self.sensitivity.setEnabled(True)
-            self.pushButton_trSelect.show()
-            pt = self.mapToGlobal(QtCore.QPoint(410,-10))
-            self.label_plotType.setText("")
-            self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
-            QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
-            self.zoom.setEnabled(False)
-            self.clearPlots()
-            self.label_plotType.clear()            
-        elif l==2:
-            try:
-                self.dataFlag = None
-                self.comboBox_xAxis.addItem(self.indVars[1])
-                self.comboBox_yAxis.addItem("None")
-                for i in self.depVars:
                     self.comboBox_zAxis.addItem(i)
-                t = time.time()
-                yield self.dv.open(self.file)
-                print 'Open Set Finished'
-                t1 = time.time()
-                print 'Time taken to open set', t1 - t
-
-                getFlag = True
-                self.Data = np.array([])
-                while getFlag == True:
-                    line = yield self.dv.get(1000L)
-
-                    try:
-                        if len(self.Data) != 0 and len(line) > 0:
-                            self.Data = np.vstack((self.Data, line))                        
-                        elif len(self.Data) == 0 and len(line) > 0:
-                            self.Data = np.asarray(line)
-                        else:
-                            getFlag = False
-                    except:
-                        getFlag = False
+        except Exception as inst:
+            print inst
             
-                print 'Get Set Finished'
-                #print self.Data
-                t = time.time()
-                print 'Time taken to get set', t - t1
+    def SetupTitle(self):            #Retrace index is 0 for trace, 1 for retrace
+        if self.TraceFlag == 0:
+            Title = self.file + "(Trace)"
+        elif self.TraceFlag == 1:
+            Title = self.file + "(Retrace)"
+        elif self.TraceFlag == None:
+            Title = self.file
+        self.plotTitle.setText(Title)
+        self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
 
-                self.mainPlot.clear()
-                self.pushButton_refresh.setEnabled(True)
-                self.diamCalc.setEnabled(True)
-                self.gradient.setEnabled(True)
-                self.subtract.setEnabled(True)
-                self.sensitivity.setEnabled(True)
-                self.pushButton_trSelect.hide()
+    def ProcessData(self):
+        try:
+            if self.TraceFlag == 0 or self.TraceFlag == 1:
+                self.indVars=self.indVars[1::]
+                self.NumberofindexVariables -=1
+                self.traceData, self.retraceData = self.split(self.Data, self.Data[:,0] == 1)
+                self.traceData = np.delete(self.traceData,0,1)
+                self.retraceData = np.delete(self.retraceData,0,1)
+                if self.TraceFlag == 0:
+                    self.Data = self.traceData
+                elif self.TraceFlag == 1:
+                    self.Data = self.retraceData
 
+            elif self.TraceFlag == None and self.NumberofindexVariables == 1:
+                pass
+            else:
                 pt = self.mapToGlobal(QtCore.QPoint(410,-10))
-                self.label_plotType.setText("")
-                self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
-                QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
-                self.zoom.setEnabled(False)
-                self.clearPlots()
-                self.label_plotType.clear()
-            except exceptions as inst:
-                print inst
+                QtGui.QToolTip.showText(pt, 'Data set format is incompatible with the plotter.')
+                
+        except exceptions as inst:
+            print inst
         
+
+            
+    @inlineCallbacks
+    def loadData(self, c):
+        self.ClearcomboBox()
+
+        self.label_plotType.setText("\nLoading data...")
+        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        
+        #Initialized data set to none
+        self.ClearData()
+
+        #Determine the Data Structure, there can be Trace/Retrace or Index/nonIndex
+        self.ParseDatainfo()
+        #self.TraceFlag gives whether there are trace, self.NumberofindexVariables gives the number of index and should also be where the data starts in self.Data,   self.DataPlotType gives the type of DataPlot
+
+        self.SetupTitle()
+        
+        yield self.ReadData()
+        
+        self.ProcessData()
+
+        ### Assumptions, we have trace/retrace for only 2DPlot
+        ### Assumptions, index are in the beginning of the lists
+        self.AddComboIndex()
+            
+        self.mainPlot.clear()
+        self.pushButton_refresh.setEnabled(True)
+        self.diamCalc.setEnabled(True)
+        self.gradient.setEnabled(True)
+        self.subtract.setEnabled(True)
+        self.sensitivity.setEnabled(True)
+        
+        if self.TraceFlag == None:
+            self.pushButton_trSelect.hide()
         else:
-            pt = self.mapToGlobal(QtCore.QPoint(410,-10))
-            QtGui.QToolTip.showText(pt, 'Data set format is incompatible with the plotter.')
+            self.pushButton_trSelect.show()
+            
+        pt = self.mapToGlobal(QtCore.QPoint(410,-10))
+        self.label_plotType.setText("")
+        self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
+        QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
+        self.zoom.setEnabled(False)
+        self.ResetLineCutPlots()
+        self.label_plotType.clear()            
+            
 
-    def refreshPlot(self):
-
-        l = int(len(self.indVars) / 2)
-        print "l=",l
-        x = self.comboBox_xAxis.currentIndex()
-        print 'x=',x
-        y = self.comboBox_yAxis.currentIndex()
-        print "y=",y
-        z = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
-        
+    def SetPlotLabel(self):
         self.viewBig.setLabel('left', text=self.comboBox_yAxis.currentText())
         self.viewBig.setLabel('bottom', text=self.comboBox_xAxis.currentText())
         self.XZPlot.setLabel('left', self.comboBox_zAxis.currentText())
         self.XZPlot.setLabel('bottom', self.comboBox_xAxis.currentText())
-        self.YZPlot.setLabel('left', self.comboBox_zAxis.currentText())
-        self.YZPlot.setLabel('bottom', self.comboBox_yAxis.currentText())
-        
-        self.xMax = np.amax(self.Data[::,l+x])
-        self.xMin = np.amin(self.Data[::,l+x])
-        self.deltaX = self.xMax - self.xMin
-        self.xPoints = np.amax(self.Data[::,x])+1  #look up the index
+        self.YZPlot.setLabel('left', self.comboBox_yAxis.currentText())
+        self.YZPlot.setLabel('bottom',self.comboBox_zAxis.currentText())
 
-        if self.comboBox_yAxis.currentText() == "None":
-            self.yMax = 1
-            self.yMin = 0
+    def SetupPlotParameter(self):
+        self.xMax = np.amax(self.Data[::,self.NumberofindexVariables+self.xIndex])
+        self.xMin = np.amin(self.Data[::,self.NumberofindexVariables+self.xIndex])
+        self.deltaX = self.xMax - self.xMin
+        self.xPoints = np.amax(self.Data[::,self.xIndex])+1  #look up the index
+        self.x0, self.x1 = self.xMin, self.xMax
+        self.xscale  = (self.x1-self.x0) / self.xPoints 
+
+        if self.DataPlotType == "2DPlot":
+            self.yMax = np.amax(self.Data[::,self.NumberofindexVariables+self.yIndex])
+            self.yMin = np.amin(self.Data[::,self.NumberofindexVariables+self.yIndex])
             self.deltaY = self.yMax - self.yMin
-            self.yPoints = 1
-        else:
-            self.yMax = np.amax(self.Data[::,l+y])
-            self.yMin = np.amin(self.Data[::,l+y])
-            self.deltaY = self.yMax - self.yMin
-            self.yPoints = np.amax(self.Data[::,y])+1
-        print "xN", self.xPoints, "yPN", self.yPoints
-        self.extent = [self.xMin, self.xMax, self.yMin, self.yMax]
-        self.x0, self.x1 = self.extent[0], self.extent[1]
-        self.y0, self.y1 = self.extent[2], self.extent[3]
-        self.xscale, self.yscale = (self.x1-self.x0) / self.xPoints, (self.y1-self.y0) / self.yPoints    
-        self.plotData = np.zeros([int(self.xPoints), int(self.yPoints)])
-        for i in self.Data:
-            if self.comboBox_yAxis.currentText() == "None":
-                self.plotData[int(i[x]), 0] = i[z]
-            else:
-                self.plotData[int(i[x]), int(i[y])] = i[z]
-        self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        if self.dataFlag == 0:
-            title = self.file + " (Trace)"
-            self.plotTitle.setText(str(title))
-            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
-        elif self.dataFlag == 1:
-            title = self.file + " (Retrace)"
-            self.plotTitle.setText(str(title))
-            self.plotTitle.setStyleSheet("QLabel#plotTitle {color: rgb(131,131,131); font: 11pt;}")
-        self.zoom.setEnabled(True)
-        self.clearPlots()
-        self.label_plotType.clear()
+            self.yPoints = np.amax(self.Data[::,self.yIndex])+1
+            self.y0, self.y1 = self.yMin, self.yMax
+            self.yscale = (self.y1-self.y0) / self.yPoints
+
+    def SetupPlotData(self):
+        try:
+            if self.DataPlotType == "2DPlot":
+                self.PlotData = np.zeros([int(self.xPoints), int(self.yPoints)])
+                for i in self.Data:
+                    if self.comboBox_yAxis.currentText() == "None":
+                        self.PlotData[int(i[self.xIndex]), 0] = i[self.zIndex]
+                    else:
+                        self.PlotData[int(i[self.xIndex]), int(i[self.yIndex])] = i[self.zIndex]
+            elif self.DataPlotType == "1DPlot":
+                self.PlotData = [[],[]] #0 for x, 1 for y
+                for i in self.Data:
+                    self.PlotData[0].append(i[self.NumberofindexVariables])
+                    self.PlotData[1].append(i[self.zIndex])
+
+        except Exception as inst:
+            print inst
+
+    def Plot_Data(self):
+        if self.DataPlotType == "2DPlot":
+            self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+            self.ResetLineCutPlots()
+            self.zoom.setEnabled(True)
+
+        elif self.DataPlotType == "1DPlot":
+            self.LineCutXZYVals = self.PlotData[1]
+            self.LineCutXZXVals = self.PlotData[0]
+            self.XZPlot.plot(x = self.LineCutXZXVals, y = self.LineCutXZYVals, pen = 0.5)
+            
+    def refreshPlot(self):
+        try:
+            self.ClearLineCutPlot()
+
+            if self.TraceFlag == 0:
+                self.Data = self.traceData
+            elif self.TraceFlag == 1:
+                self.Data = self.retraceData
+
+            l = int(len(self.indVars) / 2)
+            self.xIndex = self.comboBox_xAxis.currentIndex()
+            self.yIndex = self.comboBox_yAxis.currentIndex()
+            self.zIndex = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
+            
+            self.SetPlotLabel()
+            self.SetupPlotParameter()
+            self.SetupPlotData()
+
+            self.Plot_Data()
+
+            self.SetupTitle()
+            
+            self.label_plotType.clear()
+        except Exception as inst:
+            print inst
         
-    def ReplotData(self):
-        self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+    def RePlotData(self):
+        self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
 
     def plotTrace(self):
-        self.Data = self.traceData
-        self.dataFlag = 0
+        self.TraceFlag = 0
+        self.refreshPlot()
     
     def plotRetrace(self):
-        self.Data = self.retraceData
-        self.dataFlag = 1
+        self.TraceFlag = 1
+        self.refreshPlot()
 
-    def clearPlots(self):
-        if self.plotData is None:
+    def ResetLineCutPlots(self):
+        if self.PlotData is None:
             pass
         else:
             self.vLine.setValue(self.xMin)
@@ -938,14 +952,14 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         else:
             yindex = int(abs((self.horizontalposition - self.y0)) / self.yscale)
             self.LineCutXZXVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
-            self.LineCutXZYVals = self.plotData[:,yindex]
+            self.LineCutXZYVals = self.PlotData[:,yindex]
             self.XZPlot.plot(x = self.LineCutXZXVals, y = self.LineCutXZYVals, pen = 0.5)
 
         if self.verticalposition > self.x1 or self.verticalposition < self.x0:
             self.YZPlot.clear()
         else:
             xindex = int(abs((self.verticalposition - self.x0)) / self.xscale)
-            self.LineCutYZXVals = self.plotData[xindex]
+            self.LineCutYZXVals = self.PlotData[xindex]
             self.LineCutYZYVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
             self.YZPlot.plot(x = self.LineCutYZXVals, y = self.LineCutYZYVals, pen = 0.5)
 
@@ -1220,7 +1234,7 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         
 
         self.Data = None
-        self.plotData = None
+        self.PlotData = None
         self.file = None
         self.directory = None
         self.got_util = False
@@ -1229,7 +1243,7 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
     
       
     def matLinePlot(self):
-        if not self.plotData is None:
+        if not self.PlotData is None:
             fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
                 self.genLineMatFile(fold)
@@ -1244,7 +1258,7 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         matData = None        
 
     def matPlot(self):
-        if not self.plotData is None:
+        if not self.PlotData is None:
             fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
                 self.genMatFile(fold)
@@ -1257,7 +1271,7 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
 
         zX, zY, zXI, zYI = np.ones([1,int(self.yPoints)]), np.ones([1,int(self.xPoints)]), np.ones([1,int(self.yPoints)]), np.ones([1,int(self.xPoints)])
         X, Y,  XI, YI = np.outer(xVals, zX), np.outer(zY, yVals), np.outer(xInd, zXI), np.outer(zYI, yInd)
-        XX, YY, XXI, YYI, ZZ = X.flatten(), Y.flatten(), XI.flatten(), YI.flatten(), self.plotData.flatten()
+        XX, YY, XXI, YYI, ZZ = X.flatten(), Y.flatten(), XI.flatten(), YI.flatten(), self.PlotData.flatten()
         matData = np.transpose(np.vstack((XXI, YYI, XX, YY, ZZ)))
         savename = fold.split("/")[-1].split('.mat')[0]
         sio.savemat(fold,{savename:matData})
@@ -1299,7 +1313,7 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         elif button ==2:
             self.mainPlot.removeItem(self.zoomRect)
             self.zoom.clicked.connect(self.zoomArea)
-            self.plotZoom = self.plotData[x1:x2, y1:y2]
+            self.plotZoom = self.PlotData[x1:x2, y1:y2]
             self.dataZoom = np.asarray([])
             self.indZoomVars = []
             self.depZoomVars = []
@@ -1346,10 +1360,10 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         self.y0, self.y1 = self.extent[2], self.extent[3]
         self.xscale, self.yscale = (self.x1-self.x0) / self.xPoints, (self.y1-self.y0) / self.yPoints    
         n = self.sensIndex[3] + len(self.indVars)
-        self.plotData = np.zeros([int(self.xPoints), int(self.yPoints)])
+        self.PlotData = np.zeros([int(self.xPoints), int(self.yPoints)])
         self.noiseData = np.zeros([int(self.xPoints), int(self.yPoints)])
         for i in self.Data:
-            self.plotData[int(i[x]), int(i[y])] = float(i[z])
+            self.PlotData[int(i[x]), int(i[y])] = float(i[z])
             if i[n] != 0:
                 self.noiseData[int(i[x]), int(i[y])] = float(i[n])
             else:
@@ -1360,25 +1374,25 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         N = int(self.yPoints * self.datPct)
 
 
-        for i in range(0, self.plotData.shape[1]):
-            self.plotData[:, i] = deriv(self.plotData[:, i], xVals, N, delta)
+        for i in range(0, self.PlotData.shape[1]):
+            self.PlotData[:, i] = deriv(self.PlotData[:, i], xVals, N, delta)
 
         if self.NSselect == 1:
-            self.plotData = np.absolute(np.true_divide(self.plotData , self.noiseData))
+            self.PlotData = np.absolute(np.true_divide(self.PlotData , self.noiseData))
         else:
-            self.plotData = np.absolute(np.true_divide(self.noiseData , self.plotData ))
-            self.plotData = np.clip(self.plotData, 0, 1e3)
+            self.PlotData = np.absolute(np.true_divide(self.noiseData , self.PlotData ))
+            self.PlotData = np.clip(self.PlotData, 0, 1e3)
 
             
             if self.unitSelect == 2:
                 gain, bw = self.sensPrompt.sensConv()[0], self.sensPrompt.sensConv()[1]
-                self.plotData = np.true_divide(self.plotData, (gain * np.sqrt(1000 *bw)))
-                self.plotData = np.clip(self.plotData, 0, 1e3)
+                self.PlotData = np.true_divide(self.PlotData, (gain * np.sqrt(1000 *bw)))
+                self.PlotData = np.clip(self.PlotData, 0, 1e3)
                 
-        avg = np.average(self.plotData)
-        std = np.std(self.plotData)
+        avg = np.average(self.PlotData)
+        std = np.std(self.PlotData)
 
-        self.mainPlot.setImage(self.plotData, autoRange = True , levels = (avg - std, avg+std), autoHistogramRange = False, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+        self.mainPlot.setImage(self.PlotData, autoRange = True , levels = (avg - std, avg+std), autoHistogramRange = False, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
         self.mainPlot.addItem(self.vLine)
         self.mainPlot.addItem(self.hLine)
         self.vLine.setValue(self.xMin)
@@ -1399,8 +1413,8 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
             maxSens = np.array([])
             bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
             self.XZPlot.clear()
-            for i in range(0, self.plotData.shape[0]):
-                maxSens = np.append(maxSens, np.amax(self.plotData[i]))
+            for i in range(0, self.PlotData.shape[0]):
+                maxSens = np.append(maxSens, np.amax(self.PlotData[i]))
             self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
             self.XZPlot.setLabel('left', 'Maximum Relative Sensitivity')
             self.XZPlot.plot(x = bVals, y = maxSens,pen = 0.5)
@@ -1410,8 +1424,8 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
             minNoise = np.array([])
             bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
             self.XZPlot.clear()
-            for i in range(0, self.plotData.shape[0]):
-                minNoise = np.append(minNoise, np.amin(self.plotData[i]))
+            for i in range(0, self.PlotData.shape[0]):
+                minNoise = np.append(minNoise, np.amin(self.PlotData[i]))
             self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
             self.XZPlot.setLabel('left', 'Minimum field noise')
             self.XZPlot.plot(x = bVals, y = minNoise,pen = 0.5)
@@ -1423,8 +1437,8 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         bVals = np.linspace(self.xMin, self.xMax, self.xPoints)
         vVals =np.linspace(self.yMin, self.yMax, self.yPoints)
         self.XZPlot.clear()
-        for i in range(0, self.plotData.shape[0]):
-            arg = np.argmin(self.plotData[i])
+        for i in range(0, self.PlotData.shape[0]):
+            arg = np.argmin(self.PlotData[i])
             minNoise = np.append(minNoise, vVals[arg])
         self.XZPlot.setLabel('bottom', 'Magnetic Field', units = 'T')
         self.XZPlot.setLabel('left', 'Optimal Bias', units = 'V')
@@ -1435,8 +1449,8 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
     def Ic_ParaRes(self):
         for i in self.Data:
             pass
-        for i in range(0, self.plotData.shape[0]):
-            V_raw = self.plotData[i]
+        for i in range(0, self.PlotData.shape[0]):
+            V_raw = self.PlotData[i]
 
         l = int(len(self.indVars) / 2)
         x = self.comboBox_xAxis.currentIndex()
@@ -1460,12 +1474,12 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         self.x0, self.x1 = self.extent[0], self.extent[1]
         self.y0, self.y1 = self.extent[2], self.extent[3]
         self.xscale, self.yscale = (self.x1-self.x0) / self.xPoints, (self.y1-self.y0) / self.yPoints    
-        self.plotData = np.zeros([int(self.xPoints), int(self.yPoints)])
+        self.PlotData = np.zeros([int(self.xPoints), int(self.yPoints)])
         for i in self.Data:
-            self.plotData[int(i[x]), int(i[y])] = i[z]
+            self.PlotData[int(i[x]), int(i[y])] = i[z]
 
     def xDeriv(self):
-        if self.plotData is None:
+        if self.PlotData is None:
             self.label_plotType.setText("Please plot data.")
             self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         else:
@@ -1478,9 +1492,9 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
                 self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
 
             else:
-                for i in range(0, self.plotData.shape[1]):
-                    self.plotData[:, i] = deriv(self.plotData[:,i], xVals, N, delta)    
-                self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+                for i in range(0, self.PlotData.shape[1]):
+                    self.PlotData[:, i] = deriv(self.PlotData[:,i], xVals, N, delta)    
+                self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
                 self.label_plotType.setText("Plotted gradient along \nx-axis.")
                 self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
                 self.clearPlots()
@@ -1489,9 +1503,9 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         yVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
         delta = abs(self.yMax - self.yMin) / self.yPoints
         N = int(self.yPoints * self.datPct)
-        for i in range(0, self.plotData.shape[0]):
-            self.plotData[i, :] = deriv(self.plotData[i,:], yVals, N, delta)    
-        self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+        for i in range(0, self.PlotData.shape[0]):
+            self.PlotData[i, :] = deriv(self.PlotData[i,:], yVals, N, delta)    
+        self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
         self.label_plotType.setText("Plotted gradient along \ny-axis.")
         self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
@@ -1505,8 +1519,8 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         self.datPct = self.gradSet.dataPercent.value() / 100
 
     def subtractAvg(self):
-        avg = np.average(self.plotData)
-        self.plotData = self.plotData - avg
+        avg = np.average(self.PlotData)
+        self.PlotData = self.PlotData - avg
         self.label_plotType.setText("Plotted offset \nsubtracted data.")
         self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
@@ -1517,13 +1531,13 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         y = self.comboBox_yAxis.currentIndex()
         z = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
         X = np.c_[self.Data[::, l+x], self.Data[::,l+y], np.ones(self.Data.shape[0])]
-        Y = np.ndarray.flatten(self.plotData)
+        Y = np.ndarray.flatten(self.PlotData)
         
 
         C = np.linalg.lstsq(X, Y)
         for i in self.Data:
-            self.plotData[int(i[x]), int(i[y])] = self.plotData[int(i[x]), int(i[y])] - np.dot(C[0], [i[x+l], i[y+l], 1])        
-        self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+            self.PlotData[int(i[x]), int(i[y])] = self.PlotData[int(i[x]), int(i[y])] - np.dot(C[0], [i[x+l], i[y+l], 1])        
+        self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
         self.label_plotType.setText("Plotted plane \nsubtracted data.")
         self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
@@ -1534,11 +1548,11 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         y = self.comboBox_yAxis.currentIndex()
         z = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
         X = np.c_[np.ones(self.Data.shape[0]), self.Data[::, [l+x, l+y]], np.prod(self.Data[::, [l+x, l+y]], axis = 1), self.Data[::, [l+x, l+y]]**2]
-        Y = np.ndarray.flatten(self.plotData)
+        Y = np.ndarray.flatten(self.PlotData)
         C = np.linalg.lstsq(X, Y)
         for i in self.Data:
-            self.plotData[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l]**2, i[y+l]**2, i[l+x]*i[y+l], i[l+x], i[l+y], 1])        
-        self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+            self.PlotData[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l]**2, i[y+l]**2, i[l+x]*i[y+l], i[l+x], i[l+y], 1])        
+        self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
         self.label_plotType.setText("Plotted quadratic \nsubtracted data.")
         self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.clearPlots()
@@ -1711,10 +1725,10 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         self.x0, self.x1 = self.extent[0], self.extent[1]
         self.y0, self.y1 = self.extent[2], self.extent[3]
         self.xscale, self.yscale = (self.x1-self.x0) / self.xPoints, (self.y1-self.y0) / self.yPoints    
-        self.plotData = np.zeros([int(self.xPoints), int(self.yPoints)])
+        self.PlotData = np.zeros([int(self.xPoints), int(self.yPoints)])
         for i in self.Data:
-            self.plotData[int(i[x]), int(i[y])] = i[z]
-        self.mainPlot.setImage(self.plotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
+            self.PlotData[int(i[x]), int(i[y])] = i[z]
+        self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
         if self.dataFlag == 0:
             title = self.file + " (Trace)"
             self.plotTitle.setText(str(title))
@@ -1736,7 +1750,7 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         self.dataFlag = 1
 
     def clearPlots(self):
-        if self.plotData is None:
+        if self.PlotData is None:
             pass
         else:
             self.vLine.setValue(self.xMin)
@@ -1826,7 +1840,7 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
             else:
                 p = int(abs((pos - self.y0)) / self.yscale)
                 xVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
-                yVals = self.plotData[:,p]
+                yVals = self.PlotData[:,p]
                 self.XZPlot.plot(x = xVals, y = yVals, pen = 0.5)
                 self.lineYVals = yVals
                 self.lineXVals = xVals
@@ -1842,7 +1856,7 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
             else:
                 p = int(abs((pos - self.x0)) / self.xscale)
                 xVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
-                yVals = self.plotData[p]
+                yVals = self.PlotData[p]
                 self.YZPlot.plot(x = xVals, y = yVals, pen = 0.5)
                 self.lineYVals = yVals 
                 self.lineXVals = xVals
@@ -1857,7 +1871,7 @@ class subPlot(QtGui.QMainWindow, Ui_Plotter):
         
 
 class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
-    def __init__(self, reactor, plotData, dataSubset, zoomExtent, indVars, depVars, currentIndex, title, parent = None):
+    def __init__(self, reactor, PlotData, dataSubset, zoomExtent, indVars, depVars, currentIndex, title, parent = None):
         super(zoomPlot, self).__init__(parent)
         
         self.reactor = reactor
@@ -1875,7 +1889,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         while len(indexOffsets) != len(self.Data[0]):
             indexOffsets = np.append(indexOffsets, 0)
         self.Data = self.Data - indexOffsets
-        self.oData = copy.copy(plotData)
+        self.oData = copy.copy(PlotData)
         self.extent = zoomExtent
         self.xMin, self.xMax = self.extent[0], self.extent[1]
         self.yMin, self.yMax = self.extent[2], self.extent[3]
@@ -2112,7 +2126,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
         y = self.comboBox_yAxis.currentIndex()
         z = self.comboBox_zAxis.currentIndex() + l
         X = np.c_[np.ones(self.Data.shape[0]), self.Data[::, [l+x, l+y]], np.prod(self.Data[::, [l+x, l+y]], axis = 1), self.Data[::, [l+x, l+y]]**2]
-        Y = np.ndarray.flatten(self.plotData)
+        Y = np.ndarray.flatten(self.PlotData)
         C = np.linalg.lstsq(X, Y)
         for i in self.Data:
             self.zoomPlot[int(i[x]), int(i[y])] = i[z] - np.dot(C[0], [i[x+l]**2, i[y+l]**2, i[l+x]*i[y+l], i[l+x], i[l+y], 1])        
@@ -2171,7 +2185,7 @@ class zoomPlot(QtGui.QDialog, Ui_ZoomWindow):
                     self.zoomPlot[pt,i] = 1e-3
                     
         if self.NSselect == 1:
-            self.plotData = np.absolute(np.true_divide(self.zoomPlot , self.noiseData))
+            self.PlotData = np.absolute(np.true_divide(self.zoomPlot , self.noiseData))
         else:
             self.zoomPlot = np.absolute(np.true_divide(self.noiseData , self.zoomPlot ))
             self.zoomPlot = np.clip(self.zoomPlot, 0, 1e3)
