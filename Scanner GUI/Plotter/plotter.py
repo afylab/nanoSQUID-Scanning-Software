@@ -197,6 +197,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
 
         # self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
+        self.pushButton_lockratio.clicked.connect(self.ToggleAspectRatio)
         self.sensitivity.clicked.connect(self.promptSensitivity)
         self.zoom.clicked.connect(self.zoomArea)
         self.pushButton_loadData.clicked.connect(self.browseDV)
@@ -213,6 +214,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.numPlots = 0
         self.numZoomPlots = 0
         
+        self.aspectLocked=False
 
     @inlineCallbacks
     def connectLabRAD(self, dict):
@@ -963,10 +965,38 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.LineCutYZYVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
             self.YZPlot.plot(x = self.LineCutYZXVals, y = self.LineCutYZYVals, pen = 0.5)
 
+    def ToggleAspectRatio(self):
+        self.aspectLocked = not self.aspectLocked
+        if self.aspectLocked:
+            self.viewBig.setAspectLocked(False)
+            self.pushButton_lockratio.setStyleSheet("""#pushButton_lockratio{menu-indicator:{image:none}}
+
+#pushButton_lockratio{
+image:url(:/nSOTScanner/Pictures/ratio.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+""")
+        else:
+            self.viewBig.setAspectLocked(True, ratio = 1)
+            self.pushButton_lockratio.setStyleSheet("""#pushButton_lockratio{menu-indicator:{image:none}}
+
+#pushButton_lockratio{
+image:url(:/nSOTScanner/Pictures/ratio.png);
+background: black;
+border: 2px solid rgb(95,107,166);
+}
+""")            
+            
     def newPlot(self):
         self.numPlots += 1
         self.newPlot = subPlot(self.dv, self.numPlots, self.reactor, self)
         self.newPlot.show()
+        
+        
+        
+        
+        
         
 class editDataInfo(QtGui.QDialog, Ui_EditDataInfo):
     def __init__(self, dataset, dv, reactor, parent = None):
