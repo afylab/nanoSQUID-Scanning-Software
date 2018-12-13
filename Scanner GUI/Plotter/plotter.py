@@ -81,9 +81,8 @@ class Sensitivity(QtGui.QDialog, Ui_SensitivityPrompt):
         
         self.noiseSens = 0
 
-        l = len(self.indVars)
-        if l % 2 == 0:
-            for i in self.indVars[int(l / 2) : l]:
+        if len(self.indVars) % 2 == 0:
+            for i in self.indVars[int(len(self.indVars) / 2) : len(self.indVars)]:
                 self.difIndex.addItem(i)
                 self.constIndex.addItem(i)
             for i in self.depVars:
@@ -725,49 +724,55 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             
     @inlineCallbacks
     def loadData(self, c):
-        self.ClearcomboBox()
-
-        self.label_plotType.setText("\nLoading data...")
-        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-        
-        #Initialized data set to none
-        self.ClearData()
-
-        #Determine the Data Structure, there can be Trace/Retrace or Index/nonIndex
-        self.ParseDatainfo()
-        #self.TraceFlag gives whether there are trace, self.NumberofindexVariables gives the number of index and should also be where the data starts in self.Data,   self.DataPlotType gives the type of DataPlot
-
-        self.SetupTitle()
-        
-        yield self.ReadData()
-        
-        self.ProcessData()
-
-        ### Assumptions, we have trace/retrace for only 2DPlot
-        ### Assumptions, index are in the beginning of the lists
-        self.AddComboIndex()
+        try:
             
-        self.mainPlot.clear()
-        self.pushButton_refresh.setEnabled(True)
-        self.diamCalc.setEnabled(True)
-        self.gradient.setEnabled(True)
-        self.subtract.setEnabled(True)
-        self.sensitivity.setEnabled(True)
+            self.ClearcomboBox()
         
-        if self.TraceFlag == None:
-            self.pushButton_trSelect.hide()
-        else:
-            self.pushButton_trSelect.show()
+            self.label_plotType.setText("\nLoading data...")
+            self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
             
-        pt = self.mapToGlobal(QtCore.QPoint(410,-10))
-        self.label_plotType.setText("")
-        self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
-        QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
-        self.zoom.setEnabled(False)
-        self.ResetLineCutPlots()
-        self.label_plotType.clear()            
+            #Initialized data set to none
+            self.ClearData()
+        
+            #Determine the Data Structure, there can be Trace/Retrace or Index/nonIndex
+            self.ParseDatainfo()
+            #self.TraceFlag gives whether there are trace, self.NumberofindexVariables gives the number of index and should also be where the data starts in self.Data,   self.DataPlotType gives the type of DataPlot
+        
+            self.SetupTitle()
             
-
+            yield self.ReadData()
+            
+            self.ProcessData()
+        
+            ### Assumptions, we have trace/retrace for only 2DPlot
+            ### Assumptions, index are in the beginning of the lists
+            self.AddComboIndex()
+                
+            self.mainPlot.clear()
+            self.pushButton_refresh.setEnabled(True)
+            self.diamCalc.setEnabled(True)
+            self.gradient.setEnabled(True)
+            self.subtract.setEnabled(True)
+            self.sensitivity.setEnabled(True)
+            
+            if self.TraceFlag == None:
+                self.pushButton_trSelect.hide()
+            else:
+                self.pushButton_trSelect.show()
+                
+            pt = self.mapToGlobal(QtCore.QPoint(410,-10))
+            self.label_plotType.setText("")
+            self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
+            QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
+            self.zoom.setEnabled(False)
+            self.ResetLineCutPlots()
+            self.label_plotType.clear()            
+        except Exception as inst:
+                print 'Following error was thrown: '
+                print inst
+                print 'Error thrown on line: '
+                print sys.exc_traceback.tb_lineno
+                
     def SetPlotLabel(self):
         self.viewBig.setLabel('left', text=self.comboBox_yAxis.currentText())
         self.viewBig.setLabel('bottom', text=self.comboBox_xAxis.currentText())
@@ -783,7 +788,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.xPoints = np.amax(self.Data[::,self.xIndex])+1  #look up the index
         self.x0, self.x1 = self.xMin, self.xMax
         self.xscale  = (self.x1-self.x0) / self.xPoints 
+        self.yMin = 0.0
 
+        
+        
         if self.DataPlotType == "2DPlot":
             self.yMax = np.amax(self.Data[::,self.NumberofindexVariables+self.yIndex])
             self.yMin = np.amin(self.Data[::,self.NumberofindexVariables+self.yIndex])
@@ -830,7 +838,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             elif self.TraceFlag == 1:
                 self.Data = self.retraceData
 
-            l = int(len(self.indVars) / 2)
             self.xIndex = self.comboBox_xAxis.currentIndex()
             self.yIndex = self.comboBox_yAxis.currentIndex()
             self.zIndex = self.comboBox_zAxis.currentIndex() + len(self.indVars) 
@@ -870,100 +877,129 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
 ##################line Cut Related functions
     def SetupLineCutverticalposition(self):
-        dummystr=str(self.lineEdit_vCutPos.text())
-        dummyval=readNum(dummystr, self , False)
-        if isinstance(dummyval,float):
-            self.verticalposition=dummyval
-        self.ChangeLineCutValue("")
- 
-    def SetupLineCuthorizontalposition(self):
-        dummystr=str(self.lineEdit_hCutPos.text())
-        dummyval=readNum(dummystr, self , False)
-        if isinstance(dummyval,float):
-            self.horizontalposition=dummyval
-        self.ChangeLineCutValue("")
-        
-    def ChangeLineCutValue(self, LineCut):
-        if LineCut == self.vLine:
-            self.verticalposition=LineCut.value()
-        if LineCut == self.hLine:
-            self.horizontalposition=LineCut.value()
+        try:
+            dummystr=str(self.lineEdit_vCutPos.text())
+            dummyval=readNum(dummystr, self , False)
+            if isinstance(dummyval,float):
+                self.verticalposition=dummyval
+            self.ChangeLineCutValue("")
+        except Exception as inst:
+            print inst
             
-        self.lineEdit_vCutPos.setText(formatNum(self.verticalposition))
-        self.lineEdit_hCutPos.setText(formatNum(self.horizontalposition))
-        self.MoveLineCut()
-        self.updateLineCutPlot()
-
+    def SetupLineCuthorizontalposition(self):
+        try:
+            dummystr=str(self.lineEdit_hCutPos.text())
+            dummyval=readNum(dummystr, self , False)
+            if isinstance(dummyval,float):
+                self.horizontalposition=dummyval
+            self.ChangeLineCutValue("")
+        except Exception as inst:
+            print inst
+            
+    def ChangeLineCutValue(self, LineCut):
+        try:
+            if LineCut == self.vLine:
+                self.verticalposition=LineCut.value()
+            if LineCut == self.hLine:
+                self.horizontalposition=LineCut.value()
+                
+            self.lineEdit_vCutPos.setText(formatNum(self.verticalposition))
+            self.lineEdit_hCutPos.setText(formatNum(self.horizontalposition))
+            self.MoveLineCut()
+            self.updateLineCutPlot()
+        except Exception as inst:
+            print inst
+            
     def MoveLineCut(self):
-        self.vLine.setValue(float(self.verticalposition))
-        self.hLine.setValue(float(self.horizontalposition))
-        
+        try:
+            self.vLine.setValue(float(self.verticalposition))
+            self.hLine.setValue(float(self.horizontalposition))
+        except Exception as inst:
+            print inst
+            
     def ClearLineCutPlot(self):
-        self.XZPlot.clear()
-        self.YZPlot.clear()
-        
+        try:
+            self.XZPlot.clear()
+            self.YZPlot.clear()
+        except Exception as inst:
+            print inst
+            
     def ConnectLineCut(self):
-        self.vLine.sigPositionChangeFinished.connect(lambda:self.ChangeLineCutValue(self.vLine))
-        self.hLine.sigPositionChangeFinished.connect(lambda:self.ChangeLineCutValue(self.hLine))
-        
+        try:
+            self.vLine.sigPositionChangeFinished.connect(lambda:self.ChangeLineCutValue(self.vLine))
+            self.hLine.sigPositionChangeFinished.connect(lambda:self.ChangeLineCutValue(self.hLine))
+        except Exception as inst:
+            print inst
+            
     def SetupLineCut(self):
-        self.viewBig.addItem(self.vLine, ignoreBounds = True)
-        self.viewBig.addItem(self.hLine, ignoreBounds =True)
-        
+        try:
+            self.viewBig.addItem(self.vLine, ignoreBounds = True)
+            self.viewBig.addItem(self.hLine, ignoreBounds =True)
+        except Exception as inst:
+            print inst
+            
     def Setup1DPlot(self, Plot, Layout ):
-        Plot.setGeometry(QtCore.QRect(0, 0, 635, 200))
-        Plot.showAxis('right', show = True)
-        Plot.showAxis('top', show = True)
-        Layout.addWidget(Plot)
-        
+        try:
+            Plot.setGeometry(QtCore.QRect(0, 0, 635, 200))
+            Plot.showAxis('right', show = True)
+            Plot.showAxis('top', show = True)
+            Layout.addWidget(Plot)
+        except Exception as inst:
+            print inst
 
     def setupPlots(self):
-        self.vLine = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
-        self.hLine = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
-
-        self.viewBig = pg.PlotItem(name = "Plot")
-        self.viewBig.showAxis('top', show = True)
-        self.viewBig.showAxis('right', show = True)
-        self.viewBig.setAspectLocked(lock = False, ratio = 1)
-        self.mainPlot = pg.ImageView(parent = self.frame_mainPlotArea, view = self.viewBig)
-        self.mainPlot.setGeometry(QtCore.QRect(0, 0, 750, 450))
-        self.mainPlot.ui.menuBtn.hide()
-        self.mainPlot.ui.histogram.item.gradient.loadPreset('bipolar')
-        self.mainPlot.ui.roiBtn.hide()
-        self.mainPlot.ui.menuBtn.hide()
-        self.viewBig.setAspectLocked(False)
-        self.viewBig.invertY(False)
-        self.viewBig.setXRange(-1.25, 1.25)
-        self.viewBig.setYRange(-10, 10)
-        self.frame_mainPlotArea.close()
-        self.Layout_mainPlotArea.addWidget(self.mainPlot)
-
-        self.XZPlot = pg.PlotWidget(parent = self.frame_XZPlotArea)
-        self.Setup1DPlot(self.XZPlot ,self.Layout_XZPlotArea)
-
-        self.YZPlot = pg.PlotWidget(parent = self.frame_YZPlotArea)
-        self.Setup1DPlot(self.YZPlot ,self.Layout_YZPlotArea)
-        
-        self.SetupLineCut()
-        self.ConnectLineCut()
-        
+        try:
+            self.vLine = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
+            self.hLine = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
+          
+            self.viewBig = pg.PlotItem(name = "Plot")
+            self.viewBig.showAxis('top', show = True)
+            self.viewBig.showAxis('right', show = True)
+            self.viewBig.setAspectLocked(lock = False, ratio = 1)
+            self.mainPlot = pg.ImageView(parent = self.frame_mainPlotArea, view = self.viewBig)
+            self.mainPlot.setGeometry(QtCore.QRect(0, 0, 750, 450))
+            self.mainPlot.ui.menuBtn.hide()
+            self.mainPlot.ui.histogram.item.gradient.loadPreset('bipolar')
+            self.mainPlot.ui.roiBtn.hide()
+            self.mainPlot.ui.menuBtn.hide()
+            self.viewBig.setAspectLocked(False)
+            self.viewBig.invertY(False)
+            self.viewBig.setXRange(-1.25, 1.25)
+            self.viewBig.setYRange(-10, 10)
+            self.frame_mainPlotArea.close()
+            self.Layout_mainPlotArea.addWidget(self.mainPlot)
+          
+            self.XZPlot = pg.PlotWidget(parent = self.frame_XZPlotArea)
+            self.Setup1DPlot(self.XZPlot ,self.Layout_XZPlotArea)
+          
+            self.YZPlot = pg.PlotWidget(parent = self.frame_YZPlotArea)
+            self.Setup1DPlot(self.YZPlot ,self.Layout_YZPlotArea)
+            
+            self.SetupLineCut()
+            self.ConnectLineCut()
+        except Exception as inst:
+            print inst
+            
     def updateLineCutPlot(self):
-        self.ClearLineCutPlot()
-        if self.horizontalposition > self.y1 or self.horizontalposition < self.y0:
-            self.XZPlot.clear()
-        else:
-            yindex = int(abs((self.horizontalposition - self.y0)) / self.yscale)
-            self.LineCutXZXVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
-            self.LineCutXZYVals = self.PlotData[:,yindex]
-            self.XZPlot.plot(x = self.LineCutXZXVals, y = self.LineCutXZYVals, pen = 0.5)
-
-        if self.verticalposition > self.x1 or self.verticalposition < self.x0:
-            self.YZPlot.clear()
-        else:
-            xindex = int(abs((self.verticalposition - self.x0)) / self.xscale)
-            self.LineCutYZXVals = self.PlotData[xindex]
-            self.LineCutYZYVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
-            self.YZPlot.plot(x = self.LineCutYZXVals, y = self.LineCutYZYVals, pen = 0.5)
+        try:
+            self.ClearLineCutPlot()
+            if self.horizontalposition > self.y1 or self.horizontalposition < self.y0:
+                self.XZPlot.clear()
+            else:
+                yindex = int(abs((self.horizontalposition - self.y0)) / self.yscale)
+                self.LineCutXZXVals = np.linspace(self.xMin, self.xMax, num = self.xPoints)
+                self.LineCutXZYVals = self.PlotData[:,yindex]
+                self.XZPlot.plot(x = self.LineCutXZXVals, y = self.LineCutXZYVals, pen = 0.5)
+         
+            if self.verticalposition > self.x1 or self.verticalposition < self.x0:
+                self.YZPlot.clear()
+            else:
+                xindex = int(abs((self.verticalposition - self.x0)) / self.xscale)
+                self.LineCutYZXVals = self.PlotData[xindex]
+                self.LineCutYZYVals = np.linspace(self.yMin, self.yMax, num = self.yPoints)
+                self.YZPlot.plot(x = self.LineCutYZXVals, y = self.LineCutYZYVals, pen = 0.5)
+        except Exception as inst:
+            print inst
 
     def ToggleAspectRatio(self):
         self.aspectLocked = not self.aspectLocked
@@ -989,14 +1025,117 @@ border: 2px solid rgb(95,107,166);
 """)            
             
     def newPlot(self):
-        self.numPlots += 1
-        self.newPlot = subPlot(self.dv, self.numPlots, self.reactor, self)
-        self.newPlot.show()
+        try:
+            self.numPlots += 1
+            self.newplot=subPlotter(self.reactor, self.dv, None)
+            self.newplot.show()
+            self.newplot.setWindowTitle('subPlotter ' + str(self.numPlots))
+            
+        except Exception as inst:
+            print inst
+            
+class subPlotter(Plotter):
+    def __init__(self, reactor, datavault, parent = None):
+        super(Plotter, self).__init__()
         
+        self.reactor = reactor
+        self.setupUi(self)
+
+        self.pushButton_trSelect.hide()
+
+        self.setupPlots()
+
+        self.pushButton_refresh.setEnabled(False)
+        self.diamCalc.setEnabled(False)
+        self.gradient.setEnabled(False)
+        self.subtract.setEnabled(False)
+        self.sensitivity.setEnabled(False)
+        self.zoom.setEnabled(False)
         
+        self.lineEdit_vCutPos.editingFinished.connect(self.SetupLineCutverticalposition)
+        self.lineEdit_hCutPos.editingFinished.connect(self.SetupLineCuthorizontalposition)
+
+        self.saveMenu = QtGui.QMenu()
+        twoDSave = QtGui.QAction("Save 2D plot", self)
+        twoDSave.triggered.connect(self.matPlot)
+        oneDSaveh = QtGui.QAction("Save horizontal line cut", self)
+        oneDSaveh.triggered.connect(self.matLinePloth)
+        oneDSavev = QtGui.QAction("Save vertical line cut", self)
+        oneDSavev.triggered.connect(self.matLinePlotv)
+        self.saveMenu.addAction(twoDSave)
+        self.saveMenu.addAction(oneDSaveh)
+        self.saveMenu.addAction(oneDSavev)
+        self.savePlot.setMenu(self.saveMenu)
+
+        self.gradMenu = QtGui.QMenu()
+        gradX = QtGui.QAction(QtGui.QIcon("nablaXIcon.png"), "Gradient along x-axis", self)
+        gradY = QtGui.QAction(QtGui.QIcon("nablaYIcon.png"), "Gradient along y-axis", self)
+        lancSettings = QtGui.QAction("Gradient settings...", self)
+        gradX.triggered.connect(self.xDeriv)
+        gradY.triggered.connect(self.yDeriv)
+        lancSettings.triggered.connect(self.derivSettings)
+        self.gradMenu.addAction(gradX)
+        self.gradMenu.addAction(gradY)
+        self.gradMenu.addAction(lancSettings)
+        self.gradient.setMenu(self.gradMenu)
+        self.datPct = 0.1
+
+        #####Functions that subtract the data
+        self.subtractMenu = QtGui.QMenu()
+        subOverallAvg = QtGui.QAction( "Subtract overall average", self)
+        subXAvg = QtGui.QAction( "Subtract X average", self)
+        subYAvg = QtGui.QAction( "Subtract Y average", self)
+        subPlane = QtGui.QAction( "Subtract planar fit", self)
+        subOverallQuad = QtGui.QAction( "Subtract overall quadratic fit", self)
+        subXQuad = QtGui.QAction( "Subtract X quadratic fit", self)
+        subYQuad = QtGui.QAction( "Subtract Y quadratic fit", self)
+        subOverallAvg.triggered.connect(self.subtractOverallAvg)
+        subXAvg.triggered.connect(self.subtractXAvg)
+        subYAvg.triggered.connect(self.subtractYAvg)
+        subPlane.triggered.connect(self.subtractPlane)
+        subOverallQuad.triggered.connect(self.subtractOverallQuad)
+        subXQuad.triggered.connect(self.subtractXQuad)
+        subYQuad.triggered.connect(self.subtractYQuad)
+        self.subtractMenu.addAction(subOverallAvg)
+        self.subtractMenu.addAction(subXAvg)
+        self.subtractMenu.addAction(subYAvg)
+        self.subtractMenu.addAction(subPlane)
+        self.subtractMenu.addAction(subOverallQuad)
+        self.subtractMenu.addAction(subXQuad)
+        self.subtractMenu.addAction(subYQuad)
+        self.subtract.setMenu(self.subtractMenu)
         
+        self.trSelectMenu = QtGui.QMenu()
+        showTrace = QtGui.QAction("Plot Trace", self)
+        showRetrace = QtGui.QAction("Plot Retrace", self)
+        self.trSelectMenu.addAction(showTrace)
+        self.trSelectMenu.addAction(showRetrace)
+        showTrace.triggered.connect(self.plotTrace)
+        showRetrace.triggered.connect(self.plotRetrace)
+        self.pushButton_trSelect.setMenu(self.trSelectMenu)
+
+
+        # self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
+        self.pushButton_lockratio.clicked.connect(self.ToggleAspectRatio)
+        self.sensitivity.clicked.connect(self.promptSensitivity)
+        self.zoom.clicked.connect(self.zoomArea)
+        self.pushButton_loadData.clicked.connect(self.browseDV)
+        self.pushButton_refresh.clicked.connect(self.refreshPlot)
+        self.addPlot.clicked.connect(self.newPlot)
+
+        self.Data = None
+        self.PlotData = None
+        self.dv = datavault
+        self.cxn = None
+        self.file = None
+        self.directory = None
+        self.got_util = False
+        self.numPlots = 0
+        self.numZoomPlots = 0
         
+        self.aspectLocked=False
         
+        self.addPlot.hide()
         
 class editDataInfo(QtGui.QDialog, Ui_EditDataInfo):
     def __init__(self, dataset, dv, reactor, parent = None):
