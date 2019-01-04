@@ -137,16 +137,16 @@ void writeADCConversionTime(std::vector<String> DB)
   int adcChannel;
   switch(DB[1].toInt()){
     case 0:
-    adcChannel = 0;
-    break;
-    case 1:
     adcChannel = 1;
     break;
+    case 1:
+    adcChannel = 3;
+    break;
     case 2:
-    adcChannel = 2;
+    adcChannel = 0;
     break;
     case 3:
-    adcChannel = 3;
+    adcChannel = 2;
     break;
 
     default:  
@@ -263,16 +263,16 @@ float readADC(byte DB)
   switch (adcChannel)
   {
     case 0:
-    return getSingleReading(0);
-    break;
-    case 1:
     return getSingleReading(1);
     break;
+    case 1:
+    return getSingleReading(3);
+    break;
     case 2:
-    return getSingleReading(2);
+    return getSingleReading(0);
     break;
     case 3:
-    return getSingleReading(3);
+    return getSingleReading(2);
     break;
 
     default:  
@@ -305,19 +305,19 @@ float writeDAC(int dacChannel, float voltage)
   switch(dacChannel)
   {
     case 0:
-    return dacDataSend(dacChannel,voltage/GE[0]-OS[0]);
+    return dacDataSend(2,voltage/GE[0]-OS[0]);
     break;
 
     case 1:
-    return dacDataSend(dacChannel,voltage/GE[1]-OS[1]);
+    return dacDataSend(0,voltage/GE[1]-OS[1]);
     break;
 
     case 2:
-    return dacDataSend(dacChannel,voltage/GE[2]-OS[2]);
+    return dacDataSend(3,voltage/GE[2]-OS[2]);
     break;
 
     case 3:
-    return dacDataSend(dacChannel,voltage/GE[3]-OS[3]);
+    return dacDataSend(1,voltage/GE[3]-OS[3]);
     break;
 
     default:
@@ -380,19 +380,19 @@ void rampRead(byte DB,byte b1, byte b2, byte * o1, byte * o2, int count,int nRea
   switch (adcChannel)
   {
     case 0:
-    readingRampAvg(0, b1 , b2, o1, o2,count,nReadings);
-    break;
-    
-    case 1:
     readingRampAvg(1, b1 , b2, o1, o2,count,nReadings);
     break;
     
+    case 1:
+    readingRampAvg(3, b1 , b2, o1, o2,count,nReadings);
+    break;
+    
     case 2:
-    readingRampAvg(2, b1 , b2, o1, o2,count,nReadings);
+    readingRampAvg(0, b1 , b2, o1, o2,count,nReadings);
     break;
     
     case 3:
-    readingRampAvg(3, b1 , b2, o1, o2,count,nReadings);
+    readingRampAvg(2, b1 , b2, o1, o2,count,nReadings);
     break;
   
     default:  
@@ -421,19 +421,19 @@ float writeDAC_buffer(int dacChannel, float voltage)
   switch(dacChannel)
   {
     case 0:
-    return dacDataSend_buffer(dacChannel,voltage/GE[0]-OS[0]);
+    return dacDataSend_buffer(2,voltage/GE[0]-OS[0]);
     break;
 
     case 1:
-    return dacDataSend_buffer(dacChannel,voltage/GE[1]-OS[1]);
+    return dacDataSend_buffer(0,voltage/GE[1]-OS[1]);
     break;
 
     case 2:
-    return dacDataSend_buffer(dacChannel,voltage/GE[2]-OS[2]);
+    return dacDataSend_buffer(3,voltage/GE[2]-OS[2]);
     break;
 
     case 3:
-    return dacDataSend_buffer(dacChannel,voltage/GE[3]-OS[3]);
+    return dacDataSend_buffer(1,voltage/GE[3]-OS[3]);
     break;
 
     default:

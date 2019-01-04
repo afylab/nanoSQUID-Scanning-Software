@@ -475,6 +475,24 @@ class CPSCServer(LabradServer):
                 vec[i] = vec[i] / self.weight_for[i]
         return vec
         
+    @setting(116, returns = 'b')
+    def checkWeights(self, c):
+        #Returns True if all the weights are set to something reasonable and positive
+        #Returns False if one or more weights are set to 0 or something negative
+        num = 0
+        for weight in self.weight_for:
+            if weight <= 0:
+                num += 1
+            
+        for weight in self.weight_back:
+            if weight <= 0:
+                num += 1
+                
+        if num >0:
+            return False
+        else:
+            return True
+        
     def find_between(self, s, start, end):
         try:
             result = re.search('%s(.*)%s' % (start, end), s).group(1)

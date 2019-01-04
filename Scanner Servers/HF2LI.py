@@ -31,6 +31,7 @@ timeout = 20
 """
 
 #TODO: Filter BW, Filter Order, and Harmonic info for PID control
+#TODO: reprogram as a proper device server to make it be able to host connections to several HF2LI at the same time
 
 from labrad.server import LabradServer, setting
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -54,8 +55,8 @@ class HF2LIServer(LabradServer):
 
     def initServer(self):  # Do initialization here
         self.daq = None
-        self.dev_ID = None
-        self.device_list = None
+        self.dev_ID = 'No Device Selected'
+        self.device_list = []
         self.props = None
         self.sweeper = None
         self.pidAdvisor = None
@@ -96,30 +97,43 @@ class HF2LIServer(LabradServer):
         except RuntimeError:
             print ('Failed to detected LabOne DAQ Server and an associated Zurich Instruments device.'
                 ' Check that everything is plugged into the computer.')
-    
-    @setting(101,returns = '*s')
-    def get_device_list(self,c):
+                
+    @setting(101, 'List Devices', returns=['*(ws)'])
+    def list_devices(self, c):
         """Returns the list of devices. If none have been detected (either because detect_devices has not yet
-        been run, or because of a bad connection), this will return None. """
-        returnValue(self.device_list)
+        been run, or because of a bad connection), this will return an empty array. This is the format required for a DeviceServer
+        which this server has not yet transitioned to."""
+        names = self.device_list
+        length = len(self.device_list)
+        IDs = range(0,length)
+        return zip(IDs, names)
             
-    @setting(102,dev_ID = 's', returns = '')
-    def select_device(self, c, dev_ID="None"):
-        """Sets the active device ID to the provided dev_ID. If no dev_ID is provided, sets the active
-        device to the first device from the device list. Sets the API level to 1, which should provide 
-        all the functionality for the HF2LI."""
-        if dev_ID == "None":
+    @setting(102, 'Select Device', key=[': Select first device', 's: Select device by name', 'w: Select device by ID'], returns=['s: Name of the selected device'])
+    def select_device(self, c, key = None):
+        """Select a device for the current context. DOES NOT WORK. Instead, sets the active device ID to the provided dev_ID. If no dev_ID is provided, sets the active
+        device to the first device from the device list. Sets the API level to 1, which should provide all the functionality for the HF2LI. Right now, this is a 
+        server setting, NOT a context setting, so you cannot have multiple connections with different contexts connected to different devices."""
+        if key is None:
             self.dev_ID = self.device_list[0]
             self.initPIDAdvisor()
             self.initSweeper()
-        else: 
-            if dev_ID in self.device_list:
-                self.dev_ID = dev_ID
+        elif isinstance(key, str):
+            if key in self.device_list:
+                self.dev_ID = key
                 self.initPIDAdvisor()
                 self.initSweeper()
             else:
-                print "Provided device ID is not in the list of possible devices."
-   
+                print "Provided device key is not in the list of possible devices."
+        else: 
+            try:
+                self.dev_ID = self.device_list[key]
+                self.initPIDAdvisor()
+                self.initSweeper()
+            except:
+                print "Provided device key is not in the list of possible devices."
+            
+        return self.dev_ID
+        
     @setting(103,settings = '*s', returns = '')
     def set_settings(self, c, settings):
         """Simultaneously set all the settings described in the settings input. Settings should be a 
