@@ -5,6 +5,6 @@ system;blink device,ad5764_dcbox (COM5);magnet supply,IPS 120 Power Supply;speci
 scan;dac_adc,DA16_16_03 (COM6)
 
 approach and TF;pll output,1;pll input,1;step Z out,1;pid z out,1;z monitor,1;sum board toggle,1
-nsot;Bias Reference,4;Noise Readout,2;AC Readout,1;DC Readout,3;nSOT Bias,4
+nsot;Bias Reference,1;Noise Readout,2;AC Readout,3;DC Readout,2;nSOT Bias,4
 system;toellner dac voltage,4;blink channel,2;toellner dac current,3
-scan;x out,2;y out,3;z out,1
+scan;x out,3;y out,3;z out,3

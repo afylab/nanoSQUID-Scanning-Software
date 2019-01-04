@@ -731,7 +731,7 @@ Field</string>
      </rect>
     </property>
     <property name="text">
-     <string>0.100</string>
+     <string>1</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

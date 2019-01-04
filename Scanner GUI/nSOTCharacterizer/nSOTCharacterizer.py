@@ -20,7 +20,6 @@ toeReminder = path + r"\toeReminder.ui"
 gotoSetPoint = path + r"\gotoSetpoint.ui"
 serlist = path + r"\requiredServers.ui"
 
-
 Ui_MainWindow, QtBaseClass = uic.loadUiType(characterGUI)
 Ui_DialogBox, QtBaseClass = uic.loadUiType(dialogBox)
 Ui_dacSet, QtBaseClass = uic.loadUiType(dacSet)
@@ -31,9 +30,6 @@ Ui_ServerList, QtBaseClass = uic.loadUiType(serlist)
 
 #Main characterization window with plots, sweep paramteres, etc.
 class Window(QtGui.QMainWindow, Ui_MainWindow):
-    changedConnectionSettings = QtCore.pyqtSignal(dict)
-    #add a signal to have changes in input settings go to the gotosetpoint window TODO
-    
     def __init__(self, reactor, parent = None):
         super(Window, self).__init__(parent)
         #QtGui.QDialog.__init__(self)
@@ -47,7 +43,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         #Dictionaries of the wiring and instrument settings
         self.settingsDict = {
                 'blink':                2, #1 index DAC or DC box channel
-                'blink device':         'DAC ADC', #Device to be used to blink, DAC ADC by default
                 'nsot bias output':     1, #1 index bias output on the DAC ADC
                 'toellner volts':       4, #1 indexed output on the DAC ADC to control Toellner power supply voltage
                 'toellner current':     3, #1 indexed output on the DAC ADC to control Toellner power supply current
@@ -63,7 +58,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.acSettingsDict = {'freq' : 4.0, 'amp' : 2.0}
         
         #Dictionary of parameters defining the nSOT sweep
-        self.sweepParamDict = {'B_min' : 0, 'B_max' : 0.1, 'B_pnts' : 100, 'B_rate' : 0.1, 'V_min' : 0, 'V_max' : 1, 'V_pnts' : 500, 'delay' : 1,'volt mode' : 'min/max', 'Magnet device' : 'Toellner 8851', 'blink mode' : 'on'}
+        self.sweepParamDict = {'B_min' : 0, 'B_max' : 0.1, 'B_pnts' : 100, 'B_rate' : 1, 'V_min' : 0, 'V_max' : 1, 'V_pnts' : 500, 'delay' : 1,'volt mode' : 'min/max', 'Magnet device' : 'Toellner 8851', 'blink mode' : 'on'}
         #Dictionary the keeps track of the setpoints in magnetic field and bias voltage that are set by the 'Go To Setpoint' window
         self.setpntDict = {'field' : 0, 'bias' : 0}
         #Flag that tells the main window whether the nSOT is at a field or bias setpoint
@@ -92,8 +87,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.liveRetracePlot.clicked.connect(self.toggleRetraceLineCut)
         self.liveRetracePlotStatus = False
         
-        #Opens the DACADC and AC settings windows
-        self.dacSetOpen.clicked.connect(self.dacSet)
+        #Opens the AC settings windows
         self.acSetOpen.clicked.connect(self.acSet)
 
         #Shows/hides the color scales on the trace/retrace plots
@@ -133,14 +127,8 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         
         self.push_Servers.clicked.connect(self.showServersList)
         
-        #Changes the magnet power supply in the parameter dictionary when the corresponding option is changed in the main window dropdown menu
-        self.magnetPower.currentIndexChanged.connect(self.updateMagPower)
-        
         #Initialize to no data to avoid line cut error
         self.isData = False
-        
-        #By default use dac_adc to blink
-        self.blinkDevice = 'DAC ADC'
         
         #Initialize the servers to False
         self.cxn = False
@@ -154,15 +142,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         
         self.lockInterface()
 
-    #Changes the magnet power supply in the settings dictionary when the corresponding option is changed in the dropdown menu, and emits that change to 
-    #other modules
-    def updateMagPower(self):
-        if self.magnetPower.currentText() == 'IPS 120-10':
-            self.settingsDict['Magnet device'] = 'IPS 120-10'
-        elif self.magnetPower.currentText() == 'Toellner 8851':
-            self.settingsDict['Magnet device'] = 'Toellner 8851'
-        self.changedConnectionSettings.emit(self.settingsDict)
-
     def moveDefault(self):
         self.move(550,10)
         
@@ -175,9 +154,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
                 self.dac_toe = dict['servers']['local']['dac_adc']
                 self.magnetPower.addItem('Toellner 8851')
+                self.settingsDict['Magnet device'] = 'Toellner 8851'
             elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
                 self.ips = dict['servers']['remote']['ips120']
                 self.magnetPower.addItem('IPS 120-10')
+                self.settingsDict['Magnet device'] = 'IPS 120-10'
             
             '''
             Create another connection to labrad in order to have a set of servers opened up in a context
@@ -205,6 +186,17 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 print 'DAC ADC Blink Device'
             
             self.blinkDevice = dict['devices']['system']['blink device']
+            self.settingsDict['blink'] = dict['channels']['system']['blink channel']
+            
+            self.settingsDict['nsot bias output'] = dict['channels']['nsot']['nSOT Bias']
+            self.settingsDict['nsot bias input'] = dict['channels']['nsot']['Bias Reference']
+            self.settingsDict['feedback DC input'] = dict['channels']['nsot']['DC Readout']
+            self.settingsDict['feedback AC input'] = dict['channels']['nsot']['AC Readout']
+            self.settingsDict['noise input'] = dict['channels']['nsot']['Noise Readout']
+            
+            self.settingsDict['toellner volts'] = dict['channels']['system']['toellner dac voltage']
+            self.settingsDict['toellner current'] = dict['channels']['system']['toellner dac current']
+            
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             
@@ -216,7 +208,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             exc_type, exc_obj, exc_tb = sys.exc_info()
             print 'line num ', exc_tb.tb_lineno
             
-
     def disconnectLabRAD(self):
         self.magnetPower.removeItem(0)
         self.cxn = False
@@ -243,14 +234,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.prelim.setEnabled(False)
         self.prelimSweep = preliminarySweep(self.reactor, self.dv, self.dac, self.settingsDict, self)
         self.prelimSweep.show()
-    
-    #Opens window to adjust the DAC-ADC channels
-    def dacSet(self):
-        self.dacSetOpen.setEnabled(False)
-        self.dacSettings = dacSettings(self.settingsDict, self)
-        if self.dacSettings.exec_():
-            print 'New Settings: ', self.settingsDict
-            self.changedConnectionSettings.emit(self.settingsDict)
            
     #Opens window to adjust the AC response settings
     def acSet(self):
@@ -1990,7 +1973,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.startSweep.setEnabled(False)
         self.prelim.setEnabled(False)
         self.abortSweep.setEnabled(False)
-        self.dacSetOpen.setEnabled(False)
         self.acSetOpen.setEnabled(False)
         
     def unlockInterface(self):
@@ -2010,135 +1992,10 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.startSweep.setEnabled(True)
         self.prelim.setEnabled(True)
         self.abortSweep.setEnabled(True)
-        self.dacSetOpen.setEnabled(True)
         self.acSetOpen.setEnabled(True)
             
     def closeEvent(self, e):
         pass
-
-#Window for setting the DAC channels for setting/reading nSOT characterization voltages on the DAC ADC
-class dacSettings(QtGui.QDialog, Ui_dacSet):
-    def __init__(self, settings, parent = None):
-        super(dacSettings, self).__init__(parent)
-        
-        self.settingsDict = copy.copy(settings)
-        self.window = parent
-        self.setupUi(self)
-        self.updateVals()
-        self.connectBoxes()
-        
-        self.comboBox_blinkDevice.addItem(self.window.blinkDevice)
-
-        self.comboBox_blinkDevice.currentIndexChanged.connect(self.updateBlinkDevice)
-            
-        self.cancelDAC.clicked.connect(self._close)
-        self.okDAC.clicked.connect(self._ok)
-
-    def updateVals(self): 
-            self.biasInChannel.setValue(self.settingsDict['nsot bias input'])
-            self.dcInChannel.setValue(self.settingsDict['feedback DC input'])
-            self.acInChannel.setValue(self.settingsDict['feedback AC input'])
-            self.noiseInChannel.setValue(self.settingsDict['noise input'])
-            self.biasOutChannel.setValue(self.settingsDict['nsot bias output'])
-            self.blinkOutChannel.setValue(self.settingsDict['blink'])
-            self.voltsOutChannel.setValue(self.settingsDict['toellner volts'])
-            self.currentOutChannel.setValue(self.settingsDict['toellner current'])
-
-    def connectBoxes(self):
-            self.biasInChannel.valueChanged.connect(lambda: self.correctInVals(self.biasInChannel, 'nsot bias input'))
-            self.dcInChannel.valueChanged.connect(lambda: self.correctInVals(self.dcInChannel, 'feedback DC input'))
-            self.acInChannel.valueChanged.connect(lambda: self.correctInVals(self.acInChannel, 'feedback AC input'))
-            self.noiseInChannel.valueChanged.connect(lambda: self.correctInVals(self.noiseInChannel, 'noise input'))
-            self.biasOutChannel.valueChanged.connect(lambda: self.correctOutVals(self.biasOutChannel, 'nsot bias output'))
-            self.blinkOutChannel.valueChanged.connect(lambda: self.correctOutVals(self.blinkOutChannel, 'blink'))
-            self.voltsOutChannel.valueChanged.connect(lambda: self.correctOutVals(self.voltsOutChannel, 'toellner volts'))
-            self.currentOutChannel.valueChanged.connect(lambda: self.correctOutVals(self.currentOutChannel, 'toellner current'))
-
-    def disconnectBoxes(self):
-            self.biasInChannel.valueChanged.disconnect()
-            self.dcInChannel.valueChanged.disconnect()
-            self.acInChannel.valueChanged.disconnect()
-            self.noiseInChannel.valueChanged.disconnect()
-            self.biasOutChannel.valueChanged.disconnect()
-            self.blinkOutChannel.valueChanged.disconnect()
-            self.voltsOutChannel.valueChanged.disconnect()
-            self.currentOutChannel.valueChanged.disconnect()
-
-    def correctInVals(self, obox, item):
-        val = copy.copy(obox.value())
-        old_val = copy.copy(self.settingsDict[item])
-        inputDictionary = {
-            'feedback DC input':     self.settingsDict['feedback DC input'],
-            'feedback AC input':     self.settingsDict['feedback AC input'],
-            'noise input':     self.settingsDict['noise input'],
-            'nsot bias input':     self.settingsDict['nsot bias input'],
-        }
-        for key in inputDictionary.keys():
-            if inputDictionary[key] == val:
-                self.settingsDict[key] = old_val
-                self.settingsDict[item] = val
-                self.disconnectBoxes()
-                self.updateVals()
-                self.connectBoxes()
-                break
-    
-    def correctOutVals(self, obox, item):
-        if self.settingsDict['blink device'] == 'DC BOX' and item == 'blink':
-            pass
-        else:
-            val = copy.copy(obox.value())
-            old_val = copy.copy(self.settingsDict[item])
-            outputDictionary = {
-                'blink':        self.settingsDict['blink'],
-                'nsot bias output':        self.settingsDict['nsot bias output'],
-                'toellner volts':        self.settingsDict['toellner volts'],
-                'toellner current':        self.settingsDict['toellner current']
-            }
-            for key in outputDictionary.keys():
-                if outputDictionary[key] == val:
-                    if self.settingsDict['blink device'] == 'DC BOX' and key == 'blink':
-                        self.settingsDict[item] = val
-                    else:
-                        self.settingsDict[key] = old_val
-                        self.settingsDict[item] = val
-                        self.disconnectBoxes()
-                        self.updateVals()
-                        self.connectBoxes()
-                        break
-        
-    def updateBlinkDevice(self):
-        self.settingsDict['blink device'] = str(self.comboBox_blinkDevice.currentText())
-        
-    def closeEvent(self, e):
-        self.window.dacSetOpen.setEnabled(True)
-        self.close()
-
-    def _close(self):
-        self.window.dacSetOpen.setEnabled(True)
-        self.close()
-        
-    def _ok(self):
-        inputChans = [self.biasInChannel.value(), self.dcInChannel.value(), self.acInChannel.value(), self.noiseInChannel.value()]
-        outputChans = [self.blinkOutChannel.value(), self.biasOutChannel.value(),self.voltsOutChannel.value(), self.currentOutChannel.value()]
-        if self.comboBox_blinkDevice.currentText() == 'DC BOX':
-            outputChans.pop(0)
-
-        dif_in = [inputChans[i] - inputChans[j] for i in range(0,4) for j in range(i+1,4) ]
-        dif_out = [outputChans[i] - outputChans[j] for i in range(0,len(outputChans)) for j in range(i+1,len(outputChans)) ]
-        if 0 in dif_out:
-            self.warning.setText("Output channels must be \n distinct.")
-            self.warning.setStyleSheet("QLabel#warning {color: rgb(255,0, 0);}")
-        elif 0 in dif_in:
-            self.warning.setText("Input channels must be \n distinct.")
-            self.warning.setStyleSheet("QLabel#warning {color: rgb(255,0, 0);}")
-        
-        else:
-            print self.comboBox_blinkDevice.currentText()
-            self.window.settingsDict = copy.copy(self.settingsDict)
-            
-            self.window.dacSetOpen.setEnabled(True)
-            self.accept()
-            self.close()
 
 #Window for setting the AC excitation for dI/dV sweeps, probably will never be used
 class acSettings(QtGui.QDialog, Ui_acSet):

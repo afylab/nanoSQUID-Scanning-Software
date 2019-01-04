@@ -148,31 +148,31 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 'meas_pll'            : False,
                 'meas_fdbk_dc'        : False,
                 'meas_fdbk_ac'        : False,
-                'pll_targetBW'        : 25,       #target bandwidth for pid advisor
+                'pll_targetBW'        : 100,       #target bandwidth for pid advisor
                 'pll_advisemode'      : 2,         #advisor mode. 0 is just proportional term, 1 just integral, 2 is prop + int, and 3 is full PID
                 'pll_input'           : 1,         #hf2li input that has the signal for the pll
                 'pll_centerfreq'      : None,      #center frequency of the pll loop
                 'pll_phase_setpoint'  : None,      #phase setpoint of pll pid loop
                 'pll_range'           : 20,        #range around center frequency that the pll is allowed to go
                 'pll_harmonic'        : 1,         #harmonic of the input to the pll
-                'pll_tc'              : 553.82e-6, #pll time constant
-                'pll_filterBW'        : 125.0,     #pll filter bandwidth 
+                'pll_tc'              : 138.46e-6, #pll time constant
+                'pll_filterBW'        : 500.0,     #pll filter bandwidth 
                 'pll_filterorder'     : 4,         #pll filter order (how many filters are cascaded)
-                'pll_p'               : 0.349361,     #pll pid proportional term
-                'pll_i'               : 0.164253,     #pll pid integral term 
+                'pll_p'               : 1.399,     #pll pid proportional term
+                'pll_i'               : 2.932,     #pll pid integral term 
                 'pll_d'               : 0,         #pll pid derivative term
-                'pll_simBW'           : 28.69,         #current pid term simulated bandwidth 
-                'pll_pm'              : 73.97,         #pll pid simulated phase margin (relevant to the stability of loop)   
+                'pll_simBW'           : 115.36,    #current pid term simulated bandwidth 
+                'pll_pm'              : 73.83,     #pll pid simulated phase margin (relevant to the stability of loop)   
                 'pll_rate'            : 1.842e+6,  #Sampling rate of the PLL. Cannot be changed, despite it being spit out by the pid advisor. Just... is what it is. 
                 'pll_output'          : 1,         #hf2li output to be used to completel PLL loop. 
-                'pll_output_amp'      : 0.01,      #output amplitude   
-                'fdbk_dc_input'       : 4,         # 1 indexed input of DAC ADC (5 and 6 correspond to Aux 1 and 2 from Zurich
+                'pll_output_amp'      : 0.001,      #output amplitude   
+                'fdbk_dc_input'       : 4,         # 1 indexed input of DAC ADC (5 and 6 correspond to Aux 1 and 2 from Zurich)
                 'fdbk_dc_setpoint'    : 0,         # DC setpoint from which to determine the change in feebdack output
-                'fdbk_ac_input'       : 6,         # 1 indexed input of DAC ADC (5 and 6 correspond to Aux 1 and 2 from Zurich
+                'fdbk_ac_input'       : 6,         # 1 indexed input of DAC ADC (5 and 6 correspond to Aux 1 and 2 from Zurich)
                 'fdbk_ac_setpoint'    : 0,         # AC setpoint from which to determine the change in feebdack output
                 'z_mon_input'         : 1,         # Either 1 (aux in 1) or 2 (aux in 2) on the Zurich
                 }
-
+        
         '''
         Below is the initialization of all the default general approach settingss
         '''
@@ -183,7 +183,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 'sumboard_toggle'            : 1,     #Output from the DC Box that toggles the summing amplifier (1 indexed)
                 'blink_output'               : 2,     #1 indexed output from the DC box that goes to blinking
                 'jpe_module_address'         : 1,     #Pretty sure this is always 1 unless we add more modules to the JPE controller
-                'jpe_steps'                  : 500,   #Number of step forward in z direction taken by JPEs after attocube fully extend and retract
+                'jpe_steps'                  : 2000,   #Number of step forward in z direction taken by JPEs after attocube fully extend and retract
                 'jpe_size'                   : 100,   #relative step size of jpe steps
                 'jpe_freq'                   : 250,   #Frequency of steps on JPE approach
                 'jpe_temperature'            : 293,   #Temperature setting of the JPEs
@@ -204,7 +204,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 'd'                    : 0,     #Derivative term of approach PID 
                 'step_size'            : 10e-9, #Step size for feedback approach in meters
                 'step_speed'           : 10e-9, #Step speed for feedback approach in m/s
-                'height'               : 100e-9,#Height for constant height scanning
+                'height'               : 5e-6,#Height for constant height scanning
                 'man z extension'            : 0, #Step size for manual approach in meters
         }
         
@@ -520,7 +520,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
         val = readNum(str(self.lineEdit_Man_Z_Extension.text()), self)
         if isinstance(val,float):
             self.PIDApproachSettings['man z extension'] = val
-        self.lineEdit_Man_Z_Extension.setText(formatNum(self.PIDApproachSettings['man z extension']))
+        self.lineEdit_Man_Z_Extension.setText(formatNum(self.PIDApproachSettings['man z extension'],5))
         
     def set_voltage_calibration(self, calibration):
         self.x_volts_to_meters = float(calibration[1])
@@ -740,15 +740,13 @@ class Window(QtGui.QMainWindow, ApproachUI):
             print inst
             
     def setWorkingPoint(self, freq, phase, out, amp):
-        #self.checkBox_Freq.setCheckable(True)
-        #self.push_CenterSet.setStyleSheet("""#push_CenterSet{
-        #                                    background: rgb(0, 170, 0);
-        #                                    border-radius: 5px;
-        #                                    }""")
         self.measurementSettings['pll_centerfreq'] = freq
         self.measurementSettings['pll_phase_setpoint'] = phase
         self.measurementSettings['pll_output'] = out
         self.measurementSettings['pll_output_amp'] = amp
+        
+        self.measurementSettings['meas_pll'] = True
+        self.unlockFreq()
         
     @inlineCallbacks
     def setHF2LI_PLL_Settings(self, c = None):
@@ -797,14 +795,18 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 self.lineEdit_freqCurr.setText(formatNum(deltaf))
                 self.lineEdit_phaseError.setText(formatNum(phaseError))
                 
-                if self.constantHeight and deltaf > self.freqThreshold:
-                    print 'auto withdrew'
-                    self.withdrawFully()
-                
                 #Add frequency data to list
                 if not self.JPEStepping:
                     self.deltafData.appendleft(deltaf)
                     self.deltafData.pop()
+                
+                points_above_freq_thresh = 0
+                for f in self.deltafData:
+                    points_above_freq_thresh = points_above_freq_thresh + (f > self.freqThreshold)
+                
+                if self.constantHeight and points_above_freq_thresh > 1:
+                    print 'auto withdrew'
+                    self.withdrawFully()
 
                 self.newPLLData.emit(deltaf, phaseError)
 
@@ -1391,18 +1393,17 @@ class Window(QtGui.QMainWindow, ApproachUI):
                     #Turn PID back on so that if there's drift or the sample is taller than expected, 
                     #the PID will retract the tip
                     yield self.hf.set_pid_on(self.PID_Index, True)
-
+                    
+                    #Wait 60 seconds to clear the buffer of frequencies so that we don't autowithdraw from having hit the surface
+                    yield self.sleep(60)
+                    
                     #Emit that we can now scan in constant height mode
                     self.updateConstantHeightStatus.emit(True, self.Atto_Z_Voltage)
                     self.constantHeight = True
                     self.label_pidApproachStatus.setText('Constant Height')
                     self.approaching = False
                     self.updateApproachStatus.emit(False)
-                        
-                    #TODO:
-                    #Start a monitor of whether or not still in constant height (ie, if no longer at 
-                    #max voltage output, then probably not at constant height). Maybe give error when
-                    #Hit surface
+                    
         except Exception as inst:
             print inst
             print sys.exc_traceback.tb_lineno

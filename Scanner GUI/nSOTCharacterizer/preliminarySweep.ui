@@ -464,7 +464,7 @@ border-radius: 5px
     <double>1000.000000000000000</double>
    </property>
    <property name="value">
-    <double>2.700000000000000</double>
+    <double>2.748000000000000</double>
    </property>
   </widget>
   <widget class="QDoubleSpinBox" name="shuntRes">
@@ -514,7 +514,7 @@ border-radius: 5px
     <double>1000.000000000000000</double>
    </property>
    <property name="value">
-    <double>2.000000000000000</double>
+    <double>1.263000000000000</double>
    </property>
   </widget>
   <widget class="QDoubleSpinBox" name="ssaaWinding">
@@ -539,7 +539,7 @@ border-radius: 5px
     <double>1000.000000000000000</double>
    </property>
    <property name="value">
-    <double>14.000000000000000</double>
+    <double>13.920000000000000</double>
    </property>
   </widget>
   <widget class="QPushButton" name="closeWin">

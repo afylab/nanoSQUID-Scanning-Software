@@ -164,7 +164,7 @@ background-color: rgb(0, 0, 0);
      </rect>
     </property>
     <property name="text">
-     <string>0.100</string>
+     <string>1</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -250,7 +250,7 @@ background-color: rgb(0, 0, 0);
    <widget class="QPushButton" name="abortSweep">
     <property name="geometry">
      <rect>
-      <x>1180</x>
+      <x>1130</x>
       <y>50</y>
       <width>75</width>
       <height>23</height>
@@ -326,6 +326,9 @@ border-radius: 5px
     </property>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="currentIndex">
+     <number>1</number>
     </property>
     <item>
      <property name="text">
@@ -1146,40 +1149,6 @@ border-radius: 5px
      <string>Toggle Line Cut</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="dacSetOpen">
-    <property name="geometry">
-     <rect>
-      <x>1180</x>
-      <y>80</y>
-      <width>35</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="focusPolicy">
-     <enum>Qt::NoFocus</enum>
-    </property>
-    <property name="toolTip">
-     <string>Set DAC Channels</string>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton:pressed#dacSetOpen{
-color: rgb(95,107,166);
-background-color:rgb(168,168,168);
-border: 1px solid rgb(95,107,166);
-border-radius: 5px
-}
-
-QPushButton#dacSetOpen{
-color: rgb(255,255,51);
-background-color:rgb(0,0,0);
-border: 2px solid  rgb(255,255, 51);
-border-radius: 5px
-}</string>
-    </property>
-    <property name="text">
-     <string>DAC</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="hideTraceGrad">
     <property name="geometry">
      <rect>
@@ -1380,8 +1349,8 @@ border-radius: 5px
    <widget class="QPushButton" name="acSetOpen">
     <property name="geometry">
      <rect>
-      <x>1220</x>
-      <y>80</y>
+      <x>1240</x>
+      <y>50</y>
       <width>35</width>
       <height>23</height>
      </rect>
@@ -1694,7 +1663,7 @@ border-radius: 5px
     <property name="geometry">
      <rect>
       <x>1130</x>
-      <y>110</y>
+      <y>90</y>
       <width>51</width>
       <height>20</height>
      </rect>
@@ -1712,7 +1681,7 @@ color: rgb(168, 168, 168)
     <property name="geometry">
      <rect>
       <x>1180</x>
-      <y>110</y>
+      <y>90</y>
       <width>121</width>
       <height>20</height>
      </rect>
@@ -1740,7 +1709,7 @@ border: grey;
     <property name="geometry">
      <rect>
       <x>1180</x>
-      <y>140</y>
+      <y>120</y>
       <width>121</width>
       <height>20</height>
      </rect>
@@ -1768,7 +1737,7 @@ border: grey;
     <property name="geometry">
      <rect>
       <x>1130</x>
-      <y>140</y>
+      <y>120</y>
       <width>51</width>
       <height>20</height>
      </rect>
@@ -1785,7 +1754,6 @@ color: rgb(168, 168, 168)
    <zorder>showRetraceGrad</zorder>
    <zorder>showTraceGrad</zorder>
    <zorder>hideTraceGrad</zorder>
-   <zorder>dacSetOpen</zorder>
    <zorder>curfieldTracePlot</zorder>
    <zorder>curfieldRetracePlot</zorder>
    <zorder>curbiasRetracePlot</zorder>
@@ -1876,7 +1844,6 @@ color: rgb(168, 168, 168)
   <tabstop>biasMaxSetValue</tabstop>
   <tabstop>biasPointsSetValue</tabstop>
   <tabstop>biasSpeedSetValue</tabstop>
-  <tabstop>dacSetOpen</tabstop>
   <tabstop>startSweep</tabstop>
  </tabstops>
  <resources>

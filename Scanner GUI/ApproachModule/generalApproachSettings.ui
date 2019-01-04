@@ -65,349 +65,8 @@ color: rgb(168,168,168);
 QTabBar::tab:selected {background: rgb(50,50,50);}</string>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
-   <widget class="QWidget" name="tab_3">
-    <property name="styleSheet">
-     <string notr="true">#tab_3{
-background: black
-}</string>
-    </property>
-    <attribute name="title">
-     <string>Output Settings</string>
-    </attribute>
-    <widget class="QLabel" name="label_9">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>140</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Toggle out:</string>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="comboBox_Sumboard_Toggle">
-     <property name="geometry">
-      <rect>
-       <x>90</x>
-       <y>140</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <item>
-      <property name="text">
-       <string>DC Box 1</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 2</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 3</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 4</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 5</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 6</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 7</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 8</string>
-      </property>
-     </item>
-    </widget>
-    <widget class="QLabel" name="label_title_9">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>110</y>
-       <width>181</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-     </property>
-     <property name="text">
-      <string>Summing Board Toggle</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="comboBox_PID_Out">
-     <property name="geometry">
-      <rect>
-       <x>90</x>
-       <y>60</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <item>
-      <property name="text">
-       <string>Aux Out 1</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Aux Out 2</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Aux Out 3</string>
-      </property>
-     </item>
-    </widget>
-    <widget class="QLabel" name="label_27">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>60</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Z  Out:</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_title_10">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>30</y>
-       <width>311</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-     </property>
-     <property name="text">
-      <string>PID Output Settings</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_7">
-     <property name="geometry">
-      <rect>
-       <x>210</x>
-       <y>60</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Z  Out:</string>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="comboBox_Step_Out">
-     <property name="geometry">
-      <rect>
-       <x>290</x>
-       <y>60</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <item>
-      <property name="text">
-       <string>DAC 1</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DAC 2</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DAC 3</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DAC 4</string>
-      </property>
-     </item>
-    </widget>
-    <widget class="QLabel" name="label_title_12">
-     <property name="geometry">
-      <rect>
-       <x>210</x>
-       <y>30</y>
-       <width>311</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-     </property>
-     <property name="text">
-      <string>Step Output Settings</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_18">
-     <property name="geometry">
-      <rect>
-       <x>210</x>
-       <y>140</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Blink out:</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_title_14">
-     <property name="geometry">
-      <rect>
-       <x>210</x>
-       <y>110</y>
-       <width>181</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-     </property>
-     <property name="text">
-      <string>Blink Output Setting</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="comboBox_Blink">
-     <property name="geometry">
-      <rect>
-       <x>290</x>
-       <y>140</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="currentIndex">
-      <number>1</number>
-     </property>
-     <item>
-      <property name="text">
-       <string>DC Box 1</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 2</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 3</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 4</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 5</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 6</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 7</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 8</string>
-      </property>
-     </item>
-    </widget>
-   </widget>
    <widget class="QWidget" name="tab">
     <property name="styleSheet">
      <string notr="true">#tab{
@@ -764,6 +423,347 @@ color:rgb(168,168,168)
      <property name="text">
       <string>Tot. Retract Time (s):</string>
      </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_3">
+    <property name="styleSheet">
+     <string notr="true">#tab_3{
+background: black
+}</string>
+    </property>
+    <attribute name="title">
+     <string>Output Settings</string>
+    </attribute>
+    <widget class="QLabel" name="label_9">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>140</y>
+       <width>81</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Toggle out:</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox_Sumboard_Toggle">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>140</y>
+       <width>81</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>DC Box 1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 3</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 4</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 5</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 6</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 7</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 8</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label_title_9">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>110</y>
+       <width>181</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_title{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>Summing Board Toggle</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox_PID_Out">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>60</y>
+       <width>81</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>Aux Out 1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Aux Out 2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Aux Out 3</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label_27">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>81</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Z  Out:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_title_10">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>311</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_title{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>PID Output Settings</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_7">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>60</y>
+       <width>81</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Z  Out:</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox_Step_Out">
+     <property name="geometry">
+      <rect>
+       <x>290</x>
+       <y>60</y>
+       <width>81</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>DAC 1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DAC 2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DAC 3</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DAC 4</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label_title_12">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>30</y>
+       <width>311</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_title{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>Step Output Settings</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_18">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>140</y>
+       <width>81</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Blink out:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_title_14">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>110</y>
+       <width>181</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_title{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>Blink Output Setting</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox_Blink">
+     <property name="geometry">
+      <rect>
+       <x>290</x>
+       <y>140</y>
+       <width>81</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>1</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>DC Box 1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 3</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 4</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 5</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 6</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 7</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC Box 8</string>
+      </property>
+     </item>
     </widget>
    </widget>
   </widget>

@@ -1,9 +1,11 @@
 import sys
 from PyQt4 import QtGui, QtCore, uic
+from PyQt4.QtCore import pyqtSignal, pyqtSlot
 from twisted.internet.defer import inlineCallbacks, Deferred
 import time
 import pyqtgraph as pg
 import numpy as np
+from DetachableTabWidget import DetachableTabWidget
 
 path = sys.path[0] + r"\ApproachMonitor"
 ApproachMonitorUI, QtBaseClass = uic.loadUiType(path + r"\ApproachMonitor.ui")
@@ -17,9 +19,9 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.setupUi(self)
         self.setupAdditionalUi()
 
-        self.moveDefault()   
+        self.moveDefault()
 
-        self.time_offset = 0    
+        self.time_offset = 0
         self.pllTimeData = np.array([])
         self.deltaFData = np.array([])
         self.phaseErrorData = np.array([])
@@ -50,6 +52,17 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
             
     def setupAdditionalUi(self):
         #Set up UI that isn't easily done from Qt Designer
+        self.dTabWidget = DetachableTabWidget()
+        style = '''QTabWidget::pane { border: 0; }
+                    QTabBar::tab{background: black;
+                    color: rgb(168,168,168);
+                    }
+                    QTabBar::tab:selected {background: rgb(50,50,50);}
+                    '''
+        self.dTabWidget.setStyleSheet(style)
+        
+        self.centralwidget.layout().addWidget(self.dTabWidget)
+        
         self.deltaFPlot = pg.PlotWidget(parent = self)
         self.deltaFPlot.setLabel('left', 'Delta F', units = 'Hz')
         self.deltaFPlot.setLabel('bottom', 'Time', units = 's')
@@ -64,11 +77,14 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.phaseErrorPlot.showAxis('top', show = True)
         self.phaseErrorPlot.setTitle('PLL Error vs. Time (s)')
         
-        self.tab.layout().addWidget(self.deltaFPlot)
-        self.tab.layout().addWidget(self.phaseErrorPlot)
+        tab1 = QtGui.QWidget()
         
-        self.deltaFPlaceholder.close()
-        self.phasePlaceholder.close()
+        tab1_layout = QtGui.QVBoxLayout()
+        tab1_layout.addWidget(self.deltaFPlot)
+        tab1_layout.addWidget(self.phaseErrorPlot)
+        
+        tab1.setLayout(tab1_layout)
+        self.dTabWidget.addTab(tab1, 'PLL Monitor')
         
         self.fdbkDCPlot = pg.PlotWidget(parent = self)
         self.fdbkDCPlot.setLabel('left', 'Feedback DC', units = 'V')
@@ -84,23 +100,36 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.fdbkACPlot.showAxis('top', show = True)
         self.fdbkACPlot.setTitle('Feedback AC vs. Time (s)')
         
-        self.tab_2.layout().addWidget(self.fdbkDCPlot)
-        self.tab_2.layout().addWidget(self.fdbkACPlot)
+        tab2 = QtGui.QWidget()
         
-        self.dcPlaceholder.close()
-        self.acPlaceholder.close()
+        tab2_layout = QtGui.QVBoxLayout()
+        tab2_layout.addWidget(self.fdbkDCPlot)
+        tab2_layout.addWidget(self.fdbkACPlot)
+        
+        tab2.setLayout(tab2_layout)
+        self.dTabWidget.addTab(tab2, 'Feedback Monitor')
         
         self.zPlot = pg.PlotWidget(parent = self)
-        self.zPlot.setGeometry(15,40,641,271)
-        self.zPlot.setLabel('left', 'Attocube Z Extension', units = 'm')
+        self.zPlot.setLabel('left', 'Atto. Z Extension', units = 'm')
         self.zPlot.setLabel('bottom', 'Time', units = 's')
         self.zPlot.showAxis('right', show = True)
         self.zPlot.showAxis('top', show = True)
-        self.zPlot.setTitle('Attocube Z Extension (m) vs. Time (s)')
+        self.zPlot.setTitle('Atto. Z Extension (m) vs. Time (s)')
         
-        self.tab_3.layout().addWidget(self.zPlot)
+        tab3 = QtGui.QWidget()
         
+        tab3_layout = QtGui.QVBoxLayout()
+        tab3_layout.addWidget(self.zPlot)
+        
+        tab3.setLayout(tab3_layout)
+        self.dTabWidget.addTab(tab3, 'Z Monitor')
+
         self.zPlaceholder.close()
+        self.dcPlaceholder.close()
+        self.acPlaceholder.close()
+        self.deltaFPlaceholder.close()
+        self.phasePlaceholder.close()
+        self.tabWidget.close()
         
     def updatePLLPlots(self, deltaF, phaseError):
         if self.first_data_point:

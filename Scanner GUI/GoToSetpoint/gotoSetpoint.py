@@ -46,14 +46,20 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
             #Eventually make this module compatible with Toellner, for now it is not
             if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
                 self.dac_toe = dict['servers']['local']['dac_adc']
+                self.magDevice = 'Toellner 8851'
             elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
                 self.ips = dict['servers']['remote']['ips120']
+                self.magDevice = 'IPS 120-10'
+                
+            self.toeCurChan = dict['channels']['system']['toellner dac current'] - 1
+            self.toeVoltsChan = dict['channels']['system']['toellner dac voltage'] - 1
             
             '''
             Create another connection to labrad in order to have a set of servers opened up in a context
             specific to this module. This allows multiple datavault connections to be editted at the same
             time, or communication with multiple DACs / other devices 
             '''
+            
             from labrad.wrappers import connectAsync
             self.cxn_nsot = yield connectAsync(host = '127.0.0.1', password = 'pass')
             
@@ -67,6 +73,13 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
                 self.blink_server = yield self.cxn_nsot.dac_adc
                 self.blink_server.select_device(dict['devices']['system']['blink device'])
 
+            self.blinkChan = dict['channels']['system']['blink channel'] - 1
+                
+            self.biasChan = dict['channels']['nsot']['nSOT Bias'] - 1
+            self.biasRefChan = dict['channels']['nsot']['Bias Reference'] - 1
+            
+            self.setpointDict = {'field' : 0, 'bias' : 0}
+
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             
@@ -78,19 +91,6 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
             #print 'nsot labrad connect', inst
             #exc_type, exc_obj, exc_tb = sys.exc_info()
             #print 'line num ', exc_tb.tb_lineno
-        
-    def updateSetpointSettings(self, newSettings):
-        self.magDevice = newSettings['Magnet device']
-        self.blinkDevice = newSettings['blink device'] 
-
-        self.biasChan = newSettings['nsot bias output'] - 1
-        self.blinkChan = newSettings['blink'] - 1
-        self.biasRefChan = newSettings['nsot bias input'] - 1
-        self.setpointDict = {'field' : 0, 'bias' : 0}
-
-        if self.magDevice == 'Toellner 8851':
-            self.toeCurChan = newSettings['toellner current'] - 1
-            self.toeVoltsChan = newSettings['toellner volts'] - 1
 
     @inlineCallbacks
     def readInitVals(self, c = None):

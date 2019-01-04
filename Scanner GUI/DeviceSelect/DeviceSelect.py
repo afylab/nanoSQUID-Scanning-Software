@@ -58,21 +58,29 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         'channels':{
                     'system' : {
                         'blink channel':     self.comboBox_BlinkChannel,
-                        'toellner volt':    self.comboBox_ToeVolt,
-                        'toellner current':    self.comboBox_ToeCurr
+                        'toellner dac voltage':     self.comboBox_ToeVolt,
+                        'toellner dac current':  self.comboBox_ToeCurr
                     },
                     'approach and TF' : {
                         'pll input':    self.comboBox_Approach_PLLInput,
-                        'pll output':    self.comboBox_Approach_PLLOutput,
+                        'pll output':   self.comboBox_Approach_PLLOutput,
                         'pid z out':    self.comboBox_Approach_PIDZOut,
-                        'z monitor':    self.comboBox_Approach_ZMonitor
+                        'z monitor':    self.comboBox_Approach_ZMonitor,
+                        'step Z out':   self.comboBox_Approach_StepZOut,
+                        'sum board toggle':    self.comboBox_Approach_SumBoard,
                     },
                     'scan' : {
+                        'z out':        self.comboBox_Scan_ZOut,
+                        'x out':        self.comboBox_Scan_XOut,
+                        'y out':        self.comboBox_Scan_YOut,
                     },
                     'nsot' : {
+                        'Bias Reference':    self.comboBox_nSOT_BiasRef,
+                        'DC Readout':        self.comboBox_nSOT_DC,
+                        'AC Readout':        self.comboBox_nSOT_AC,
+                        'Noise Readout':     self.comboBox_nSOT_Noise,
+                        'nSOT Bias':         self.comboBox_nSOT_Bias, 
                     },
-                    'sample' : {
-                    }
         }
         }
         
@@ -87,7 +95,17 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         
         self.comboBox_Scan_DACADC.currentIndexChanged.connect(self.setScanDACADC)
         
+        self.comboBox_Scan_ZOut.currentIndexChanged.connect(self.setScanZOut)
+        self.comboBox_Scan_XOut.currentIndexChanged.connect(self.setScanXOut)
+        self.comboBox_Scan_YOut.currentIndexChanged.connect(self.setScanYOut)
+        
         self.comboBox_nSOT_DACADC.currentIndexChanged.connect(self.setNSOTDACADC)
+        
+        self.comboBox_nSOT_BiasRef.currentIndexChanged.connect(self.setNSOTBiasRef)
+        self.comboBox_nSOT_Bias.currentIndexChanged.connect(self.setNSOTBias)
+        self.comboBox_nSOT_DC.currentIndexChanged.connect(self.setNSOTDC)
+        self.comboBox_nSOT_AC.currentIndexChanged.connect(self.setNSOTAC)
+        self.comboBox_nSOT_Noise.currentIndexChanged.connect(self.setNSOTNoise)
         
         self.comboBox_MagnetPowerSupply.currentIndexChanged.connect(self.setMagnetPowerSupply)
         self.comboBox_MagnetSupplyDevice.currentIndexChanged.connect(self.setMagnetSupplyDevice)
@@ -104,6 +122,19 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
     def setupAdditionalUi(self):
         #Set up UI that isn't easily done from Qt Designer
         pass
+        
+    def setConfigStatus(self, status):
+        if status:
+            sheet = '''#pushButton_configStatus{
+                        background: rgb(0, 170, 0);
+                        border-radius: 8px;
+                        }'''
+        else:
+            sheet = '''#pushButton_configStatus{
+                        background: rgb(161, 0, 0);
+                        border-radius: 8px;
+                        }'''
+        self.pushButton_configStatus.setStyleSheet(sheet)
         
     def setApproachDACADC(self):
         self.deviceDictionary['devices']['approach and TF']['dac_adc'] = str(self.comboBox_Approach_DACADC.currentText())
@@ -122,10 +153,12 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         
         ComboBox1.addItem(str(self.comboBox_Approach_DACADC.currentText()))
         ComboBox2.addItem(str(self.comboBox_Approach_DACADC.currentText()))
+        self.setConfigStatus(False)
         
     def setApproachDCBox(self):
         self.deviceDictionary['devices']['approach and TF']['dc_box'] = str(self.comboBox_Approach_DCBox.currentText())
         self.label_Approach_DCBox.setText(str(self.comboBox_Approach_DCBox.currentText()))
+        self.setConfigStatus(False)
     
     def setApproachHF2LI(self):
         self.deviceDictionary['devices']['approach and TF']['hf2li'] = str(self.comboBox_Approach_HF2LI.currentText())
@@ -146,12 +179,26 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         
         ComboBox1.addItem(str(self.comboBox_Approach_HF2LI.currentText()))
         ComboBox2.addItem(str(self.comboBox_Approach_HF2LI.currentText()))
+        self.setConfigStatus(False)
         
     def setScanDACADC(self):
         self.deviceDictionary['devices']['scan']['dac_adc'] = str(self.comboBox_Scan_DACADC.currentText())
         self.label_Scan_Device1.setText(str(self.comboBox_Scan_DACADC.currentText()))
         self.label_Scan_Device2.setText(str(self.comboBox_Scan_DACADC.currentText()))
         self.label_Scan_Device3.setText(str(self.comboBox_Scan_DACADC.currentText()))
+        self.setConfigStatus(False)
+        
+    def setScanZOut(self):
+        self.deviceDictionary['channels']['scan']['z out'] = int(self.comboBox_Scan_ZOut.currentIndex())+1
+        self.setConfigStatus(False)
+        
+    def setScanXOut(self):
+        self.deviceDictionary['channels']['scan']['x out'] = int(self.comboBox_Scan_XOut.currentIndex())+1
+        self.setConfigStatus(False)
+        
+    def setScanYOut(self):
+        self.deviceDictionary['channels']['scan']['y out'] = int(self.comboBox_Scan_YOut.currentIndex())+1
+        self.setConfigStatus(False)
         
     def setNSOTDACADC(self):
         self.deviceDictionary['devices']['nsot']['dac_adc'] = str(self.comboBox_nSOT_DACADC.currentText())
@@ -161,6 +208,27 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.label_nSOT_Device3.setText(str(self.comboBox_nSOT_DACADC.currentText()))
         self.label_nSOT_Device4.setText(str(self.comboBox_nSOT_DACADC.currentText()))
         self.label_nSOT_Device5.setText(str(self.comboBox_nSOT_DACADC.currentText()))
+        self.setConfigStatus(False)
+        
+    def setNSOTBiasRef(self):
+        self.deviceDictionary['channels']['nsot']['Bias Reference'] = int(self.comboBox_nSOT_BiasRef.currentIndex())+1
+        self.setConfigStatus(False)
+        
+    def setNSOTBias(self):
+        self.deviceDictionary['channels']['nsot']['nSOT Bias'] = int(self.comboBox_nSOT_Bias.currentIndex())+1
+        self.setConfigStatus(False)
+        
+    def setNSOTDC(self):
+        self.deviceDictionary['channels']['nsot']['DC Readout'] = int(self.comboBox_nSOT_DC.currentIndex())+1
+        self.setConfigStatus(False)
+        
+    def setNSOTAC(self):
+        self.deviceDictionary['channels']['nsot']['AC Readout'] = int(self.comboBox_nSOT_AC.currentIndex())+1
+        self.setConfigStatus(False)
+        
+    def setNSOTNoise(self):
+        self.deviceDictionary['channels']['nsot']['Noise Readout'] = int(self.comboBox_nSOT_Noise.currentIndex())+1
+        self.setConfigStatus(False)
         
     def setMagnetPowerSupply(self):
         self.deviceDictionary['devices']['system']['magnet supply'] = str(self.comboBox_MagnetPowerSupply.currentText())
@@ -178,25 +246,30 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
             self.label_ToeCurrDevice.setVisible(True)
             self.comboBox_ToeVolt.setVisible(True)
             self.comboBox_ToeCurr.setVisible(True)
+        self.setConfigStatus(False)
         
     def setMagnetSupplyDevice(self):
         self.deviceDictionary['devices']['system']['specific supply'] = str(self.comboBox_MagnetSupplyDevice.currentText())
         self.label_ToeVoltDevice.setText(str(self.comboBox_MagnetSupplyDevice.currentText()))
         self.label_ToeCurrDevice.setText(str(self.comboBox_MagnetSupplyDevice.currentText()))
+        self.setConfigStatus(False)
         
     def setBlinkDevice(self):
         self.deviceDictionary['devices']['system']['blink device'] = str(self.comboBox_BlinkDevice.currentText())
         self.label_BlinkDevice.setText(str(self.comboBox_BlinkDevice.currentText()))
+        self.setConfigStatus(False)
         
     def setBlinkChannel(self):
-        self.deviceDictionary['channels']['system']['blink channel'] = str(self.comboBox_BlinkChannel.currentText())
+        self.deviceDictionary['channels']['system']['blink channel'] = int(self.comboBox_BlinkChannel.currentIndex()+1)
+        self.setConfigStatus(False)
         
     def setSampleDACADC(self):
         self.deviceDictionary['devices']['sample']['dac_adc'] = str(self.comboBox_Sample_DACADC.currentText())
+        self.setConfigStatus(False)
         
     def setSampleDCBox(self):
         self.deviceDictionary['devices']['sample']['dc_box'] = str(self.comboBox_Sample_DCBox.currentText())
-
+        self.setConfigStatus(False)
         
     @inlineCallbacks
     def connectLabRAD(self, dict):
@@ -292,12 +365,12 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                         'blink channel':  2,
                     },
                     'approach and TF' : {
-                        'pll input':    'Sig In 1',
-                        'pll output':   'Sig Out 1',
-                        'pid z out':    'Aux Out 1',
-                        'z monitor':    'Aux In 1(<20 kHz)',
-                        'step Z out':   'DAC Out 1', 
-                        'sum board toggle': 'DC BOx 1',
+                        'pll input':    1,
+                        'pll output':   1,
+                        'pid z out':    1,
+                        'z monitor':    1,
+                        'step Z out':   1, 
+                        'sum board toggle': 1,
                     },
                     'scan' : {
                         'z out':        1,
@@ -305,16 +378,12 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                         'y out':        3,
                     },
                     'nsot' : {
-                        'Bias Reference':    1,
-                        'DC Readout':        2,
-                        'AC Readout':        3,
+                        'Bias Reference':    4,
+                        'DC Readout':        3,
+                        'AC Readout':        1,
                         'Noise Readout':     2,
                         'nSOT Bias':         4, 
-                        'nSOT Gate':         3, 
-                    },
-                    'sample' : {
-                        'dac_adc':  self.comboBox_Sample_DACADC,
-                        'dc_box':   self.comboBox_Sample_DCBox
+                        #'nSOT Gate':         3, #implement this later
                     }
         }
         }
@@ -352,13 +421,24 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         f.close()
         
         entries = message.splitlines()
-        for entry in entries:
+        #First 5 lines encode the device information
+        for entry in entries[0:5]:
             entry = entry.split(';')
             name = entry[0]
             entry.remove(entry[0])
             for item in entry:
                 item = item.split(',')
                 self.deviceDictionary['devices'][name][item[0]] = item[1]
+        
+        #Next 5 lines encode the channel information
+        for entry in entries[6:11]:
+            entry = entry.split(';')
+            name = entry[0]
+            entry.remove(entry[0])
+            for item in entry:
+                item = item.split(',')
+                self.deviceDictionary['channels'][name][item[0]] = int(item[1])
+                self.GUIDictionary['channels'][name][item[0]].setCurrentIndex(int(item[1])-1)
         
         self.checkLoadedConfiguration()
         
@@ -411,6 +491,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                 yield self.deviceDictionary['servers']['local']['dac_adc'].select_device(self.deviceDictionary['devices']['system']['specific supply'])
             
             self.newDeviceInfo.emit(self.deviceDictionary)
+            self.setConfigStatus(True)
         except Exception as inst:
             print 'check Loaded', inst
             print 'on line: ', sys.exc_traceback.tb_lineno
@@ -420,24 +501,33 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         f.write(self.configFileName)
         f.close()
         print 'Devices: ', self.deviceDictionary['devices']
+        print 'Channels: ', self.deviceDictionary['channels']
 
     def saveConfigurationInfo(self):
         file = str(QtGui.QFileDialog.getSaveFileName(self, directory = path, filter = "Text files (*.txt)"))
-        f = open(file,'w')
-        message  = ''
-        #For now, only adding devices into the configuration file
-        for section, dev_list in self.deviceDictionary['devices'].iteritems():
-            message = message + section + ';'
-            for dev, dev_name in dev_list.iteritems():
-                message = message + str(dev) + ',' + str(dev_name) + ';'
-            message = message[:-1] + '\n'
-        
-        #Add channel info here eventually
-        f.write(message)
-        f.close()
+        if len(file) >0:
+            f = open(file,'w')
+            message  = ''
+            #For now, only adding devices into the configuration file
+            for section, dev_list in self.deviceDictionary['devices'].iteritems():
+                message = message + section + ';'
+                for dev, dev_name in dev_list.iteritems():
+                    message = message + str(dev) + ',' + str(dev_name) + ';'
+                message = message[:-1] + '\n'
             
-        self.configFileName = file.split('/')[-1]
-        self.label_currentConfigFile.setText(self.configFileName)
+            message = message + '\n'
+            
+            for section, dev_list in self.deviceDictionary['channels'].iteritems():
+                message = message + section + ';'
+                for dev, dev_name in dev_list.iteritems():
+                    message = message + str(dev) + ',' + str(dev_name) + ';'
+                message = message[:-1] + '\n'
+            
+            f.write(message)
+            f.close()
+                
+            self.configFileName = file.split('/')[-1]
+            self.label_currentConfigFile.setText(self.configFileName)
         
     # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous 
     # delay that allows other labrad / pyqt methods to run

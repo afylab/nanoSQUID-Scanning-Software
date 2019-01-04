@@ -97,6 +97,53 @@ background: black
        </spacer>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButton_configStatus">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>16</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If red, then the current configuration has not been loaded into the software. Make sure you save and load the configuration for it to take effect. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">#pushButton_configStatus{
+background: rgb(161, 0, 0);
+ border-radius: 8px;
+}</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_16">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
        <widget class="QPushButton" name="push_loadConfig">
         <property name="toolTip">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Loads configuration file and, if valid, sends it out to the rest of the program. &lt;/p&gt;&lt;p&gt;Only when a file is loaded is the information sent to the rest of the program. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -734,7 +781,7 @@ border: 2px solid rgb(168,168,168)
             </widget>
            </item>
            <item row="7" column="2">
-            <widget class="QComboBox" name="comboBox_7">
+            <widget class="QComboBox" name="comboBox_Approach_StepZOut">
              <item>
               <property name="text">
                <string>DAC Out 1</string>
@@ -779,7 +826,7 @@ border: 2px solid rgb(168,168,168)
             </widget>
            </item>
            <item row="8" column="2">
-            <widget class="QComboBox" name="comboBox_8">
+            <widget class="QComboBox" name="comboBox_Approach_SumBoard">
              <item>
               <property name="text">
                <string>DC Box 1</string>
@@ -1190,7 +1237,7 @@ border: 2px solid rgb(168,168,168)
             </widget>
            </item>
            <item row="2" column="2">
-            <widget class="QComboBox" name="comboBox_25">
+            <widget class="QComboBox" name="comboBox_Scan_XOut">
              <property name="currentIndex">
               <number>1</number>
              </property>
@@ -1217,7 +1264,7 @@ border: 2px solid rgb(168,168,168)
             </widget>
            </item>
            <item row="3" column="2">
-            <widget class="QComboBox" name="comboBox_26">
+            <widget class="QComboBox" name="comboBox_Scan_YOut">
              <property name="currentIndex">
               <number>2</number>
              </property>
@@ -1244,7 +1291,7 @@ border: 2px solid rgb(168,168,168)
             </widget>
            </item>
            <item row="1" column="2">
-            <widget class="QComboBox" name="comboBox_27">
+            <widget class="QComboBox" name="comboBox_Scan_ZOut">
              <item>
               <property name="text">
                <string>DAC Out 1</string>
@@ -1508,7 +1555,7 @@ border: 2px solid rgb(168,168,168)
             </widget>
            </item>
            <item row="5" column="2">
-            <widget class="QComboBox" name="comboBox_34">
+            <widget class="QComboBox" name="comboBox_nSOT_Bias">
              <property name="currentIndex">
               <number>3</number>
              </property>
@@ -1535,7 +1582,7 @@ border: 2px solid rgb(168,168,168)
             </widget>
            </item>
            <item row="1" column="2">
-            <widget class="QComboBox" name="comboBox_35">
+            <widget class="QComboBox" name="comboBox_nSOT_BiasRef">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -1568,7 +1615,7 @@ border: 2px solid rgb(168,168,168)
             </widget>
            </item>
            <item row="2" column="2">
-            <widget class="QComboBox" name="comboBox_36">
+            <widget class="QComboBox" name="comboBox_nSOT_DC">
              <property name="currentIndex">
               <number>2</number>
              </property>
@@ -1595,7 +1642,7 @@ border: 2px solid rgb(168,168,168)
             </widget>
            </item>
            <item row="3" column="2">
-            <widget class="QComboBox" name="comboBox_37">
+            <widget class="QComboBox" name="comboBox_nSOT_AC">
              <property name="currentIndex">
               <number>0</number>
              </property>
@@ -1622,7 +1669,7 @@ border: 2px solid rgb(168,168,168)
             </widget>
            </item>
            <item row="4" column="2">
-            <widget class="QComboBox" name="comboBox_38">
+            <widget class="QComboBox" name="comboBox_nSOT_Noise">
              <property name="currentIndex">
               <number>1</number>
              </property>

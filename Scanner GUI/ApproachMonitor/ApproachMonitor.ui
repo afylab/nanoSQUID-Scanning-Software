@@ -155,12 +155,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
       <property name="currentIndex">
        <number>0</number>
       </property>
-      <widget class="QWidget" name="tab">
-       <property name="styleSheet">
-        <string notr="true">#tab{
-background: black
-}</string>
-       </property>
+      <widget class="QWidget" name="tab" native="true">
        <attribute name="title">
         <string>PLL Monitor</string>
        </attribute>
@@ -200,12 +195,7 @@ background: grey
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_2">
-       <property name="styleSheet">
-        <string notr="true">#tab_2{
-background: black
-}</string>
-       </property>
+      <widget class="QWidget" name="tab_2" native="true">
        <attribute name="title">
         <string>Feedback Monitor</string>
        </attribute>
@@ -245,12 +235,7 @@ background: grey
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_3">
-       <property name="styleSheet">
-        <string notr="true">#tab_3{
-background: black
-}</string>
-       </property>
+      <widget class="QWidget" name="tab_3" native="true">
        <attribute name="title">
         <string>Z Monitor</string>
        </attribute>
