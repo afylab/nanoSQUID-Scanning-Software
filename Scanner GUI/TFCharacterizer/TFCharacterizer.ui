@@ -1304,7 +1304,7 @@ color:rgb(168,168,168)
                 <string notr="true"/>
                </property>
                <property name="text">
-                <string>10m</string>
+                <string>1m</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

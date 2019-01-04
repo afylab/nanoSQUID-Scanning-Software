@@ -42,14 +42,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         #initialize scanning area and plotted data information
         #Lower left corner of the square (assuming unrotated)
-        self.x = -2.5e-6
-        self.y = -2.5e-6
+        self.x = -15e-6
+        self.y = -15e-6
         #Center of the square
         self.Xc = 0.0
         self.Yc = 0.0
         #Height and width of scanning square
-        self.H = 5e-6
-        self.W = 5e-6
+        self.H = 30e-6
+        self.W = 30e-6
         #Aspect ratio defined as H/W
         self.SquareAspectRatio = 1.0
         #Angle of scanning square in degrees
@@ -59,10 +59,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.currAngle = 0.0
         self.currXc = 0.0
         self.currYc = 0.0
-        self.currH = 2e-5
-        self.currW = 2e-5
-        self.curr_x = -1e-5
-        self.curr_y = -1e-5
+        self.currH = 3e-5
+        self.currW = 3e-5
+        self.curr_x = -1.5e-5
+        self.curr_y = -1.5e-5
         self.currLine = -1
 
         #Number of pixels taken in each direction, and the ratio of pixels to lines
@@ -71,9 +71,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.PixelsAspectRatio = 1.0
         
         #Measurement information
-        self.linearSpeed = 78.13e-6
+        self.linearSpeed = 2e-6
         self.delayTime = 1e-2
-        self.lineTime = 64e-3
+        self.lineTime = 15
         
         #Initial attocube position in volts as controlled by the scanning DAC ADC
         self.Atto_X_Voltage = 0.0
@@ -109,30 +109,32 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         #0 corresponds to no blinking, 1 before trace, 2 before trace and retrace
         self.blinkMode = 0
-        #DC Box output for blinking (1 indexed)
-        self.blinkOutput = 2
         
         #Channel 0 corresponds to height, and 1 to input 1, and 2 to input 2
         self.channel = 0
                 
-        self.inputs = {
-                'Z in'                : 1,         # 1 Indexed DAC input into which the voltage corresponding to the Z atto motion 
-                'Z conversion'        : 1,         # Conversion from volts to Z Units specified below. Should be units = Volts / conversion_factor
-                'Z units'             : 'm',       # Units 
-                'Input 1 name'        : 'Input 1', # String with the name of Input 1
-                'Input 1 in'          : 2,         # 1 Indexed DAC input for Input 1
-                'Input 1 conversion'  : 1,         # Conversion from volts to Input 1 units specified below. Should be units = Volts / conversion_factor
-                'Input 1 unit'        : 'V',       # Units of input 1. Default of nothing shows Volts
-                'Input 2 name'        : 'Input 2', # String with the name of Input 2
-                'Input 2 in'          : 3,         # 1 Indexed DAC input for Input 2
-                'Input 2 conversion'  : 1,         # Conversion from volts to Input 2 units specified below. Should be units = Volts / conversion_factor
-                'Input 2 unit'        : 'V',       # Units of input 2
-                }
+        inputDict  = {
+        'Name'              : 'Input', #Name of the input
+        'Conversion'        : 1,       #Conversion from volts to the units specified. Shoudl be units = volts / conversion_factor
+        'Units'             : 'V',     #Units of the input
+        'ADC Channel'       : 1        #ADC Channel 1 indexed
+        }
                 
+        #Array of 8 dictionaires containing the information for each input
+        self.inputs = [inputDict.copy(),inputDict.copy(),inputDict.copy(),inputDict.copy(),inputDict.copy(),inputDict.copy(),inputDict.copy(),inputDict.copy()]
+        #Initialize dictionaries to appropriate defaults
+        self.inputs[0]['Name'] = 'Z'
+        self.inputs[0]['ADC Channel'] = 1
+        self.inputs[0]['Units'] = 'm'
+        for i in range(1,8):
+            self.inputs[i]['Name'] = 'Input ' + str(i+1)
+            self.inputs[i]['ADC Channel'] = i+1
+            
+        #The outputs are kept in a dictionary. Values are determined by the device select module and loaded in the connectLabRAD function
         self.outputs = {
                 'z out'               : 1,         # 1 indexed DAC output that goes to constant gain on Z 
                 'x out'               : 2,         # 1 indexed DAC output that goes to X
-                'y out'               : 3,          # 1 indexed DAC output that goes to Y
+                'y out'               : 3,         # 1 indexed DAC output that goes to Y
                 'blink out'           : 2,         # 1 indexed DC Box output that goes to blinking
         }
         
@@ -165,6 +167,17 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_toggleSmooth.clicked.connect(self.toggleSmoothScan)
         self.push_ResetScan.clicked.connect(self.resetScan)
         
+        self.pushButton_RemoveInput.clicked.connect(lambda: self.removeInput(0))
+        self.pushButton_RemoveInput2.clicked.connect(lambda: self.removeInput(1))
+        self.pushButton_RemoveInput3.clicked.connect(lambda: self.removeInput(2))
+        self.pushButton_RemoveInput4.clicked.connect(lambda: self.removeInput(3))
+        self.pushButton_RemoveInput5.clicked.connect(lambda: self.removeInput(4))
+        self.pushButton_RemoveInput6.clicked.connect(lambda: self.removeInput(5))
+        self.pushButton_RemoveInput7.clicked.connect(lambda: self.removeInput(6))
+        self.pushButton_RemoveInput8.clicked.connect(lambda: self.removeInput(7))
+        
+        self.pushButton_addInput.clicked.connect(self.addInput)
+        
         #Connect lineEdits
         self.lineEdit_Xc.editingFinished.connect(self.updateXc)
         self.lineEdit_Yc.editingFinished.connect(self.updateYc)
@@ -180,12 +193,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_YTilt.editingFinished.connect(self.updateYTilt)
         self.lineEdit_Xset.editingFinished.connect(self.updateXset)
         self.lineEdit_Yset.editingFinished.connect(self.updateYset)
-        self.lineEdit_Input1Name.editingFinished.connect(self.setInput1Name)
-        self.lineEdit_Input2Name.editingFinished.connect(self.setInput2Name)
-        self.lineEdit_Input1Conversion.editingFinished.connect(self.setInput1Conversion)
-        self.lineEdit_Input2Conversion.editingFinished.connect(self.setInput2Conversion)
-        self.lineEdit_Input1Unit.editingFinished.connect(self.setInput1Unit)
-        self.lineEdit_Input2Unit.editingFinished.connect(self.setInput2Unit)
         
         self.checkBox.toggled.connect(self.toggleROIVisibility)
                 
@@ -194,14 +201,42 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.comboBox_scanMode.activated[str].connect(self.updateScanMode)
         self.comboBox_Channel.currentIndexChanged.connect(self.selectChannel)
         self.comboBox_blinkMode.currentIndexChanged.connect(self.setBlinkMode)
-        self.comboBox_ZInput.currentIndexChanged.connect(self.setZInput)
-        self.comboBox_Input1.currentIndexChanged.connect(self.setInput1)
-        self.comboBox_Input2.currentIndexChanged.connect(self.setInput2)
         
-        self.comboBox_ZOutput.currentIndexChanged.connect(self.setZOutput)
-        self.comboBox_XOutput.currentIndexChanged.connect(self.setXOutput)
-        self.comboBox_YOutput.currentIndexChanged.connect(self.setYOutput)
-        self.comboBox_BlinkOutput.currentIndexChanged.connect(self.setBlinkOutput)
+        self.comboBox_Input1.currentIndexChanged.connect(lambda: self.setInputChannel(0,self.comboBox_Input1))
+        self.comboBox_Input2.currentIndexChanged.connect(lambda: self.setInputChannel(1,self.comboBox_Input2))
+        self.comboBox_Input3.currentIndexChanged.connect(lambda: self.setInputChannel(2,self.comboBox_Input3))
+        self.comboBox_Input4.currentIndexChanged.connect(lambda: self.setInputChannel(3,self.comboBox_Input4))
+        self.comboBox_Input5.currentIndexChanged.connect(lambda: self.setInputChannel(4,self.comboBox_Input5))
+        self.comboBox_Input6.currentIndexChanged.connect(lambda: self.setInputChannel(5,self.comboBox_Input6))
+        self.comboBox_Input7.currentIndexChanged.connect(lambda: self.setInputChannel(6,self.comboBox_Input7))
+        self.comboBox_Input8.currentIndexChanged.connect(lambda: self.setInputChannel(7,self.comboBox_Input8))
+        
+        self.lineEdit_Input1Name.editingFinished.connect(lambda: self.setInputName(0, self.lineEdit_Input1Name))
+        self.lineEdit_Input2Name.editingFinished.connect(lambda: self.setInputName(1, self.lineEdit_Input2Name))
+        self.lineEdit_Input3Name.editingFinished.connect(lambda: self.setInputName(2, self.lineEdit_Input3Name))
+        self.lineEdit_Input4Name.editingFinished.connect(lambda: self.setInputName(3, self.lineEdit_Input4Name))
+        self.lineEdit_Input5Name.editingFinished.connect(lambda: self.setInputName(4, self.lineEdit_Input5Name))
+        self.lineEdit_Input6Name.editingFinished.connect(lambda: self.setInputName(5, self.lineEdit_Input6Name))
+        self.lineEdit_Input7Name.editingFinished.connect(lambda: self.setInputName(6, self.lineEdit_Input7Name))
+        self.lineEdit_Input8Name.editingFinished.connect(lambda: self.setInputName(7, self.lineEdit_Input8Name))
+        
+        self.lineEdit_Input1Conversion.editingFinished.connect(lambda: self.setInputConversion(0, self.lineEdit_Input1Conversion))
+        self.lineEdit_Input2Conversion.editingFinished.connect(lambda: self.setInputConversion(1, self.lineEdit_Input2Conversion))
+        self.lineEdit_Input3Conversion.editingFinished.connect(lambda: self.setInputConversion(2, self.lineEdit_Input3Conversion))
+        self.lineEdit_Input4Conversion.editingFinished.connect(lambda: self.setInputConversion(3, self.lineEdit_Input4Conversion))
+        self.lineEdit_Input5Conversion.editingFinished.connect(lambda: self.setInputConversion(4, self.lineEdit_Input5Conversion))
+        self.lineEdit_Input6Conversion.editingFinished.connect(lambda: self.setInputConversion(5, self.lineEdit_Input6Conversion))
+        self.lineEdit_Input7Conversion.editingFinished.connect(lambda: self.setInputConversion(6, self.lineEdit_Input7Conversion))
+        self.lineEdit_Input8Conversion.editingFinished.connect(lambda: self.setInputConversion(7, self.lineEdit_Input8Conversion))
+        
+        self.lineEdit_Input1Unit.editingFinished.connect(lambda: self.setInputUnit(0, self.lineEdit_Input1Unit))
+        self.lineEdit_Input2Unit.editingFinished.connect(lambda: self.setInputUnit(1, self.lineEdit_Input2Unit))
+        self.lineEdit_Input3Unit.editingFinished.connect(lambda: self.setInputUnit(2, self.lineEdit_Input3Unit))
+        self.lineEdit_Input4Unit.editingFinished.connect(lambda: self.setInputUnit(3, self.lineEdit_Input4Unit))
+        self.lineEdit_Input5Unit.editingFinished.connect(lambda: self.setInputUnit(4, self.lineEdit_Input5Unit))
+        self.lineEdit_Input6Unit.editingFinished.connect(lambda: self.setInputUnit(5, self.lineEdit_Input6Unit))
+        self.lineEdit_Input7Unit.editingFinished.connect(lambda: self.setInputUnit(6, self.lineEdit_Input7Unit))
+        self.lineEdit_Input8Unit.editingFinished.connect(lambda: self.setInputUnit(7, self.lineEdit_Input8Unit))
         
         #ROI in trace plot
         self.ROI.sigRegionChanged.connect(self.updateROI)
@@ -245,15 +280,23 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             curr_folder = yield self.gen_dv.cd()
             yield self.dv.cd(curr_folder)
             
+            #Similarly uses that extra connection so that we can talk to the scan dac at the same time as other dacs
             self.dac = yield self.cxn_scan.dac_adc
             self.dac.select_device(dict['devices']['scan']['dac_adc'])
                 
+            self.outputs['z out'] = dict['channels']['scan']['z out']
+            self.outputs['x out'] = dict['channels']['scan']['x out']
+            self.outputs['y out'] = dict['channels']['scan']['y out']
+                
+            #Create a connection to the proper device for blinking
             if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
                 self.blink_server = yield self.cxn_scan.ad5764_dcbox
                 self.blink_server.select_device(dict['devices']['system']['blink device'])
             elif dict['devices']['system']['blink device'].startswith('DA'):
                 self.blink_server = yield self.cxn_scan.dac_adc
                 self.blink_server.select_device(dict['devices']['system']['blink device'])
+            
+            self.outputs['blink out'] = dict['channels']['system']['blink channel']
             
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -358,7 +401,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Determine plot scales
         self.xscale, self.yscale = self.currW / self.lines, self.currH / self.pixels
 
-        #Create default dataset for initial plots. lines x pixels x 3 (Z info and B info and AC info)
+        #Create default dataset for initial plots. lines x pixels x 3, since by default start with 3 inputs
         pxsize = (3, self.pixels, self.lines)
         #data and data_retrace contain only the raw data
         self.data = np.full(pxsize, self.randomFill)
@@ -393,7 +436,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         #Set up UI that isn't easily done from Qt Designer
         self.traceLinePlot = pg.PlotWidget(parent = self)
-        self.traceLinePlot.setLabel('left', 'Z Extension', units = 'm')
+        self.traceLinePlot.setLabel('left', 'Z', units = 'm')
         self.traceLinePlot.setLabel('bottom', 'Position', units = 'm')
         self.traceLinePlot.showAxis('right', show = True)
         self.traceLinePlot.showAxis('top', show = True)
@@ -405,7 +448,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.horizontalLayout_3.addItem(horizontalSpacer)
 
         self.retraceLinePlot = pg.PlotWidget(parent = self)
-        self.retraceLinePlot.setLabel('left', 'Z Extension', units = 'm')
+        self.retraceLinePlot.setLabel('left', 'Z', units = 'm')
         self.retraceLinePlot.setLabel('bottom', 'Position', units = 'm')
         self.retraceLinePlot.showAxis('right', show = True)
         self.retraceLinePlot.showAxis('top', show = True)
@@ -414,12 +457,26 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.horizontalLayout_3.addWidget(self.retraceLinePlot)
         self.horizontalLayout_3.addItem(horizontalSpacer)
         
+        #Below is array formatted GUIs. Each grid frame contains the GUI associated with an input. gridFrame 1 has the GUI associated with input 1, etc... 
+        self.inputFrames = [self.gridFrame, self.gridFrame_2, self.gridFrame_3, self.gridFrame_4, self.gridFrame_5, self.gridFrame_6, self.gridFrame_7, self.gridFrame_8]
+        #Below is an arrray keeping track of whether or not an input is "active", meaning visible on the top right of the scan control window. 
+        self.inputActive = [True, True, True, True, True, True, True, True]
+        #An array to keep track of the order of the inputs at the top right of the scan window. All the inputs in this array are "active", meaning they will be measured in a scan. 
+        self.inputActiveOrder = [1, 2, 3, 4, 5, 6, 7, 8]
+        #Start with the first three inputs by default
+        self.removeInput(3)
+        self.removeInput(4)
+        self.removeInput(5)
+        self.removeInput(6)
+        self.removeInput(7)
+        self.inputScanOrder = [1,2,3]
+        
     def setupScanningArea(self):
         #ROI and ROI3 and the trace, and retrace ROIs
         #ROI2 is the minimap ROI
-        self.ROI = pg.RectROI((-2.5e-6,-2.5e-6),(5e-6,5e-6), movable = True)
-        self.ROI2 = pg.RectROI((-2.5e-6,-2.5e-6),(5e-6,5e-6), movable = True)
-        self.ROI3 = pg.RectROI((-2.5e-6,-2.5e-6),(5e-6,5e-6), movable = True)
+        self.ROI = pg.RectROI((self.x,self.y),(self.W,self.H), movable = True)
+        self.ROI2 = pg.RectROI((self.x,self.y),(self.W,self.H), movable = True)
+        self.ROI3 = pg.RectROI((self.x,self.y),(self.W,self.H), movable = True)
         
         self.view.addItem(self.ROI)
         self.view2.addItem(self.ROI2)
@@ -508,7 +565,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.view2.setXRange(-self.x_meters_max/2 - 2.0e-7,self.x_meters_max/2,0)
         self.view2.setYRange(-self.y_meters_max/2,self.y_meters_max/2 + 2.0e-7,0)
         
-        self.lineEdit_ZConversion.setText(formatNum(self.z_volts_to_meters))
+        self.lineEdit_Input1Conversion.setText(formatNum(self.z_volts_to_meters))
+        self.inputs[0]['Conversion'] = self.z_volts_to_meters
         
         self.updatePosition()
         self.updateFrameTime()
@@ -636,15 +694,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def selectChannel(self):
         self.channel = self.comboBox_Channel.currentIndex()
-        if self.channel == 0:
-            self.traceLinePlot.setLabel('left', 'Z Extension', units = 'm')
-            self.retraceLinePlot.setLabel('left', 'Z Extension', units = 'm')
-        elif self.channel == 1:
-            self.traceLinePlot.setLabel('left', self.inputs['Input 1 name'], units = self.inputs['Input 1 unit'])
-            self.retraceLinePlot.setLabel('left', self.inputs['Input 1 name'], units = self.inputs['Input 1 unit'])
-        elif self.channel == 2:
-            self.traceLinePlot.setLabel('left', self.inputs['Input 2 name'], units = self.inputs['Input 2 unit'])
-            self.retraceLinePlot.setLabel('left', self.inputs['Input 2 name'], units = self.inputs['Input 2 unit'])
+        self.traceLinePlot.setLabel('left', self.inputs[self.inputActiveOrder[self.channel]-1]['Name'], units = self.inputs[self.inputActiveOrder[self.channel]-1]['Units'])
+        self.retraceLinePlot.setLabel('left', self.inputs[self.inputActiveOrder[self.channel]-1]['Name'], units = self.inputs[self.inputActiveOrder[self.channel]-1]['Units'])
         self.refreshPlotData()
         
     def setBlinkMode(self):
@@ -970,10 +1021,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         if isinstance(val,float):
             W = val
             if self.FrameLocked:
-                H = self.W * self.SquareAspectRatio
+                H = W * self.SquareAspectRatio
             else:
                 H = self.H
-
+            
             x = self.Xc + H*np.sin(self.angle*np.pi/180)/2 - W*np.cos(self.angle*np.pi/180)/2
             y = self.Yc - H*np.cos(self.angle*np.pi/180)/2 - W*np.sin(self.angle*np.pi/180)/2
             
@@ -1210,124 +1261,120 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_Xcurr.setText(formatNum(xpos))
         self.lineEdit_Ycurr.setText(formatNum(ypos))
         
-    def setZInput(self):
-        self.inputs['Z in'] = self.comboBox_ZInput.currentIndex()+1
-        print self.inputs
-        
-    def setInput1(self):
-        self.inputs['Input 1 in'] = self.comboBox_Input1.currentIndex()+1
-        print self.inputs
-        
-    def setInput2(self):
-        self.inputs['Input 2 in'] = self.comboBox_Input2.currentIndex()+1
-        print self.inputs
-        
-    def setInput1Name(self):
-        self.inputs['Input 1 name'] = str(self.lineEdit_Input1Name.text())
-        self.comboBox_Channel.setItemText(1, self.lineEdit_Input1Name.text())
-        print self.inputs
-        
-    def setInput2Name(self):
-        self.inputs['Input 2 name'] = str(self.lineEdit_Input2Name.text())
-        self.comboBox_Channel.setItemText(2, self.lineEdit_Input2Name.text())
-        print self.inputs
-        
-    def setInput1Conversion(self):
-        text = str(self.lineEdit_Input1Conversion.text())
-        val = readNum(text, self, False)
-        if isinstance(val,float):
-            self.inputs['Input 1 conversion'] = val
-        self.lineEdit_Input1Conversion.setText(formatNum(self.inputs['Input 1 conversion']))
-    
-    def setInput2Conversion(self):
-        text = str(self.lineEdit_Input2Conversion.text())
-        val = readNum(text, self, False)
-        if isinstance(val,float):
-            self.inputs['Input 2 conversion'] = val
-        self.lineEdit_Input2Conversion.setText(formatNum(self.inputs['Input 2 conversion']))
-    
-    def setInput1Unit(self):
-        self.inputs['Input 1 unit'] = str(self.lineEdit_Input1Unit.text())
-    
-    def setInput2Unit(self):
-        self.inputs['Input 2 unit'] = str(self.lineEdit_Input2Unit.text())
-        
-    def setZOutput(self):
-        self.outputs['z out'] = self.comboBox_ZOutput.currentIndex()+1
-
-    def setXOutput(self):
-        self.outputs['x out'] = self.comboBox_XOutput.currentIndex()+1
-        
-    def setYOutput(self):
-        self.outputs['y out'] = self.comboBox_YOutput.currentIndex()+1
-        
-    def setBlinkOutput(self):
-        self.outputs['blink out'] = self.comboBox_BlinkOutput.currentIndex()+1
-        
     def updateFrameTime(self):
-        #These speeds are calculated using the manually set delay values
-        lineContribution = 2*self.lines * self.lineTime
-        if self.scanSmooth:
-            pixelContribution = (self.lines-1) * self.H / (self.linearSpeed*self.lines)
-        else:
-            pixelContribution = 0
-        
-        #Next we consider the unavoidable delays not accounted for in speed calcualtions. 
-        line_x = self.W * np.cos(np.pi*self.angle/180) * self.x_volts_to_meters
-        line_y = self.W * np.sin(np.pi*self.angle/180) * self.y_volts_to_meters
-
-        line_points = int(np.maximum(np.absolute(line_x / (300e-6)), np.absolute(line_y / (300e-6))))
-        
-        line_ADC = self.pixels
-        if self.scanSmooth:
-            line_DAC = np.maximum(line_points, self.pixels)
-        else:
-            line_DAC = self.pixels
-
-        pixel_x = -self.H * np.sin(np.pi*self.angle/180) * self.x_volts_to_meters / (self.lines - 1)
-        pixel_y = self.H * np.cos(np.pi*self.angle/180) * self.y_volts_to_meters / (self.lines - 1)
-        
-        pixel_points = int(np.maximum(np.absolute(pixel_x / (300e-6)), np.absolute(pixel_y / (300e-6))))
-        if pixel_points == 0:
-            pixel_points = 1
+        try:
+            #These speeds are calculated using the manually set delay values
+            lineContribution = 2*self.lines * self.lineTime
+            if self.scanSmooth:
+                pixelContribution = (self.lines-1) * self.H / (self.linearSpeed*self.lines)
+            else:
+                pixelContribution = 0
             
-        #Pixel_ADC should be 0, but causes a bug in the code. So currently set to 1
-        pixel_ADC = 1
-        if self.scanSmooth:
-            pixel_DAC = pixel_points
-        else:
-            pixel_DAC = 1
-            
-        #Assumed conversion time of 425 us for ADC (determined experimentally, much larger than it should be but hey). Multiplied by 3 because reading 3 channels
-        #on a line scan, and only 1 on the pixel scan (that ends up thrown out). 
-        conversionContribution = 0.000425*(2*line_ADC*3*self.lines + pixel_ADC*(self.lines-1))
-        #Assumed setting time of 48 us for the DAC (determined experimentally, much larger than it should be). Multiplied by either 2 or 3 depending on if scanning
-        #in feedback (z is not buffer ramped) or constant height (z is controlled) 
-        if self.scanMode == 'Constant Height':
-            settlingContribution = 0.000048*(2*line_DAC*3*self.lines + pixel_DAC*(self.lines-1))
-        else:
-            settlingContribution = 0.000048*(2*line_DAC*2*self.lines + pixel_DAC*(self.lines-1))
-        
-        #Assume 0.02 seconds taken for each buffer ramp call
-        #3 communications per line, trace, retrace, and pixel step. 
-        communicationContribution = 3 * self.lines * 0.02
-        
-        #Each blink takes ~ 0.6 seconds
-        blinkContribution = 0.6 * self.blinkMode * self.lines
-        
-        #Graphing contribution. Takes about 15 ms to update the graph. This happens once per line
-        graphContribution = 0.015*self.lines
+            #Next we consider the unavoidable delays not accounted for in speed calcualtions. 
+            line_x = self.W * np.cos(np.pi*self.angle/180) * self.x_volts_to_meters
+            line_y = self.W * np.sin(np.pi*self.angle/180) * self.y_volts_to_meters
 
-        self.FrameTime = lineContribution + pixelContribution + blinkContribution + communicationContribution + conversionContribution + settlingContribution+graphContribution
-        self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
+            line_points = int(np.maximum(np.absolute(line_x / (300e-6)), np.absolute(line_y / (300e-6))))
+            
+            line_ADC = self.pixels
+            if self.scanSmooth:
+                line_DAC = np.maximum(line_points, self.pixels)
+            else:
+                line_DAC = self.pixels
+
+            pixel_x = -self.H * np.sin(np.pi*self.angle/180) * self.x_volts_to_meters / (self.lines - 1)
+            pixel_y = self.H * np.cos(np.pi*self.angle/180) * self.y_volts_to_meters / (self.lines - 1)
+            
+            pixel_points = int(np.maximum(np.absolute(pixel_x / (300e-6)), np.absolute(pixel_y / (300e-6))))
+            if pixel_points == 0:
+                pixel_points = 1
+                
+            #Pixel_ADC should be 0, but causes a bug in the code. So currently set to 1
+            pixel_ADC = 1
+            if self.scanSmooth:
+                pixel_DAC = pixel_points
+            else:
+                pixel_DAC = 1
+                
+            #Assumed conversion time of 465 us for ADC (determined experimentally, much larger than it should be but hey). Multiplied by the number of channels read
+            #on a line scan, and only 1 on the pixel scan (that ends up thrown out). 
+            #Previous value assumes buffered differential input to 16 bit ADC. Unbuffered / non differential ADC was 425 us. Discrepency might just be from experimental method. 
+            num = len(self.inputActiveOrder)
+            conversionContribution = 0.000465*(2*line_ADC*num*self.lines + pixel_ADC*(self.lines-1))
+            
+            #Assumed setting time of 71.4 us for the DAC when scanning with 2 DAC outputs, and 69.5 us when scanning with 3 DAC outputs. 
+            #(determined experimentally, much larger than it should be). Multiplied by either 2 or 3 depending on if scanning
+            #in feedback (z is not buffer ramped) or constant height (z is controlled) 
+            #Previous value assumes a 20 bit DAC. For a 16 bit DAC, the value is 48 us. Also experimentally determined. 
+            if self.scanMode == 'Constant Height':
+                settlingContribution = 0.0000695*(2*line_DAC*3*self.lines + 3*pixel_DAC*(self.lines-1))
+            else:
+                settlingContribution = 0.0000714*(2*line_DAC*2*self.lines + 2*pixel_DAC*(self.lines-1))
+            
+            #Assume 0.02 seconds taken for each buffer ramp call
+            #3 communications per line, trace, retrace, and pixel step. 
+            communicationContribution = 3 * self.lines * 0.02
+            
+            #Each blink takes ~ 0.6 seconds
+            blinkContribution = 0.6 * self.blinkMode * self.lines
+            
+            #Graphing contribution. Takes about 15 ms to update the graph. This happens once per line
+            graphContribution = 0.015*self.lines
+
+            self.FrameTime = lineContribution + pixelContribution + blinkContribution + communicationContribution + conversionContribution + settlingContribution+graphContribution
+            self.lineEdit_FrameTime.setText(formatNum(self.FrameTime))
+        except AttributeError:
+            pass
+#-----------------------------------------------------------------------------------------#
+    '''The following section deals with managing inputs'''
+        
+    def removeInput(self, input):
+        self.scrollAreaWidgetContents.layout().removeWidget(self.inputFrames[input])
+        self.inputFrames[input].setParent(None)
+        self.inputActive[input] = False
+        self.inputActiveOrder.remove(input+1)
+        self.updateFrameTime()
+        
+    def addInput(self):
+        try:
+            num = self.inputActive.index(False)
+            self.scrollAreaWidgetContents.layout().insertWidget(self.scrollAreaWidgetContents.layout().count()-2, self.inputFrames[num])
+            self.inputActive[num] = True
+            self.inputActiveOrder.append(num+1)
+            self.updateFrameTime()
+        except ValueError:
+            pass
+        
+    def setInputChannel(self, index, comboBox):
+        self.inputs[index]['ADC Channel'] = comboBox.currentIndex()+1
+        
+    def setInputName(self, ind, lineEdit):
+        self.inputs[ind]['Name'] = str(lineEdit.text())
+        try:
+            #If the edited 
+            pos = self.inputScanOrder.index(ind+1)
+            self.comboBox_Channel.setItemText(pos, lineEdit.text())
+        except ValueError:
+            pass
+            
+    def setInputConversion(self, index, lineEdit):
+        text = str(lineEdit.text())
+        val = readNum(text, self, False)
+        if isinstance(val,float):
+            self.inputs[index]['Conversion'] = val
+        lineEdit.setText(formatNum(self.inputs[index]['Conversion']))
+    
+    def setInputUnit(self, index, lineEdit):
+        self.inputs[index]['Units'] = str(lineEdit.text())
+
 #----------------------------------------------------------------------------------------------#      
     """ The following section has scanning functions and live graph updating."""  
     
     @inlineCallbacks
     def blink(self, c = None):
-        yield self.blink_server.set_voltage(self.blinkOutput-1, 5)
+        yield self.blink_server.set_voltage(self.outputs['blink out']-1, 5)
         yield self.sleep(0.25)
-        yield self.blink_server.set_voltage(self.blinkOutput-1, 0)
+        yield self.blink_server.set_voltage(self.outputs['blink out']-1, 0)
         yield self.sleep(0.25)
         
     @inlineCallbacks
@@ -1341,6 +1388,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def setPosition(self, x, y):
         try:
+            print 'Getting here'
             #Buffer ramp is being used here to ramp 1 and 2, or 0,1,2 at the same time
             #Read values are not being used for anything (but are being read to avoid
             #bugs related to having 0 read values)
@@ -1349,7 +1397,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
             #Takes the number of points required for this to be a smooth (300 uV step size)
             points = int(np.maximum(np.absolute((stopx-startx) / (300e-6)), np.absolute((stopy-starty) / (300e-6))))
-            #Make sure minimum of 1 point to avoid errors
+            #Make sure minimum of 2 point to avoid errors
             if points < 2:
                 points = 2
             
@@ -1360,20 +1408,23 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
             #Get delay in microseconds to ensure going at the module specified line speed
             delay = int(1e6 * time / points)
-            
+            print 'Getting here'
             #Only change the z value when moving around if we're in constant height mode
             if self.scanMode == 'Constant Height' and self.ConstantHeightReady:
                 out_list = [self.outputs['z out']-1, self.outputs['x out']-1,self.outputs['y out']-1]
+                print out_list, startz, startx, starty, stopz, stopx, stopy, points, delay
                 yield self.dac.buffer_ramp_dis(out_list,[0],[startz,startx, starty],[stopz, stopx, stopy], points, delay,2)
                 self.Atto_Z_Voltage = stopz
             else:
                 out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
+                print out_list, startx, starty, stopx, stopy, points, delay
                 yield self.dac.buffer_ramp_dis(out_list,[0],[startx, starty],[stopx, stopy], points, delay,2)
                 
             self.Atto_X_Voltage = stopx
             self.Atto_Y_Voltage = stopy
             
             self.updatePosition()
+            
         except Exception as inst:
             print inst
             
@@ -1397,10 +1448,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Call this the new center of the plane
         self.updateScanPlaneCenter(0)
         
-    def startScan(self):
+    @inlineCallbacks
+    def startScan(self, c= None):
         try:
             print 'Starting Scan Protocol'
-            #Set scan values
+            #Save the values of the current scan as separate variables so that they are not editted by moving around scan windows mid-scan
             self.currAngle = self.angle
             self.currXc = self.Xc
             self.currYc = self.Yc
@@ -1409,58 +1461,66 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.curr_x = self.x
             self.curr_y = self.y
             
+            #Save a separate list of the order in which the data is saved for this scan data. Syntax on right creates a copy
+            self.inputScanOrder = list(self.inputActiveOrder)
+            
             #Determine plot scales
             self.xscale, self.yscale = self.currW / self.pixels, self.currH / self.lines
             
-            #If necessary, update ROIs
+            #If we are viewing the data in the coordinate system of the scan, then update ROIs so that they are accurately reflected by the new coordinate system
             if self.scanCoordinates:
                 self.moveROI()
                 self.moveROI3()
 
-            #Initialize empty data sets
-            pxsize = (3, self.pixels, self.lines)
+            #Initialize empty data sets to the appropriate size for whatever data is being taken
+            num_datasets = len(self.inputScanOrder)
+            pxsize = (num_datasets, self.pixels, self.lines)
+            
+            #Make the initial dataset of null values, that has size num_datasets by pixels by lines
             self.data = np.full(pxsize, self.randomFill)
             self.data_retrace = np.full(pxsize, self.randomFill)
+            
+            #The plot data is 1 by pixel by lines (since we only plot one dataset at a time). Initially by default this is defined to be the 1st (0th) channel
             self.plotData = np.full(pxsize, self.randomFill)[0]
             self.plotData_retrace = np.full(pxsize, self.randomFill)[0]
             
+            #Repopulate the Channel drop down menu with the appropriate number, name, and order of inputs being viewed
+            #Also, define list of input channels for the scan ramps (in_list) as well as a list of input name (in_name_list)
+            self.comboBox_Channel.clear()
+            in_list = []
+            in_name_list = []
+            for a in self.inputScanOrder:
+                self.comboBox_Channel.addItem(self.inputs[a-1]['Name'])
+                in_name_list.append(self.inputs[a-1]['Name'])
+                in_list.append(self.inputs[a-1]['ADC Channel']-1)
+            
+            print 'In name list: ' + str(in_name_list)
+            print 'In list: ' + str(in_list)
+            
+            #Define list of outputs for the scan ramps
+            if self.scanMode == 'Feedback':
+                out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
+            elif self.scanMode == 'Constant Height':
+                out_list = [self.outputs['z out']-1, self.outputs['x out']-1,self.outputs['y out']-1]
+            
+            #Set the current scan line to -1, because we have not yet started scanning
             self.currLine = -1
 
             #Update graphs with empty data sets
             self.update_gph()
             
-            #Prevent you from editing most parameters mid scan. 
-            self.push_Scan.setEnabled(False)
-            self.lineEdit_Angle.setEnabled(False)
-            self.lineEdit_Xc.setEnabled(False)
-            self.lineEdit_Yc.setEnabled(False)
-            self.lineEdit_W.setEnabled(False)
-            self.lineEdit_H.setEnabled(False)
-            self.push_setView.setEnabled(False)
-            self.lineEdit_Lines.setEnabled(False)
-            self.lineEdit_Pixels.setEnabled(False)
-            self.lineEdit_XTilt.setEnabled(False)
-            self.lineEdit_YTilt.setEnabled(False)
-
-            self.push_ZeroXY.setEnabled(False)
-            self.push_ZeroZ.setEnabled(False)
-            self.push_Set.setEnabled(False)
+            #Prevent you from editing parameters mid scan that would break things
+            self.scanInterfaceEnabled(False)
             
             #Begin data gathering procedure
             self.scanning = True
             self.updateScanningStatus.emit(True)
             self.push_Scan.setText('Scanning')
             self.push_Scan.setEnabled(False)
-            self.update_data()
-        except Exception as inst:
-            print "testUpdates: " + str(inst)
-        
-    @inlineCallbacks
-    def update_data(self):
-        try:
+            
             #Create data vault file with appropriate parameters
             #Retrace index is 0 for trace, 1 for retrace
-            file_info = yield self.dv.new("nSOT Scan Data " + self.fileName, ['Retrace Index','X Pos. Index','Y Pos. Index','X Pos. Voltage', 'Y Pos. Voltage'],['Z Position',self.inputs['Input 1 name'], self.inputs['Input 2 name']])
+            file_info = yield self.dv.new("nSOT Scan Data " + self.fileName, ['Retrace Index','X Pos. Index','Y Pos. Index','X Pos. Voltage', 'Y Pos. Voltage'],in_name_list)
             self.dvFileName = file_info[1]
             self.lineEdit_ImageNum.setText(file_info[1][0:5])
             session  = ''
@@ -1468,30 +1528,28 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 session = session + '\\' + folder
             self.lineEdit_ImageDir.setText(r'\.datavault' + session)
             print 'Created new DV file'
+            
             params = (('X Center', self.currXc), ('Y Center', self.currYc), ('Width', self.currW), 
                      ('Height',self.currH), ('Angle',self.currAngle), ('Speed',self.linearSpeed), ('Blink', self.blinkMode),
-                     ('Pixels',self.pixels), ('Lines', self.lines), ('Input 1 name', self.inputs['Input 1 name']),
-                     ('Input 1 unit',self.inputs['Input 1 unit']),('Input 1 conversion',self.inputs['Input 1 conversion']),
-                     ('Input 2 name', self.inputs['Input 2 name']), ('Input 2 unit',self.inputs['Input 2 unit']),
-                     ('Input 2 conversion',self.inputs['Input 2 conversion']))
+                     ('Pixels',self.pixels), ('Lines', self.lines))
+                     
+            num = 1
+            for a in self.inputScanOrder:
+                params += (('Input ' + str(num) + ' Name', self.inputs[a-1]['Name']), ('Input ' + str(num) + ' Units', self.inputs[a-1]['Units']) , ('Input ' + str(num) + ' Conversion', self.inputs[a-1]['Conversion']))
+                num += 1
                      
             print params
+            
             yield self.dv.add_parameters(params)
             print 'Added params'
             
             self.updateScanParameters()
             
+            print 'Scan parameters updated'
             #Move to the bottom left corner of the scan range 
             yield self.setPosition(self.curr_x, self.curr_y)
             
             self.startScanTimer()
-            
-            #Define list of inputs and outputs for the scan ramps
-            in_list = [self.inputs['Z in']-1,self.inputs['Input 1 in']-1,self.inputs['Input 2 in']-1]
-            if self.scanMode == 'Feedback':
-                out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
-            elif self.scanMode == 'Constant Height':
-                out_list = [self.outputs['z out']-1, self.outputs['x out']-1,self.outputs['y out']-1]
             
             for i in range(0,self.lines):
                 print 'Starting sweep for line ' + str(i) + '.'
@@ -1515,7 +1573,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Do buffer ramp. If in feedback mode, 
                 if self.scanMode == 'Feedback': 
                     print "X and Y outputs: ", out_list
-                    print "Z, Input 1, Input 2: ", in_list
+                    print "Input in use in order: ", in_list
                     if self.scanSmooth:
                         newData = yield self.dac.buffer_ramp_dis(out_list,in_list,[startx, starty],[stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     else:
@@ -1523,7 +1581,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 
                 elif self.scanMode == 'Constant Height': 
                     print "Z, X and Y outputs: ", out_list
-                    print "Z, Input 1, Input 2: ", in_list
+                    print "Input in use in order: ", in_list
                     if self.scanSmooth:
                         newData = yield self.dac.buffer_ramp_dis(out_list, in_list, [startz, startx, starty], [stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     else:
@@ -1540,11 +1598,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Add the binned Z data to the dataset. Note that right now, newData is the same length as self.pixels, 
                 #and the binning does nothing except flip the order of the data for retraces. The function is kept to 
                 #allow future modifications for multiple types of binning
-                self.data[0][:,i] = self.bin_data(newData[0]/self.z_volts_to_meters, self.pixels, 'trace')
-                #Add the binned input 1 data to the dataset
-                self.data[1][:,i] = self.bin_data(newData[1]/self.inputs['Input 1 conversion'], self.pixels, 'trace')
-                #Add the binned input 2 data to the dataset
-                self.data[2][:,i] = self.bin_data(newData[2]/self.inputs['Input 2 conversion'], self.pixels, 'trace')
+                for k in range(0,num_datasets):
+                    self.data[k][:,i] = self.bin_data(newData[k]/self.inputs[self.inputScanOrder[k]-1]['Conversion'], self.pixels, 'trace')
                 
                 print 'Time taken to bin data: ' + str(time.clock()-tzero)
                 tzero = time.clock()
@@ -1557,7 +1612,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 y_voltage = np.linspace(starty, stopy, self.pixels)
                 formated_data = []
                 for j in range(0, self.pixels):
-                    formated_data.append((0, j, i, x_voltage[j], y_voltage[j], self.data[0][j,i], self.data[1][j,i],self.data[2][j,i]))
+                    data_point = (0, j, i, x_voltage[j], y_voltage[j])
+                    for k in range(0,num_datasets):
+                        data_point += (self.data[k][j,i],)
+                    formated_data.append(data_point)
                 yield self.dv.add(formated_data)
                 print 'Time taken to add data to data vault: ' + str(time.clock()-tzero)
 
@@ -1580,14 +1638,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 tzero = time.clock()
                 if self.scanMode == 'Feedback':
                     print "X and Y outputs: ", out_list
-                    print "Z, Input 1, Input 2: ", in_list
+                    print "Input in use in order: ", in_list
                     if self.scanSmooth:
                         newData = yield self.dac.buffer_ramp_dis(out_list,in_list,[startx, starty],[stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     else:
                         newData = yield self.dac.buffer_ramp(out_list,in_list,[startx, starty],[stopx, stopy], self.pixels, self.delayTime*1e6)
                 elif self.scanMode == 'Constant Height':
                     print "Z, X and Y outputs: ", out_list
-                    print "Z, Input 1, Input 2: ", in_list
+                    print "Input in use in order: ", in_list
                     if self.scanSmooth:
                         newData = yield self.dac.buffer_ramp_dis(out_list,in_list,[startz,startx, starty],[stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     else:
@@ -1604,11 +1662,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Add the binned Z data to the dataset. Note that right now, newData is the same length as self.pixels, 
                 #and the binning does nothing except flip the order of the data for retraces. The function is kept to 
                 #allow future modifications for multiple types of binning
-                self.data_retrace[0][:,i] = self.bin_data(newData[0]/self.z_volts_to_meters, self.pixels,'retrace')
-                #bin newData to appropriate number of pixels for input 1
-                self.data_retrace[1][:,i] = self.bin_data(newData[1]/self.inputs['Input 1 conversion'], self.pixels,'retrace')
-                #bin newData to appropriate number of pixels for input 2
-                self.data_retrace[2][:,i] = self.bin_data(newData[2]/self.inputs['Input 2 conversion'], self.pixels,'retrace')
+                for k in range(0,num_datasets):
+                    self.data_retrace[k][:,i] = self.bin_data(newData[k]/self.inputs[self.inputScanOrder[k]-1]['Conversion'], self.pixels, 'retrace')
                 
                 #Process data for plotting
                 self.plotData_retrace[:,i] = processLineData(np.copy(self.data_retrace[self.channel][:,i]), self.dataProcessing)
@@ -1618,8 +1673,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 y_voltage = np.linspace(starty, stopy, self.pixels)
                 formated_data = []
                 for j in range(0, self.pixels):
-                    #Putting in 0 for SSAA voltage (last entry) because not yet being used/read
-                    formated_data.append((1, j, i, x_voltage[::-1][j], y_voltage[::-1][j], self.data_retrace[0][j,i], self.data_retrace[1][j,i], self.data_retrace[2][j,i]))
+                    data_point = (1, j, i, x_voltage[::-1][j], y_voltage[::-1][j])
+                    for k in range(0,num_datasets):
+                        data_point += (self.data_retrace[k][j,i],)
+                    formated_data.append(data_point)
                 yield self.dv.add(formated_data)
                 
                 #------------------------------------#
@@ -1640,9 +1697,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     tzero = time.clock()
                     if self.scanMode == 'Feedback':
                         print "X and Y outputs: ", out_list
-                        yield self.dac.buffer_ramp_dis(out_list,[0],[startx, starty],[stopx, stopy], self.scanParameters['pixel_points'], self.scanParameters['pixel_delay'],1)
+                        yield self.dac.buffer_ramp_dis(out_list,[0],[startx, starty],[stopx, stopy], self.scanParameters['pixel_points'], self.scanParameters['pixel_delay'],2)
                     elif self.scanMode == 'Constant Height':
-                        newLine = yield self.dac.buffer_ramp_dis(out_list,[0],[startz,startx, starty],[stopz, stopx, stopy], self.scanParameters['pixel_points'], self.scanParameters['pixel_delay'],1)
+                        yield self.dac.buffer_ramp_dis(out_list,[0],[startz,startx, starty],[stopz, stopx, stopy], self.scanParameters['pixel_points'], self.scanParameters['pixel_delay'],2)
                         self.Atto_Z_Voltage = stopz
                     
                     self.Atto_X_Voltage = stopx
@@ -1730,11 +1787,29 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except Exception as inst:
             print 'update_gph: ' + str(inst)
         
+        
+    def scanInterfaceEnabled(self, status):
+        self.push_Scan.setEnabled(status)
+        self.lineEdit_Angle.setEnabled(status)
+        self.lineEdit_Xc.setEnabled(status)
+        self.lineEdit_Yc.setEnabled(status)
+        self.lineEdit_W.setEnabled(status)
+        self.lineEdit_H.setEnabled(status)
+        self.push_setView.setEnabled(status)
+        self.lineEdit_Lines.setEnabled(status)
+        self.lineEdit_Pixels.setEnabled(status)
+        self.lineEdit_XTilt.setEnabled(status)
+        self.lineEdit_YTilt.setEnabled(status)
+
+        self.push_ZeroXY.setEnabled(status)
+        self.push_ZeroZ.setEnabled(status)
+        self.push_Set.setEnabled(status)
+        
     '''
     Function that in the future can be implemented to bin data in different ways. 
     Right now, it simply takes a line of M data points and takes N number of points
     equally spaced in that dataset. Also allows to reverse the order of the data
-    tkaen with a retrace, so that it's stored in the same order as a trace. 
+    taken with a retrace, so that it's stored in the same order as a trace. 
     '''
     def bin_data(self, data, num_points, trace):
         length = np.size(data)
@@ -1894,14 +1969,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.comboBox_scanMode.setEnabled(False)
         self.comboBox_blinkMode.setEnabled(False)
         
-        self.comboBox_ZInput.setEnabled(False)
         self.comboBox_Input1.setEnabled(False)
         self.comboBox_Input2.setEnabled(False)
-
-        self.comboBox_ZOutput.setEnabled(False)
-        self.comboBox_XOutput.setEnabled(False)
-        self.comboBox_YOutput.setEnabled(False)
-        self.comboBox_BlinkOutput.setEnabled(False)
         
         self.lineEdit_Input1Name.setEnabled(False)
         self.lineEdit_Input2Name.setEnabled(False)
@@ -1952,14 +2021,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.comboBox_scanMode.setEnabled(True)
         self.comboBox_blinkMode.setEnabled(True)
         
-        self.comboBox_ZInput.setEnabled(True)
         self.comboBox_Input1.setEnabled(True)
         self.comboBox_Input2.setEnabled(True)
-
-        self.comboBox_ZOutput.setEnabled(True)
-        self.comboBox_XOutput.setEnabled(True)
-        self.comboBox_YOutput.setEnabled(True)
-        self.comboBox_BlinkOutput.setEnabled(True)
         
         self.lineEdit_Input1Name.setEnabled(True)
         self.lineEdit_Input2Name.setEnabled(True)

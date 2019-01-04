@@ -28,7 +28,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.selectFreq = 32000
         
-        self.exAmp = 0.01
+        self.exAmp = 0.001
         self.timeConst = 0.005
         self.sensitvity = 2
         
@@ -254,8 +254,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.horizontalLayout.addWidget(self.ampPlot)
         self.horizontalLayout.addWidget(self.phasePlot)
         
-
-          
 #----------------------------------------------------------------------------------------------#         
     """ The following section connects all signals."""
           
@@ -501,13 +499,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.hf.clear_sweep()
             
         except Exception as inst:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            print 'line num ', exc_tb.tb_lineno
             print inst
     
     @inlineCallbacks
     def updateRemainingTime(self,c = None):
         try:
             time  = yield self.hf.sweep_time_remaining()
-            #print time
             self.lineEdit_timeRemaining.setText(formatNum(time))
         except Exception as inst:
             print inst

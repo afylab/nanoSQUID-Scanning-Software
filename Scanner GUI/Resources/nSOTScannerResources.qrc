@@ -1,5 +1,9 @@
 <RCC>
   <qresource prefix="nSOTScanner">
+    <file>Pictures/ratio.png</file>
+    <file>Pictures/addWhite.png</file>
+    <file>Pictures/addWhiteHover.png</file>
+    <file>Pictures/tab_close.png</file>
     <file>Pictures/Landaul Fan.PNG</file>
     <file>Pictures/Four Terminal.png</file>
     <file>Pictures/tiptf.png</file>

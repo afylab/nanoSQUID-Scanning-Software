@@ -139,16 +139,11 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.JPEControl.newJPESettings.connect(self.Approach.updateJPESettings)
         self.JPEControl.updateJPEConnectStatus.connect(self.Approach.updateJPEConnected)
         
-        self.nSOTChar.changedConnectionSettings.connect(self.GoToSetpoint.updateSetpointSettings)
-        
         #Make sure default calibration is emitted 
         self.PosCalibration.emitCalibration()
         
         #Make sure default session flder is emitted
         self.LabRAD.newSessionFolder.emit(self.LabRAD.session_2)
-
-        #Make sure default wiring connections and settings are emitted (eventually this will be a centralized window taking care of it)
-        self.nSOTChar.changedConnectionSettings.emit(self.nSOTChar.settingsDict)
         
         #Open by default the LabRAD Connect Module and Device Select
         self.openLabRADConnectWindow()
