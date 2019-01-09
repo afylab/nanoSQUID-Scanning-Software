@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Command Center</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../Resources/nSOTScannerResources.qrc">
+    <normaloff>:/nSOTScanner/Pictures/jj_schema.svg</normaloff>:/nSOTScanner/Pictures/jj_schema.svg</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true">#centralwidget
+{
+background-color: rgb(0, 0, 0);
+}</string>
+   </property>
+   <widget class="QListWidget" name="listWidget_Plots">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>40</y>
+      <width>256</width>
+      <height>192</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QListWidget#listWidget_Plots{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131, 131, 131);
+border-radius: 5px
+}
+
+QScrollBar:horizontal {
+   border: 0px;
+   background: black;
+   height: 15px;
+}
+QScrollBar:vertical {
+   border: 0px;
+   background: black;
+   width: 15px;
+}</string>
+    </property>
+    <item>
+     <property name="text">
+      <string>New Item</string>
+     </property>
+     <property name="background">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>100</red>
+        <green>100</green>
+        <blue>100</blue>
+       </color>
+      </brush>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>New Item</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>New Item</string>
+     </property>
+     <property name="background">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>155</red>
+        <green>155</green>
+        <blue>155</blue>
+       </color>
+      </brush>
+     </property>
+    </item>
+   </widget>
+   <widget class="QListWidget" name="listWidget_PlotsListA">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>330</y>
+      <width>256</width>
+      <height>192</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QListWidget#listWidget_PlotsListA{
+color: rgb(131,131,131);
+background-color:black;
+border: 2px solid rgb(200,50,50);
+border-radius: 5px
+}
+
+QScrollBar:horizontal {
+   border: 0px;
+   background: black;
+   height: 15px;
+}
+QScrollBar:vertical {
+   border: 0px;
+   background: black;
+   width: 15px;
+}</string>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="listWidget_PlotsListB">
+    <property name="geometry">
+     <rect>
+      <x>370</x>
+      <y>330</y>
+      <width>256</width>
+      <height>192</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QListWidget#listWidget_PlotsListB{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid rgb(50,50,200);
+border-radius: 5px
+}
+
+QScrollBar:horizontal {
+   border: 0px;
+   background: black;
+   height: 15px;
+}
+QScrollBar:vertical {
+   border: 0px;
+   background: black;
+   width: 15px;
+}</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_AddPlotter">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>150</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton#pushButton_AddPlotter{
+image:url(:/nSOTScanner/Pictures/add.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_AddPlotter{
+image:url(:/nSOTScanner/Pictures/add.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_Process">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>440</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#pushButton_Process{
+color: rgb(0,0,0);
+background-color:rgb(131,131,131);
+border: 1px solid rgb(0,0,0);
+border-radius: 5px
+}
+
+QPushButton#pushButton_Process{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}</string>
+    </property>
+    <property name="text">
+     <string>Process</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <resources>
+  <include location="../Resources/nSOTScannerResources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
