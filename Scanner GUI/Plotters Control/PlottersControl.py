@@ -244,6 +244,9 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.RefreshPlotList()
 
     def moveDefault(self):
-        self.move(550,10)
+        parentx, parenty = self.parent.mapToGlobal(QtCore.QPoint(0,0)).x(), self.parent.mapToGlobal(QtCore.QPoint(0,0)).y()
+        parentwidth, parentheight = self.parent.width(), self.parent.height()
+        Offset = 10
+        self.move(parentx, parenty + Offset)   
         if not self.dv is None:
             self.AddPlotter()

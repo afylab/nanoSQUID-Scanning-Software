@@ -1159,7 +1159,10 @@ border: 2px solid rgb(95,107,166);
 """)            
    
     def moveDefault(self):
-        self.move(550,10)         
+        parentx, parenty = self.parent.mapToGlobal(QtCore.QPoint(0,0)).x(), self.parent.mapToGlobal(QtCore.QPoint(0,0)).y()
+        parentwidth, parentheight = self.parent.width(), self.parent.height()
+        Offset = self.number * 50 + 10
+        self.move(parentx + parentwidth + Offset, parenty)         
         
     def closeEvent(self, e):
         self.parent.PlotterList.remove(self)
