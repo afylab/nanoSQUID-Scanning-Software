@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="nSOTScanner">
+    <file>Pictures/Multiply.png</file>
+    <file>Pictures/Overlap.png</file>
+    <file>Pictures/Info.png</file>
     <file>Pictures/ratio.png</file>
     <file>Pictures/addWhite.png</file>
     <file>Pictures/addWhiteHover.png</file>
@@ -7,6 +10,7 @@
     <file>Pictures/Landaul Fan.PNG</file>
     <file>Pictures/Four Terminal.png</file>
     <file>Pictures/tiptf.png</file>
+    <file>Pictures/Flatten.png</file>
     <file>Pictures/Connected.png</file>
     <file>Pictures/Disconnected.png</file>
     <file>Pictures/map.png</file>
