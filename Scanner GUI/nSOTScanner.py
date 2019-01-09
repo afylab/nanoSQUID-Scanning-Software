@@ -6,24 +6,24 @@ myappid = 'YoungLab.nSOTScannerSoftware'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 path = sys.path[0]
-sys.path.append(path+'\Resources')
-sys.path.append(path+'\ScanControl')
-sys.path.append(path+'\LabRADConnect')
-sys.path.append(path+r'\nSOTCharacterizer')    
-sys.path.append(path+'\DataVaultBrowser')
-sys.path.append(path+'\Plotter')
-sys.path.append(path+'\TFCharacterizer')
-sys.path.append(path+'\ApproachModule')
-sys.path.append(path+'\ApproachMonitor')
-sys.path.append(path+'\JPEPositionControl')
-sys.path.append(path+'\PositionCalibration')
-sys.path.append(path+'\Field Control')
-sys.path.append(path+'\ScriptingModule')
-sys.path.append(path+'\TemperatureControl')
-sys.path.append(path+'\QRreader')
-sys.path.append(path+'\SampleCharacterizer')
-sys.path.append(path+'\GoToSetpoint')
-sys.path.append(path+'\DeviceSelect')
+sys.path.append(path + r'\Resources')
+sys.path.append(path + r'\ScanControl')
+sys.path.append(path + r'\LabRADConnect')
+sys.path.append(path + r'\nSOTCharacterizer')    
+sys.path.append(path + r'\DataVaultBrowser')
+sys.path.append(path + r'\Plotters Control')
+sys.path.append(path + r'\TFCharacterizer')
+sys.path.append(path + r'\ApproachModule')
+sys.path.append(path + r'\ApproachMonitor') 
+sys.path.append(path + r'\JPEPositionControl')
+sys.path.append(path + r'\PositionCalibration')
+sys.path.append(path + r'\Field Control')
+sys.path.append(path + r'\ScriptingModule')
+sys.path.append(path + r'\TemperatureControl')
+sys.path.append(path + r'\QRreader')
+sys.path.append(path + r'\SampleCharacterizer')
+sys.path.append(path + r'\GoToSetpoint')
+sys.path.append(path + r'\DeviceSelect')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -32,7 +32,7 @@ MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
 import ScanControl
 import LabRADConnect
 import nSOTCharacterizer
-import plotter
+import PlottersControl
 import TFCharacterizer
 import Approach
 import ApproachMonitor
@@ -68,7 +68,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.LabRAD = LabRADConnect.Window(self.reactor, None)
         self.DeviceSelect = DeviceSelect.Window(self.reactor, None)
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor, None)
-        self.Plot = plotter.Plotter(self.reactor, None)
+        self.PlottersControl = PlottersControl.CommandingCenter(self.reactor, None)
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
         self.Approach = Approach.Window(self.reactor, None)
         self.ApproachMonitor = ApproachMonitor.Window(self.reactor, None)
@@ -177,9 +177,9 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.nSOTChar.raise_()
             
     def openDataPlotter(self):
-        self.Plot.showNormal()
-        self.Plot.moveDefault()
-        self.Plot.raise_()
+        self.PlottersControl.showNormal()
+        self.PlottersControl.moveDefault()
+        self.PlottersControl.raise_()
             
     def openTFCharWindow(self):
         self.TFChar.showNormal()
@@ -245,7 +245,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
     
     def distributeDeviceInfo(self,dict):
         #Call connectLabRAD functions for relevant modules
-        self.Plot.connectLabRAD(dict)
+        self.PlottersControl.connectLabRAD(dict)
         self.nSOTChar.connectLabRAD(dict)
         self.ScanControl.connectLabRAD(dict)
         self.TFChar.connectLabRAD(dict)
@@ -259,7 +259,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
 
     def disconnectLabRADConnections(self):
         self.DeviceSelect.disconnectLabRAD()
-        self.Plot.disconnectLabRAD()
+        self.PlottersControl.disconnectLabRAD()
         self.nSOTChar.disconnectLabRAD()
         self.ScanControl.disconnectLabRAD()
         self.TFChar.disconnectLabRAD()
@@ -318,7 +318,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.ScanControl.hide()
         self.LabRAD.hide()
         self.nSOTChar.hide()
-        self.Plot.hide()
+        self.PlottersControl.hide()
         self.TFChar.hide()
         self.Approach.hide()
         self.ApproachMonitor.hide()
@@ -334,7 +334,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
             self.disconnectLabRADConnections()
             self.ScanControl.close()
             self.nSOTChar.close()
-            self.Plot.close()
+            self.PlottersControl.close()
             self.TFChar.close()
             self.Approach.close()
             self.ApproachMonitor.close()
