@@ -68,7 +68,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.LabRAD = LabRADConnect.Window(self.reactor, None)
         self.DeviceSelect = DeviceSelect.Window(self.reactor, None)
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor, None)
-        self.PlottersControl = PlottersControl.CommandingCenter(self.reactor, None)
+        self.PlottersControl = PlottersControl.CommandingCenter(self.reactor, self)
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
         self.Approach = Approach.Window(self.reactor, None)
         self.ApproachMonitor = ApproachMonitor.Window(self.reactor, None)
