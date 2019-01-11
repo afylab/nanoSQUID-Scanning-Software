@@ -2,7 +2,7 @@ from __future__ import division
 import sys
 from PyQt4 import QtCore, QtGui, QtTest, uic
 import numpy as np
-
+import copy
 
 path = sys.path[0] + r"\Plotters Control\Plotter\ZoomWindow"
 Ui_ZoomWindow, QtBaseClass = uic.loadUiType(path + r"\zoomWindow.ui")

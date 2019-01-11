@@ -3,12 +3,12 @@ import sys
 from PyQt4 import QtCore, QtGui, QtTest, uic
 import numpy as np
 
-path = sys.path[0] + r"\Plotters Control\Plotter\Multiplier Window"
-Ui_MultiplierWindow, QtBaseClass = uic.loadUiType(path + r"\MultiplierSettings.ui")
+path = sys.path[0] + r"\Plotters Control\Plotter\Subtract Constant Window"
+Ui_SubConstant, QtBaseClass = uic.loadUiType(path + r"\ConstantSubtract.ui")
 
-class MultiplierWindow(QtGui.QMainWindow, Ui_MultiplierWindow):
+class SubConstantWindow(QtGui.QMainWindow, Ui_SubConstant):
     def __init__(self, reactor, parent):
-        super(MultiplierWindow, self).__init__()
+        super(SubConstantWindow, self).__init__()
         
         self.reactor = reactor
         self.parent = parent
@@ -16,22 +16,21 @@ class MultiplierWindow(QtGui.QMainWindow, Ui_MultiplierWindow):
 
         self.pushButton_ok.clicked.connect(self.OK)
         self.pushButton_Cancel.clicked.connect(self.Cancel)
-        self.lineEdit_Multiplier.editingFinished.connect(self.ChangeMultiplier)
+        self.lineEdit_Constant.editingFinished.connect(self.ChangeConstant)
 
-
-    def ChangeMultiplier(self):
-        number = float(self.lineEdit_Multiplier.text())
-        self.parent.multiplier = number
+    def ChangeConstant(self):
+        number = float(self.lineEdit_Constant.text())
+        self.parent.ConstantSubtracted = number
         self.lineEdit_Multiplier.setText(str(number))
 
     def moveDefault(self):
-        buttonposition = self.parent.pushButton_Multiply.mapToGlobal(QtCore.QPoint(0,0))
+        buttonposition = self.parent.subtract.mapToGlobal(QtCore.QPoint(0,0))
         buttonx, buttony = buttonposition.x(), buttonposition.y()
         Offset = 50
         self.move(buttonx + Offset, buttony)  
 
     def OK(self):
-        self.parent.MultiplyPlotData(self.parent.multiplier)
+        self.parent.subtractOverallConstant(self.parent.ConstantSubtracted)
         self.close()
 
     def Cancel(self):

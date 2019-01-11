@@ -84,15 +84,27 @@ class editDataInfo(QtGui.QMainWindow, Ui_EditDataInfo):
             #PlotDetails
             #X,Ydimension
             x ,y = self.parent.Number_PlotData_X, self.parent.Number_PlotData_Y
-            self.textEdit_XPoints.setText(str(x))
-            self.textEdit_YPoints.setText(str(y))
+            self.lineEdit_XPoints.setText(str(x))
+            self.lineEdit_YPoints.setText(str(y))
             
             #Sweeping direction
             Sweepdirect = self.parent.SweepingDirection
             if Sweepdirect != '':
-                self.textEdit_SweepingAxis.setText(Sweepdirect.capitalize() + " Axis")
+                self.lineEdit_SweepingAxis.setText(Sweepdirect.capitalize() + " Axis")
             else:
-                self.textEdit_SweepingAxis.setText("None")
+                self.lineEdit_SweepingAxis.setText("None")
+
+            #Area Selected
+            AreaSelectedParameters = self.parent.AreaSelectedParameters
+            self.lineEdit_xTotal.setText(str(1 + AreaSelectedParameters['xMax'] - AreaSelectedParameters['xMin']))
+            self.lineEdit_yTotal.setText(str(1 + AreaSelectedParameters['yMax'] - AreaSelectedParameters['yMin']))
+            self.lineEdit_xMin.setText(str(AreaSelectedParameters['xMin']))
+            self.lineEdit_xMax.setText(str(AreaSelectedParameters['xMax']))
+            self.lineEdit_yMin.setText(str(AreaSelectedParameters['yMax']))
+            self.lineEdit_yMin.setText(str(AreaSelectedParameters['yMin']))
+            average = self.parent.Average_SelectedArea
+            self.lineEdit_average.setText(str(average))
+            
 
         except Exception as inst:
                 print 'Following error was thrown: ', inst
@@ -115,14 +127,26 @@ class editDataInfo(QtGui.QMainWindow, Ui_EditDataInfo):
             pass
         else:
             dv = self.parent.dv
+            dv.cd(self.parent.directory)
+            dv.open(self.parent.file)
             yield dv.add_comment(coms)
-        self.close()
+            comments = yield dv.get_comments()
+            self.parent.comments = comments
+            self.RefreshInfo()
+        
+        
     
     def UpdateTitle(self):
         self.parent.Title = self.lineEdit_Title.text()
         self.RefreshInfo()
         self.parent.RefreshInterface()
         self.parent.parent.RefreshPlotList()
-        
+
+    def moveDefault(self):
+        buttonposition = self.parent.pushButton_Info.mapToGlobal(QtCore.QPoint(0,0))
+        buttonx, buttony = buttonposition.x(), buttonposition.y()
+        Offset = 50
+        self.move(buttonx + Offset, buttony)  
+
     def exitEdit(self):
         self.close()

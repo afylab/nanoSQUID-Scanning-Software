@@ -11,8 +11,10 @@ import copy
 
 path = sys.path[0] + r"\Plotters Control"
 sys.path.append(path + r'\Plotter')
+sys.path.append(path + r'\Process List')
 
 import plotter
+import ProcessWindow
 
 Ui_CommandCenter, QtBaseClass = uic.loadUiType(path + r"\PlottersControl.ui")
 
@@ -42,25 +44,18 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.setupUi(self)
 
         self.PlotterList = [] #PlotterList contains the all the Plotters
-        self.PlotsListA, self.PlotsListB = [], [] #PlotsListA and PlotsListB contain the Plotter.number
+        self.ProcessList = ProcessWindow.ProcessWindow(self.reactor, self)
 
         #Color Code  [0]for Text, [1] for Background
         self.Color_NoData = [QtGui.QColor(131, 131, 131), QtGui.QColor(0, 0, 0)]
         self.Color_ContainData = [QtGui.QColor(0, 0, 0), QtGui.QColor(100, 100, 100)]
         self.Color_ContainPlotData = [QtGui.QColor(0, 0, 0), QtGui.QColor(155, 155, 155)]
-        self.Color_Compatible = [QtGui.QColor(0, 0, 0), QtGui.QColor(170, 255, 0)]
-        self.Color_NotCompatible = [QtGui.QColor(0, 0, 0), QtGui.QColor(255, 100, 100)]
-        
 
-        self.listWidget_Plots.itemDoubleClicked.connect(self.AddToProcess)
-        self.listWidget_PlotsListA.itemDoubleClicked.connect(self.RemovePlotsListAItem)
-        self.listWidget_PlotsListB.itemDoubleClicked.connect(self.RemovePlotsListBItem)
-        self.pushButton_Process.clicked.connect(self.ProcessData)
+        self.listWidget_Plots.itemDoubleClicked.connect(self.AddtoProcess)
+        self.pushButton_Subtract.clicked.connect(self.Subtract)
         self.pushButton_AddPlotter.clicked.connect(self.AddPlotter)
         
         self.RefreshPlotList()
-
-        self.pushButton_AddPlotter.setEnabled(True)
 
 #####Labrad Related Function
     @inlineCallbacks
@@ -87,8 +82,7 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
 
     def ClearListWidget(self):
         self.listWidget_Plots.clear()
-        self.listWidget_PlotsListA.clear()
-        self.listWidget_PlotsListB.clear()
+        self.ProcessList.ClearListWidget()
         
     def RefreshPlotList(self):
         self.ClearListWidget()
@@ -97,22 +91,11 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             number = plotter.number
             self.renderItem(item, number)
             self.listWidget_Plots.addItem(item)
+        
+        self.ProcessList.RefreshPlotList()
+
             
-        index = 0
-        for i in self.PlotsListA:
-            item = QtGui.QListWidgetItem()
-            self.renderItem(item, i, 'ProcessList', index)
-            self.listWidget_PlotsListA.addItem(item)
-            index += 1
-            
-        index = 0
-        for i in self.PlotsListB:
-            item = QtGui.QListWidgetItem()
-            self.renderItem(item, i, 'ProcessList', index)
-            self.listWidget_PlotsListB.addItem(item)
-            index += 1
-            
-    def renderItem(self, ListWidgetItem , number, type = 'MainList', processlistindex = 0): #Based on the plotter.number, dress the Item property
+    def renderItem(self, ListWidgetItem , number): #Based on the plotter.number, dress the Item property
         try:
             plotter = self.GrabPlotterFromNumber(number)
             Text = self.PlotterList[number].Title
@@ -131,26 +114,7 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
                 ListWidgetItem.setBackgroundColor(self.Color_ContainPlotData[1])
                 x, y = str(plotter.Number_PlotData_X), str(plotter.Number_PlotData_Y)
                 ListWidgetItem.setToolTip('X: ' + x + '; ' + 'Y: ' + y)
-                
-            if type == 'ProcessList': #For processing Plot list, we need index to assist
-                Flag = True
-                if len(self.PlotsListA) < (processlistindex + 1) or self.PlotsListB == [] or self.PlotsListA == [] or len(self.PlotsListB) < (processlistindex + 1):
-                    Flag = False
-                else:
-                    numberA, numberB = self.PlotsListA[processlistindex], self.PlotsListB[processlistindex]
-                    plotterA, plotterB = self.GrabPlotterFromNumber(numberA), self.GrabPlotterFromNumber(numberB)
-                    Ax, Ay = str(plotterA.Number_PlotData_X), str(plotterA.Number_PlotData_Y)
-                    Bx, By = str(plotterB.Number_PlotData_X), str(plotterB.Number_PlotData_Y)
-                    if Ax != Bx or Ay != By:#if the data structure does not matches
-                        Flag = False
-                        
-                if Flag:
-                    ListWidgetItem.setTextColor(self.Color_Compatible[0])
-                    ListWidgetItem.setBackgroundColor(self.Color_Compatible[1])#Light red for not compatible
-                else:
-                    ListWidgetItem.setTextColor(self.Color_NotCompatible[0])
-                    ListWidgetItem.setBackgroundColor(self.Color_NotCompatible[1])#Light red for not compatible
-                    
+
         except Exception as inst:
             print "Error: ",inst
             print "Occured at line: ", sys.exc_traceback.tb_lineno
@@ -160,52 +124,28 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             if number == plotter.number:
                 return plotter
         
-    def AddToProcess(self, item, process = 'Add'):
+    def AddtoProcess(self, item):
         try:
-            if process == 'Transfer':
-                pass
-            elif process == 'Add' and item.backgroundColor() == self.Color_ContainPlotData[1]:#Only Proceed with data contained
+            if item.backgroundColor() == self.Color_ContainPlotData[1]:#Only Proceed with data contained
                 index = self.listWidget_Plots.indexFromItem(item).row()
                 number = self.PlotterList[index].number
-                if  self.listWidget_PlotsListA.count() <= self.listWidget_PlotsListB.count():
-                    self.PlotsListA.append(number)
+                if  self.ProcessList.listWidget_PlotsListA.count() <= self.ProcessList.listWidget_PlotsListB.count():
+                    self.ProcessList.PlotsListA.append(number)
                 else:
-                    self.PlotsListB.append(number)
+                    self.ProcessList.PlotsListB.append(number)
             else:
                 print "Only Add to Process if Data is loaded"
-                
+
             self.RefreshPlotList()
             
         except Exception as inst:
             print "Error: ",inst
             print "Occured at line: ", sys.exc_traceback.tb_lineno
                 
-    def ProcessData(self, c = None):
-        Flag = True
-        for i in range(self.listWidget_PlotsListA.count()):
-            if self.listWidget_PlotsListA.item(i).backgroundColor() != self.Color_Compatible[1]:
-                Flag = False
-        
-        if Flag:
-            for index in range(len(self.PlotsListA)):
-                numberA, numberB = self.PlotsListA[index], self.PlotsListB[index]
-                plotterA, plotterB = self.GrabPlotterFromNumber(numberA), self.GrabPlotterFromNumber(numberB)
-                PlotDataA, PlotDataB  = plotterA.PlotData, plotterB.PlotData,
-                PlotDataGenerated = PlotDataA - PlotDataB
-                
-                operation = ' Subtract '
-                procedure = plotterA.Title + operation + plotterA.Title
-                
-                self.AddPlotter()
-                self.transferPlotData(self.PlotterList[-1], PlotDataGenerated, procedure, procedure, procedure, plotterA.PlotParameters, [plotterA.comboBox_xAxis.currentText(),plotterA.comboBox_yAxis.currentText()],[plotterA.comboBox_zAxis.currentText()])
-                self.PlotterList[-1].RefreshComboIndex()
-                self.PlotterList[-1].ParsePlotData()
-                self.PlotterList[-1].refreshPlot()
-                self.PlotterList[-1].editDataInfo.RefreshInfo()
-            self.PlotsListA, self.PlotsListB = [],[]
-            self.RefreshPlotList()
-        else:
-            print "Data not Compatible"
+    def Subtract(self, c = None):
+        self.ProcessList.raise_()
+        self.ProcessList.show()
+        self.ProcessList.label_Operation.setText('Subtract')
 
     def transferPlotData(self, plotter, PlotData, comments, filename, title, PlotParameters, indVars, depVars):
         plotter.PlotData = PlotData
@@ -248,5 +188,3 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         parentwidth, parentheight = self.parent.width(), self.parent.height()
         Offset = 10
         self.move(parentx, parenty + Offset)   
-        if not self.dv is None:
-            self.AddPlotter()

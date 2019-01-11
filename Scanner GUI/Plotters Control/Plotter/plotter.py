@@ -28,6 +28,7 @@ sys.path.append(path + r'\Data Info')
 sys.path.append(path + r'\Plotters Control')
 sys.path.append(path + r'\Remove Spike Setting')
 sys.path.append(path + r'\Multiplier Window')
+sys.path.append(path + r'\Subtract Constant Window')
 
 import sensitivityPrompt
 import gradSettings
@@ -37,6 +38,7 @@ import editDatasetInfo
 import PlottersControl
 import DespikeSettings
 import MultiplierSettings
+import ConstantSubtract
 
 axesSelectGUI = path + r"\axesSelect.ui"
 plotter = path + r"\plotter.ui"
@@ -48,154 +50,180 @@ sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
 
 #####Plotter
-
 class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def __init__(self, reactor, datavault, number, parent = None):
         super(Plotter, self).__init__()
         
-        self.reactor = reactor
-        self.number = number
-        self.dv = datavault
-        self.parent = parent
+        try:
+            self.reactor = reactor
+            self.number = number
+            self.dv = datavault
+            self.parent = parent
 
-        self.setupUi(self)
+            self.Data = None
+            self.PlotData = None
+            self.TraceFlag = None
+            self.DataType = 'None'
+            self.NumberofindexVariables = 0
+            self.Title = 'Plotter ' + str(self.number)
+            self.directory = None
+            self.PlotParameters = {
+                'xMax': 0.0,
+                'xMin': 0.0,
+                'deltaX': 0.0,
+                'xPoints': 0.0,
+                'xscale': 0.0,
+                'yMax': 0.0,
+                'yMin': 0.0,
+                'deltaY': 0.0,
+                'yPoints': 0.0,
+                'yscale': 0.0
+            }
+            self.AreaSelectedParameters = {
+                'xMax': 0.0,
+                'xMin': 0.0,
+                'yMax': 0.0,
+                'yMin': 0.0
+            }
+            self.file = ''
+            self.indVars = []
+            self.depVars = []
+            self.Parameters = {}
+            self.comments = ''
+            self.Number_PlotData_X, self.Number_PlotData_Y = 0,0
+            self.aspectLocked=False
+            self.SweepingIndependentAxis=[]
+            self.SweepingDirection = ''
+            self.got_util = False
 
-        self.pushButton_trSelect.hide()
+            self.setupUi(self)
 
-        self.setupPlots()
-        
-        self.editDataInfo = editDatasetInfo.editDataInfo(self.reactor , self)
+            self.pushButton_trSelect.hide()
 
-        self.lineEdit_vCutPos.editingFinished.connect(self.SetupLineCutverticalposition)
-        self.lineEdit_hCutPos.editingFinished.connect(self.SetupLineCuthorizontalposition)
+            self.setupPlots()
 
-        #Function of saving matlab file 
-        self.saveMenu = QtGui.QMenu()
-        twoDSave = QtGui.QAction("Save 2D plot", self)
-        twoDSave.triggered.connect(self.matPlot)
-        oneDSaveh = QtGui.QAction("Save horizontal line cut", self)
-        oneDSaveh.triggered.connect(self.matLinePloth)
-        oneDSavev = QtGui.QAction("Save vertical line cut", self)
-        oneDSavev.triggered.connect(self.matLinePlotv)
-        self.saveMenu.addAction(twoDSave)
-        self.saveMenu.addAction(oneDSaveh)
-        self.saveMenu.addAction(oneDSavev)
-        self.savePlot.setMenu(self.saveMenu)
+            self.editDataInfo = editDatasetInfo.editDataInfo(self.reactor , self)
 
-        #Function Taking gradiant
-        self.gradMenu = QtGui.QMenu()
-        gradX = QtGui.QAction(QtGui.QIcon("nablaXIcon.png"), "Gradient along x-axis", self)
-        gradY = QtGui.QAction(QtGui.QIcon("nablaYIcon.png"), "Gradient along y-axis", self)
-        lancSettings = QtGui.QAction("Gradient settings...", self)
-        gradX.triggered.connect(self.xDeriv)
-        gradY.triggered.connect(self.yDeriv)
-        lancSettings.triggered.connect(self.derivSettings)
-        self.gradMenu.addAction(gradX)
-        self.gradMenu.addAction(gradY)
-        self.gradMenu.addAction(lancSettings)
-        self.gradient.setMenu(self.gradMenu)
-        self.datPct = 0.1
+            self.lineEdit_vCutPos.editingFinished.connect(self.SetupLineCutverticalposition)
+            self.lineEdit_hCutPos.editingFinished.connect(self.SetupLineCuthorizontalposition)
 
-        #Function Despiking
-        self.AdjacentPoints, self.NumberOfSigma = 3, 5
-        self.DespikeSettingWindow = DespikeSettings.DespikeSet(self.reactor, self)
-        self.RemoveSpikesMenu = QtGui.QMenu()
-        Despike = QtGui.QAction("Remove Spikes", self)
-        DespikeSetting = QtGui.QAction("Setting", self)
-        Despike.triggered.connect(self.RemoveSpikes)
-        DespikeSetting.triggered.connect(self.RemoveSpikesSettings)
-        self.RemoveSpikesMenu.addAction(Despike)
-        self.RemoveSpikesMenu.addAction(DespikeSetting)
-        self.pushButton_Despike.setMenu(self.RemoveSpikesMenu)
+            #Function of select an Area file 
+            self.pushButton_SelectArea.clicked.connect(self.SelectArea)
+            self.AreaSelected = pg.RectROI((0.0 , 0.0), (1,1))
+            self.AreaSelected.setAcceptedMouseButtons(QtCore.Qt.RightButton | QtCore.Qt.LeftButton)
+            self.AreaSelected.addScaleHandle((1,1), (.5,.5), lockAspect = False)
+            self.Average_SelectedArea = 0.0
+            self.SelectedAreaShow = False
+            self.AreaSelected.sigRegionChangeFinished.connect(self.RefreshAreaSelected)
 
-        #####Functions that subtract the data
-        self.subtractMenu = QtGui.QMenu()
-        subOverallAvg = QtGui.QAction( "Subtract overall average", self)
-        subOverallAvg.triggered.connect(self.subtractOverallAvg)
-        self.subtractMenu.addAction(subOverallAvg)
-        subPlane = QtGui.QAction( "Subtract planar fit", self)
-        subPlane.triggered.connect(self.subtractPlane)
-        self.subtractMenu.addAction(subPlane)
-        subOverallQuad = QtGui.QAction( "Subtract overall quadratic fit", self)
-        subOverallQuad.triggered.connect(self.subtractOverallQuad)
-        self.subtractMenu.addAction(subOverallQuad)
-        subXAvg = QtGui.QAction( "Subtract X average", self)
-        subXAvg.triggered.connect(self.subtractXAvg)
-        self.subtractMenu.addAction(subXAvg)
-        subYAvg = QtGui.QAction( "Subtract Y average", self)
-        subYAvg.triggered.connect(self.subtractYAvg)
-        self.subtractMenu.addAction(subYAvg)
-        subXLinear = QtGui.QAction( "Subtract X linear fit", self)
-        subXLinear.triggered.connect(self.subtractXLinear)
-        self.subtractMenu.addAction(subXLinear)
-        subYLinear = QtGui.QAction( "Subtract Y linear fit", self)
-        subYLinear.triggered.connect(self.subtractYLinear)
-        self.subtractMenu.addAction(subYLinear)
-        subXQuad = QtGui.QAction( "Subtract X quadratic fit", self)
-        subXQuad.triggered.connect(self.subtractXQuad)
-        self.subtractMenu.addAction(subXQuad)
-        subYQuad = QtGui.QAction( "Subtract Y quadratic fit", self)
-        subYQuad.triggered.connect(self.subtractYQuad)
-        self.subtractMenu.addAction(subYQuad)
-        self.subtract.setMenu(self.subtractMenu)
-        
-        self.multiplier = 1.0
-        self.MultiplyWindow = MultiplierSettings.MultiplierWindow(self.reactor, self)
-        self.pushButton_Multiply.clicked.connect(self.MultiplyDialog)
-        
-        #TraceSelect
-        self.trSelectMenu = QtGui.QMenu()
-        showTrace = QtGui.QAction("Plot Trace", self)
-        showRetrace = QtGui.QAction("Plot Retrace", self)
-        self.trSelectMenu.addAction(showTrace)
-        self.trSelectMenu.addAction(showRetrace)
-        showTrace.triggered.connect(self.plotTrace)
-        showRetrace.triggered.connect(self.plotRetrace)
-        self.pushButton_trSelect.setMenu(self.trSelectMenu)
+            #Function of saving matlab file 
+            self.saveMenu = QtGui.QMenu()
+            twoDSave = QtGui.QAction("Save 2D plot", self)
+            twoDSave.triggered.connect(self.matPlot)
+            oneDSaveh = QtGui.QAction("Save horizontal line cut", self)
+            oneDSaveh.triggered.connect(self.matLinePloth)
+            oneDSavev = QtGui.QAction("Save vertical line cut", self)
+            oneDSavev.triggered.connect(self.matLinePlotv)
+            self.saveMenu.addAction(twoDSave)
+            self.saveMenu.addAction(oneDSaveh)
+            self.saveMenu.addAction(oneDSavev)
+            self.savePlot.setMenu(self.saveMenu)
 
-        # self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
-        self.pushButton_lockratio.clicked.connect(self.ToggleAspectRatio)
-        self.sensitivity.clicked.connect(self.promptSensitivity)
-        self.zoom.clicked.connect(self.zoomArea)
-        self.pushButton_loadData.clicked.connect(self.browseDV)
-        self.pushButton_refresh.clicked.connect(self.refreshPlot)
-        self.pushButton_Info.clicked.connect(self.displayInfo)
-        
-        self.Data = None
-        self.PlotData = None
-        self.TraceFlag = None
-        self.DataType = 'None'
-        self.NumberofindexVariables = 0
-        self.Title = 'Plotter ' + str(self.number)
-        self.directory = None
-        self.PlotParameters = {
-            'xMax': 0.0,
-            'xMin': 0.0,
-            'deltaX': 0.0,
-            'xPoints': 0.0,
-            'xscale': 0.0,
-            'yMax': 0.0,
-            'yMin': 0.0,
-            'deltaY': 0.0,
-            'yPoints': 0.0,
-            'yscale': 0.0
-        }
-        self.file = ''
-        self.indVars = []
-        self.depVars = []
-        self.Parameters = {}
-        self.comments = ''
-        self.Number_PlotData_X, self.Number_PlotData_Y = 0,0
-        self.aspectLocked=False
-        self.SweepingIndependentAxis=[]
-        self.SweepingDirection = ''
-        self.got_util = False
-        
-        self.RefreshInterface()
+            #Function Taking gradiant
+            self.gradMenu = QtGui.QMenu()
+            gradX = QtGui.QAction(QtGui.QIcon("nablaXIcon.png"), "Gradient along x-axis", self)
+            gradY = QtGui.QAction(QtGui.QIcon("nablaYIcon.png"), "Gradient along y-axis", self)
+            lancSettings = QtGui.QAction("Gradient settings...", self)
+            gradX.triggered.connect(self.xDeriv)
+            gradY.triggered.connect(self.yDeriv)
+            lancSettings.triggered.connect(self.derivSettings)
+            self.gradMenu.addAction(gradX)
+            self.gradMenu.addAction(gradY)
+            self.gradMenu.addAction(lancSettings)
+            self.gradient.setMenu(self.gradMenu)
+            self.datPct = 0.1
 
-        #Buttons Enable conditions:
-        self.EnableCondition= {}
-        
+            #Function Despiking
+            self.AdjacentPoints, self.NumberOfSigma = 3, 5
+            self.DespikeSettingWindow = DespikeSettings.DespikeSet(self.reactor, self)
+            self.RemoveSpikesMenu = QtGui.QMenu()
+            Despike = QtGui.QAction("Remove Spikes", self)
+            DespikeSetting = QtGui.QAction("Setting", self)
+            Despike.triggered.connect(self.RemoveSpikes)
+            DespikeSetting.triggered.connect(self.RemoveSpikesSettings)
+            self.RemoveSpikesMenu.addAction(Despike)
+            self.RemoveSpikesMenu.addAction(DespikeSetting)
+            self.pushButton_Despike.setMenu(self.RemoveSpikesMenu)
+
+            #####Functions that subtract the data
+            self.subtractMenu = QtGui.QMenu()
+            subOverallAvg = QtGui.QAction( "Subtract overall average", self)
+            subOverallAvg.triggered.connect(self.subtractOverallAvg)
+            self.subtractMenu.addAction(subOverallAvg)
+            self.ConstantSubtracted = 0.0
+            self.SubConstantWindow = ConstantSubtract.SubConstantWindow(self.reactor, self)
+            subconstant = QtGui.QAction( "Subtract overall constant", self)
+            subconstant.triggered.connect(self.ConstantSubtractedWindow)
+            self.subtractMenu.addAction(subconstant)
+            subPlane = QtGui.QAction( "Subtract planar fit", self)
+            subPlane.triggered.connect(self.subtractPlane)
+            self.subtractMenu.addAction(subPlane)
+            subOverallQuad = QtGui.QAction( "Subtract overall quadratic fit", self)
+            subOverallQuad.triggered.connect(self.subtractOverallQuad)
+            self.subtractMenu.addAction(subOverallQuad)
+            subSelectedAreaAvg = QtGui.QAction( "Subtract selected area average", self)
+            subSelectedAreaAvg.triggered.connect(lambda: self.subtractOverallConstant(self.Average_SelectedArea))
+            self.subtractMenu.addAction(subSelectedAreaAvg)
+            subXAvg = QtGui.QAction( "Subtract X average", self)
+            subXAvg.triggered.connect(self.subtractXAvg)
+            self.subtractMenu.addAction(subXAvg)
+            subYAvg = QtGui.QAction( "Subtract Y average", self)
+            subYAvg.triggered.connect(self.subtractYAvg)
+            self.subtractMenu.addAction(subYAvg)
+            subXLinear = QtGui.QAction( "Subtract X linear fit", self)
+            subXLinear.triggered.connect(self.subtractXLinear)
+            self.subtractMenu.addAction(subXLinear)
+            subYLinear = QtGui.QAction( "Subtract Y linear fit", self)
+            subYLinear.triggered.connect(self.subtractYLinear)
+            self.subtractMenu.addAction(subYLinear)
+            subXQuad = QtGui.QAction( "Subtract X quadratic fit", self)
+            subXQuad.triggered.connect(self.subtractXQuad)
+            self.subtractMenu.addAction(subXQuad)
+            subYQuad = QtGui.QAction( "Subtract Y quadratic fit", self)
+            subYQuad.triggered.connect(self.subtractYQuad)
+            self.subtractMenu.addAction(subYQuad)
+            self.subtract.setMenu(self.subtractMenu)
+
+            self.multiplier = 1.0
+            self.MultiplyWindow = MultiplierSettings.MultiplierWindow(self.reactor, self)
+            self.pushButton_Multiply.clicked.connect(self.MultiplyDialog)
+
+            #TraceSelect
+            self.trSelectMenu = QtGui.QMenu()
+            showTrace = QtGui.QAction("Plot Trace", self)
+            showRetrace = QtGui.QAction("Plot Retrace", self)
+            self.trSelectMenu.addAction(showTrace)
+            self.trSelectMenu.addAction(showRetrace)
+            showTrace.triggered.connect(self.plotTrace)
+            showRetrace.triggered.connect(self.plotRetrace)
+            self.pushButton_trSelect.setMenu(self.trSelectMenu)
+
+            # self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
+            self.pushButton_lockratio.clicked.connect(self.ToggleAspectRatio)
+            self.sensitivity.clicked.connect(self.promptSensitivity)
+            self.zoom.clicked.connect(self.zoomArea)
+            self.pushButton_loadData.clicked.connect(self.browseDV)
+            self.pushButton_refresh.clicked.connect(self.refreshPlot)
+            self.pushButton_Info.clicked.connect(self.displayInfo)
+
+            self.RefreshInterface()
+
+            #Buttons Enable conditions:
+            self.EnableCondition= {}
+        except Exception as inst:
+            print 'Following error was thrown: ', inst
+            print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+
     def DetermineEnableConditions(self):
         self.ButtonsCondition={
             self.pushButton_refresh: (not self.Data is None),
@@ -210,7 +238,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.gradient: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.sensitivity: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.diamCalc: False,
-            self.savePlot:(not self.PlotData is None)
+            self.savePlot:(not self.PlotData is None),
+            self.pushButton_SelectArea: (not self.PlotData is None)
         }
         
     def RefreshInterface(self):
@@ -285,7 +314,45 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         sio.savemat(fold,{savename:matData})
         matData = None
 ##################
-   
+
+    def SelectArea(self):
+        self.SelectedAreaShow = not self.SelectedAreaShow
+        if self.SelectedAreaShow:
+            self.mainPlot.addItem(self.AreaSelected)
+        else:
+            self.mainPlot.removeItem(self.AreaSelected)
+
+    def RefreshAreaSelected(self):
+        self.RefreshSelecedAreaProperty()
+        self.RedefineSelectedAreaData()
+        self.editDataInfo.RefreshInfo()
+
+    def SetDefaultSelectedAreaPos(self):
+        xAxis = self.viewBig.getAxis('bottom')
+        yAxis = self.viewBig.getAxis('left')
+        xMin, xMax = xAxis.range[0], xAxis.range[1]
+        yMin, yMax = yAxis.range[0], yAxis.range[1]#Get current Plot geometry
+        self.AreaSelected.setPos((xMin + (xMax - xMin) / 4), (yMin + (yMax - yMin) / 4))
+        self.AreaSelected.setSize((xMax - xMin) / 2, (yMax - yMin) / 4)#??
+
+
+    def RefreshSelecedAreaProperty(self):
+        bounds = self.AreaSelected.parentBounds()#Return the bounding rectangle of this ROI in the coordinate system of its parent. 
+        self.AreaSelectedParameters['xMin'] = int((bounds.x() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
+        self.AreaSelectedParameters['yMin'] = int((bounds.y() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
+        self.AreaSelectedParameters['xMax'] = int((bounds.x() + bounds.width() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
+        self.AreaSelectedParameters['yMax'] = int((bounds.y() + bounds.height() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
+        self.RedefineSelectedAreaData()
+    
+    def RedefineSelectedAreaData(self):
+        if not self.PlotData is None:
+            xMin, xMax = self.AreaSelectedParameters['xMin'], self.AreaSelectedParameters['xMax']
+            yMin, yMax = self.AreaSelectedParameters['yMin'], self.AreaSelectedParameters['yMax']
+            self.Data_SelectedArea = self.PlotData[xMin:xMax, yMin:yMax]
+            self.Average_SelectedArea = np.average(self.Data_SelectedArea)
+        else:
+            pass
+
 ################## This part create a window on the plot and you can drage it around, click on it will rescale the plot
     def zoomArea(self):
         self.zoom.clicked.disconnect(self.zoomArea)
@@ -295,7 +362,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         a1, a2 = xAxis.range[0], xAxis.range[1]
         b1, b2 = yAxis.range[0], yAxis.range[1]
         self.zoomRect = pg.RectROI(((a2 + a1) / 2, (b2 + b1) / 2),((a2 - a1) / 2, (b2 - b1) / 2), movable = True)
-        self.zoomRect.setAcceptedMouseButtons(QtCore.Qt.LeftButton | QtCore.Qt.RightButton)
+        self.zoomRect.setAcceptedMouseButtons(QtCore.Qt.RightButton | QtCore.Qt.LeftButton)
         self.zoomRect.addScaleHandle((1,1), (.5,.5), lockAspect = False)
         self.zoomRect.sigClicked.connect(self.QMouseEvent)
         self.mainPlot.addItem(self.zoomRect)
@@ -304,8 +371,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.mainPlot.removeItem(self.zoomRect)
         self.zoom.clicked.connect(self.zoomArea)
 
-    def QMouseEvent(self, thing, button):
-        button = int(str(button)[-2])
+    def QMouseEvent(self, thing, button, c =None, d =None):
+        print thing , button,c,d
+        button = int(str(button)[-2])#1 for left, 2 for right
 
         bounds = self.zoomRect.parentBounds()
         x1 = int((bounds.x() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
@@ -403,13 +471,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.vLine.setValue(self.PlotParameters['xMin'])
         self.hLine.setValue(self.PlotParameters['yMin'])    
         if self.NSselect == 1:
-            self.label_plotType.setText('Plotted sensitivity.')
+            self.Feedback('Plotted sensitivity.')
             self.vhSelect.addItem('Maximum Sensitivity')
         else:
-            self.label_plotType.setText('Plotted field noise.')    
+            self.Feedback('Plotted field noise.')    
             self.vhSelect.addItem('Minimum Noise')
             self.vhSelect.addItem('Optimal Bias')
-        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
         self.ResetLineCutPlots()
 
     def plotMaxSens(self):
@@ -481,23 +548,20 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
     def xDeriv(self):
         if self.PlotData is None:
-            self.label_plotType.setText("Please plot data.")
-            self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+            self.Feedback("Please plot data.")
         else:
             self.gradient.setFocusPolicy(QtCore.Qt.StrongFocus)
             xVals = np.linspace(self.PlotParameters['xMin'], self.PlotParameters['xMax'], num = self.PlotParameters['xPoints'])
             delta = abs(self.PlotParameters['xMax'] - self.PlotParameters['xMin']) / self.PlotParameters['xPoints']
             N = int(self.PlotParameters['xPoints'] * self.datPct)
             if N < 2:
-                self.label_plotType.setText("Lanczos window too \nsmall.")
-                self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+                self.Feedback("Lanczos window too small.")
 
             else:
                 for i in range(0, self.PlotData.shape[1]):
                     self.PlotData[:, i] = deriv(self.PlotData[:,i], xVals, N, delta)    
                 self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.PlotParameters['xMin'], self.PlotParameters['yMin']],scale=[self.PlotParameters['xscale'], self.PlotParameters['yscale']])
-                self.label_plotType.setText("Plotted gradient along \nx-axis.")
-                self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+                self.Feedback("Plotted gradient along x-axis.")
                 self.ResetLineCutPlots()
                 
     def yDeriv(self):
@@ -507,8 +571,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         for i in range(0, self.PlotData.shape[0]):
             self.PlotData[i, :] = deriv(self.PlotData[i,:], yVals, N, delta)    
         self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.PlotParameters['xMin'], self.PlotParameters['yMin']],scale=[self.PlotParameters['xscale'], self.PlotParameters['yscale']])
-        self.label_plotType.setText("Plotted gradient along \ny-axis.")
-        self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
+        self.Feedback("Plotted gradient along y-axis.")
         self.ResetLineCutPlots()
         
     def derivSettings(self):
@@ -519,47 +582,71 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def setLancWindow(self):
         self.datPct = self.gradSet.dataPercent.value() / 100
 
-        
 ##################Manipulating Plot Data
     def subtractOverallAvg(self):
         self.PlotData = processImageData(self.PlotData, 'Subtract Image Average')
+        self.Feedback("Subtracted Overall Average")
         self.Plot_Data()
+
+    def ConstantSubtractedWindow(self):
+        self.SubConstantWindow.raise_()
+        self.SubConstantWindow.moveDefault()
+        self.SubConstantWindow.show()
+
+    def subtractOverallConstant(self, number):
+        if not self.PlotData is None:
+            NewData = self.PlotData - number
+            self.PlotData = NewData
+            self.Plot_Data()
+            feedback = "Subtracted Constatnt: " + str(number)
+            self.Feedback(feedback)
+        else:
+            pass
 
     def subtractPlane(self):
         self.PlotData = processImageData(self.PlotData, 'Subtract Image Plane')
+        self.Feedback("Subtracted Overall Plane Fit")
         self.Plot_Data()
 
     def subtractOverallQuad(self):
         self.PlotData = processImageData(self.PlotData, 'Subtract Image Quadratic')
-        self.Plot_Data()
-        
-    def subtractYAvg(self):
-        self.PlotData = processImageData(self.PlotData, 'Subtract Line Average')
+        self.Feedback("Subtracted Overall Quadratic Fit")
         self.Plot_Data()
         
     def subtractXAvg(self):
+        self.PlotData = processImageData(self.PlotData, 'Subtract Line Average')
+        self.Feedback("Subtracted Line Average in X")
+        self.Plot_Data()
+        
+    def subtractYAvg(self):
         self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Average').T
+        self.Feedback("Subtracted Line Average in Y")
         self.Plot_Data()
 
-    def subtractYLinear(self):
-        self.PlotData = processImageData(self.PlotData, 'Subtract Line Linear')
-        self.Plot_Data()
-    
     def subtractXLinear(self):
-        self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Linear').T
-        self.Plot_Data()
-
-    def subtractYQuad(self):
-        self.PlotData = processImageData(self.PlotData, 'Subtract Line Quadratic')
+        self.PlotData = processImageData(self.PlotData, 'Subtract Line Linear')
+        self.Feedback("Subtracted Linear Fit in X")
         self.Plot_Data()
     
+    def subtractYLinear(self):
+        self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Linear').T
+        self.Feedback("Subtracted Linear Fit in Y")
+        self.Plot_Data()
+
     def subtractXQuad(self):
+        self.PlotData = processImageData(self.PlotData, 'Subtract Line Quadratic')
+        self.Feedback("Subtracted Quadratic Fit in X")
+        self.Plot_Data()
+    
+    def subtractYQuad(self):
         self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Quadratic').T
+        self.Feedback("Subtracted Quadratic Fit in Y")
         self.Plot_Data()
         
 ##################
 
     def MultiplyDialog(self):
+        self.MultiplyWindow.moveDefault()
         self.MultiplyWindow.show()
 
     def MultiplyPlotData(self, multiplier):
@@ -579,7 +666,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.dvExplorer.accepted.connect(lambda: self.loadData(self.reactor))
             self.dvExplorer.rejected.connect(self.reenableRefresh)
         except Exception as inst:
-            print inst
+            print 'Following error was thrown: ', inst
+            print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
 
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
@@ -664,7 +752,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     @inlineCallbacks
     def ReadData(self):#Read all the data in datavault and stack them in order
         try:
-            t1 = time.time()
             getFlag = True
             rawData = np.array([])
             while getFlag == True:
@@ -680,9 +767,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 except:
                     getFlag = False
             
-            print 'Get Set Finished'
-            t = time.time()
-            print 'Time taken to get set', t - t1
+            feedback = 'Get Set Finished.'
+            self.Feedback(feedback)
             returnValue(rawData) 
         except Exception as inst:
                 print 'Following error was thrown: ', inst
@@ -750,10 +836,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def loadData(self, c):
         try:
             self.ClearcomboBox()
-        
-            self.label_plotType.setText("\nLoading data...")
-            self.label_plotType.setStyleSheet("QLabel#plotType {color: rgb(131,131,131); font: 9pt;}")
-            
+                    
             #Initialized data set to none
             self.ClearData()
             
@@ -782,12 +865,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 self.pushButton_trSelect.show()
                 
             pt = self.mapToGlobal(QtCore.QPoint(410,-10))
-            self.label_plotType.setText("")
             self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
             QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
             self.zoom.setEnabled(False)
             self.ResetLineCutPlots()
-            self.label_plotType.clear()
             
             self.RefreshInterface()
             self.editDataInfo.RefreshInfo()
@@ -904,11 +985,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 self.ParsePlotData()
 
             self.Plot_Data()
+            self.SetDefaultSelectedAreaPos()
             
             self.RefreshInterface()
             self.editDataInfo.RefreshInfo()
-            self.label_plotType.clear()
-            
 
         except Exception as inst:
                 print 'Following error was thrown: ', inst
@@ -1067,13 +1147,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         except Exception as inst:
                 print 'Following error was thrown: ', inst
                 print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
-
-            
             
     # @inlineCallbacks
     def displayInfo(self, c):
         try:
             self.editDataInfo.RefreshInfo()
+            self.editDataInfo.moveDefault()
             self.editDataInfo.show()
         except Exception as inst:
                 print 'Following error was thrown: ', inst
@@ -1118,7 +1197,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         return value
         
     def RemoveSpikes(self):
-        print "Start to remove spikes with parameters: ",self.AdjacentPoints ,self.NumberOfSigma
+        feedback = "Start to remove spikes with parameters: " + str(self.AdjacentPoints) + ' , ' + str(self.NumberOfSigma)
+        self.Feedback(feedback)
         number = 0
         list = []
         for i in range(self.Number_PlotData_X ):
@@ -1129,8 +1209,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                     list.append([i,j, abs(self.PlotData[i][j] - avg) / float(std)])
                     self.PlotData[i][j] = self.LinearExtrapolate(i,j)
         self.Plot_Data()
-        print "Remove Spikes Finished, Flattened ", number, "data. They are ", list
-        
+        feedback = "Remove Spikes Finished, Flattened " + str(number) + " data."
+        self.Feedback(feedback)
+
     def RemoveSpikesSettings(self):
         self.DespikeSettingWindow.show()
         self.DespikeSettingWindow.raise_()
@@ -1139,25 +1220,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.aspectLocked = not self.aspectLocked
         if self.aspectLocked == False:
             self.viewBig.setAspectLocked(False)
-            self.pushButton_lockratio.setStyleSheet("""#pushButton_lockratio{menu-indicator:{image:none}}
-
-#pushButton_lockratio{
-image:url(:/nSOTScanner/Pictures/ratio.png);
-background: black;
-border: 0px solid rgb(95,107,166);
-}
-""")
         else:
             self.viewBig.setAspectLocked(True, ratio = 1)
-            self.pushButton_lockratio.setStyleSheet("""#pushButton_lockratio{menu-indicator:{image:none}}
 
-#pushButton_lockratio{
-image:url(:/nSOTScanner/Pictures/ratio.png);
-background: black;
-border: 2px solid rgb(95,107,166);
-}
-""")            
-   
+    def Feedback(self, string):
+        self.label_Feeedback.setText(string) 
+
     def moveDefault(self):
         parentx, parenty = self.parent.mapToGlobal(QtCore.QPoint(0,0)).x(), self.parent.mapToGlobal(QtCore.QPoint(0,0)).y()
         parentwidth, parentheight = self.parent.width(), self.parent.height()

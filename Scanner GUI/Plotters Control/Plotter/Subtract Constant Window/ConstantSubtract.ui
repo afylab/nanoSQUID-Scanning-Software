@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Multiplier Window</string>
+   <string>Subtract Constant</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../../../Resources/nSOTScannerResources.qrc">
@@ -142,7 +142,7 @@ border-radius: 5px
        </size>
       </property>
       <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;Multiplier:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#838383;&quot;&gt;Constant:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
@@ -150,7 +150,7 @@ border-radius: 5px
      </widget>
     </item>
     <item row="0" column="3" colspan="3">
-     <widget class="QLineEdit" name="lineEdit_Multiplier">
+     <widget class="QLineEdit" name="lineEdit_Constant">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
         <horstretch>0</horstretch>
@@ -164,7 +164,7 @@ border-radius: 5px
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">QLineEdit#lineEdit_Multiplier{
+       <string notr="true">QLineEdit#lineEdit_Constant{
 color: rgb(131,131,131);
 background-color:rgb(0,0,0);
 border: 2px solid  rgb(131,131,131);
@@ -172,7 +172,7 @@ border-radius: 5px
 }</string>
       </property>
       <property name="text">
-       <string>1.0</string>
+       <string>0.0</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
