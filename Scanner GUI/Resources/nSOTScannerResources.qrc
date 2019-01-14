@@ -1,11 +1,16 @@
 <RCC>
   <qresource prefix="nSOTScanner">
+    <file>Pictures/OverlapSubtract.png</file>
+    <file>Pictures/SelectArea.png</file>
+    <file>Pictures/AddPlotter.png</file>
+    <file>Pictures/ArrowLeft.png</file>
     <file>Pictures/Multiply.png</file>
     <file>Pictures/Overlap.png</file>
     <file>Pictures/Info.png</file>
     <file>Pictures/ratio.png</file>
     <file>Pictures/addWhite.png</file>
     <file>Pictures/addWhiteHover.png</file>
+    <file>Pictures/ArrowRight.png</file>
     <file>Pictures/tab_close.png</file>
     <file>Pictures/Landaul Fan.PNG</file>
     <file>Pictures/Four Terminal.png</file>
