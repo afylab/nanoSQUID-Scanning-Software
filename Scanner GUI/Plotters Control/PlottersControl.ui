@@ -24,28 +24,160 @@
 background-color: rgb(0, 0, 0);
 }</string>
    </property>
-   <layout class="QGridLayout" name="gridLayout_3" rowstretch="1,1" columnstretch="2,1">
-    <item row="0" column="0" rowspan="2">
-     <widget class="QListWidget" name="listWidget_Plots">
+   <layout class="QGridLayout" name="gridLayout_3" rowstretch="1,1" columnstretch="2,0">
+    <item row="1" column="1">
+     <widget class="QFrame" name="frame_Process">
       <property name="styleSheet">
-       <string notr="true">QListWidget#listWidget_Plots{
+       <string notr="true">
+QFrame#frame_Process{
 color: rgb(131,131,131);
 background-color:rgb(0,0,0);
-border: 2px solid  rgb(131, 131, 131);
+border: 2px solid  rgb(131,131,131);
 border-radius: 5px
 }
-
-QScrollBar:horizontal {
-   border: 0px;
-   background: black;
-   height: 15px;
-}
-QScrollBar:vertical {
-   border: 0px;
-   background: black;
-   width: 15px;
-}</string>
+</string>
       </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,1,1" columnstretch="1,1">
+       <item row="1" column="0">
+        <widget class="QPushButton" name="pushButton_Subtract">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton#pushButton_Subtract{
+image:url(:/nSOTScanner/Pictures/OverlapSubtract.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_Subtract{
+image:url(:/nSOTScanner/Pictures/OverlapSubtract.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QPushButton" name="pushButton_Product">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton#pushButton_AddPlotter{
+image:url(:/nSOTScanner/Pictures/add.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_AddPlotter{
+image:url(:/nSOTScanner/Pictures/add.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QPushButton" name="pushButton_Division">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton#pushButton_AddPlotter{
+image:url(:/nSOTScanner/Pictures/add.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_AddPlotter{
+image:url(:/nSOTScanner/Pictures/add.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="pushButton_Addition">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton#pushButton_AddPlotter{
+image:url(:/nSOTScanner/Pictures/add.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_AddPlotter{
+image:url(:/nSOTScanner/Pictures/add.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0" colspan="2">
+        <widget class="QLabel" name="label">
+         <property name="styleSheet">
+          <string notr="true">color:rgb(131,131,131)</string>
+         </property>
+         <property name="text">
+          <string>Process Functions</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
     <item row="0" column="1">
@@ -179,159 +311,27 @@ border-radius: 5px
       </layout>
      </widget>
     </item>
-    <item row="1" column="1">
-     <widget class="QFrame" name="frame_Process">
+    <item row="0" column="0" rowspan="2">
+     <widget class="QListWidget" name="listWidget_Plots">
       <property name="styleSheet">
-       <string notr="true">
-QFrame#frame_Process{
+       <string notr="true">QListWidget#listWidget_Plots{
 color: rgb(131,131,131);
 background-color:rgb(0,0,0);
-border: 2px solid  rgb(131,131,131);
+border: 2px solid  rgb(131, 131, 131);
 border-radius: 5px
 }
-</string>
+
+QScrollBar:horizontal {
+   border: 0px;
+   background: black;
+   height: 15px;
+}
+QScrollBar:vertical {
+   border: 0px;
+   background: black;
+   width: 15px;
+}</string>
       </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,1,1" columnstretch="1,1">
-       <item row="1" column="0">
-        <widget class="QPushButton" name="pushButton_Subtract">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
-background: black;
-}
-
-QPushButton:pressed#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
-background: black;
-border: 2px rgb(131,131,131);
-border-radius: 5px
-}
-</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QPushButton" name="pushButton_Product">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
-background: black;
-}
-
-QPushButton:pressed#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
-background: black;
-border: 2px rgb(131,131,131);
-border-radius: 5px
-}
-</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QPushButton" name="pushButton_Division">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
-background: black;
-}
-
-QPushButton:pressed#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
-background: black;
-border: 2px rgb(131,131,131);
-border-radius: 5px
-}
-</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QPushButton" name="pushButton_Addition">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
-background: black;
-}
-
-QPushButton:pressed#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
-background: black;
-border: 2px rgb(131,131,131);
-border-radius: 5px
-}
-</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0" colspan="2">
-        <widget class="QLabel" name="label">
-         <property name="styleSheet">
-          <string notr="true">color:rgb(131,131,131)</string>
-         </property>
-         <property name="text">
-          <string>Process Functions</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
      </widget>
     </item>
    </layout>
