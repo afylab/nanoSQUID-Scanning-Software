@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="nSOTScanner">
+    <file>Pictures/Crop.jpg</file>
     <file>Pictures/OverlapSubtract.png</file>
     <file>Pictures/SelectArea.png</file>
     <file>Pictures/AddPlotter.png</file>
