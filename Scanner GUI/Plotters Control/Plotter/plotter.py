@@ -116,6 +116,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.SelectedAreaShow = False
             self.AreaSelected.sigRegionChangeFinished.connect(self.RefreshAreaSelected)
 
+            #Function of croping a window
+            self.pushButton_CropWindow.clicked.connect(lambda: self.CropWindow(self.AreaSelectedParameters['xMin'], self.AreaSelectedParameters['xMax'], self.AreaSelectedParameters['yMin'], self.AreaSelectedParameters['yMax']))
+
             #Function of saving matlab file 
             self.saveMenu = QtGui.QMenu()
             twoDSave = QtGui.QAction("Save 2D plot", self)
@@ -239,7 +242,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.sensitivity: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.diamCalc: False,
             self.savePlot:(not self.PlotData is None),
-            self.pushButton_SelectArea: (not self.PlotData is None)
+            self.pushButton_SelectArea: (not self.PlotData is None),
+            self.pushButton_CropWindow: (not self.PlotData is None)
         }
         
     def RefreshInterface(self):
@@ -328,12 +332,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.editDataInfo.RefreshInfo()
 
     def SetDefaultSelectedAreaPos(self):
+        self.PlotParameters 
         xAxis = self.viewBig.getAxis('bottom')
         yAxis = self.viewBig.getAxis('left')
-        xMin, xMax = xAxis.range[0], xAxis.range[1]
-        yMin, yMax = yAxis.range[0], yAxis.range[1]#Get current Plot geometry
-        self.AreaSelected.setPos((xMin + (xMax - xMin) / 4), (yMin + (yMax - yMin) / 4))
-        self.AreaSelected.setSize((xMax - xMin) / 2, (yMax - yMin) / 4)#??
+        xMin, xMax = self.PlotParameters['xMin'], self.PlotParameters['xMax']
+        yMin, yMax = self.PlotParameters['yMin'], self.PlotParameters['yMax']
+        self.AreaSelected.setPos(xMin, yMin)
 
 
     def RefreshSelecedAreaProperty(self):
@@ -348,8 +352,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         if not self.PlotData is None:
             xMin, xMax = self.AreaSelectedParameters['xMin'], self.AreaSelectedParameters['xMax']
             yMin, yMax = self.AreaSelectedParameters['yMin'], self.AreaSelectedParameters['yMax']
-            self.Data_SelectedArea = self.PlotData[xMin:xMax, yMin:yMax]
-            self.Average_SelectedArea = np.average(self.Data_SelectedArea)
+            Dimx, Dimy = self.PlotParameters['xPoints'], self.PlotParameters['yPoints']
+            if xMin >= 0 and xMax < Dimx and yMin >= 0 and yMax < Dimy:
+                self.Data_SelectedArea = self.PlotData[xMin:xMax, yMin:yMax]
+                self.Average_SelectedArea = np.average(self.Data_SelectedArea)
+            else:
+                self.Average_SelectedArea = 0.0
         else:
             pass
 
@@ -892,7 +900,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.PlotParameters['xMin'] = np.amin(self.Data[::,self.NumberofindexVariables+self.xIndex])
             self.PlotParameters['deltaX'] = self.PlotParameters['xMax'] - self.PlotParameters['xMin']
             self.PlotParameters['xPoints'] = np.amax(self.Data[::,self.xIndex])+1  #look up the index
-            self.PlotParameters['xMin'], self.PlotParameters['xMax'] = self.PlotParameters['xMin'], self.PlotParameters['xMax']
             self.PlotParameters['xscale']  = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / self.PlotParameters['xPoints'] 
             self.PlotParameters['yMin'] = 0.0
         
@@ -932,12 +939,13 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         if "2DPlot" in self.DataType:
             self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.PlotParameters['xMin'], self.PlotParameters['yMin']],scale=[self.PlotParameters['xscale'], self.PlotParameters['yscale']])
             self.ResetLineCutPlots()
-            self.zoom.setEnabled(True)
 
         elif "1DPlot" in self.DataType:
             self.LineCutXZYVals = self.PlotData[1]
             self.LineCutXZXVals = self.PlotData[0]
             self.XZPlot.plot(x = self.LineCutXZXVals, y = self.LineCutXZYVals, pen = 0.5)
+
+        self.editDataInfo.RefreshInfo()
 
     def DetermineSweepingIndependentAxis(self): #Assumptions: independent Variables saved firstly
         self.SweepingIndependentAxis = []
@@ -988,7 +996,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.SetDefaultSelectedAreaPos()
             
             self.RefreshInterface()
-            self.editDataInfo.RefreshInfo()
 
         except Exception as inst:
                 print 'Following error was thrown: ', inst
@@ -1222,6 +1229,30 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.viewBig.setAspectLocked(False)
         else:
             self.viewBig.setAspectLocked(True, ratio = 1)
+
+    def CropWindow(self, xMinIndex, xMaxIndex, yMinIndex, yMaxIndex):
+        CropData = self.PlotData[xMinIndex:xMaxIndex, yMinIndex:yMaxIndex]
+        xMin_Past = self.PlotParameters['xMin']
+        xMax_Past = self.PlotParameters['xMax']
+        yMin_Past = self.PlotParameters['yMin']
+        yMax_Past = self.PlotParameters['yMax']
+        xPoints_Past = self.PlotParameters['xPoints']
+        yPoints_Past = self.PlotParameters['yPoints'] 
+
+        self.PlotParameters['xMin'] = (xMax_Past - xMin_Past)/ xPoints_Past * xMinIndex + xMin_Past
+        self.PlotParameters['xMax'] = (xMax_Past - xMin_Past)/ xPoints_Past * xMaxIndex + xMin_Past
+        self.PlotParameters['yMin'] = (yMax_Past - yMin_Past)/ yPoints_Past * yMinIndex + yMin_Past
+        self.PlotParameters['yMax'] = (yMax_Past - yMin_Past)/ yPoints_Past * yMaxIndex + yMin_Past
+        self.PlotParameters['deltaX'] = self.PlotParameters['xMax'] - self.PlotParameters['xMin']
+        self.PlotParameters['xPoints'] = xMaxIndex - xMinIndex 
+        self.PlotParameters['xscale']  = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / self.PlotParameters['xPoints'] 
+        self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
+        self.PlotParameters['yPoints'] = yMaxIndex - yMinIndex 
+        self.PlotParameters['yscale'] = (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / self.PlotParameters['yPoints']
+        
+        self.PlotData = CropData
+        self.Plot_Data()
+        self.RefreshInterface()
 
     def Feedback(self, string):
         self.label_Feeedback.setText(string) 

@@ -152,4 +152,4 @@ class ProcessWindow(QtGui.QMainWindow, Ui_ProcessWindow):
         parentx, parenty = self.parent.mapToGlobal(QtCore.QPoint(0,0)).x(), self.parent.mapToGlobal(QtCore.QPoint(0,0)).y()
         parentwidth, parentheight = self.parent.width(), self.parent.height()
         Offset = 10
-        self.move(parentx + parentwidth + Offset, parenty)   
+        self.move(parentx, parenty + parentheight + Offset )   

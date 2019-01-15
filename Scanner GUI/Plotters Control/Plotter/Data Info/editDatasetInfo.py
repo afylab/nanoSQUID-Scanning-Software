@@ -83,9 +83,9 @@ class editDataInfo(QtGui.QMainWindow, Ui_EditDataInfo):
                 
             #PlotDetails
             #X,Ydimension
-            x ,y = self.parent.Number_PlotData_X, self.parent.Number_PlotData_Y
-            self.lineEdit_XPoints.setText(str(x))
-            self.lineEdit_YPoints.setText(str(y))
+            Dimx ,Dimy = self.parent.Number_PlotData_X, self.parent.Number_PlotData_Y
+            self.lineEdit_XPoints.setText(str(Dimx))
+            self.lineEdit_YPoints.setText(str(Dimy))
             
             #Sweeping direction
             Sweepdirect = self.parent.SweepingDirection
@@ -98,10 +98,26 @@ class editDataInfo(QtGui.QMainWindow, Ui_EditDataInfo):
             AreaSelectedParameters = self.parent.AreaSelectedParameters
             self.lineEdit_xTotal.setText(str(1 + AreaSelectedParameters['xMax'] - AreaSelectedParameters['xMin']))
             self.lineEdit_yTotal.setText(str(1 + AreaSelectedParameters['yMax'] - AreaSelectedParameters['yMin']))
-            self.lineEdit_xMin.setText(str(AreaSelectedParameters['xMin']))
-            self.lineEdit_xMax.setText(str(AreaSelectedParameters['xMax']))
-            self.lineEdit_yMin.setText(str(AreaSelectedParameters['yMax']))
-            self.lineEdit_yMin.setText(str(AreaSelectedParameters['yMin']))
+            xMin , xMax = AreaSelectedParameters['xMin'], AreaSelectedParameters['xMax'] 
+            yMin , yMax = AreaSelectedParameters['yMin'], AreaSelectedParameters['yMax']
+
+            if  xMin >= 0 or xMin < Dimx:
+                self.lineEdit_xMin.setText(str(xMin))
+            else:
+                self.lineEdit_xMin.setText('Out of bound')
+            if  xMax >= 0 or xMax < Dimx:
+                self.lineEdit_xMax.setText(str(xMax))
+            else:
+                self.lineEdit_xMax.setText('Out of bound')
+            if  yMin >= 0 or yMin < Dimy:
+                self.lineEdit_yMin.setText(str(yMin))
+            else:
+                self.lineEdit_yMin.setText('Out of bound')
+            if  yMax >= 0 or yMax < Dimy:
+                self.lineEdit_yMax.setText(str(yMax))
+            else:
+                self.lineEdit_yMax.setText('Out of bound')
+
             average = self.parent.Average_SelectedArea
             self.lineEdit_average.setText(str(average))
             

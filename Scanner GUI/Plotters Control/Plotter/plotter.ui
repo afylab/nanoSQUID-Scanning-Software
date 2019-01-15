@@ -765,6 +765,47 @@ border-radius: 5px
             </property>
            </widget>
           </item>
+          <item row="1" column="0">
+           <widget class="QPushButton" name="pushButton_CropWindow">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Crop the data to the selected area&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton:disabled#pushButton_CropWindow {image:url(:/nSOTScanner/Pictures/lock.png)}
+
+#pushButton_CropWindow{
+image:url(:/nSOTScanner/Pictures/Crop.jpg);
+background: black;
+
+}
+
+QPushButton:pressed#pushButton_CropWindow{
+image:url(:/nSOTScanner/Pictures/Crop.jpg);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>

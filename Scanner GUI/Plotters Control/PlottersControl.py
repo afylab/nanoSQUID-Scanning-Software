@@ -144,6 +144,7 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
                 
     def Subtract(self, c = None):
         self.ProcessList.raise_()
+        self.ProcessList.moveDefault()
         self.ProcessList.show()
         self.ProcessList.label_Operation.setText('Subtract')
 
