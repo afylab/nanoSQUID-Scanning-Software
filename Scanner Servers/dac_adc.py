@@ -256,7 +256,7 @@ class DAC_ADCServer(DeviceServer):
             while v != "":
                 v = yield dev.read()
             returnValue(ans)
-            returnValue(ans)
+        returnValue(ans)
 
     @setting(106,port1='i',port2='i',ivoltage1='v',ivoltage2='v',fvoltage1='v',fvoltage2='v',steps='i',delay='i',returns='s')
     def ramp2(self,c,port1,port2,ivoltage1,ivoltage2,fvoltage1,fvoltage2,steps,delay):
@@ -328,11 +328,11 @@ class DAC_ADCServer(DeviceServer):
                         tmp = yield dev.readByte(bytestoread)
                         data = data + tmp
                         nbytes = nbytes + bytestoread
-
+            
             dev.setramping(False)
-
+            
             data = list(data)
-
+            
             for x in xrange(adcN):
                 channels.append([])
 

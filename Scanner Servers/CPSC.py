@@ -210,44 +210,76 @@ class CPSCServer(LabradServer):
         the xyz coordinates need to be transformed into other coordinates first, after which they will be rounded. 
         Output not yet implememnted. Output returns the true number of steps taken in the x, y, and z directions 
         (not necessarily equal), and the number of steps taken in radial directions."""
-        
-        VEC = np.dot(self.T1,XYZ)
-        VEC = self.adjustForWeight(VEC)
-        VEC = [round(x) for x in VEC]
-        print VEC
-        
-        if VEC[0] > 0:
-            yield self.move(c, ADDR, 1, 'CA1801', TEMP, 1, FREQ, REL, VEC[0], TORQUE)
-            print "Moving channel 1 by " + str(VEC[0])
-            while True:
-                status = yield self.status(c,ADDR)
-                if status.startswith("STATUS : STOP"):
-                    break
-        elif VEC[0] < 0: 
-            yield self.move(c, ADDR, 1, 'CA1801', TEMP, 0, FREQ, REL, -VEC[0], TORQUE)
-            print "Moving channel 1 by " + str(VEC[0])
-            yield self.pause_while_moving(c,ADDR)
+        try:
+            VEC = np.dot(self.T1,XYZ)
+            VEC = self.adjustForWeight(VEC)
+            VEC = [round(x) for x in VEC]
+            print VEC
             
-        if VEC[1] > 0:
-            yield self.move(c, ADDR, 2, 'CA1801', TEMP, 1, FREQ, REL, VEC[1], TORQUE)
-            print "Moving channel 2 by " + str(VEC[1])
-            yield self.pause_while_moving(c,ADDR)
-        elif VEC[1] < 0: 
-            yield self.move(c, ADDR, 2, 'CA1801', TEMP, 0, FREQ, REL, -VEC[1], TORQUE)
-            print "Moving channel 2 by " + str(VEC[1])
-            yield self.pause_while_moving(c,ADDR)
+            #have each cycle take ~1 second
+            cycle_size = int(FREQ/2)
             
-        if VEC[2] > 0:
-            yield self.move(c, ADDR, 3, 'CA1801', TEMP, 1, FREQ, REL, VEC[2], TORQUE)
-            print "Moving channel 3 by " + str(VEC[2])
-            yield self.pause_while_moving(c,ADDR)
-        elif VEC[2] < 0: 
-            yield self.move(c, ADDR, 3, 'CA1801', TEMP, 0, FREQ, REL, -VEC[2], TORQUE)
-            print "Moving channel 3 by " + str(VEC[2])
-            yield self.pause_while_moving(c,ADDR)
-        
-        returnValue('Success!')
-    
+            if VEC[0] > 0:
+                dir_chn_1 = 1
+            else:
+                dir_chn_1 = 0
+
+            if VEC[1] > 0:
+                dir_chn_2 = 1
+            else:
+                dir_chn_2 = 0
+                
+            if VEC[2] > 0:
+                dir_chn_3 = 1
+            else:
+                dir_chn_3 = 0
+                
+            #Find the largest number of steps that need to be taken
+            max = np.max(np.abs(VEC))
+            #Determine the number of cycles based on the max number of step taken in a cycle (cycle_size)
+            num_cycles  = floor(max / cycle_size)
+            #Determine the amount to move each cycle in each channel 
+            
+            VEC_cycle = [int(x) for x in np.multiply(VEC, cycle_size / max)]
+            remainder  = [int(x) for x in np.subtract(VEC, np.multiply(VEC_cycle, num_cycles))]
+            
+            print "Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively."
+            print "This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps."
+            print "And a final cycle with the remainder of " + str(remainder) + " steps."
+
+            VEC_cycle = np.abs(VEC_cycle)
+            remainder = np.abs(remainder)
+            
+            for i in range (0,int(num_cycles)):
+                if VEC_cycle[0] > 0:
+                    yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, VEC_cycle[0], TORQUE)
+                    yield self.pause_while_moving(c,ADDR)
+                if VEC_cycle[1] > 0:
+                    yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, VEC_cycle[1], TORQUE)
+                    yield self.pause_while_moving(c,ADDR)
+                if VEC_cycle[2] > 0:
+                    yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, VEC_cycle[2], TORQUE)
+                    yield self.pause_while_moving(c,ADDR)
+            
+            tot_remain = 0
+            for rem in remainder:
+                tot_remain = tot_remain + rem
+                
+            if tot_remain != 0:
+                if remainder[0] > 0:
+                    yield self.move(c, ADDR, 1, 'CA1801', TEMP, dir_chn_1, FREQ, REL, remainder[0], TORQUE)
+                    yield self.pause_while_moving(c,ADDR)
+                if remainder[1] > 0:
+                    yield self.move(c, ADDR, 2, 'CA1801', TEMP, dir_chn_2, FREQ, REL, remainder[1], TORQUE)
+                    yield self.pause_while_moving(c,ADDR)
+                if remainder[2] > 0:
+                    yield self.move(c, ADDR, 3, 'CA1801', TEMP, dir_chn_3, FREQ, REL, remainder[2], TORQUE)
+                    yield self.pause_while_moving(c,ADDR)
+            
+            returnValue('Success!')
+        except Exception as inst:
+            print inst
+            
     @setting(111, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', X = 'v[]', TORQUE = 'i', returns = 's')
     def move_x(self,c, ADDR, TEMP, FREQ, REL, X, TORQUE = None):
         """Request CADM move sample in the according to the arbitrary vector XYZ. XYZ should be a 3 element list 
@@ -258,6 +290,7 @@ class CPSCServer(LabradServer):
         
         VEC = np.dot(self.T1,[X,0,0])
         VEC = self.adjustForWeight(VEC)
+        VEC = [round(x) for x in VEC]
         print VEC
         print 'Knob 2 should always need to move 0 for this. If it is not showing 0, then something went werd'
         #have each cycle take ~1 second
@@ -319,6 +352,7 @@ class CPSCServer(LabradServer):
         
         VEC = np.dot(self.T1,[0,Y,0])
         VEC = self.adjustForWeight(VEC)
+        VEC = [round(x) for x in VEC]
         print VEC
         
         #Have each cycle take ~1.5 seconds
@@ -388,6 +422,7 @@ class CPSCServer(LabradServer):
         #Calculate steps in knobs 1 2 and 3
         VEC = np.dot(self.T1,[0.0,0.0,Z])
         VEC = self.adjustForWeight(VEC)
+        VEC = [round(x) for x in VEC]
         print VEC
         
         #Have each cycle take ~1.5 seconds
