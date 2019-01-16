@@ -1388,6 +1388,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def setPosition(self, x, y):
         try:
+            if not self.scanning:
+                self.push_ZeroXY.setEnabled(False)
+                self.push_Set.setEnabled(False)
             print 'Getting here'
             #Buffer ramp is being used here to ramp 1 and 2, or 0,1,2 at the same time
             #Read values are not being used for anything (but are being read to avoid
@@ -1424,7 +1427,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.Atto_Y_Voltage = stopy
             
             self.updatePosition()
-            
+
+            if not self.scanning:
+                self.push_ZeroXY.setEnabled(True)
+                self.push_Set.setEnabled(True)
         except Exception as inst:
             print inst
             
