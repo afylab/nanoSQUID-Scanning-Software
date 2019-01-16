@@ -25,7 +25,6 @@ sys.path.append(path + r'\Gradient Setting')
 sys.path.append(path + r'\ZoomWindow')
 sys.path.append(path + r'\Data Vault Explorer')
 sys.path.append(path + r'\Data Info')
-sys.path.append(path + r'\Plotters Control')
 sys.path.append(path + r'\Remove Spike Setting')
 sys.path.append(path + r'\Multiplier Window')
 sys.path.append(path + r'\Subtract Constant Window')
@@ -35,7 +34,6 @@ import gradSettings
 import zoomWindow
 import dvExplorerWindow
 import editDatasetInfo
-import PlottersControl
 import DespikeSettings
 import MultiplierSettings
 import ConstantSubtract
@@ -97,8 +95,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.got_util = False
 
             self.setupUi(self)
-
-            self.pushButton_trSelect.hide()
 
             self.setupPlots()
 
@@ -236,14 +232,14 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.pushButton_Despike: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.pushButton_Info: True,
             self.pushButton_lockratio: (not self.PlotData is None) and '2DPlot' in self.DataType,
-            self.zoom: (not self.PlotData is None),
-            self.subtract: (not self.PlotData is None),
+            self.zoom: (not self.PlotData is None) and '2DPlot' in self.DataType,
+            self.subtract: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.gradient: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.sensitivity: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.diamCalc: False,
             self.savePlot:(not self.PlotData is None),
-            self.pushButton_SelectArea: (not self.PlotData is None),
-            self.pushButton_CropWindow: (not self.PlotData is None)
+            self.pushButton_SelectArea: (not self.PlotData is None and '2DPlot' in self.DataType),
+            self.pushButton_CropWindow: (not self.PlotData is None and '2DPlot' in self.DataType)
         }
         
     def RefreshInterface(self):
@@ -332,21 +328,23 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.editDataInfo.RefreshInfo()
 
     def SetDefaultSelectedAreaPos(self):
-        self.PlotParameters 
         xAxis = self.viewBig.getAxis('bottom')
         yAxis = self.viewBig.getAxis('left')
         xMin, xMax = self.PlotParameters['xMin'], self.PlotParameters['xMax']
         yMin, yMax = self.PlotParameters['yMin'], self.PlotParameters['yMax']
-        self.AreaSelected.setPos(xMin, yMin)
-
+        self.AreaSelected.setPos([xMin, yMin])
+        self.AreaSelected.setSize([(xMax - xMin) / 2, (yMax - yMin) / 2])
 
     def RefreshSelecedAreaProperty(self):
-        bounds = self.AreaSelected.parentBounds()#Return the bounding rectangle of this ROI in the coordinate system of its parent. 
-        self.AreaSelectedParameters['xMin'] = int((bounds.x() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
-        self.AreaSelectedParameters['yMin'] = int((bounds.y() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
-        self.AreaSelectedParameters['xMax'] = int((bounds.x() + bounds.width() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
-        self.AreaSelectedParameters['yMax'] = int((bounds.y() + bounds.height() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
-        self.RedefineSelectedAreaData()
+        if '2DPlot' in self.DataType:
+            bounds = self.AreaSelected.parentBounds()#Return the bounding rectangle of this ROI in the coordinate system of its parent. 
+            self.AreaSelectedParameters['xMin'] = int((bounds.x() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
+            self.AreaSelectedParameters['yMin'] = int((bounds.y() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
+            self.AreaSelectedParameters['xMax'] = int((bounds.x() + bounds.width() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
+            self.AreaSelectedParameters['yMax'] = int((bounds.y() + bounds.height() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
+            self.RedefineSelectedAreaData()
+        else:
+            pass
     
     def RedefineSelectedAreaData(self):
         if not self.PlotData is None:
@@ -667,12 +665,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def browseDV(self, c = None):
         try:
             yield self.sleep(0.1)
-            self.pushButton_refresh.setEnabled(False)
             self.dvExplorer = dvExplorerWindow.dataVaultExplorer(self.dv, self.reactor)
             yield self.dvExplorer.popDirs()
             self.dvExplorer.show()
             self.dvExplorer.accepted.connect(lambda: self.loadData(self.reactor))
-            self.dvExplorer.rejected.connect(self.reenableRefresh)
         except Exception as inst:
             print 'Following error was thrown: ', inst
             print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
@@ -683,12 +679,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         d = Deferred()
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
-
-    def reenableRefresh(self):
-        if self.Data is None:
-            pass
-        else:
-            self.pushButton_refresh.setEnabled(True)
 
     def ClearcomboBox(self):
         self.comboBox_xAxis.clear()
@@ -831,7 +821,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 print 'Following error was thrown: ', inst
                 print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
         
-
     def setData(self, data, info):
         self.ClearcomboBox()
         self.ClearData()
@@ -866,16 +855,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             #Also put this in setPlotInfo
             
             self.mainPlot.clear()
-                        
-            if self.TraceFlag == None:
-                self.pushButton_trSelect.hide()
-            else:
-                self.pushButton_trSelect.show()
                 
-            pt = self.mapToGlobal(QtCore.QPoint(410,-10))
-            self.pushButton_refresh.setToolTip('Data set loaded. Select axes and click refresh to plot.')
-            QtGui.QToolTip.showText(pt, 'Data set loaded. Select axes and click refresh to plot.')
-            self.zoom.setEnabled(False)
             self.ResetLineCutPlots()
             
             self.RefreshInterface()
@@ -908,7 +888,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 self.PlotParameters['yMin'] = np.amin(self.Data[::,self.NumberofindexVariables+self.yIndex])
                 self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
                 self.PlotParameters['yPoints'] = np.amax(self.Data[::,self.yIndex])+1
-                self.PlotParameters['yMin'], self.PlotParameters['yMax'] = self.PlotParameters['yMin'], self.PlotParameters['yMax']
                 self.PlotParameters['yscale'] = (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / self.PlotParameters['yPoints']
         except Exception as inst:
                 print 'Following error was thrown: ', inst
@@ -995,6 +974,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.Plot_Data()
             self.SetDefaultSelectedAreaPos()
             
+            self.Feedback('Plot Refreshed')
             self.RefreshInterface()
 
         except Exception as inst:
@@ -1003,11 +983,15 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
     def plotTrace(self):
         self.TraceFlag = 0
+        self.Data = self.traceData
         self.refreshPlot()
-    
+        self.Feedback('Plot Trace')
+
     def plotRetrace(self):
         self.TraceFlag = 1
+        self.Data = self.retraceData
         self.refreshPlot()
+        self.Feedback('Plot Retrace')
 
     def ResetLineCutPlots(self):
         if self.PlotData is None:
@@ -1265,9 +1249,26 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         
     def closeEvent(self, e):
         self.parent.PlotterList.remove(self)
+        self.CloseSubWindow()
         self.parent.RefreshPlotList()
         self.close()
-        
+    
+    def CloseSubWindow(self):
+        if hasattr(self, 'editDataInfo'):
+            self.editDataInfo.close()
+        if hasattr(self, 'sensPrompt'):
+            self.sensPrompt.close()
+        if hasattr(self, 'gradSet'):
+            self.gradSet.close()
+        if hasattr(self, 'dvExplorer'):
+            self.dvExplorer.close()
+        if hasattr(self, 'DespikeSettingWindow'):
+            self.DespikeSettingWindow.close()
+        if hasattr(self, 'MultiplyWindow'):
+            self.MultiplyWindow.close()
+        if hasattr(self, 'SubConstantWindow'):
+            self.SubConstantWindow.close() 
+
 if __name__ == "__main__":
     app = QtGui.QApplication([])
     from qtreactor import pyqt4reactor

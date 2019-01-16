@@ -31,6 +31,8 @@ class ProcessWindow(QtGui.QMainWindow, Ui_ProcessWindow):
         self.listWidget_PlotsListA.itemDoubleClicked.connect(self.RemovePlotsListAItem)
         self.listWidget_PlotsListB.itemDoubleClicked.connect(self.RemovePlotsListBItem)
         self.pushButton_Process.clicked.connect(self.ProcessData)
+        self.pushButton_TransferLeft.clicked.connect(self.TransferLeft)
+        self.pushButton_TransferRight.clicked.connect(self.TransferRight)
         
         self.RefreshPlotList()
 
@@ -39,6 +41,7 @@ class ProcessWindow(QtGui.QMainWindow, Ui_ProcessWindow):
         self.listWidget_PlotsListB.clear()
         
     def RefreshPlotList(self):
+        self.ClearListWidget()
         index = 0
         for i in self.PlotsListA:
             item = QtGui.QListWidgetItem()
@@ -148,6 +151,24 @@ class ProcessWindow(QtGui.QMainWindow, Ui_ProcessWindow):
         self.PlotsListB.pop(index)
         self.RefreshPlotList()
 
+    def TransferLeft(self):
+        item = self.listWidget_PlotsListB.currentItem()
+        if not item is None:
+            index = self.listWidget_PlotsListB.indexFromItem(item).row()
+            if index != -1:
+                number = self.PlotsListB.pop(index)
+                self.PlotsListA.append(number)
+            self.RefreshPlotList()
+
+    def TransferRight(self):
+        item = self.listWidget_PlotsListA.currentItem()
+        if not item is None:
+            index = self.listWidget_PlotsListA.indexFromItem(item).row()
+            if index != -1:
+                number = self.PlotsListA.pop(index)
+                self.PlotsListB.append(number)
+            self.RefreshPlotList()
+            
     def moveDefault(self):
         parentx, parenty = self.parent.mapToGlobal(QtCore.QPoint(0,0)).x(), self.parent.mapToGlobal(QtCore.QPoint(0,0)).y()
         parentwidth, parentheight = self.parent.width(), self.parent.height()

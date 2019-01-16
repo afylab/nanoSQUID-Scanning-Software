@@ -36,6 +36,8 @@ Number_PlotData_X, Number_PlotData_Y
 SweepingDirection = ''
 '''
 class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
+    keyPressed = QtCore.pyqtSignal(QtCore.QEvent)
+
     def __init__(self, reactor, parent = None):
         super(CommandingCenter, self).__init__(parent)
 
@@ -55,6 +57,8 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.pushButton_Subtract.clicked.connect(self.Subtract)
         self.pushButton_AddPlotter.clicked.connect(self.AddPlotter)
         
+        self.keyPressed.connect(self.PressingKey)
+
         self.RefreshPlotList()
 
 #####Labrad Related Function
@@ -98,7 +102,8 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
     def renderItem(self, ListWidgetItem , number): #Based on the plotter.number, dress the Item property
         try:
             plotter = self.GrabPlotterFromNumber(number)
-            Text = self.PlotterList[number].Title
+            index = self.PlotterList.index(plotter)
+            Text = self.PlotterList[index].Title
             ListWidgetItem.setText(Text)
             
             if isinstance(plotter.Data, np.ndarray): #Check if it contains data
@@ -122,7 +127,7 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
     def GrabPlotterFromNumber(self, number): #return the plotter based on the plotter.number given
         for plotter in self.PlotterList:
             if number == plotter.number:
-                return plotter
+                return plotter 
         
     def AddtoProcess(self, item):
         try:
@@ -184,6 +189,22 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.PlotsListB.pop(index)
         self.RefreshPlotList()
 
+    def keyPressEvent(self, event):
+        super(CommandingCenter, self).keyPressEvent(event)
+        self.keyPressed.emit(event) 
+
+    def PressingKey(self, event):
+        print event.key()
+        if event.key() == QtCore.Qt.Key_Delete or event.key() == Key_Backspace:
+            item = self.listWidget_Plots.currentItem()
+            if not item is None:
+                index = self.listWidget_Plots.indexFromItem(item).row()
+                self.DeletePlotter(index)
+    
+    def DeletePlotter(self, index):
+        print 'index', index
+        self.PlotterList[index].close()
+        
     def moveDefault(self):
         parentx, parenty = self.parent.mapToGlobal(QtCore.QPoint(0,0)).x(), self.parent.mapToGlobal(QtCore.QPoint(0,0)).y()
         parentwidth, parentheight = self.parent.width(), self.parent.height()
