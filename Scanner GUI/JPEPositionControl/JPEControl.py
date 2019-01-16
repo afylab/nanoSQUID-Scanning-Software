@@ -1,7 +1,7 @@
 import sys
 from PyQt4 import QtGui, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
-
+import numpy as np
 path = sys.path[0] + r"\JPEPositionControl"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\JPEControl.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
@@ -37,6 +37,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.weight_for = [1.0, 1.0, 1.0]
         self.weight_back = [1.0, 1.0, 1.0]
         self.tip_height = 24 #Tip height from JPE stage in millimeters. 
+        #Angle of vector movement of JPEs in degrees
+        self.angle = 0
+        
+        #Variable indicating which type of movement mode we're current using. 0 is traditional x/y, 1 is vector, 2 is individual knobs
+        #Individual knobs not yet implemented
+        self.movementMode = 0
         
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
@@ -62,6 +68,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_weight_back_B.editingFinished.connect(self.setBackwardJPEWeightB)
         self.lineEdit_weight_back_C.editingFinished.connect(self.setBackwardJPEWeightC)
         
+        self.lineEdit_VectorAngle.editingFinished.connect(self.setVectorAngle)
+        self.push_moveVector.clicked.connect(self.moveVector)
+        
+        
         self.push_JPEConnect.clicked.connect(self.toggleJPEConnection)
         
         self.push_movePosX.clicked.connect(self.movePosX)
@@ -71,6 +81,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_movePosZ.clicked.connect(self.movePosZ)
         self.push_moveNegZ.clicked.connect(self.moveNegZ)
 
+        self.pushButton_toggleMode.clicked.connect(self.toggleMovementMode)
+        
         self.lockInterface()
         
     def moveDefault(self):
@@ -111,8 +123,50 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
     def setupAdditionalUi(self):
         #Set up UI that isn't easily done from Qt Designer
-        pass
+        self.lineEdit_VectorAngle.hide()
+        
+        self.push_moveVector = RotatedButton("", self, 0)
+        self.push_moveVector.move(141,438)
+        self.push_moveVector.resize(64,64)
+        self.push_moveVector.setObjectName('push_moveVector')
+        
+        style = '''#push_moveVector{
+                image:url(:/nSOTScanner/Pictures/doublearrow_right.png);
+                background: black;
+                border: 0px solid rgb(95,107,166);
+                }
 
+                QPushButton:pressed#push_moveVector{
+                image:url(:/nSOTScanner/Pictures/doublearrow_right.png);
+                background: rgb(95,107,166);
+                border: 1px solid rgb(95,107,166);
+                }
+                '''
+        
+        self.push_moveVector.setStyleSheet(style)
+        
+        self.push_moveVector.hide()
+        
+    def toggleMovementMode(self):
+        if self.movementMode == 0:
+            self.push_movePosY.hide()
+            self.push_movePosX.hide()
+            self.push_moveNegX.hide()
+            self.push_moveNegY.hide()
+            
+            self.lineEdit_VectorAngle.show()
+            self.push_moveVector.show()
+        else:
+            self.push_movePosY.show()
+            self.push_movePosX.show()
+            self.push_moveNegX.show()
+            self.push_moveNegY.show()
+            
+            self.lineEdit_VectorAngle.hide()
+            self.push_moveVector.hide()
+            
+        self.movementMode = (self.movementMode+1)%2
+        
     def setTemperature(self):
         val = readNum(str(self.lineEdit_Temperature.text()), self, False)
         if isinstance(val,float):
@@ -154,6 +208,28 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.JPESettings['toggle_channel'] = self.comboBox_JPE_Toggle.currentIndex()+1
         self.newJPESettings.emit(self.JPESettings)
         
+    def setVectorAngle(self):
+        val = readNum(str(self.lineEdit_VectorAngle.text()), self, False)
+        if isinstance(val,float):
+            self.angle = int(val)%360
+        self.lineEdit_VectorAngle.setText(formatNum(self.angle))
+        self.updateVectorButtonGraphic()
+        
+    def updateVectorButtonGraphic(self):
+        self.push_moveVector.setAngle(-1*self.angle)
+        #Center of movement is around 120, 470
+        
+        if 0 <= self.angle <= 45: 
+            self.push_moveVector.move(141, 438 - 1.16*self.angle)
+        elif 45 < self.angle <= 135:
+            self.push_moveVector.move(141 - 1.16*(self.angle - 45), 438 - 1.16*45)
+        elif 135 < self.angle <= 225:
+            self.push_moveVector.move(141 - 1.16*(135 - 45), 438 - 1.16*45 + 1.16*(self.angle - 135))
+        elif 225 < self.angle <= 315:
+            self.push_moveVector.move(141 - 1.16*(135 - 45) + 1.16*(self.angle - 225), 438 + 1.16*45)
+        else:
+            self.push_moveVector.move(141, 438 - 1.16*(self.angle-315) + 1.16*45)
+            
     @inlineCallbacks
     def toggleJPEConnection(self, c = None):
         if not self.JPEConnected:
@@ -204,16 +280,19 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     @inlineCallbacks
     def movePosX(self, c = None):
-        if not self.cpsc.checkweights():
-            self.throwWeightsWarning()
-        else:
-            self.lockInterface()
-            if self.checkBox_Torque.isChecked():
-                yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps, 30)
-            else: 
-                yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps)
-            self.unlockInterface()
-
+        try:
+            if not self.cpsc.checkweights():
+                self.throwWeightsWarning()
+            else:
+                self.lockInterface()
+                if self.checkBox_Torque.isChecked():
+                    yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps, 30)
+                else: 
+                    yield self.cpsc.move_x(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, self.steps)
+                self.unlockInterface()
+        except Exception as inst:
+            print inst
+            
     @inlineCallbacks
     def moveNegX(self, c = None):
         if not self.cpsc.checkweights():
@@ -274,6 +353,22 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 yield self.cpsc.move_z(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, -self.steps)
             self.unlockInterface()
 
+    @inlineCallbacks
+    def moveVector(self, c = None):
+        if not self.cpsc.checkweights():
+            self.throwWeightsWarning()
+        else:
+            self.lockInterface()
+            
+            x = self.steps*np.cos(self.angle*np.pi/180)
+            y = self.steps*np.sin(self.angle*np.pi/180)
+            
+            if self.checkBox_Torque.isChecked():
+                yield self.cpsc.move_xyz(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, [x,y,0], 30)
+            else:
+                yield self.cpsc.move_xyz(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, [x,y,0])
+            self.unlockInterface()
+            
     def updateApproachStatus(self, status):
         if status:
             self.lockInterface()
@@ -416,3 +511,65 @@ class serversList(QtGui.QDialog, Ui_ServerList):
         self.setupUi(self)
         pos = parent.pos()
         self.move(pos)
+        
+class RotatedButton(QtGui.QPushButton):
+    def __init__(self, text, parent, angle = 0):
+        super(RotatedButton,self).__init__(text, parent)
+        self.angle = np.pi*angle/180
+
+    def paintEvent(self, event):
+        painter = QtGui.QStylePainter(self)
+        x = self.width()/(2.0*np.sqrt(2))
+        y = self.height()/(2.0*np.sqrt(2))
+        painter.translate(self.width()*(1-1/np.sqrt(2))/2, self.height()*(1-1/np.sqrt(2))/2)
+        
+        painter.rotate(self.angle*180/np.pi)
+
+        painter.translate(x*np.cos(self.angle)+y*np.sin(self.angle)-x, -x*np.sin(self.angle)+y*np.cos(self.angle)-y);
+        painter.drawControl(QtGui.QStyle.CE_PushButton, self.getSyleOptions())
+
+    def minimumSizeHint(self):
+        size = self.getRotatedRectangle(super(RotatedButton, self).minimumSizeHint())
+        return size
+
+    def sizeHint(self):
+        size = self.getRotatedRectangle(super(RotatedButton, self).sizeHint())
+        return size
+        
+    #Takes in a size, rotates it, then finds the smallest rectangle that encloses the rotated area, and returns that size
+    def getRotatedRectangle(self, size):
+        w = size.width()
+        h = size.height()
+
+        size.setWidth(w/np.sqrt(2))
+        size.setHeight(h/np.sqrt(2))
+        return size
+        
+    def setAngle(self, angle):
+        self.angle = np.pi*angle/180
+
+    def getSyleOptions(self):
+        options = QtGui.QStyleOptionButton()
+        options.initFrom(self)
+        size = self.getRotatedRectangle(options.rect.size())
+        options.rect.setSize(size)
+        options.features = QtGui.QStyleOptionButton.None
+        if self.isFlat():
+            options.features |= QtGui.QStyleOptionButton.Flat
+        if self.menu():
+            options.features |= QtGui.QStyleOptionButton.HasMenu
+        if self.autoDefault() or self.isDefault():
+            options.features |= QtGui.QStyleOptionButton.AutoDefaultButton
+        if self.isDefault():
+            options.features |= QtGui.QStyleOptionButton.DefaultButton
+        if self.isDown() or (self.menu() and self.menu().isVisible()):
+            options.state |= QtGui.QStyle.State_Sunken
+        if self.isChecked():
+            options.state |= QtGui.QStyle.State_On
+        if not self.isFlat() and not self.isDown():
+            options.state |= QtGui.QStyle.State_Raised
+
+        options.text = self.text()
+        options.icon = self.icon()
+        options.iconSize = self.iconSize()
+        return options

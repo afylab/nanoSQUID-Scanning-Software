@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>561</height>
+    <height>566</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,13 +19,13 @@
   <property name="minimumSize">
    <size>
     <width>500</width>
-    <height>561</height>
+    <height>566</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>750</width>
-    <height>561</height>
+    <height>566</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -386,7 +386,7 @@ color:rgb(168,168,168)
    <widget class="QPushButton" name="push_moveNegX">
     <property name="geometry">
      <rect>
-      <x>50</x>
+      <x>45</x>
       <y>455</y>
       <width>45</width>
       <height>31</height>
@@ -412,8 +412,8 @@ border: 1px solid rgb(95,107,166);
    <widget class="QPushButton" name="push_movePosY">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>400</y>
+      <x>105</x>
+      <y>395</y>
       <width>31</width>
       <height>45</height>
      </rect>
@@ -438,8 +438,8 @@ border: 1px solid rgb(95,107,166);
    <widget class="QPushButton" name="push_moveNegY">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>496</y>
+      <x>105</x>
+      <y>501</y>
       <width>31</width>
       <height>45</height>
      </rect>
@@ -464,7 +464,7 @@ border: 1px solid rgb(95,107,166);
    <widget class="QPushButton" name="push_movePosX">
     <property name="geometry">
      <rect>
-      <x>146</x>
+      <x>151</x>
       <y>455</y>
       <width>45</width>
       <height>31</height>
@@ -602,7 +602,7 @@ image:url(:/nSOTScanner/Pictures/Tip-Sample.png);
     <property name="geometry">
      <rect>
       <x>119</x>
-      <y>385</y>
+      <y>383</y>
       <width>102</width>
       <height>3</height>
      </rect>
@@ -623,9 +623,9 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>219</x>
-      <y>386</y>
+      <y>384</y>
       <width>3</width>
-      <height>161</height>
+      <height>173</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -644,7 +644,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>546</y>
+      <y>556</y>
       <width>201</width>
       <height>3</height>
      </rect>
@@ -665,9 +665,9 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>19</x>
-      <y>386</y>
+      <y>384</y>
       <width>3</width>
-      <height>162</height>
+      <height>173</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -686,7 +686,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>385</y>
+      <y>383</y>
       <width>22</width>
       <height>3</height>
      </rect>
@@ -707,7 +707,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>380</x>
-      <y>385</y>
+      <y>383</y>
       <width>102</width>
       <height>3</height>
      </rect>
@@ -728,9 +728,9 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>480</x>
-      <y>387</y>
+      <y>384</y>
       <width>3</width>
-      <height>161</height>
+      <height>173</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -749,9 +749,9 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>279</x>
-      <y>387</y>
+      <y>384</y>
       <width>3</width>
-      <height>162</height>
+      <height>173</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -770,7 +770,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>385</y>
+      <y>383</y>
       <width>22</width>
       <height>3</height>
      </rect>
@@ -791,7 +791,7 @@ color:rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>547</y>
+      <y>556</y>
       <width>202</width>
       <height>3</height>
      </rect>
@@ -1550,6 +1550,51 @@ background: black;
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_VectorAngle">
+    <property name="geometry">
+     <rect>
+      <x>105</x>
+      <y>460</y>
+      <width>31</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_toggleMode">
+    <property name="geometry">
+     <rect>
+      <x>235</x>
+      <y>390</y>
+      <width>31</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Cycle through different control modes.</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#pushButton_toggleMode{
+image:url(:/nSOTScanner/Pictures/refreshIcon.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+
+QPushButton:pressed#pushButton_toggleMode{
+image:url(:/nSOTScanner/Pictures/refreshIcon.png);
+background: rgb(95,107,166);
+border: 1px solid rgb(95,107,166);
+}</string>
+    </property>
+    <property name="text">
+     <string/>
     </property>
    </widget>
   </widget>

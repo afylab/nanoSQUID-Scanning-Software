@@ -2325,7 +2325,7 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                     print 'Blinks the problem yo'
 
                 if biasMin != 0:
-                    yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [0], [biasMin], int(biasMin * 1000), 1000)
+                    yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [0], [biasMin], abs(int(biasMin * 1000)), 1000)
                     yield self.sleep(1)
 
                 #Do sweep
