@@ -119,13 +119,13 @@ border-radius: 5px
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
+          <string notr="true">QPushButton#pushButton_Division{
+image:url(:/nSOTScanner/Pictures/OverlapDivision.png);
 background: black;
 }
 
-QPushButton:pressed#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
+QPushButton:pressed#pushButton_Division{
+image:url(:/nSOTScanner/Pictures/OverlapDivision.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px

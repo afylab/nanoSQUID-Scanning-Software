@@ -26,7 +26,6 @@ class ProcessWindow(QtGui.QMainWindow, Ui_ProcessWindow):
         #Color Code  [0]for Text, [1] for Background
         self.Color_Compatible = [QtGui.QColor(0, 0, 0), QtGui.QColor(170, 255, 0)]
         self.Color_NotCompatible = [QtGui.QColor(0, 0, 0), QtGui.QColor(255, 100, 100)]
-        
 
         self.listWidget_PlotsListA.itemDoubleClicked.connect(self.RemovePlotsListAItem)
         self.listWidget_PlotsListB.itemDoubleClicked.connect(self.RemovePlotsListBItem)
@@ -115,9 +114,12 @@ class ProcessWindow(QtGui.QMainWindow, Ui_ProcessWindow):
                 numberA, numberB = self.PlotsListA[index], self.PlotsListB[index]
                 plotterA, plotterB = self.parent.GrabPlotterFromNumber(numberA), self.parent.GrabPlotterFromNumber(numberB)
                 PlotDataA, PlotDataB  = plotterA.PlotData, plotterB.PlotData,
-                PlotDataGenerated = PlotDataA - PlotDataB
+                operation = ' ' + self.label_Operation.text() + ' '
+                if 'Subtract' in operation:
+                    PlotDataGenerated = PlotDataA - PlotDataB
+                elif 'Division' in operation:
+                    PlotDataGenerated = PlotDataA / PlotDataB
                 
-                operation = ' Subtract '
                 procedure = plotterA.Title + operation + plotterA.Title
                 
                 self.parent.AddPlotter()

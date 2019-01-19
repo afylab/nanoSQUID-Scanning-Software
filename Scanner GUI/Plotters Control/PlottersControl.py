@@ -55,8 +55,10 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
 
         self.listWidget_Plots.itemDoubleClicked.connect(self.AddtoProcess)
         self.pushButton_Subtract.clicked.connect(self.Subtract)
+        self.pushButton_Division.clicked.connect(self.Division)
         self.pushButton_AddPlotter.clicked.connect(self.AddPlotter)
         
+
         self.keyPressed.connect(self.PressingKey)
 
         self.RefreshPlotList()
@@ -89,16 +91,19 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.ProcessList.ClearListWidget()
         
     def RefreshPlotList(self):
-        self.ClearListWidget()
-        for plotter in self.PlotterList:
-            item = QtGui.QListWidgetItem()
-            number = plotter.number
-            self.renderItem(item, number)
-            self.listWidget_Plots.addItem(item)
-        
-        self.ProcessList.RefreshPlotList()
+        try:
+            self.ClearListWidget()
+            for plotter in self.PlotterList:
+                item = QtGui.QListWidgetItem()
+                number = plotter.number
+                self.renderItem(item, number)
+                self.listWidget_Plots.addItem(item)
 
-            
+            self.ProcessList.RefreshPlotList()
+        except Exception as inst:
+            print "Error: ",inst
+            print "Occured at line: ", sys.exc_traceback.tb_lineno
+
     def renderItem(self, ListWidgetItem , number): #Based on the plotter.number, dress the Item property
         try:
             plotter = self.GrabPlotterFromNumber(number)
@@ -148,10 +153,28 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             print "Occured at line: ", sys.exc_traceback.tb_lineno
                 
     def Subtract(self, c = None):
+        if self.ProcessList.label_Operation.text() == 'Subtract': #If the operation changed, kill the current list
+            pass
+        else:
+            self.ProcessList.ClearListWidget()
+            self.PlotsListA, self.PlotsListB = [], []
+
         self.ProcessList.raise_()
         self.ProcessList.moveDefault()
         self.ProcessList.show()
         self.ProcessList.label_Operation.setText('Subtract')
+
+    def Division(self, c = None):
+        if self.ProcessList.label_Operation.text() == 'Division': #If the operation changed, kill the current list
+            pass
+        else:
+            self.ProcessList.ClearListWidget()
+            self.PlotsListA, self.PlotsListB = [], []
+
+        self.ProcessList.raise_()
+        self.ProcessList.moveDefault()
+        self.ProcessList.show()
+        self.ProcessList.label_Operation.setText('Division')
 
     def transferPlotData(self, plotter, PlotData, comments, filename, title, PlotParameters, indVars, depVars):
         plotter.PlotData = PlotData
@@ -202,11 +225,10 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
                 self.DeletePlotter(index)
     
     def DeletePlotter(self, index):
-        print 'index', index
         self.PlotterList[index].close()
-        
+
+    def CopyPlotter(self, plotter):
+        pass
+
     def moveDefault(self):
-        parentx, parenty = self.parent.mapToGlobal(QtCore.QPoint(0,0)).x(), self.parent.mapToGlobal(QtCore.QPoint(0,0)).y()
-        parentwidth, parentheight = self.parent.width(), self.parent.height()
-        Offset = 10
-        self.move(parentx, parenty + Offset)   
+        self.move(10,170)

@@ -14,6 +14,7 @@ import pyqtgraph as pg
 import exceptions
 import time
 import threading
+import math
 import copy
 import time
 import scipy.io as sio
@@ -28,6 +29,8 @@ sys.path.append(path + r'\Data Info')
 sys.path.append(path + r'\Remove Spike Setting')
 sys.path.append(path + r'\Multiplier Window')
 sys.path.append(path + r'\Subtract Constant Window')
+sys.path.append(path + r'\Plot1D')
+sys.path.append(sys.path[0]+r'\Resources')
 
 import sensitivityPrompt
 import gradSettings
@@ -37,15 +40,11 @@ import editDatasetInfo
 import DespikeSettings
 import MultiplierSettings
 import ConstantSubtract
+import Plot1D
 
-axesSelectGUI = path + r"\axesSelect.ui"
 plotter = path + r"\plotter.ui"
-
 Ui_Plotter, QtBaseClass = uic.loadUiType(plotter)
-Ui_AxesSelect, QtBaseClass = uic.loadUiType(axesSelectGUI)
 
-sys.path.append(sys.path[0]+'\Resources')
-from nSOTScannerFormat import readNum, formatNum
 
 #####Plotter
 class Plotter(QtGui.QMainWindow, Ui_Plotter):
@@ -193,6 +192,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.subtractMenu.addAction(subYQuad)
             self.subtract.setMenu(self.subtractMenu)
 
+            #####Multiply
             self.multiplier = 1.0
             self.MultiplyWindow = MultiplierSettings.MultiplierWindow(self.reactor, self)
             self.pushButton_Multiply.clicked.connect(self.MultiplyDialog)
@@ -207,13 +207,18 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             showRetrace.triggered.connect(self.plotRetrace)
             self.pushButton_trSelect.setMenu(self.trSelectMenu)
 
-            # self.vhSelect.currentIndexChanged.connect(self.toggleBottomPlot)
+            #PushButton
             self.pushButton_lockratio.clicked.connect(self.ToggleAspectRatio)
-            self.sensitivity.clicked.connect(self.promptSensitivity)
-            self.zoom.clicked.connect(self.zoomArea)
+            self.pushButton_sensitivity.clicked.connect(self.GenerateSensitivity)
+            self.pushButton_zoom.clicked.connect(self.zoomArea)
             self.pushButton_loadData.clicked.connect(self.browseDV)
             self.pushButton_refresh.clicked.connect(self.refreshPlot)
             self.pushButton_Info.clicked.connect(self.displayInfo)
+            self.pushButton_Squid.clicked.connect(self.ShowSQUIDProperty)
+
+            #Sensitivity and Bias Window
+            self.OptimalSensitivity = Plot1D.Plot1D(self.reactor, 'Optimal Sensitivity', self)
+            self.OptimalBias = Plot1D.Plot1D(self.reactor, 'Optimal Bias', self)
 
             self.RefreshInterface()
 
@@ -232,14 +237,15 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.pushButton_Despike: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.pushButton_Info: True,
             self.pushButton_lockratio: (not self.PlotData is None) and '2DPlot' in self.DataType,
-            self.zoom: (not self.PlotData is None) and '2DPlot' in self.DataType,
+            self.pushButton_zoom: (not self.PlotData is None) and '2DPlot' in self.DataType and self.SelectedAreaShow,
             self.subtract: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.gradient: (not self.PlotData is None) and '2DPlot' in self.DataType,
-            self.sensitivity: (not self.PlotData is None) and '2DPlot' in self.DataType,
+            self.pushButton_sensitivity: (not self.PlotData is None) and '2DPlot' in self.DataType and 'nSOT vs. Bias Voltage and Field' in self.file and 'DC SSAA Output' in self.comboBox_zAxis.currentText() and 'B Field' in self.comboBox_xAxis.currentText() and 'Bias Voltage' in self.comboBox_yAxis.currentText(),
+            self.pushButton_Squid: (not self.PlotData is None) and '2DPlot' in self.DataType and 'nSOT vs. Bias Voltage and Field' in self.file and 'DC SSAA Output' in self.comboBox_zAxis.currentText() and 'B Field' in self.comboBox_xAxis.currentText() and 'Bias Voltage' in self.comboBox_yAxis.currentText(),
             self.diamCalc: False,
             self.savePlot:(not self.PlotData is None),
             self.pushButton_SelectArea: (not self.PlotData is None and '2DPlot' in self.DataType),
-            self.pushButton_CropWindow: (not self.PlotData is None and '2DPlot' in self.DataType)
+            self.pushButton_CropWindow: (not self.PlotData is None and '2DPlot' in self.DataType) and self.SelectedAreaShow
         }
         
     def RefreshInterface(self):
@@ -319,11 +325,13 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.SelectedAreaShow = not self.SelectedAreaShow
         if self.SelectedAreaShow:
             self.mainPlot.addItem(self.AreaSelected)
+            self.RefreshInterface()
         else:
             self.mainPlot.removeItem(self.AreaSelected)
+            self.RefreshInterface()
 
     def RefreshAreaSelected(self):
-        self.RefreshSelecedAreaProperty()
+        self.RefreshSelectedAreaProperty()
         self.RedefineSelectedAreaData()
         self.editDataInfo.RefreshInfo()
 
@@ -335,7 +343,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.AreaSelected.setPos([xMin, yMin])
         self.AreaSelected.setSize([(xMax - xMin) / 2, (yMax - yMin) / 2])
 
-    def RefreshSelecedAreaProperty(self):
+    def RefreshSelectedAreaProperty(self):
         if '2DPlot' in self.DataType:
             bounds = self.AreaSelected.parentBounds()#Return the bounding rectangle of this ROI in the coordinate system of its parent. 
             self.AreaSelectedParameters['xMin'] = int((bounds.x() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
@@ -359,65 +367,19 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         else:
             pass
 
-################## This part create a window on the plot and you can drage it around, click on it will rescale the plot
-    def zoomArea(self):
-        self.zoom.clicked.disconnect(self.zoomArea)
-        self.zoom.clicked.connect(self.rmvZoomArea)
-        xAxis = self.viewBig.getAxis('bottom')
-        yAxis = self.viewBig.getAxis('left')
-        a1, a2 = xAxis.range[0], xAxis.range[1]
-        b1, b2 = yAxis.range[0], yAxis.range[1]
-        self.zoomRect = pg.RectROI(((a2 + a1) / 2, (b2 + b1) / 2),((a2 - a1) / 2, (b2 - b1) / 2), movable = True)
-        self.zoomRect.setAcceptedMouseButtons(QtCore.Qt.RightButton | QtCore.Qt.LeftButton)
-        self.zoomRect.addScaleHandle((1,1), (.5,.5), lockAspect = False)
-        self.zoomRect.sigClicked.connect(self.QMouseEvent)
-        self.mainPlot.addItem(self.zoomRect)
-        
-    def rmvZoomArea(self):
-        self.mainPlot.removeItem(self.zoomRect)
-        self.zoom.clicked.connect(self.zoomArea)
+    def GenerateSensitivity(self):
+        self.xDeriv()
+        NoiseData = np.zeros([int(self.PlotParameters['xPoints']), int(self.PlotParameters['yPoints'])])
+        for i in self.Data:
+            NoiseData[int(i[self.xIndex]), int(i[self.yIndex])] = i[self.zIndex + 1]
+        ratio = 1000 * math.sqrt(65000)
+        Data = self.PlotData / (NoiseData/ ratio)
+        self.PlotData = Data
+        self.Plot_Data()
+        self.Feedback('Sensitivity Plotted')
 
-    def QMouseEvent(self, thing, button, c =None, d =None):
-        print thing , button,c,d
-        button = int(str(button)[-2])#1 for left, 2 for right
 
-        bounds = self.zoomRect.parentBounds()
-        x1 = int((bounds.x() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
-        y1 = int((bounds.y() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
-        x2 = int((bounds.x() + bounds.width() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
-        y2 = int((bounds.y() + bounds.height() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
-        if button == 1:
-            self.viewBig.setXRange(bounds.x(), bounds.x()+bounds.width())
-            self.viewBig.setYRange(bounds.y(),bounds.y() + bounds.height())            
-            self.mainPlot.removeItem(self.zoomRect)
-            self.zoom.clicked.connect(self.zoomArea)
-        elif button ==2:
-            self.mainPlot.removeItem(self.zoomRect)
-            self.zoom.clicked.connect(self.zoomArea)
-            self.plotZoom = self.PlotData[x1:x2, y1:y2]
-            self.dataZoom = np.asarray([])
-            self.indZoomVars = []
-            self.depZoomVars = []
-            for k in range(x1, x2):
-                if len(self.dataZoom)==0:
-                    self.dataZoom = self.Data[int(k*self.PlotParameters['yPoints'] + y1) :int(k*self.PlotParameters['yPoints'] + y2)]
-                else:
-                    self.dataZoom = np.vstack((self.dataZoom, self.Data[int(k*self.PlotParameters['yPoints'] + y1) :int(k*self.PlotParameters['yPoints'] + y2)]))
-                
-            for i in range(0, self.comboBox_xAxis.count()):
-                self.indZoomVars.append(self.comboBox_xAxis.itemText(i))
-            for i in range(0, self.comboBox_zAxis.count()):
-                self.depZoomVars.append(self.comboBox_zAxis.itemText(i))
-            title= str(self.label_FileName.text())
-            self.indXVar, self.indYVar, self.depVar = self.comboBox_xAxis.currentText(), self.comboBox_yAxis.currentText(), self.comboBox_zAxis.currentText()
-            self.currentIndex = [self.comboBox_xAxis.currentIndex(), self.comboBox_yAxis.currentIndex(), self.comboBox_zAxis.currentIndex()]        
-            self.zoomExtent = [bounds.x(), bounds.x() + bounds.width(), bounds.y(), bounds.y() + bounds.height(), self.PlotParameters['xscale'], self.PlotParameters['yscale']]
-            self.zoomPlot = zoomWindow.zoomPlot(self.reactor, self.plotZoom, self.dataZoom, self.zoomExtent, self.indZoomVars, self.depZoomVars, self.currentIndex, title, self)
-            self.zoom.setEnabled(False)
-            self.zoomPlot.show()
-##################
-
-    def promptSensitivity(self):
+    def sensitivityPrompt(self):
         self.sensPrompt = sensitivityPrompt.Sensitivity(self.depVars, self.indVars, self.reactor)
         self.sensPrompt.show()
         self.sensPrompt.accepted.connect(self.plotSens)
@@ -438,7 +400,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
         self.PlotParameters['xPoints'] = np.amax(self.Data[::,x])+1
         self.PlotParameters['yPoints'] = np.amax(self.Data[::,y])+1
-        self.PlotParameters['xscale'], self.PlotParameters['yscale'] = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / self.PlotParameters['xPoints'], (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / self.PlotParameters['yPoints']    
+        self.PlotParameters['xscale'] = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / self.PlotParameters['xPoints']
+        self.PlotParameters['yscale'] = (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / self.PlotParameters['yPoints']    
         n = self.sensIndex[3] + len(self.indVars)
         self.PlotData = np.zeros([int(self.PlotParameters['xPoints']), int(self.PlotParameters['yPoints'])])
         self.noiseData = np.zeros([int(self.PlotParameters['xPoints']), int(self.PlotParameters['yPoints'])])
@@ -485,6 +448,41 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.vhSelect.addItem('Optimal Bias')
         self.ResetLineCutPlots()
 
+    def ShowSQUIDProperty(self):
+        self.PlotOptimalSensitivity()
+        self.PlotOptimalBias()        
+
+    def PlotOptimalSensitivity(self):
+        XData = np.linspace(self.PlotParameters['xMin'], self.PlotParameters['xMax'], self.PlotParameters['xPoints']).tolist()
+        YData = []
+        for i in range(len(XData)):
+            Sensitivitymax = np.amax(self.PlotData[i])
+            Sensitivitymin = np.amin(self.PlotData[i])
+            YData.append(max(abs(Sensitivitymax),abs(Sensitivitymin)))
+        gain =1000.0
+        bandwidth = 65000.0
+        YData = [data / gain * math.sqrt(bandwidth) for data in YData]
+        self.OptimalSensitivity.PlotData(XData,YData)
+        self.OptimalSensitivity.moveDefault()
+        self.OptimalSensitivity.raise_()
+        self.OptimalSensitivity.show()
+        
+    def PlotOptimalBias(self):
+        XData = np.linspace(self.PlotParameters['xMin'], self.PlotParameters['xMax'], self.PlotParameters['xPoints']).tolist()
+        YData = []
+        for i in range(len(XData)):
+            Indexmax = np.argmax(self.PlotData[i])
+            Indexmin = np.argmin(self.PlotData[i])
+            if abs(np.amax(self.PlotData[i])) < abs(np.amin(self.PlotData[i])):
+                YData.append(Indexmax * self.PlotParameters['yscale'] + self.PlotParameters['yMin'])                        
+            elif abs(np.amax(self.PlotData[i])) >= abs(np.amin(self.PlotData[i])):
+                YData.append(Indexmin * self.PlotParameters['yscale'] + self.PlotParameters['yMin'])
+
+        self.OptimalBias.PlotData(XData,YData)
+        self.OptimalBias.moveDefault()
+        self.OptimalBias.raise_()
+        self.OptimalBias.show()
+                
     def plotMaxSens(self):
         if self.NSselect == 1:
             maxSens = np.array([])
@@ -553,22 +551,19 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.PlotData[int(i[x]), int(i[y])] = i[z]
 
     def xDeriv(self):
-        if self.PlotData is None:
-            self.Feedback("Please plot data.")
+        self.gradient.setFocusPolicy(QtCore.Qt.StrongFocus)
+        xVals = np.linspace(self.PlotParameters['xMin'], self.PlotParameters['xMax'], num = self.PlotParameters['xPoints'])
+        delta = abs(self.PlotParameters['xMax'] - self.PlotParameters['xMin']) / self.PlotParameters['xPoints']
+        N = int(self.PlotParameters['xPoints'] * self.datPct)
+        if N < 2:
+            self.Feedback("Lanczos window too small.")
         else:
-            self.gradient.setFocusPolicy(QtCore.Qt.StrongFocus)
-            xVals = np.linspace(self.PlotParameters['xMin'], self.PlotParameters['xMax'], num = self.PlotParameters['xPoints'])
-            delta = abs(self.PlotParameters['xMax'] - self.PlotParameters['xMin']) / self.PlotParameters['xPoints']
-            N = int(self.PlotParameters['xPoints'] * self.datPct)
-            if N < 2:
-                self.Feedback("Lanczos window too small.")
-
-            else:
-                for i in range(0, self.PlotData.shape[1]):
-                    self.PlotData[:, i] = deriv(self.PlotData[:,i], xVals, N, delta)    
-                self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.PlotParameters['xMin'], self.PlotParameters['yMin']],scale=[self.PlotParameters['xscale'], self.PlotParameters['yscale']])
-                self.Feedback("Plotted gradient along x-axis.")
-                self.ResetLineCutPlots()
+            for i in range(0, self.PlotData.shape[1]):
+                self.PlotData[:, i] = deriv(self.PlotData[:,i], xVals, N, delta) 
+               
+            self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.PlotParameters['xMin'], self.PlotParameters['yMin']],scale=[self.PlotParameters['xscale'], self.PlotParameters['yscale']])
+            self.Feedback("Plotted gradient along x-axis.")
+            self.ResetLineCutPlots()
                 
     def yDeriv(self):
         yVals = np.linspace(self.PlotParameters['yMin'], self.PlotParameters['yMax'], num = self.PlotParameters['yPoints'])
@@ -687,6 +682,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
       
     def ClearData(self):
         self.Data = None
+        self.PlotData = None
         self.traceData = None
         self.retraceData = None
         self.Number_PlotData_X, self.Number_PlotData_Y = 0,0
@@ -715,18 +711,19 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             TraceFlag = None #None for no Trace/Retrace, 0 for trace, 1 for retrace
             NumberofindexVariables = 0
             
-            if len(indVars)-NumberofindexVariables == 1:
-                DataType = "1DPlot"
-            else:
-                DataType = "2DPlot"
-                
             for i in indVars:
                 if i == 'Trace Index' or i == 'Retrace Index':
                     TraceFlag = 0 #default set traceflag to trace
             for i in indVars:
                 if "index" in i or "Index" in i:
                     NumberofindexVariables +=1
-                    
+
+            if len(indVars)-NumberofindexVariables == 1:
+                # print Number
+                DataType = "1DPlot"
+            else:
+                DataType = "2DPlot"
+                
             return file, directory, indVars, depVars, paramsDict, comments, DataType, TraceFlag, NumberofindexVariables
              
             
@@ -829,6 +826,21 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     
         #buttons appropriately
         
+    def RemoveNaN(self, data):
+        try:
+            raw = data
+            listtodelete = []
+            for i in range(len(raw[0])):
+                for j in range(len(raw)):
+                    if np.isnan(raw[j][i]):
+                        listtodelete.append(j)
+            raw = np.delete(raw, listtodelete, 0)# 0 for horizontal               
+            return raw
+
+        except Exception as inst:
+                print 'Following error was thrown: ', inst
+                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+
     @inlineCallbacks
     def loadData(self, c):
         try:
@@ -842,7 +854,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             file, directory, indVars, depVars, paramsDict, comments, DataType, TraceFlag, NumberofindexVariables = self.ParseDatainfo(dvInfo)
             
             rawData = yield self.ReadData()
-            
+
+            nanflag = False
+            if np.isnan(rawData).any():
+                nanflag = True
+                rawData = self.RemoveNaN(rawData)
+
             self.setPlotInfo(file, directory, indVars, depVars, paramsDict, comments, DataType, TraceFlag, NumberofindexVariables) #file, directory, indVars, depVars, paramsDict, comments, DataType, TraceFlag = None, NumberofindexVariables = 0
             
             self.Data = self.ProcessRawData(rawData)
@@ -854,6 +871,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             #self.TraceFlag gives whether there are trace, self.NumberofindexVariables gives the number of index and should also be where the data starts in self.Data,   self.DataType gives the type of DataPlot
             #Also put this in setPlotInfo
             
+            if np.array_equal(self.Data, np.array([])):
+                self.Data = None
+                self.Feedback('Data Empty, check data integrity')
+
             self.mainPlot.clear()
                 
             self.ResetLineCutPlots()
@@ -861,6 +882,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.RefreshInterface()
             self.editDataInfo.RefreshInfo()
             self.parent.RefreshPlotList()
+
+            if nanflag:
+                self.Feedback('nan detected in data structure, check data integrity') 
 
         except Exception as inst:
                 print 'Following error was thrown: ', inst
@@ -882,16 +906,25 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.PlotParameters['xPoints'] = np.amax(self.Data[::,self.xIndex])+1  #look up the index
             self.PlotParameters['xscale']  = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / self.PlotParameters['xPoints'] 
             self.PlotParameters['yMin'] = 0.0
-        
+            self.PlotParameters['xMax'] += (self.PlotParameters['xscale'] / 2)
+            self.PlotParameters['xMin'] -= (self.PlotParameters['xscale'] / 2)
+            print 'xMax', self.PlotParameters['xMax']
+            print 'xMin', self.PlotParameters['xMin']
+            print 'deltaX', self.PlotParameters['deltaX']
+            print 'xPoints', self.PlotParameters['xPoints']
+            print 'xscale', self.PlotParameters['xscale']
+
             if "2DPlot" in self.DataType:
                 self.PlotParameters['yMax'] = np.amax(self.Data[::,self.NumberofindexVariables+self.yIndex])
                 self.PlotParameters['yMin'] = np.amin(self.Data[::,self.NumberofindexVariables+self.yIndex])
                 self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
                 self.PlotParameters['yPoints'] = np.amax(self.Data[::,self.yIndex])+1
                 self.PlotParameters['yscale'] = (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / self.PlotParameters['yPoints']
+                self.PlotParameters['yMax'] += (self.PlotParameters['yscale'] / 2)
+                self.PlotParameters['yMin'] -= (self.PlotParameters['yscale'] / 2)
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+            print 'Following error was thrown: ', inst
+            print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
                 
     def SetupPlotData(self):
         try:
@@ -963,7 +996,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.xAxis_Name = self.comboBox_xAxis.currentText()
             self.yAxis_Name = self.comboBox_yAxis.currentText()
             
-            
             self.SetPlotLabel()
             
             if not "Reconstitute" in self.DataType:
@@ -972,7 +1004,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 self.ParsePlotData()
 
             self.Plot_Data()
-            self.SetDefaultSelectedAreaPos()
+            if '2DPlot' in self.DataType:
+                self.SetDefaultSelectedAreaPos()
             
             self.Feedback('Plot Refreshed')
             self.RefreshInterface()
@@ -1153,20 +1186,25 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def get_standard_distribution(self, x, y): #Find data's adjacent mean and standard deviation
         side = self.AdjacentPoints
         if self.SweepingDirection == 'x':
-            if abs(x - 0) > side and abs(x - (self.Number_PlotData_X - 1)) > side:
+            if abs(x - 0) >= side and abs(x - (self.Number_PlotData_X - 1)) >= side:
                 data = [item[y] for item in self.PlotData][x - side:x + side +1]
-            elif abs(x - 0) <= side:
+                data.pop(side)
+            elif abs(x - 0) < side:
                 data = [item[y] for item in self.PlotData][0: 2*side + 1]
-            elif abs(x - (self.Number_PlotData_X - 1)) <= side:
+                data.pop(x)
+            elif abs(x - (self.Number_PlotData_X - 1)) < side:
                 data = [item[y] for item in self.PlotData][(self.Number_PlotData_X - 1) - (2*side + 1):(self.Number_PlotData_X - 1)]
+                data.pop(2*side - (self.Number_PlotData_X - 1 - x))
         elif self.SweepingDirection == 'y':
-            if abs(y - 0) > side and abs(y - (self.Number_PlotData_Y - 1)) >side:
+            if abs(y - 0) >= side and abs(y - (self.Number_PlotData_Y - 1)) >= side:
                 data = self.PlotData[x][y - side : y + side + 1]
-            elif abs(y - 0) <= side:
+                data.pop(side)
+            elif abs(y - 0) < side:
                 data = self.PlotData[x][0: 2*side + 1]
-            elif abs(y - (self.Number_PlotData_Y - 1)) <= side:
+                data.pop(y)
+            elif abs(y - (self.Number_PlotData_Y - 1)) < side:
                 data = self.PlotData[x][(self.Number_PlotData_Y - 1) - (2*side + 1):(self.Number_PlotData_Y - 1)]
-        data.pop(3)
+                data.pop(2*side - (self.Number_PlotData_Y - 1 - y))
         return np.mean(data), np.std(data)
 
         
@@ -1194,11 +1232,19 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         list = []
         for i in range(self.Number_PlotData_X ):
             for j in range(self.Number_PlotData_Y ):
-                avg, std = self.get_standard_distribution(i,j)
-                if std != 0 and abs(self.PlotData[i][j] - avg) > self.NumberOfSigma * std:
-                    number += 1
-                    list.append([i,j, abs(self.PlotData[i][j] - avg) / float(std)])
-                    self.PlotData[i][j] = self.LinearExtrapolate(i,j)
+                ProceedFlag = True
+                if self.SweepingDirection == 'x' and i != 0 and i != (self.Number_PlotData_X - 1):
+                    ProceedFlag = (self.PlotData[i-1][j] >= self.PlotData[i][j] >= self.PlotData[i+1][j]) or (self.PlotData[i-1][j] <= self.PlotData[i][j] <= self.PlotData[i+1][j]) 
+                elif self.SweepingDirection == 'y' and j != 0 and j != (self.Number_PlotData_Y - 1):
+                    ProceedFlag = (self.PlotData[i][j-1] >= self.PlotData[i][j] >= self.PlotData[i][j+1]) or (self.PlotData[i][j-1] <= self.PlotData[i][j] <= self.PlotData[i][j+1]) 
+                
+                if ProceedFlag != True: #Proceed if data is not within range of adjacent two points
+                    avg, std = self.get_standard_distribution(i,j)
+                    if std != 0 and abs(self.PlotData[i][j] - avg) > self.NumberOfSigma * std:
+                        number += 1
+                        list.append([i,j, abs(self.PlotData[i][j] - avg) / float(std)])
+                        self.PlotData[i][j] = self.LinearExtrapolate(i,j)
+
         self.Plot_Data()
         feedback = "Remove Spikes Finished, Flattened " + str(number) + " data."
         self.Feedback(feedback)
@@ -1223,20 +1269,23 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         xPoints_Past = self.PlotParameters['xPoints']
         yPoints_Past = self.PlotParameters['yPoints'] 
 
-        self.PlotParameters['xMin'] = (xMax_Past - xMin_Past)/ xPoints_Past * xMinIndex + xMin_Past
-        self.PlotParameters['xMax'] = (xMax_Past - xMin_Past)/ xPoints_Past * xMaxIndex + xMin_Past
-        self.PlotParameters['yMin'] = (yMax_Past - yMin_Past)/ yPoints_Past * yMinIndex + yMin_Past
-        self.PlotParameters['yMax'] = (yMax_Past - yMin_Past)/ yPoints_Past * yMaxIndex + yMin_Past
+        self.PlotParameters['xMin'] = (xMax_Past - xMin_Past)/ xPoints_Past * xMinIndex + xMin_Past - (self.PlotParameters['xscale'] / 2)
+        self.PlotParameters['xMax'] = (xMax_Past - xMin_Past)/ xPoints_Past * xMaxIndex + xMin_Past + (self.PlotParameters['xscale'] / 2)
+        self.PlotParameters['yMin'] = (yMax_Past - yMin_Past)/ yPoints_Past * yMinIndex + yMin_Past - (self.PlotParameters['yscale'] / 2)
+        self.PlotParameters['yMax'] = (yMax_Past - yMin_Past)/ yPoints_Past * yMaxIndex + yMin_Past + (self.PlotParameters['yscale'] / 2)
         self.PlotParameters['deltaX'] = self.PlotParameters['xMax'] - self.PlotParameters['xMin']
         self.PlotParameters['xPoints'] = xMaxIndex - xMinIndex 
-        self.PlotParameters['xscale']  = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / self.PlotParameters['xPoints'] 
         self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
         self.PlotParameters['yPoints'] = yMaxIndex - yMinIndex 
-        self.PlotParameters['yscale'] = (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / self.PlotParameters['yPoints']
         
         self.PlotData = CropData
         self.Plot_Data()
         self.RefreshInterface()
+
+    def zoomArea(self):
+        bounds = self.AreaSelected.parentBounds()
+        self.viewBig.setXRange(bounds.x(), bounds.x()+bounds.width())
+        self.viewBig.setYRange(bounds.y(), bounds.y() + bounds.height())    
 
     def Feedback(self, string):
         self.label_Feeedback.setText(string) 
