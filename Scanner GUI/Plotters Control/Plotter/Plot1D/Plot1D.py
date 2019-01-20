@@ -30,7 +30,7 @@ class Plot1D(QtGui.QMainWindow, Ui_Plot1D):
 
         self.LineVisible = False
         self.lineEdit_LineCutPosition.editingFinished.connect(self.SetupLineCutposition)
-        self.pushButton_Show.clicked.connect(self.ShowLine)
+        self.pushButton_Show.clicked.connect(self.ToggleLineCut)
         self.pushButton_SaveMatlab.clicked.connect(self.PlotMatLab)
         self.pushButton_Switch.clicked.connect(self.SwitchData)
         if self.Name != 'Optimal Sensitivity':
@@ -41,28 +41,29 @@ class Plot1D(QtGui.QMainWindow, Ui_Plot1D):
         self.Line.sigPositionChangeFinished.connect(self.ChangeLineCutValue)
 
     def SwitchData(self):
-        self.Plot.removeItem(self.PlotShown)
         self.YData = [1.0/data for data in self.YData]
         if self.Name == 'Optimal Sensitivity':
             self.Name = 'Optimal Noise'
         elif self.Name == 'Optimal Noise':
             self.Name = 'Optimal Sensitivity'
-        self.SetupLabels()
-        self.label_Name.setText(self.Name)
-        self.setWindowTitle(self.Name)
-        self.PlotData(self.XData, self.YData)
+        self.RefreshPlot()
+
+    def SetMinimumLineCut(self):
+        self.Line.setValue(np.amin(self.XData))
+        self.position = self.Line.value()
+        self.lineEdit_LineCutPosition.setText(formatNum(self.position))
 
     def ChangeLineCutValue(self):
-        self.position=self.Line.value()
+        self.position = self.Line.value()
         self.lineEdit_LineCutPosition.setText(formatNum(self.position))
         self.Line.setValue(float(self.position))
 
     def SetupLineCutposition(self):
         try:
-            dummystr=str(self.lineEdit_LineCutPosition.text())
-            dummyval=readNum(dummystr, self , False)
+            dummystr = str(self.lineEdit_LineCutPosition.text())
+            dummyval = readNum(dummystr, self , False)
             if isinstance(dummyval,float):
-                self.position=dummyval
+                self.position = dummyval
             self.lineEdit_LineCutPosition.setText(formatNum(self.position))
             self.Line.setValue(float(self.position))
     
@@ -88,18 +89,25 @@ class Plot1D(QtGui.QMainWindow, Ui_Plot1D):
             color = 'r'
         elif self.Name == 'Optimal Sensitivity' or self.Name == 'Optimal Noise':
             color = 'b'
+        self.Plot.plot(x = dataX, y = dataY, pen = color)
+        
+    def ToggleLineCut(self):
+        self.LineVisible = not self.LineVisible
+        self.RefreshPlot()
 
-        self.PlotShown = self.Plot.plot(x = dataX, y = dataY, pen = color)
-        print self.Name
-        print self.XData
-        print self.YData
-
-    def ShowLine(self):
+    def RefreshLineCut(self):
         if self.LineVisible:
             self.Plot.removeItem(self.Line)
         elif not self.LineVisible:
             self.Plot.addItem(self.Line)
-        self.LineVisible = not self.LineVisible
+
+    def RefreshPlot(self):
+        self.Plot.clear()
+        self.PlotData(self.XData, self.YData)
+        self.RefreshLineCut()
+        self.SetupLabels()
+        self.label_Name.setText(self.Name)
+        self.setWindowTitle(self.Name)
 
     def PlotMatLab(self):
         fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
@@ -117,9 +125,6 @@ class Plot1D(QtGui.QMainWindow, Ui_Plot1D):
         parentwidth, parentheight = self.parent.width(), self.parent.height()
         Offset = 400
         if self.Name == 'Optimal Sensitivity':
-            self.move(parentx + parentwidth/2, parenty + parentheight/2) 
+            self.move(parentx + parentwidth/2, parenty) 
         elif self.Name == 'Optimal Bias':
-            self.move(parentx + parentwidth/2, parenty + parentheight/2 + Offset) 
-
-
-
+            self.move(parentx + parentwidth/2, parenty + Offset) 

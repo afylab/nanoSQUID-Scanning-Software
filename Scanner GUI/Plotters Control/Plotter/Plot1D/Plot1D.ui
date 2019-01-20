@@ -174,7 +174,7 @@ border-radius: 5px
           </sizepolicy>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save plot data&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>Show linecut</string>
          </property>
          <property name="styleSheet">
           <string notr="true">QPushButton:disabled#pushButton_Show {image:url(:/nSOTScanner/Pictures/lock.png)}
@@ -211,7 +211,7 @@ border-radius: 5px
           </size>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Subtract fit or offset.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save data in mat file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="styleSheet">
           <string notr="true">QPushButton:disabled#pushButton_SaveMatlab {image:url(:/nSOTScanner/Pictures/lock.png)}
@@ -242,7 +242,7 @@ border-radius: 5px
           </sizepolicy>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save plot data&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Switch sensitivity and noise&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="styleSheet">
           <string notr="true">QPushButton:disabled#pushButton_Switch {image:url(:/nSOTScanner/Pictures/lock.png)}

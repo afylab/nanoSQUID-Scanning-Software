@@ -53,6 +53,7 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.Color_ContainData = [QtGui.QColor(0, 0, 0), QtGui.QColor(100, 100, 100)]
         self.Color_ContainPlotData = [QtGui.QColor(0, 0, 0), QtGui.QColor(155, 155, 155)]
 
+        self.listWidget_Plots.itemDoubleClicked.connect(self.MaximizePlotter)
         self.listWidget_Plots.itemDoubleClicked.connect(self.AddtoProcess)
         self.pushButton_Subtract.clicked.connect(self.Subtract)
         self.pushButton_Division.clicked.connect(self.Division)
@@ -134,6 +135,10 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             if number == plotter.number:
                 return plotter 
         
+    def MaximizePlotter(self, item):
+        index = self.listWidget_Plots.indexFromItem(item).row()
+        self.PlotterList[index].showMaximized()
+
     def AddtoProcess(self, item):
         try:
             if item.backgroundColor() == self.Color_ContainPlotData[1]:#Only Proceed with data contained
@@ -218,7 +223,7 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
 
     def PressingKey(self, event):
         print event.key()
-        if event.key() == QtCore.Qt.Key_Delete or event.key() == Key_Backspace:
+        if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
             item = self.listWidget_Plots.currentItem()
             if not item is None:
                 index = self.listWidget_Plots.indexFromItem(item).row()

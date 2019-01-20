@@ -32,6 +32,7 @@ class ProcessWindow(QtGui.QMainWindow, Ui_ProcessWindow):
         self.pushButton_Process.clicked.connect(self.ProcessData)
         self.pushButton_TransferLeft.clicked.connect(self.TransferLeft)
         self.pushButton_TransferRight.clicked.connect(self.TransferRight)
+        self.pushButton_Cancel.clicked.connect(self.Cancel)
         
         self.RefreshPlotList()
 
@@ -170,7 +171,13 @@ class ProcessWindow(QtGui.QMainWindow, Ui_ProcessWindow):
                 number = self.PlotsListA.pop(index)
                 self.PlotsListB.append(number)
             self.RefreshPlotList()
-            
+
+    def Cancel(self):
+        self.ClearListWidget()
+        self.PlotsListA = []
+        self.PlotsListB = []
+        self.close()
+
     def moveDefault(self):
         parentx, parenty = self.parent.mapToGlobal(QtCore.QPoint(0,0)).x(), self.parent.mapToGlobal(QtCore.QPoint(0,0)).y()
         parentwidth, parentheight = self.parent.width(), self.parent.height()

@@ -345,6 +345,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
     def RefreshSelectedAreaProperty(self):
         if '2DPlot' in self.DataType:
+            print self.Data
+            print self.self.PlotParameters['xMin'], self.PlotParameters['xscale']
             bounds = self.AreaSelected.parentBounds()#Return the bounding rectangle of this ROI in the coordinate system of its parent. 
             self.AreaSelectedParameters['xMin'] = int((bounds.x() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
             self.AreaSelectedParameters['yMin'] = int((bounds.y() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
@@ -400,8 +402,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
         self.PlotParameters['xPoints'] = np.amax(self.Data[::,x])+1
         self.PlotParameters['yPoints'] = np.amax(self.Data[::,y])+1
-        self.PlotParameters['xscale'] = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / self.PlotParameters['xPoints']
-        self.PlotParameters['yscale'] = (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / self.PlotParameters['yPoints']    
+        self.PlotParameters['xscale'] = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / (self.PlotParameters['xPoints'] - 1)
+        self.PlotParameters['yscale'] = (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / (self.PlotParameters['yPoints'] - 1)   
         n = self.sensIndex[3] + len(self.indVars)
         self.PlotData = np.zeros([int(self.PlotParameters['xPoints']), int(self.PlotParameters['yPoints'])])
         self.noiseData = np.zeros([int(self.PlotParameters['xPoints']), int(self.PlotParameters['yPoints'])])
@@ -463,6 +465,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         bandwidth = 65000.0
         YData = [data / gain * math.sqrt(bandwidth) for data in YData]
         self.OptimalSensitivity.PlotData(XData,YData)
+        self.OptimalSensitivity.SetMinimumLineCut()
         self.OptimalSensitivity.moveDefault()
         self.OptimalSensitivity.raise_()
         self.OptimalSensitivity.show()
@@ -479,6 +482,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 YData.append(Indexmin * self.PlotParameters['yscale'] + self.PlotParameters['yMin'])
 
         self.OptimalBias.PlotData(XData,YData)
+        self.OptimalBias.SetMinimumLineCut()
         self.OptimalBias.moveDefault()
         self.OptimalBias.raise_()
         self.OptimalBias.show()
@@ -545,7 +549,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
         self.PlotParameters['xPoints'] = np.amax(self.Data[::,x])+1
         self.PlotParameters['yPoints'] = np.amax(self.Data[::,y])+1
-        self.PlotParameters['xscale'], self.PlotParameters['yscale'] = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / self.PlotParameters['xPoints'], (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / self.PlotParameters['yPoints']    
+        self.PlotParameters['xscale'], self.PlotParameters['yscale'] = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / (self.PlotParameters['xPoints'] - 1), (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / (self.PlotParameters['yPoints'] - 1)    
         self.PlotData = np.zeros([int(self.PlotParameters['xPoints']), int(self.PlotParameters['yPoints'])])
         for i in self.Data:
             self.PlotData[int(i[x]), int(i[y])] = i[z]
@@ -655,7 +659,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.PlotData = NewData
         self.Plot_Data()
         
-
     @inlineCallbacks
     def browseDV(self, c = None):
         try:
@@ -726,7 +729,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 
             return file, directory, indVars, depVars, paramsDict, comments, DataType, TraceFlag, NumberofindexVariables
              
-            
             self.editDataInfo.RefreshInfo()
 
         except Exception as inst:
@@ -823,7 +825,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.ClearData()
         self.setData(data)
         self.setPlotInfo(info)#file, directory, indVars, depVars, paramsDict, comments, DataType, TraceFlag = None, NumberofindexVariables = 0
-    
         #buttons appropriately
         
     def RemoveNaN(self, data):
@@ -904,10 +905,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.PlotParameters['xMin'] = np.amin(self.Data[::,self.NumberofindexVariables+self.xIndex])
             self.PlotParameters['deltaX'] = self.PlotParameters['xMax'] - self.PlotParameters['xMin']
             self.PlotParameters['xPoints'] = np.amax(self.Data[::,self.xIndex])+1  #look up the index
-            self.PlotParameters['xscale']  = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / self.PlotParameters['xPoints'] 
+            self.PlotParameters['xscale']  = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / (self.PlotParameters['xPoints'] -1)
             self.PlotParameters['yMin'] = 0.0
-            self.PlotParameters['xMax'] += (self.PlotParameters['xscale'] / 2)
-            self.PlotParameters['xMin'] -= (self.PlotParameters['xscale'] / 2)
             print 'xMax', self.PlotParameters['xMax']
             print 'xMin', self.PlotParameters['xMin']
             print 'deltaX', self.PlotParameters['deltaX']
@@ -919,9 +918,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 self.PlotParameters['yMin'] = np.amin(self.Data[::,self.NumberofindexVariables+self.yIndex])
                 self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
                 self.PlotParameters['yPoints'] = np.amax(self.Data[::,self.yIndex])+1
-                self.PlotParameters['yscale'] = (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / self.PlotParameters['yPoints']
-                self.PlotParameters['yMax'] += (self.PlotParameters['yscale'] / 2)
-                self.PlotParameters['yMin'] -= (self.PlotParameters['yscale'] / 2)
+                self.PlotParameters['yscale'] = (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / (self.PlotParameters['yPoints'] - 1)
         except Exception as inst:
             print 'Following error was thrown: ', inst
             print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
@@ -949,7 +946,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         
     def Plot_Data(self):
         if "2DPlot" in self.DataType:
-            self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.PlotParameters['xMin'], self.PlotParameters['yMin']],scale=[self.PlotParameters['xscale'], self.PlotParameters['yscale']])
+            self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.PlotParameters['xMin'] - (self.PlotParameters['xscale'] / 2), self.PlotParameters['yMin'] - (self.PlotParameters['yscale'] / 2)],scale=[self.PlotParameters['xscale'], self.PlotParameters['yscale']])
             self.ResetLineCutPlots()
 
         elif "1DPlot" in self.DataType:
