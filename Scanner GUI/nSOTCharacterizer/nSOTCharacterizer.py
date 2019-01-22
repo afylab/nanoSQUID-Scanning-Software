@@ -8,6 +8,7 @@ import pyqtgraph as pg
 import exceptions
 import time
 import threading
+import math
 import copy
 
 path = sys.path[0] + r"\nSOTCharacterizer"
@@ -141,6 +142,25 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.blink_server = False
         
         self.lockInterface()
+
+    def UpdateFieldPeriod(self):
+        pos1 = self.MeasureLine1.value()
+        pos2 = self.MeasureLine2.value()
+        period = abs(pos1 - pos2)
+        self.lineEdit_FieldPeriod.setText(str(round(period * 1000, 1)))
+        fluxquanta = 2.0678338 / (10.0 ** 15)
+        area = fluxquanta / period
+        diameter = 2 * math.sqrt(area / math.pi)
+        self.lineEdit_Diameter.setText(str(round(diameter * 10.0 ** 9, 1)))
+
+    def ToggleMeasurementLine(self):
+        if self.Flag_MeasurementLineShowing:
+            self.view0.removeItem(self.MeasureLine1)
+            self.view0.removeItem(self.MeasureLine2)
+        else:
+            self.view0.addItem(self.MeasureLine1)
+            self.view0.addItem(self.MeasureLine2)
+        self.Flag_MeasurementLineShowing = not self.Flag_MeasurementLineShowing
 
     def moveDefault(self):
         self.move(550,10)
@@ -488,6 +508,16 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
         self.view0.addItem(self.vTraceLine, ignoreBounds = True)
         self.view0.addItem(self.hTraceLine, ignoreBounds =True)
+
+        #Raymond's addition
+        self.MeasureLine1 = pg.InfiniteLine(pos = 0.1, angle = 90, movable = True, pen = 'b', hoverPen = (50, 50, 200))
+        self.MeasureLine2 = pg.InfiniteLine(pos = 0.2, angle = 90, movable = True, pen = 'b', hoverPen = (50, 50, 200))
+        self.MeasureLine1.sigPositionChangeFinished.connect(self.UpdateFieldPeriod)
+        self.MeasureLine2.sigPositionChangeFinished.connect(self.UpdateFieldPeriod)
+        self.pushButton_Show.clicked.connect(self.ToggleMeasurementLine)
+        self.Flag_MeasurementLineShowing = True
+        self.view0.addItem(self.MeasureLine1, ignoreBounds = True)
+        self.view0.addItem(self.MeasureLine2, ignoreBounds = True)
 
         self.view1 = pg.PlotItem(name = "Field-Bias-Noise")
         self.view1.setLabel('left', text='Bias Voltage', units = 'V')
@@ -2170,27 +2200,20 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         self.sweepPlot.enableAutoRange(enable = True)
         proxy = pg.SignalProxy(self.sweepPlot.scene().sigMouseClicked ,slot=self.updateIC)
         self.sweepPlot.scene().sigMouseClicked.connect(self.updateIC)
-        
+        self.IcLine = pg.InfiniteLine(pos = 0.0 , angle = 90, movable = True, pen = 'b', hoverPen = (50, 50, 200))
+        self.IcLine.sigPositionChangeFinished.connect(self.updateIC)
+
     def updateIC(self, e):
-        vb = self.sweepPlot.vb
-        pos = e.pos()
-        ssaaRes = float(self.ssaaRes.value())*1000
-        winding = float(self.ssaaWinding.value())
-        pt = vb.mapToView(pos)
         if not self.data is None:
-            xPos = pt.x()
-            arg = np.argmin(np.absolute(np.asarray(self.data[::, 1]) - xPos))
-            xPos, yPos = self.data[arg][1], self.data[arg][2]
-            zeroPos = np.argmin(np.absolute(np.asarray(self.data[::, 1])))
-            x_0 = self.data[zeroPos][1]
-            y_0 = self.data[zeroPos][2]
-            
-            try:
-                I_c =  np.round(np.absolute((yPos - y_0) / (ssaaRes * winding)) * 1e6, decimals = 2)
-            
-                self.critCurrLine.setText(str(I_c))
-            except:
-                self.critCurrLine.setText('Nan')
+            xVals = [x[1] for x in self.data]
+            yVals = [x[2] for x in self.data]
+            xscale = float((np.amax(xVals)) - float(np.amin(xVals))) / float((len(xVals) - 1))
+            index = self.IcLine.value() / xscale
+            ssaaRes = float(self.ssaaRes.value())*1000
+            winding = float(self.ssaaWinding.value())
+            yValue = yVals[index]
+            I_c =  np.round(np.absolute((yValue) / (ssaaRes * winding)) * 1e6, decimals = 2)
+            self.critCurrLine.setText(str(I_c))
                 
     @inlineCallbacks
     def plotSweepData(self, data):
