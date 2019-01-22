@@ -44,7 +44,53 @@ border-radius: 5px
        <enum>QFrame::Raised</enum>
       </property>
       <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,1,1" columnstretch="1,1">
+       <item row="0" column="0" colspan="2">
+        <widget class="QLabel" name="label">
+         <property name="styleSheet">
+          <string notr="true">color:rgb(131,131,131)</string>
+         </property>
+         <property name="text">
+          <string>Process Functions</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
        <item row="1" column="0">
+        <widget class="QPushButton" name="pushButton_Addition">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>open process list as addition</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton#pushButton_Addition{
+image:url(:/nSOTScanner/Pictures/overlay Addition.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_Addition{
+image:url(:/nSOTScanner/Pictures/overlay Addition.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
         <widget class="QPushButton" name="pushButton_Subtract">
          <property name="enabled">
           <bool>true</bool>
@@ -56,16 +102,16 @@ border-radius: 5px
           </sizepolicy>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open subtract plotter data window&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>open process list as subtract</string>
          </property>
          <property name="styleSheet">
           <string notr="true">QPushButton#pushButton_Subtract{
-image:url(:/nSOTScanner/Pictures/OverlapSubtract.png);
+image:url(:/nSOTScanner/Pictures/overlaySubtract.png);
 background: black;
 }
 
 QPushButton:pressed#pushButton_Subtract{
-image:url(:/nSOTScanner/Pictures/OverlapSubtract.png);
+image:url(:/nSOTScanner/Pictures/overlaySubtract.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px
@@ -88,14 +134,17 @@ border-radius: 5px
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="toolTip">
+          <string>open process list as multiply</string>
+         </property>
          <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
+          <string notr="true">QPushButton#pushButton_Product{
+image:url(:/nSOTScanner/Pictures/overlay Multiply.png);
 background: black;
 }
 
-QPushButton:pressed#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
+QPushButton:pressed#pushButton_Product{
+image:url(:/nSOTScanner/Pictures/overlay Multiply.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px
@@ -118,14 +167,17 @@ border-radius: 5px
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="toolTip">
+          <string>open process list as division</string>
+         </property>
          <property name="styleSheet">
           <string notr="true">QPushButton#pushButton_Division{
-image:url(:/nSOTScanner/Pictures/OverlapDivision.png);
+image:url(:/nSOTScanner/Pictures/overlay Divison.png);
 background: black;
 }
 
 QPushButton:pressed#pushButton_Division{
-image:url(:/nSOTScanner/Pictures/OverlapDivision.png);
+image:url(:/nSOTScanner/Pictures/overlay Divison.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px
@@ -134,49 +186,6 @@ border-radius: 5px
          </property>
          <property name="text">
           <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QPushButton" name="pushButton_Addition">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
-background: black;
-}
-
-QPushButton:pressed#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
-background: black;
-border: 2px rgb(131,131,131);
-border-radius: 5px
-}
-</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0" colspan="2">
-        <widget class="QLabel" name="label">
-         <property name="styleSheet">
-          <string notr="true">color:rgb(131,131,131)</string>
-         </property>
-         <property name="text">
-          <string>Process Functions</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -242,7 +251,7 @@ border-radius: 5px
         </widget>
        </item>
        <item row="2" column="0">
-        <widget class="QPushButton" name="pushButton_SubtractRegionAverage">
+        <widget class="QPushButton" name="pushButton_SetArea">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -252,14 +261,17 @@ border-radius: 5px
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="toolTip">
+          <string>Set selected area for all window</string>
+         </property>
          <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
+          <string notr="true">QPushButton#pushButton_SetArea{
+image:url(:/nSOTScanner/Pictures/SelectArea.png);
 background: black;
 }
 
-QPushButton:pressed#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
+QPushButton:pressed#pushButton_SetArea{
+image:url(:/nSOTScanner/Pictures/SelectArea.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px
@@ -286,13 +298,13 @@ border-radius: 5px
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Batch process all plotters.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
+          <string notr="true">QPushButton#pushButton_SubtractOveralAverage{
+image:url(:/nSOTScanner/Pictures/inverseRes.png);
 background: black;
 }
 
-QPushButton:pressed#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/add.png);
+QPushButton:pressed#pushButton_SubtractOveralAverage{
+image:url(:/nSOTScanner/Pictures/inverseRes.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px

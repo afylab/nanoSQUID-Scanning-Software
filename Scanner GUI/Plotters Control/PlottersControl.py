@@ -53,13 +53,47 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.Color_ContainData = [QtGui.QColor(0, 0, 0), QtGui.QColor(100, 100, 100)]
         self.Color_ContainPlotData = [QtGui.QColor(0, 0, 0), QtGui.QColor(155, 155, 155)]
 
-        self.listWidget_Plots.itemDoubleClicked.connect(self.MaximizePlotter)
+        self.subtractMenu = QtGui.QMenu()
+        subOverallAvg = QtGui.QAction( "Subtract overall average", self)
+        subOverallAvg.triggered.connect(self.subtractOverallAvg)
+        self.subtractMenu.addAction(subOverallAvg)
+        subPlane = QtGui.QAction( "Subtract planar fit", self)
+        subPlane.triggered.connect(self.subtractPlane)
+        self.subtractMenu.addAction(subPlane)
+        subOverallQuad = QtGui.QAction( "Subtract overall quadratic fit", self)
+        subOverallQuad.triggered.connect(self.subtractOverallQuad)
+        self.subtractMenu.addAction(subOverallQuad)
+        subSelectedAreaAvg = QtGui.QAction( "Subtract selected area average", self)
+        subSelectedAreaAvg.triggered.connect(self.subtractSelectedArea)
+        self.subtractMenu.addAction(subSelectedAreaAvg)
+        subXAvg = QtGui.QAction( "Subtract X average", self)
+        subXAvg.triggered.connect(self.subtractXAvg)
+        self.subtractMenu.addAction(subXAvg)
+        subYAvg = QtGui.QAction( "Subtract Y average", self)
+        subYAvg.triggered.connect(self.subtractYAvg)
+        self.subtractMenu.addAction(subYAvg)
+        subXLinear = QtGui.QAction( "Subtract X linear fit", self)
+        subXLinear.triggered.connect(self.subtractXLinear)
+        self.subtractMenu.addAction(subXLinear)
+        subYLinear = QtGui.QAction( "Subtract Y linear fit", self)
+        subYLinear.triggered.connect(self.subtractYLinear)
+        self.subtractMenu.addAction(subYLinear)
+        subXQuad = QtGui.QAction( "Subtract X quadratic fit", self)
+        subXQuad.triggered.connect(self.subtractXQuad)
+        self.subtractMenu.addAction(subXQuad)
+        subYQuad = QtGui.QAction( "Subtract Y quadratic fit", self)
+        subYQuad.triggered.connect(self.subtractYQuad)
+        self.subtractMenu.addAction(subYQuad)
+        self.pushButton_SubtractOveralAverage.setMenu(self.subtractMenu)
+
         self.listWidget_Plots.itemDoubleClicked.connect(self.AddtoProcess)
-        self.pushButton_Subtract.clicked.connect(self.Subtract)
-        self.pushButton_Division.clicked.connect(self.Division)
+        self.pushButton_Subtract.clicked.connect(lambda: self.Process('Subtract'))
+        self.pushButton_Addition.clicked.connect(lambda: self.Process('Addition'))
+        self.pushButton_Product.clicked.connect(lambda: self.Process('Product'))
+        self.pushButton_Division.clicked.connect(lambda: self.Process('Division'))
+        self.pushButton_SetArea.clicked.connect(self.SetSelectedArea)
         self.pushButton_AddPlotter.clicked.connect(self.AddPlotter)
         
-
         self.keyPressed.connect(self.PressingKey)
 
         self.RefreshPlotList()
@@ -157,29 +191,17 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             print "Error: ",inst
             print "Occured at line: ", sys.exc_traceback.tb_lineno
                 
-    def Subtract(self, c = None):
-        if self.ProcessList.label_Operation.text() == 'Subtract': #If the operation changed, kill the current list
+    def Process(self, Process, c = None):
+        if self.ProcessList.label_Operation.text() == Process: #If the operation changed, kill the current list
             pass
         else:
             self.ProcessList.ClearListWidget()
-            self.PlotsListA, self.PlotsListB = [], []
+            self.ProcessList.PlotsListA, self.ProcessList.PlotsListB = [], []
 
         self.ProcessList.raise_()
         self.ProcessList.moveDefault()
         self.ProcessList.show()
-        self.ProcessList.label_Operation.setText('Subtract')
-
-    def Division(self, c = None):
-        if self.ProcessList.label_Operation.text() == 'Division': #If the operation changed, kill the current list
-            pass
-        else:
-            self.ProcessList.ClearListWidget()
-            self.PlotsListA, self.PlotsListB = [], []
-
-        self.ProcessList.raise_()
-        self.ProcessList.moveDefault()
-        self.ProcessList.show()
-        self.ProcessList.label_Operation.setText('Division')
+        self.ProcessList.label_Operation.setText(Process)
 
     def transferPlotData(self, plotter, PlotData, comments, filename, title, PlotParameters, indVars, depVars):
         plotter.PlotData = PlotData
@@ -217,6 +239,63 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.PlotsListB.pop(index)
         self.RefreshPlotList()
 
+    def SetSelectedArea(self):
+        plotter = self.PlotterList[-1]
+        plotter.AreaSelected.sigRegionChangeFinished.connect(lambda: self.ApplySelectedArea(plotter))
+        plotter.raise_()
+
+    def ApplySelectedArea(self, plotterchanged,):
+        AreaSelectedParameters = plotterchanged.AreaSelectedParameters
+        pos = plotterchanged.AreaSelected.pos()
+        size = plotterchanged.AreaSelected.size()
+        for plotter in self.PlotterList:
+            if plotter != plotterchanged:
+                plotter.AreaSelectedParameters = AreaSelectedParameters
+                plotter.AreaSelected.setSize(size)
+                plotter.AreaSelected.setPos(pos)
+
+#####Subtract Related Function
+    def subtractOverallAvg(self):
+        for plotter in self.PlotterList:
+            plotter.subtractOverallAvg()
+            
+    def subtractPlane(self):
+        for plotter in self.PlotterList:
+            plotter.subtractPlane()        
+
+    def subtractOverallQuad(self):
+        for plotter in self.PlotterList:
+            plotter.subtractOverallQuad()        
+            
+    def subtractXAvg(self):
+        for plotter in self.PlotterList:
+            plotter.subtractXAvg()     
+            
+    def subtractYAvg(self):
+        for plotter in self.PlotterList:
+            plotter.subtractYAvg()     
+            
+    def subtractXLinear(self):
+        for plotter in self.PlotterList:
+            plotter.subtractXLinear() 
+            
+    def subtractYLinear(self):
+        for plotter in self.PlotterList:
+            plotter.subtractYLinear()
+            
+    def subtractXQuad(self):
+        for plotter in self.PlotterList:
+            plotter.subtractXQuad() 
+            
+    def subtractYQuad(self):
+        for plotter in self.PlotterList:
+            plotter.subtractYLinear()         
+
+    def subtractSelectedArea(self):
+        for plotter in self.PlotterList:
+            plotter.subtractOverallConstant(plotter.Average_SelectedArea)
+#####Subtract Related Function
+   
     def keyPressEvent(self, event):
         super(CommandingCenter, self).keyPressEvent(event)
         self.keyPressed.emit(event) 

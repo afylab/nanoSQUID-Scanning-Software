@@ -120,7 +120,11 @@ class ProcessWindow(QtGui.QMainWindow, Ui_ProcessWindow):
                     PlotDataGenerated = PlotDataA - PlotDataB
                 elif 'Division' in operation:
                     PlotDataGenerated = PlotDataA / PlotDataB
-                
+                elif 'Addition' in operation:
+                    PlotDataGenerated = PlotDataA + PlotDataB
+                elif 'Product' in operation:
+                    PlotDataGenerated = PlotDataA * PlotDataB
+                    
                 procedure = plotterA.Title + operation + plotterA.Title
                 
                 self.parent.AddPlotter()

@@ -216,10 +216,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.pushButton_Info.clicked.connect(self.displayInfo)
             self.pushButton_Squid.clicked.connect(self.ShowSQUIDProperty)
 
-            #Sensitivity and Bias Window
-            self.OptimalSensitivity = Plot1D.Plot1D(self.reactor, 'Optimal Sensitivity', self)
-            self.OptimalBias = Plot1D.Plot1D(self.reactor, 'Optimal Bias', self)
-
             self.RefreshInterface()
 
             #Buttons Enable conditions:
@@ -241,7 +237,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.subtract: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.gradient: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.pushButton_sensitivity: (not self.PlotData is None) and '2DPlot' in self.DataType and 'nSOT vs. Bias Voltage and Field' in self.file and 'DC SSAA Output' in self.comboBox_zAxis.currentText() and 'B Field' in self.comboBox_xAxis.currentText() and 'Bias Voltage' in self.comboBox_yAxis.currentText(),
-            self.pushButton_Squid: (not self.PlotData is None) and '2DPlot' in self.DataType and 'nSOT vs. Bias Voltage and Field' in self.file and 'DC SSAA Output' in self.comboBox_zAxis.currentText() and 'B Field' in self.comboBox_xAxis.currentText() and 'Bias Voltage' in self.comboBox_yAxis.currentText(),
+            self.pushButton_Squid: self.label_Feeedback.text() == 'Sensitivity Plotted' and (not self.PlotData is None) and '2DPlot' in self.DataType and 'nSOT vs. Bias Voltage and Field' in self.file and 'DC SSAA Output' in self.comboBox_zAxis.currentText() and 'B Field' in self.comboBox_xAxis.currentText() and 'Bias Voltage' in self.comboBox_yAxis.currentText(),
             self.diamCalc: False,
             self.savePlot:(not self.PlotData is None),
             self.pushButton_SelectArea: (not self.PlotData is None and '2DPlot' in self.DataType),
@@ -345,8 +341,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
     def RefreshSelectedAreaProperty(self):
         if '2DPlot' in self.DataType:
-            print self.Data
-            print self.self.PlotParameters['xMin'], self.PlotParameters['xscale']
             bounds = self.AreaSelected.parentBounds()#Return the bounding rectangle of this ROI in the coordinate system of its parent. 
             self.AreaSelectedParameters['xMin'] = int((bounds.x() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
             self.AreaSelectedParameters['yMin'] = int((bounds.y() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
@@ -379,7 +373,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.PlotData = Data
         self.Plot_Data()
         self.Feedback('Sensitivity Plotted')
-
+        self.RefreshInterface()
 
     def sensitivityPrompt(self):
         self.sensPrompt = sensitivityPrompt.Sensitivity(self.depVars, self.indVars, self.reactor)
@@ -455,6 +449,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.PlotOptimalBias()        
 
     def PlotOptimalSensitivity(self):
+        self.OptimalSensitivity = Plot1D.Plot1D(self.reactor, 'Optimal Sensitivity', self)
         XData = np.linspace(self.PlotParameters['xMin'], self.PlotParameters['xMax'], self.PlotParameters['xPoints']).tolist()
         YData = []
         for i in range(len(XData)):
@@ -471,6 +466,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.OptimalSensitivity.show()
         
     def PlotOptimalBias(self):
+        self.OptimalBias = Plot1D.Plot1D(self.reactor, 'Optimal Bias', self)
         XData = np.linspace(self.PlotParameters['xMin'], self.PlotParameters['xMax'], self.PlotParameters['xPoints']).tolist()
         YData = []
         for i in range(len(XData)):
@@ -907,11 +903,11 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.PlotParameters['xPoints'] = np.amax(self.Data[::,self.xIndex])+1  #look up the index
             self.PlotParameters['xscale']  = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / (self.PlotParameters['xPoints'] -1)
             self.PlotParameters['yMin'] = 0.0
-            print 'xMax', self.PlotParameters['xMax']
-            print 'xMin', self.PlotParameters['xMin']
-            print 'deltaX', self.PlotParameters['deltaX']
-            print 'xPoints', self.PlotParameters['xPoints']
-            print 'xscale', self.PlotParameters['xscale']
+            # print 'xMax', self.PlotParameters['xMax']
+            # print 'xMin', self.PlotParameters['xMin']
+            # print 'deltaX', self.PlotParameters['deltaX']
+            # print 'xPoints', self.PlotParameters['xPoints']
+            # print 'xscale', self.PlotParameters['xscale']
 
             if "2DPlot" in self.DataType:
                 self.PlotParameters['yMax'] = np.amax(self.Data[::,self.NumberofindexVariables+self.yIndex])
@@ -1266,10 +1262,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         xPoints_Past = self.PlotParameters['xPoints']
         yPoints_Past = self.PlotParameters['yPoints'] 
 
-        self.PlotParameters['xMin'] = (xMax_Past - xMin_Past)/ xPoints_Past * xMinIndex + xMin_Past - (self.PlotParameters['xscale'] / 2)
-        self.PlotParameters['xMax'] = (xMax_Past - xMin_Past)/ xPoints_Past * xMaxIndex + xMin_Past + (self.PlotParameters['xscale'] / 2)
-        self.PlotParameters['yMin'] = (yMax_Past - yMin_Past)/ yPoints_Past * yMinIndex + yMin_Past - (self.PlotParameters['yscale'] / 2)
-        self.PlotParameters['yMax'] = (yMax_Past - yMin_Past)/ yPoints_Past * yMaxIndex + yMin_Past + (self.PlotParameters['yscale'] / 2)
+        self.PlotParameters['xMin'] = self.PlotParameters['xscale'] * xMinIndex + xMin_Past - (self.PlotParameters['xscale'] / 2)
+        self.PlotParameters['xMax'] = self.PlotParameters['xscale'] * xMaxIndex + xMin_Past + (self.PlotParameters['xscale'] / 2)
+        self.PlotParameters['yMin'] = self.PlotParameters['yscale'] * yMinIndex + yMin_Past - (self.PlotParameters['yscale'] / 2)
+        self.PlotParameters['yMax'] = self.PlotParameters['yscale'] * yMaxIndex + yMin_Past + (self.PlotParameters['yscale'] / 2)
         self.PlotParameters['deltaX'] = self.PlotParameters['xMax'] - self.PlotParameters['xMin']
         self.PlotParameters['xPoints'] = xMaxIndex - xMinIndex 
         self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
@@ -1314,6 +1310,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.MultiplyWindow.close()
         if hasattr(self, 'SubConstantWindow'):
             self.SubConstantWindow.close() 
+        if hasattr(self, 'OptimalSensitivity'):
+            self.OptimalSensitivity.close()
+        if hasattr(self, 'OptimalBias'):
+            self.OptimalBias.close()             
 
 if __name__ == "__main__":
     app = QtGui.QApplication([])
