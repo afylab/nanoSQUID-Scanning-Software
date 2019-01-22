@@ -1,5 +1,13 @@
 <RCC>
   <qresource prefix="nSOTScanner">
+    <file>Pictures/overlay Addition.png</file>
+    <file>Pictures/overlay Divison.png</file>
+    <file>Pictures/overlay Multiply.png</file>
+    <file>Pictures/overlaySubtract.png</file>
+    <file>Pictures/Switch.png</file>
+    <file>Pictures/Show.png</file>
+    <file>Pictures/jj_schema.png</file>
+    <file>Pictures/OverlapDivision.png</file>
     <file>Pictures/Crop.jpg</file>
     <file>Pictures/OverlapSubtract.png</file>
     <file>Pictures/SelectArea.png</file>
