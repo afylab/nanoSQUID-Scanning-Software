@@ -1132,6 +1132,60 @@ qproperty-alignment: 'AlignVCenter | AlignCenter';
       <string>Data Vault:</string>
      </property>
     </widget>
+    <widget class="QLabel" name="label_ANC350">
+     <property name="geometry">
+      <rect>
+       <x>235</x>
+       <y>40</y>
+       <width>80</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string>ANC350:</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_ANC350">
+     <property name="geometry">
+      <rect>
+       <x>325</x>
+       <y>40</y>
+       <width>15</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_ANC350{
+background:rgb(144, 140, 9);
+border-radius: 4px;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_ANC350_status">
+     <property name="geometry">
+      <rect>
+       <x>345</x>
+       <y>40</y>
+       <width>121</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_ANC350_status{
+color:rgb(168,168,168);
+qproperty-alignment: 'AlignVCenter | AlignCenter';
+}</string>
+     </property>
+     <property name="text">
+      <string>Not connected</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QPushButton" name="push_LabRAD">
     <property name="geometry">

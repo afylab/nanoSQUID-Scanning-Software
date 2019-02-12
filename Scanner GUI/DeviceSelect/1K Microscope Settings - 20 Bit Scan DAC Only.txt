@@ -1,0 +1,10 @@
+approach and TF;dac_adc,DA20_16_03 (COM7);hf2li,dev1022;dc_box,ad5764_dcbox (COM5)
+sample;dac_adc,DA16_16_06 (COM3);dc_box,ad5764_dcbox (COM5)
+nsot;dac_adc,DA16_16_03 (COM6)
+system;blink device,ad5764_dcbox (COM5);magnet supply,IPS 120 Power Supply;coarse positioner,Attocube ANC350;specific supply,minint-o9n40pb GPIB Bus - GPIB0::23::INSTR
+scan;dac_adc,DA20_16_03 (COM7)
+
+approach and TF;pll output,1;pll input,1;step Z out,1;pid z out,1;z monitor,1;sum board toggle,1
+nsot;Bias Reference,4;Noise Readout,2;AC Readout,1;DC Readout,3;nSOT Bias,4
+system;toellner dac voltage,4;blink channel,2;toellner dac current,3
+scan;x out,2;y out,3;z out,1

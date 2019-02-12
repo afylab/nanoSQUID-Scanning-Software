@@ -37,7 +37,8 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                     'system' : {
                         'magnet supply':  self.comboBox_MagnetPowerSupply,
                         'specific supply':   self.comboBox_MagnetSupplyDevice,
-                        'blink device':     self.comboBox_BlinkDevice
+                        'blink device':     self.comboBox_BlinkDevice,
+                        'coarse positioner': self.comboBox_CoarsePositioner
                     },
                     'approach and TF' : {
                         'dac_adc':  self.comboBox_Approach_DACADC,
@@ -116,6 +117,8 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.comboBox_BlinkDevice.currentIndexChanged.connect(self.setBlinkDevice)
         self.comboBox_BlinkChannel.currentIndexChanged.connect(self.setBlinkChannel)
         
+        self.comboBox_CoarsePositioner.currentIndexChanged.connect(self.setCoarsePositioner)
+        
     def moveDefault(self):
         self.move(550,10)
         
@@ -145,7 +148,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         ComboBox2 = self.comboBox_Approach_Sig2Device
         
         AllItems = [ComboBox1.itemText(i) for i in range(ComboBox1.count())]
-                
+        
         for item in AllItems:
             if str(item).startswith('DA'):
                 ComboBox1.removeItem(AllItems.index(item))
@@ -263,6 +266,10 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.deviceDictionary['channels']['system']['blink channel'] = int(self.comboBox_BlinkChannel.currentIndex()+1)
         self.setConfigStatus(False)
         
+    def setCoarsePositioner(self):
+        self.deviceDictionary['devices']['system']['coarse positioner'] = str(self.comboBox_CoarsePositioner.currentText())
+        self.setConfigStatus(False)
+        
     def setSampleDACADC(self):
         self.deviceDictionary['devices']['sample']['dac_adc'] = str(self.comboBox_Sample_DACADC.currentText())
         self.setConfigStatus(False)
@@ -275,7 +282,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
     def connectLabRAD(self, dict):
         try:
             self.deviceDictionary['servers']['local'] = dict
-        
+            
             if not not dict['dac_adc']:
                 list = yield dict['dac_adc'].list_devices()
                 
@@ -303,6 +310,12 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                 for device in list:
                     self.comboBox_Approach_HF2LI.addItem(device[1])
                     
+            if not not dict['cpsc']:
+                self.comboBox_CoarsePositioner.addItem('JPE CPSC')
+                
+            if not not dict['anc350']:
+                self.comboBox_CoarsePositioner.addItem('Attocube ANC350')
+                
             self.localLabRADConnected = True
             if self.localLabRADConnected and self.remoteLabRADConnected:
                 self.loadDefaultConfigurationInfo()
@@ -321,7 +334,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                     self.comboBox_MagnetSupplyDevice.addItem(device[1])
 
                 if len(list) > 0:
-                    self.deviceDictionary['devices']['system']['specific supply'] = list[0][1]
+                    self.deviceDictionary['devices']['system']['specific supply'] = str(list[0][1])
                     self.comboBox_MagnetPowerSupply.addItem('IPS 120 Power Supply')
 
             self.remoteLabRADConnected = True
@@ -341,6 +354,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                         'magnet supply':  False,
                         'specific supply':   False,
                         'blink device':  False,
+                        'coarse positioner': False,
                     },
                     'approach and TF' : {
                         'dac_adc':  False,
@@ -451,7 +465,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
             for section, dev_list in self.deviceDictionary['devices'].iteritems():
                 for dev, dev_name in dev_list.iteritems():
                     ComboBox = self.GUIDictionary['devices'][section][dev]
-                    AllItems = [ComboBox.itemText(i) for i in range(ComboBox.count())]
+                    AllItems = [str(ComboBox.itemText(i)) for i in range(ComboBox.count())]
                 
                     if dev_name in AllItems:
                         ComboBox.setCurrentIndex(AllItems.index(dev_name))
@@ -493,7 +507,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
             self.newDeviceInfo.emit(self.deviceDictionary)
             self.setConfigStatus(True)
         except Exception as inst:
-            print 'check Loaded', inst
+            print 'check Loaded: ', inst
             print 'on line: ', sys.exc_traceback.tb_lineno
             
     def setDefaultConfiguration(self):

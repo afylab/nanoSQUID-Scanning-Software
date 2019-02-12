@@ -560,7 +560,7 @@ image:url(:/nSOTScanner/Pictures/Tip-Sample.png);
      <enum>QFrame::Raised</enum>
     </property>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="label_XYControl">
     <property name="geometry">
      <rect>
       <x>49</x>
@@ -579,7 +579,7 @@ image:url(:/nSOTScanner/Pictures/Tip-Sample.png);
      <string>X-Y Control</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_2">
+   <widget class="QLabel" name="label_ZControl">
     <property name="geometry">
      <rect>
       <x>315</x>
@@ -1572,7 +1572,7 @@ background: black;
     <property name="geometry">
      <rect>
       <x>235</x>
-      <y>390</y>
+      <y>375</y>
       <width>31</width>
       <height>23</height>
      </rect>

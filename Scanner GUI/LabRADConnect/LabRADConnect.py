@@ -39,7 +39,8 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         'hf2li'     : False,
         'cpsc'      : False,
         'gpib_server': False, 
-        'gpib_manager': False
+        'gpib_manager': False,
+        'anc350':       False
         }
         
         self.emptyRemoteDictionary = {
@@ -84,8 +85,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
 
         self.key_list = []
         '''
-        Eventually add ability to toggle individual connections. Gotta think
-        about how to emit the dictionary
+        Eventually add ability to toggle individual connections. 
         self.push_LabRAD.clicked.connect(self.connectLabRAD)
         self.push_DataVault.clicked.connect(self.connectDataVault)
         self.push_SerialServer.clicked.connect(self.connectSerialServer)
@@ -147,6 +147,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.connectDataVault()
             self.connectHF2LI()
             self.connectCPSC()
+            self.connectANC350()
             
             #Then connect servers with dependencies on GPIB or Serial servers
             self.connectSerialDevices()
@@ -221,6 +222,11 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
 
     @inlineCallbacks
     def disconnectLabRAD(self, c = None):
+        try:
+            yield self.cxn.anc350_server.disconnect()
+        except:
+            pass
+        
         try: 
             yield self.cxn.disconnect()
         except:
@@ -283,6 +289,9 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.push_LS350.setStyleSheet("#push_LS350{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.label_LS350_status.setText('Not connected')
+        self.push_ANC350.setStyleSheet("#push_ANC350{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_ANC350_status.setText('Not connected')
         
         self.cxnDisconnected.emit()   
 
@@ -383,6 +392,34 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 "background: rgb(161,0,0);border-radius: 4px;}")
                 self.label_CPSC_status.setText('Connection Failed')
         self.cxnAttemptLocalDictionary['cpsc'] = True
+        self.emitLocalConnectionDictionary()
+        
+    @inlineCallbacks
+    def connectANC350(self, c = None):
+        if self.connectionLocalDictionary['cxn'] is False:
+            self.push_ANC350.setStyleSheet("#push_ANC350{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+            self.label_ANC350_status.setText('Not connected')
+        else: 
+            cxn = self.connectionLocalDictionary['cxn']
+            try:
+                anc = yield cxn.anc350_server
+                num_devs = yield anc.discover()
+                if num_devs > 0:
+                    yield anc.connect()
+                    self.push_ANC350.setStyleSheet("#push_ANC350{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_ANC350_status.setText('Connected')
+                    self.connectionLocalDictionary['anc350'] = anc
+                else:
+                    self.push_ANC350.setStyleSheet("#push_ANC350{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_ANC350_status.setText('No device detected') 
+            except Exception as inst:
+                self.push_ANC350.setStyleSheet("#push_ANC350{" + 
+                "background: rgb(161,0,0);border-radius: 4px;}")
+                self.label_ANC350_status.setText('Connection Failed')
+        self.cxnAttemptLocalDictionary['anc350'] = True
         self.emitLocalConnectionDictionary()
 
 #--------------------------------------------------------------------------------------------------------------------------#

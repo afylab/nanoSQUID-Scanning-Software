@@ -80,7 +80,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_moveNegY.clicked.connect(self.moveNegY)
         self.push_movePosZ.clicked.connect(self.movePosZ)
         self.push_moveNegZ.clicked.connect(self.moveNegZ)
-
+        
+        self.push_Knob1Up.clicked.connect(lambda: self.moveKnob(1, 0))
+        self.push_Knob1Down.clicked.connect(lambda: self.moveKnob(1, 1))
+        self.push_Knob2Up.clicked.connect(lambda: self.moveKnob(2, 0))
+        self.push_Knob2Down.clicked.connect(lambda: self.moveKnob(2, 1))
+        self.push_Knob3Up.clicked.connect(lambda: self.moveKnob(3, 0))
+        self.push_Knob3Down.clicked.connect(lambda: self.moveKnob(3, 1))
+        
         self.pushButton_toggleMode.clicked.connect(self.toggleMovementMode)
         
         self.lockInterface()
@@ -142,10 +149,159 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 border: 1px solid rgb(95,107,166);
                 }
                 '''
-        
         self.push_moveVector.setStyleSheet(style)
         
         self.push_moveVector.hide()
+        
+        #Font to be used for labels
+        palette = QtGui.QPalette()
+        #palette.setColor(QtGui.QPalette.Text, QtGui.QColor(168,168,168))
+        palette.setColor(QtGui.QPalette.Text, QtCore.Qt.red)
+        font = QtGui.QFont("MS Shell Dlg 2", 11, QtGui.QFont.Bold)
+        
+        self.push_Knob1Up = QtGui.QPushButton(self)
+        self.push_Knob1Up.move(70,395)
+        self.push_Knob1Up.resize(31,45)
+        self.push_Knob1Up.setObjectName('push_Knob1Up')
+        
+        style = '''#push_Knob1Up{
+                image:url(:/nSOTScanner/Pictures/doublearrow_up.png);
+                background: black;
+                border: 0px solid rgb(95,107,166);
+                }
+
+                QPushButton:pressed#push_Knob1Up{
+                image:url(:/nSOTScanner/Pictures/doublearrow_up.png);
+                background: rgb(95,107,166);
+                border: 1px solid rgb(95,107,166);
+                }
+                '''
+        self.push_Knob1Up.setStyleSheet(style)
+        self.push_Knob1Up.hide()
+        
+        self.push_Knob1Down = QtGui.QPushButton(self)
+        self.push_Knob1Down.move(70,501)
+        self.push_Knob1Down.resize(31,45)
+        self.push_Knob1Down.setObjectName('push_Knob1Down')
+        
+        style = '''#push_Knob1Down{
+                image:url(:/nSOTScanner/Pictures/doublearrow_down.png);
+                background: black;
+                border: 0px solid rgb(95,107,166);
+                }
+
+                QPushButton:pressed#push_Knob1Down{
+                image:url(:/nSOTScanner/Pictures/doublearrow_down.png);
+                background: rgb(95,107,166);
+                border: 1px solid rgb(95,107,166);
+                }
+                '''
+        self.push_Knob1Down.setStyleSheet(style)
+        self.push_Knob1Down.hide()
+        
+        self.label_Knob1 = QtGui.QLabel('1', self)
+        self.label_Knob1.move(70,460)
+        self.label_Knob1.resize(31,20)
+        self.label_Knob1.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+        self.label_Knob1.setFont(font)
+        self.label_Knob1.setStyleSheet("color: rgb(168,168,168)")
+        self.label_Knob1.hide()
+        
+        self.push_Knob2Up = QtGui.QPushButton(self)
+        self.push_Knob2Up.move(185,395)
+        self.push_Knob2Up.resize(31,45)
+        self.push_Knob2Up.setObjectName('push_Knob2Up')
+        
+        style = '''#push_Knob2Up{
+                image:url(:/nSOTScanner/Pictures/doublearrow_up.png);
+                background: black;
+                border: 0px solid rgb(95,107,166);
+                }
+
+                QPushButton:pressed#push_Knob2Up{
+                image:url(:/nSOTScanner/Pictures/doublearrow_up.png);
+                background: rgb(95,107,166);
+                border: 1px solid rgb(95,107,166);
+                }
+                '''
+        self.push_Knob2Up.setStyleSheet(style)
+        self.push_Knob2Up.hide()
+        
+        self.push_Knob2Down = QtGui.QPushButton(self)
+        self.push_Knob2Down.move(185,501)
+        self.push_Knob2Down.resize(31,45)
+        self.push_Knob2Down.setObjectName('push_Knob2Down')
+        
+        style = '''#push_Knob2Down{
+                image:url(:/nSOTScanner/Pictures/doublearrow_down.png);
+                background: black;
+                border: 0px solid rgb(95,107,166);
+                }
+
+                QPushButton:pressed#push_Knob2Down{
+                image:url(:/nSOTScanner/Pictures/doublearrow_down.png);
+                background: rgb(95,107,166);
+                border: 1px solid rgb(95,107,166);
+                }
+                '''
+        self.push_Knob2Down.setStyleSheet(style)
+        self.push_Knob2Down.hide()
+        
+        self.label_Knob2 = QtGui.QLabel('2', self)
+        self.label_Knob2.move(185,460)
+        self.label_Knob2.resize(31,20)
+        self.label_Knob2.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+        self.label_Knob2.setFont(font)
+        self.label_Knob2.setStyleSheet("color: rgb(168,168,168)")
+        self.label_Knob2.hide()
+        
+        self.push_Knob3Up = QtGui.QPushButton(self)
+        self.push_Knob3Up.move(300,395)
+        self.push_Knob3Up.resize(31,45)
+        self.push_Knob3Up.setObjectName('push_Knob3Up')
+        
+        style = '''#push_Knob3Up{
+                image:url(:/nSOTScanner/Pictures/doublearrow_up.png);
+                background: black;
+                border: 0px solid rgb(95,107,166);
+                }
+
+                QPushButton:pressed#push_Knob3Up{
+                image:url(:/nSOTScanner/Pictures/doublearrow_up.png);
+                background: rgb(95,107,166);
+                border: 1px solid rgb(95,107,166);
+                }
+                '''
+        self.push_Knob3Up.setStyleSheet(style)
+        self.push_Knob3Up.hide()
+        
+        self.push_Knob3Down = QtGui.QPushButton(self)
+        self.push_Knob3Down.move(300,501)
+        self.push_Knob3Down.resize(31,45)
+        self.push_Knob3Down.setObjectName('push_Knob3Down')
+        
+        style = '''#push_Knob3Down{
+                image:url(:/nSOTScanner/Pictures/doublearrow_down.png);
+                background: black;
+                border: 0px solid rgb(95,107,166);
+                }
+
+                QPushButton:pressed#push_Knob3Down{
+                image:url(:/nSOTScanner/Pictures/doublearrow_down.png);
+                background: rgb(95,107,166);
+                border: 1px solid rgb(95,107,166);
+                }
+                '''
+        self.push_Knob3Down.setStyleSheet(style)
+        self.push_Knob3Down.hide()
+        
+        self.label_Knob3 = QtGui.QLabel('3', self)
+        self.label_Knob3.move(300,460)
+        self.label_Knob3.resize(31,20)
+        self.label_Knob3.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+        self.label_Knob3.setFont(font)
+        self.label_Knob3.setStyleSheet("color: rgb(168,168,168)")
+        self.label_Knob3.hide()
         
     def toggleMovementMode(self):
         if self.movementMode == 0:
@@ -156,16 +312,72 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
             self.lineEdit_VectorAngle.show()
             self.push_moveVector.show()
-        else:
-            self.push_movePosY.show()
-            self.push_movePosX.show()
-            self.push_moveNegX.show()
-            self.push_moveNegY.show()
+        elif self.movementMode ==1:
+            style = '''#frame{
+                        image:url(:/nSOTScanner/Pictures/Tip-Sample-with-knobs.png);
+                        }
+                    '''
+            self.frame.setStyleSheet(style)
+            
+            self.line.setGeometry(127, 383, 262, 3)
+            self.line_3.setGeometry(20,556,261, 3)
+            
+            self.line_2.hide()
+            self.line_9.hide()
+            
+            self.label_ZControl.hide()
+            self.label_XYControl.setText("Knob Control")
+            
+            self.push_movePosZ.hide()
+            self.push_moveNegZ.hide()
             
             self.lineEdit_VectorAngle.hide()
             self.push_moveVector.hide()
             
-        self.movementMode = (self.movementMode+1)%2
+            self.push_Knob1Up.show()
+            self.push_Knob1Down.show()
+            self.push_Knob2Up.show()
+            self.push_Knob2Down.show()
+            self.push_Knob3Up.show()
+            self.push_Knob3Down.show()
+            self.label_Knob1.show()
+            self.label_Knob2.show()
+            self.label_Knob3.show()
+            
+        else: 
+            style = '''#frame{
+                        image:url(:/nSOTScanner/Pictures/Tip-Sample.png);
+                        }
+                    '''
+            self.frame.setStyleSheet(style)
+            
+            self.line.setGeometry(119, 383, 102, 3)
+            self.line_3.setGeometry(20,556,201, 3)
+            
+            self.line_2.show()
+            self.line_9.show()
+            
+            self.label_ZControl.show()
+            self.label_XYControl.setText("X-Y Control")
+            
+            self.push_movePosY.show()
+            self.push_movePosX.show()
+            self.push_moveNegX.show()
+            self.push_moveNegY.show()
+            self.push_movePosZ.show()
+            self.push_moveNegZ.show()
+            
+            self.push_Knob1Up.hide()
+            self.push_Knob1Down.hide()
+            self.push_Knob2Up.hide()
+            self.push_Knob2Down.hide()
+            self.push_Knob3Up.hide()
+            self.push_Knob3Down.hide()
+            self.label_Knob1.hide()
+            self.label_Knob2.hide()
+            self.label_Knob3.hide()
+            
+        self.movementMode = (self.movementMode+1)%3
         
     def setTemperature(self):
         val = readNum(str(self.lineEdit_Temperature.text()), self, False)
@@ -189,7 +401,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def setJPE_Approach_Steps(self):
         val = readNum(str(self.lineEdit_JPE_Approach_Steps.text()), self, False)
         if isinstance(val,float):
-            self.steps = val
+            self.steps = int(val)
         self.lineEdit_JPE_Approach_Steps.setText(formatNum(self.steps))
         
     def setJPE_Approach_Size(self):
@@ -368,6 +580,20 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             else:
                 yield self.cpsc.move_xyz(self.JPESettings['module_address'], self.JPESettings['temp'], self.freq, self.size, [x,y,0])
             self.unlockInterface()
+            
+    @inlineCallbacks
+    def moveKnob(self, knob, direction):
+        try:
+            self.lockInterface()
+            if self.checkBox_Torque.isChecked():
+                yield self.cpsc.move(self.JPESettings['module_address'], knob, 'CA1801', self.JPESettings['temp'], direction, self.freq, self.size, self.steps, 30)
+                yield self.cpsc.pause_while_moving(self.JPESettings['module_address'])
+            else:
+                yield self.cpsc.move(self.JPESettings['module_address'], knob, 'CA1801', self.JPESettings['temp'], direction, self.freq, self.size, self.steps)
+                yield self.cpsc.pause_while_moving(self.JPESettings['module_address'])
+            self.unlockInterface()
+        except Exception as inst:
+            print 'Move knob error: ', str(inst)
             
     def updateApproachStatus(self, status):
         if status:
