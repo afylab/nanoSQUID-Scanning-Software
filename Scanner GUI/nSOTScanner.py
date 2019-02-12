@@ -9,7 +9,7 @@ path = sys.path[0]
 sys.path.append(path + r'\Resources')
 sys.path.append(path + r'\ScanControl')
 sys.path.append(path + r'\LabRADConnect')
-sys.path.append(path + r'\nSOTCharacterizer')    
+sys.path.append(path + r'\nSOTCharacterizer')
 sys.path.append(path + r'\DataVaultBrowser')
 sys.path.append(path + r'\Plotters Control')
 sys.path.append(path + r'\TFCharacterizer')
