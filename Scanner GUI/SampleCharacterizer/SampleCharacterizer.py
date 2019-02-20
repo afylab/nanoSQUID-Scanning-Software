@@ -180,14 +180,12 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.AutoLevelFourTerminalMagneticFieldSweep_Flag =True
         self.BacktoZeroFourTerminalMagneticFieldSweep_Flag =True
 
-
         self.PlotDataFourTerminalResistance2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
         self.PlotDataFourTerminalConductance2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
         self.PlotDataFourTerminalVoltage2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
         self.PlotDataFourTerminalCurrent2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
 
 
-        
         self.dvFileName=""
         self.ChangeLockinSettings()
         self.moveDefault()
@@ -231,8 +229,18 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             #Eventually make this module compatible with Toellner, for now it is not
             if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
                 self.dac_toe = dict['servers']['local']['dac_adc']
+                self.ips = None
+                self.ami = None
+
             elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
+                self.dac_toe = None
                 self.ips = dict['servers']['remote']['ips120']
+                self.ami = None
+
+            elif dict['devices']['system']['magnet supply'] == 'AMI 430 Power Supply':
+                self.dac_toe = None
+                self.ips = None
+                self.ami = dict['servers']['local']['ami_430']
                 
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -403,38 +411,53 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         
         yield self.sleep(0.25)
         '''
-        yield self.ips.set_control(3)
-        yield self.ips.set_fieldsweep_rate(rate)
-        yield self.ips.set_control(2)
+        if self.dac_toe != None:
+            pass
+
+        elif self.ips != None:
+            yield self.ips.set_control(3)
+            yield self.ips.set_fieldsweep_rate(rate)
+            yield self.ips.set_control(2)
+            
+            t0 = time.time() #Keep track of starting time for setting the field
+            yield self.ips.set_control(3)
+            yield self.ips.set_targetfield(end) #Set the setpoin
+            yield self.ips.set_control(2)
+            
+            yield self.ips.set_control(3)
+            yield self.ips.set_activity(1) #Put ips in go to setpoint mode
+            yield self.ips.set_control(2)
+            
+            print 'Setting field to ' + str(end)
+            while True:
+                yield self.ips.set_control(3)#
+                self.current_field = yield self.ips.read_parameter(7)#Read the field
+                yield self.ips.set_control(2)#
+                #if within 10 uT of the desired field, break out of the loop
+                if float(self.current_field[1:]) <= end +0.00001 and float(self.current_field[1:]) >= end -0.00001:#
+                    break
+                #if after one second we still haven't reached the desired field, then reset the field setpoint and activity
+                if time.time() - t0 > 1:
+                    yield self.ips.set_control(3)
+                    yield self.ips.set_targetfield(end)
+                    yield self.ips.set_control(2)
+                    
+                    yield self.ips.set_control(3)
+                    yield self.ips.set_activity(1)
+                    yield self.ips.set_control(2)
+                    t0 = time.time()
+                    print 'restarting loop'
         
-        t0 = time.time() #Keep track of starting time for setting the field
-        yield self.ips.set_control(3)
-        yield self.ips.set_targetfield(end) #Set the setpoin
-        yield self.ips.set_control(2)
-        
-        yield self.ips.set_control(3)
-        yield self.ips.set_activity(1) #Put ips in go to setpoint mode
-        yield self.ips.set_control(2)
-        
-        print 'Setting field to ' + str(end)
-        while True:
-            yield self.ips.set_control(3)#
-            self.current_field = yield self.ips.read_parameter(7)#Read the field
-            yield self.ips.set_control(2)#
-            #if within 10 uT of the desired field, break out of the loop
-            if float(self.current_field[1:]) <= end +0.00001 and float(self.current_field[1:]) >= end -0.00001:#
-                break
-            #if after one second we still haven't reached the desired field, then reset the field setpoint and activity
-            if time.time() - t0 > 1:
-                yield self.ips.set_control(3)
-                yield self.ips.set_targetfield(end)
-                yield self.ips.set_control(2)
-                
-                yield self.ips.set_control(3)
-                yield self.ips.set_activity(1)
-                yield self.ips.set_control(2)
-                t0 = time.time()
-                print 'restarting loop'
+        elif self.ami != None:
+            print 'Setting field to ' + str(end)
+            self.ami.conf_field_targ(end)
+            self.ami.ramp()
+            target_field = float(self.ami.get_field_targ())
+            actual_field = float(self.ami.get_field_mag())
+            while abs(target_field - actual_field) > 1e-3:
+                time.sleep(2)
+                actual_field = float(self.ami.get_field_mag())
+            print 'Field set to ' + str(end)
 
         self.current_field = end
         
@@ -790,7 +813,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 self.Plot_Data[5].append(Conductance)
                 
     @inlineCallbacks
-    def newDataVaultFile(self,Status):
+    def newDataVaultFile(self, Status):
         if Status== "Magnetic Field":
             file = yield self.dv.new('FourTerminal MagneticField ' + self.Device_Name, self.datavaultXaxis,self.datavaultYaxis)
         else:
