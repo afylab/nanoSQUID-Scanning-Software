@@ -814,9 +814,13 @@ class Window(QtGui.QMainWindow, ApproachUI):
                     self.deltafData.pop()
                 
                 points_above_freq_thresh = 0
-                for f in self.deltafData:
-                    points_above_freq_thresh = points_above_freq_thresh + (f > self.freqThreshold)
                 
+                for f in self.deltafData:
+                    if self.radioButton_plus.isChecked():
+                        points_above_freq_thresh = points_above_freq_thresh + (f > self.freqThreshold)
+                    else:
+                        points_above_freq_thresh = points_above_freq_thresh + (f > (-1.0*self.freqThreshold))
+                        
                 if self.constantHeight and points_above_freq_thresh > 1:
                     print 'auto withdrew'
                     self.withdrawFully()
