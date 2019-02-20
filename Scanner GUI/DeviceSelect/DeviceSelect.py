@@ -27,9 +27,6 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.localLabRADConnected = False
         self.remoteLabRADConnected = False
         
-        #Set device dictionary to default empty state
-        self.resetDeviceDictionary()
-        
         #Creates a dictionary that organizes the GUI items into a similar structure as the deviceDictionary 
         #for easy iteration and structure
         self.GUIDictionary = {
@@ -84,6 +81,9 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                     },
         }
         }
+        
+        #Set device dictionary to default empty state, and generally treat the module as if it were just disconnected
+        self.disconnectLabRAD()
         
         self.push_setDefault.clicked.connect(self.setDefaultConfiguration)
         self.push_saveConfig.clicked.connect(self.saveConfigurationInfo)
@@ -420,6 +420,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         for section, dev_list in self.GUIDictionary['devices'].iteritems():
             for dev, dev_name in dev_list.iteritems():
                 self.GUIDictionary['devices'][section][dev].clear() 
+                self.GUIDictionary['devices'][section][dev].addItem('None') 
         
     def loadDefaultConfigurationInfo(self):
         f = open(self.fileName,'r')
