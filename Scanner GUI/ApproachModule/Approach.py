@@ -821,7 +821,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                     else:
                         points_above_freq_thresh = points_above_freq_thresh + (f > (-1.0*self.freqThreshold))
                         
-                if self.constantHeight and points_above_freq_thresh > 1:
+                if self.constantHeight and points_above_freq_thresh > 2:
                     print 'auto withdrew'
                     self.withdrawFully()
 
@@ -1098,8 +1098,11 @@ class Window(QtGui.QMainWindow, ApproachUI):
         #of the PLL. If enough points are above the frequency threshold, then assume we're in contact.
         #this number has been aribtrarily set to 10. 
         points_above_freq_thresh = 0
-        for deltaf in self.deltafData:
-            points_above_freq_thresh = points_above_freq_thresh + (deltaf > self.freqThreshold)
+        for f in self.deltafData:
+            if self.radioButton_plus.isChecked():
+                points_above_freq_thresh = points_above_freq_thresh + (f > self.freqThreshold)
+            else:
+                points_above_freq_thresh = points_above_freq_thresh + (f > (-1.0*self.freqThreshold))
     
         if points_above_freq_thresh > 10:
             print 'Surface contact made with points above frequency threshhold algorithm.'
