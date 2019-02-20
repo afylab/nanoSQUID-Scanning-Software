@@ -235,7 +235,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         
     def setMagnetPowerSupply(self):
         self.deviceDictionary['devices']['system']['magnet supply'] = str(self.comboBox_MagnetPowerSupply.currentText())
-        if str(self.comboBox_MagnetPowerSupply.currentText()).startswith('IPS'):
+        if str(self.comboBox_MagnetPowerSupply.currentText()).startswith('IPS') or str(self.comboBox_MagnetPowerSupply.currentText()).startswith('AMI'):
             self.label_ToeVolt.setVisible(False)
             self.label_ToeCurr.setVisible(False)
             self.label_ToeVoltDevice.setVisible(False)
@@ -315,6 +315,14 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                 
             if not not dict['anc350']:
                 self.comboBox_CoarsePositioner.addItem('Attocube ANC350')
+                
+            if not not dict['ami_430']:
+                list = yield dict['ami_430'].list_devices()
+                for device in list:
+                    self.comboBox_MagnetSupplyDevice.addItem(device[1])
+
+                if len(list) > 0:
+                    self.comboBox_MagnetPowerSupply.addItem('AMI 430 Power Supply')
                 
             self.localLabRADConnected = True
             if self.localLabRADConnected and self.remoteLabRADConnected:
@@ -501,6 +509,8 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
             #Select the proper devices for the system general devices
             if self.deviceDictionary['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
                 yield self.deviceDictionary['servers']['remote']['ips120'].select_device(self.deviceDictionary['devices']['system']['specific supply'])
+            elif self.deviceDictionary['devices']['system']['magnet supply'] == 'AMI 430 Power Supply':
+                yield self.deviceDictionary['servers']['local']['ami_430'].select_device(self.deviceDictionary['devices']['system']['specific supply'])
             elif self.deviceDictionary['devices']['system']['magnet supply'] == 'Toellner Power Supply':
                 yield self.deviceDictionary['servers']['local']['dac_adc'].select_device(self.deviceDictionary['devices']['system']['specific supply'])
             

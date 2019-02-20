@@ -36,6 +36,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         'ser_server': False,
         'dac_adc'   : False,
         'dc_box'    : False,
+        'ami_430'   : False, 
         'hf2li'     : False,
         'cpsc'      : False,
         'gpib_server': False, 
@@ -71,7 +72,8 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         
         #Saving images of all data taken info
         self.lineEdit_Session_2.setReadOnly(True)
-        self.session_2 = 'C:\\Users\\Cthulhu\\Data Sets\\ScanData\\' + str(datetime.date.today())
+        home = os.path.expanduser("~")
+        self.session_2 = home + '\\Data Sets\\ScanData\\' + str(datetime.date.today())
         self.lineEdit_Session_2.setText(self.session_2)
         
         folderExists = os.path.exists(self.session_2)
@@ -84,6 +86,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.push_DisconnectAll.clicked.connect(self.disconnectLabRAD)
 
         self.key_list = []
+        
         '''
         Eventually add ability to toggle individual connections. 
         self.push_LabRAD.clicked.connect(self.connectLabRAD)
@@ -118,7 +121,6 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             new_background = 180 - i*3
             new_sheet = base_sheet.replace('60',str(new_background))
             self.sheets.append(new_sheet)
-
 
     def moveDefault(self):    
         self.move(10,170)
@@ -474,6 +476,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         yield self.connectSerialServer()
         self.connectDACADC()
         self.connectDCBox()
+        self.connectAMI430()
 
     @inlineCallbacks
     def connectSerialServer(self, c = None):
@@ -555,7 +558,34 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.cxnAttemptLocalDictionary['dc_box'] = True
         self.emitLocalConnectionDictionary()
 
+    @inlineCallbacks
+    def connectAMI430(self, c = None):
+        if self.connectionLocalDictionary['ser_server'] is False:
+            self.push_AMI430.setStyleSheet("#push_AMI430{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+            self.label_AMI430_status.setText('Not connected')
+        else: 
+            cxn = self.connectionLocalDictionary['cxn']
+            try:
+                ami = yield cxn.ami_430
+                try: 
+                    yield ami.select_device()
+                    self.push_AMI430.setStyleSheet("#push_AMI430{" + 
+                    "background: rgb(0,170,0);border-radius: 4px;}")
+                    self.label_AMI430_status.setText('Connected')
+                    self.connectionLocalDictionary['ami_430'] = ami
+                except:
+                    self.push_AMI430.setStyleSheet("#push_AMI430{" + 
+                    "background: rgb(161,0,0);border-radius: 4px;}")
+                    self.label_AMI430_status.setText('No device detected')
+            except:
+                self.push_AMI430.setStyleSheet("#push_AMI430{" + 
+                "background: rgb(161,0,0);border-radius: 4px;}")
+                self.label_AMI430_status.setText('Connection Failed')
 
+        self.cxnAttemptLocalDictionary['ami_430'] = True
+        self.emitLocalConnectionDictionary()
+        
 #--------------------------------------------------------------------------------------------------------------------------#
             
     """ The following section has the methods for connecting remote Serial devices."""
