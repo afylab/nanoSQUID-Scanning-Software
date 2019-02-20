@@ -31,6 +31,10 @@
   <property name="windowTitle">
    <string>Sample Characterizer</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../Resources/nSOTScannerResources.qrc">
+    <normaloff>:/nSOTScanner/Pictures/jj_schema.svg</normaloff>:/nSOTScanner/Pictures/jj_schema.svg</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -710,7 +714,6 @@ background:black
               <property name="frameShadow">
                <enum>QFrame::Raised</enum>
               </property>
-              <zorder></zorder>
              </widget>
             </item>
            </layout>
@@ -2241,7 +2244,6 @@ background-color: rgb(0, 0, 0);
                 <property name="frameShadow">
                  <enum>QFrame::Raised</enum>
                 </property>
-                <zorder>Frame_FourTerminalMagneticField_Current_2DPlot_2</zorder>
                </widget>
               </item>
              </layout>
