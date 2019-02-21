@@ -1015,6 +1015,43 @@ border-radius: 5px
     <string>Show Fit</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="pushButton_Show">
+   <property name="geometry">
+    <rect>
+     <x>380</x>
+     <y>580</y>
+     <width>51</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="toolTip">
+    <string>Show linecut</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:disabled#pushButton_Show {image:url(:/nSOTScanner/Pictures/lock.png)}
+
+#pushButton_Show{
+image:url(:/nSOTScanner/Pictures/Show.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_Show{
+image:url(:/nSOTScanner/Pictures/Show.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
  </widget>
  <resources>
   <include location="../Resources/nSOTScannerResources.qrc"/>

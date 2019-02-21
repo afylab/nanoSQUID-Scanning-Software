@@ -2171,7 +2171,17 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         self.showFitBtn.clicked.connect(self.showFitFunc)
         self.btnAction = 'sweep'
 
+        self.flag_IcLineShowing = False
+        self.pushButton_Show.clicked.connect(self.toggleIcMeasurementLine)
+
         self.closeWin.clicked.connect(self._close)
+
+    def toggleIcMeasurementLine(self):
+        if self.flag_IcLineShowing:
+            self.sweepPlot.removeItem(self.IcLine)
+        else:
+            self.sweepPlot.addItem(self.IcLine)
+        self.flag_IcLineShowing = not self.flag_IcLineShowing
 
     def refreshSweep(self):
         self.startSweep.setEnabled(True)
@@ -2199,7 +2209,7 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         self.sweepPlot.setYRange(0,2)
         self.sweepPlot.enableAutoRange(enable = True)
         proxy = pg.SignalProxy(self.sweepPlot.scene().sigMouseClicked ,slot=self.updateIC)
-        self.sweepPlot.scene().sigMouseClicked.connect(self.updateIC)
+        # self.sweepPlot.scene().sigMouseClicked.connect(self.updateIC)
         self.IcLine = pg.InfiniteLine(pos = 0.0 , angle = 90, movable = True, pen = 'b', hoverPen = (50, 50, 200))
         self.IcLine.sigPositionChangeFinished.connect(self.updateIC)
 
@@ -2366,7 +2376,7 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                 self.saveDataToSessionFolder()
                 
                 #Return to zero voltage gently
-                yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMax], [0], int(biasMax * 1000), 1000)
+                yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMax], [0], abs(int(biasMax * 1000)), 1000)
                 yield self.sleep(0.25)
                 yield self.dac.set_voltage(DAC_out, 0)
                 self.startSweep.setEnabled(True)
