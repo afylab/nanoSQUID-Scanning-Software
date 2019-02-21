@@ -1238,7 +1238,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         print 'Aborting sweep from applied field of ', bVal,'T and nSOT bias of ', vVal, 'V' 
         print 'Ramping nSOT bias to zero'
         if vVal != 0:
-            yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [vVal], [0], int(vVal * 1000), 10000)
+            yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [vVal], [0], abs(int(vVal * 1000)), 10000)
         else:
             pass
         yield self.sleep(1)
