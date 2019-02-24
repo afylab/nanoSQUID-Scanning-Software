@@ -80,6 +80,8 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
         self.pushButton_Absolute = [self.pushButton_AutomaticMoveAbsolute_Axis1, self.pushButton_AutomaticMoveAbsolute_Axis2, self.pushButton_AutomaticMoveAbsolute_Axis3]
         self.pushButton_Status = [self.pushButton_Status_Axis1, self.pushButton_Status_Axis2, self.pushButton_Status_Axis3]
         self.pushButton_Compensation = [self.pushButton_Compensation_Axis1, self.pushButton_Compensation_Axis2, self.pushButton_Compensation_Axis3]
+        self.pushButton_SingleStepPlus = [self.pushButton_ManualStepPlus_Axis1, self.pushButton_ManualStepPlus_Axis2, self.pushButton_ManualStepPlus_Axis3]
+        self.pushButton_SingleStepMinus = [self.pushButton_ManualStepMinus_Axis1, self.pushButton_ManualStepMinus_Axis2, self.pushButton_ManualStepMinus_Axis3]        
         self.lcddisplay = [self.lcdNumber_Axis1, self.lcdNumber_Axis2, self.lcdNumber_Axis3]
         self.CurrentPosition = [0.0, 0.0, 0.0]
         self.RelativePosition = [0.0, 0.0, 0.0]
@@ -136,8 +138,10 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 self.Status[i] = 'Error'
             elif statusarray[4] == 1:
                 self.Status[i] = 'MoveBlockedPositive'
+                self.DisableSingleStep(i)
             elif statusarray[5] == 1:
                 self.Status[i] = 'MoveBlockedNegative'
+                self.DisableSingleStep(i)
             elif statusarray[3] == 1 or self.Status[i] == 'TargetReached':#keep Target Reached untill hit move again or click the pushbutton
                 if self.Status[i] == 'TargetReached':
                     pass
@@ -146,6 +150,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                     self.Direction[i] = 'Still'
                     self.pushButton_Relative[i].setText('Move Relative')
                     self.pushButton_Absolute[i].setText('Move Absolute')
+                    self.EnableSingleStep(i)
             elif statusarray[2] == 1:
                 if self.Direction[i] == 'Positive':
                     self.Status[i] = 'Moving positive'
@@ -155,6 +160,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                     print 'Error in determining direction'
             else:
                 self.Status[i] ='Still'
+                self.EnableSingleStep(i)
 
             #Change the Pushbutton
             stylesheet = '#pushButton_Status_Axis' + str(i+1) + '{\nimage:url(' + self.IconPath[self.Status[i]] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
@@ -261,6 +267,14 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
 
     def ResetStatus(self, AxisNo):
         self.Status[AxisNo] = ''
+
+    def EnableSingleStep(self, AxisNo):
+        self.pushButton_SingleStepPlus[AxisNo].setEnabled(True)
+        self.pushButton_SingleStepMinus[AxisNo].setEnabled(True)
+
+    def DisableSingleStep(self, AxisNo):
+        self.pushButton_SingleStepPlus[AxisNo].setEnabled(False)
+        self.pushButton_SingleStepMinus[AxisNo].setEnabled(False)
 
     def showServersList(self):
         serList = serversList(self.reactor, self)
