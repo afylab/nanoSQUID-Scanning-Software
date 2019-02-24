@@ -8,13 +8,16 @@ import exceptions
 import time
 import threading
 import copy
+import os
 
 path = sys.path[0] + r"\Plotters Control"
 sys.path.append(path + r'\Plotter')
 sys.path.append(path + r'\Process List')
+sys.path.append(path + r'\Multiplier Window')
 
 import plotter
 import ProcessWindow
+import MultiplierSettings
 
 Ui_CommandCenter, QtBaseClass = uic.loadUiType(path + r"\PlottersControl.ui")
 
@@ -92,9 +95,20 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.pushButton_Product.clicked.connect(lambda: self.Process('Product'))
         self.pushButton_Division.clicked.connect(lambda: self.Process('Division'))
         self.pushButton_SetArea.clicked.connect(self.SetSelectedArea)
+        self.SelectedArea_Flag = False
         self.pushButton_AddPlotter.clicked.connect(self.AddPlotter)
+
+        #####Multiply
+        self.multiplier = 1.0
+        self.MultiplyWindow = MultiplierSettings.MultiplierWindow(self.reactor, self)
+        self.pushButton_MultiplyAll.clicked.connect(self.MultiplyAll)
+
+        self.pushButton_savePlot.clicked.connect(self.SaveAllPlot)
+        
         
         self.keyPressed.connect(self.PressingKey)
+
+        self.pushButton_ConnectLabrad.clicked.connect(self.connectLabRADBackup)
 
         self.RefreshPlotList()
 
@@ -112,6 +126,17 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         except:
             pass
 
+    @inlineCallbacks
+    def connectLabRADBackup(self, c):
+        try:
+            from labrad.wrappers import connectAsync
+            self.cxn_pc = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            self.dv = yield self.cxn_pc.data_vault
+            self.pushButton_AddPlotter.setEnabled(True)
+            self.Feedback('Data Vault Connected')
+        except:
+            pass
+
     def disconnectLabRAD(self):
         self.cxn = False
         self.cxn_dv = False
@@ -120,6 +145,14 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.pushButton_AddPlotter.setEnabled(False)
 
 #####Labrad Related Function
+
+#####Save Matlab file Related Function
+    def SaveAllPlot(self):
+        fold = str(QtGui.QFileDialog.getExistingDirectory(self, directory = os.getcwd()))
+        print fold
+        for plotter in self.PlotterList:
+            plotter.genMatFile(fold + '/' + plotter.file)
+#####Save Matlab file Related Function
 
     def ClearListWidget(self):
         self.listWidget_Plots.clear()
@@ -240,9 +273,17 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.RefreshPlotList()
 
     def SetSelectedArea(self):
-        plotter = self.PlotterList[-1]
-        plotter.AreaSelected.sigRegionChangeFinished.connect(lambda: self.ApplySelectedArea(plotter))
-        plotter.raise_()
+        if self.SelectedArea_Flag == False:
+            self.plotter_AreaSelected = self.PlotterList[-1]
+            self.Feedback('Selected Area change in ' + self.plotter_AreaSelected.Title + ' is globally applied')
+            self.plotter_AreaSelected.AreaSelected.sigRegionChangeFinished.connect(lambda: self.ApplySelectedArea(self.plotter_AreaSelected))
+            self.plotter_AreaSelected.raise_()
+            self.SelectedArea_Flag = True
+        else:
+            self.Feedback('Selected Area change in ' + self.plotter_AreaSelected.Title + ' is disconnected from other plotters')
+            self.plotter_AreaSelected.AreaSelected.sigRegionChangeFinished.disconnect()
+            self.SelectedArea_Flag = False
+
 
     def ApplySelectedArea(self, plotterchanged,):
         AreaSelectedParameters = plotterchanged.AreaSelectedParameters
@@ -296,6 +337,16 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             plotter.subtractOverallConstant(plotter.Average_SelectedArea)
 #####Subtract Related Function
    
+    def MultiplyAll(self):
+        self.MultiplyWindow.moveDefault()
+        self.MultiplyWindow.show()
+
+    def MultiplyAllPlotData(self, multiplier):
+        for plotter in self.PlotterList:
+            NewData = plotter.PlotData * multiplier
+            plotter.PlotData = NewData
+            plotter.Plot_Data()
+
     def keyPressEvent(self, event):
         super(CommandingCenter, self).keyPressEvent(event)
         self.keyPressed.emit(event) 
@@ -313,6 +364,9 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
 
     def CopyPlotter(self, plotter):
         pass
+
+    def Feedback(self, str):
+        self.label_Feedback.setText(str)
 
     def moveDefault(self):
         self.move(10,170)

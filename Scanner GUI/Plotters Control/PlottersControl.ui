@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>360</width>
-    <height>351</height>
+    <width>483</width>
+    <height>445</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,8 +24,243 @@
 background-color: rgb(0, 0, 0);
 }</string>
    </property>
-   <layout class="QGridLayout" name="gridLayout_3" rowstretch="1,1" columnstretch="2,0">
+   <layout class="QGridLayout" name="gridLayout_3" rowstretch="0,4,3" columnstretch="2,0">
     <item row="1" column="1">
+     <widget class="QFrame" name="frame_PlotRelatedFunctions">
+      <property name="styleSheet">
+       <string notr="true">
+QFrame#frame_PlotRelatedFunctions{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QGridLayout" name="gridLayout" rowstretch="1,1,1,1" columnstretch="1,1">
+       <item row="2" column="1">
+        <widget class="QPushButton" name="pushButton_MultiplyAll">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Multiply all Process with constant&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton#pushButton_MultiplyAll{
+image:url(:/nSOTScanner/Pictures/Multiply.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_MultiplyAll{
+image:url(:/nSOTScanner/Pictures/Multiply.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0" colspan="2">
+        <widget class="QLabel" name="label_PlotRelated">
+         <property name="styleSheet">
+          <string notr="true">color:rgb(131,131,131)</string>
+         </property>
+         <property name="text">
+          <string>Plot Functions</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="pushButton_SubtractOveralAverage">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Batch process all plotters.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton#pushButton_SubtractOveralAverage{
+image:url(:/nSOTScanner/Pictures/inverseRes.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_SubtractOveralAverage{
+image:url(:/nSOTScanner/Pictures/inverseRes.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QPushButton" name="pushButton_SetArea">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Set selected area for all window</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton#pushButton_SetArea{
+image:url(:/nSOTScanner/Pictures/SelectArea.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_SetArea{
+image:url(:/nSOTScanner/Pictures/SelectArea.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="pushButton_AddPlotter">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add a new plotter&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton#pushButton_AddPlotter{
+image:url(:/nSOTScanner/Pictures/AddPlotter.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_AddPlotter{
+image:url(:/nSOTScanner/Pictures/AddPlotter.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QPushButton" name="pushButton_savePlot">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save all data as matlab files&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:disabled#pushButton_savePlot {image:url(:/nSOTScanner/Pictures/lock.png)}
+
+#pushButton_savePlot{
+image:url(:/nSOTScanner/Pictures/save.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_savePlot{
+image:url(:/nSOTScanner/Pictures/save.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QPushButton" name="pushButton_ConnectLabrad">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Labrad Connection&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:disabled#pushButton_ConnectLabrad {image:url(:/nSOTScanner/Pictures/lock.png)}
+
+#pushButton_ConnectLabrad{
+image:url(:/nSOTScanner/Pictures/Connected.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_ConnectLabrad{
+image:url(:/nSOTScanner/Pictures/Connected.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="2" column="1">
      <widget class="QFrame" name="frame_Process">
       <property name="styleSheet">
        <string notr="true">
@@ -192,147 +427,7 @@ border-radius: 5px
       </layout>
      </widget>
     </item>
-    <item row="0" column="1">
-     <widget class="QFrame" name="frame_PlotRelatedFunctions">
-      <property name="styleSheet">
-       <string notr="true">
-QFrame#frame_PlotRelatedFunctions{
-color: rgb(131,131,131);
-background-color:rgb(0,0,0);
-border: 2px solid  rgb(131,131,131);
-border-radius: 5px
-}
-</string>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <layout class="QGridLayout" name="gridLayout" rowstretch="1,1,1" columnstretch="1,1">
-       <item row="1" column="0">
-        <widget class="QPushButton" name="pushButton_AddPlotter">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add a new plotter&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/AddPlotter.png);
-background: black;
-}
-
-QPushButton:pressed#pushButton_AddPlotter{
-image:url(:/nSOTScanner/Pictures/AddPlotter.png);
-background: black;
-border: 2px rgb(131,131,131);
-border-radius: 5px
-}
-</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QPushButton" name="pushButton_SetArea">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="toolTip">
-          <string>Set selected area for all window</string>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_SetArea{
-image:url(:/nSOTScanner/Pictures/SelectArea.png);
-background: black;
-}
-
-QPushButton:pressed#pushButton_SetArea{
-image:url(:/nSOTScanner/Pictures/SelectArea.png);
-background: black;
-border: 2px rgb(131,131,131);
-border-radius: 5px
-}
-</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QPushButton" name="pushButton_SubtractOveralAverage">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Batch process all plotters.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPushButton#pushButton_SubtractOveralAverage{
-image:url(:/nSOTScanner/Pictures/inverseRes.png);
-background: black;
-}
-
-QPushButton:pressed#pushButton_SubtractOveralAverage{
-image:url(:/nSOTScanner/Pictures/inverseRes.png);
-background: black;
-border: 2px rgb(131,131,131);
-border-radius: 5px
-}
-</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0" colspan="2">
-        <widget class="QLabel" name="label_PlotRelated">
-         <property name="styleSheet">
-          <string notr="true">color:rgb(131,131,131)</string>
-         </property>
-         <property name="text">
-          <string>Plot Functions</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="0" column="0" rowspan="2">
+    <item row="1" column="0" rowspan="2">
      <widget class="QListWidget" name="listWidget_Plots">
       <property name="styleSheet">
        <string notr="true">QListWidget#listWidget_Plots{
@@ -352,6 +447,27 @@ QScrollBar:vertical {
    background: black;
    width: 15px;
 }</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0" colspan="2">
+     <widget class="QLabel" name="label_Feedback">
+      <property name="font">
+       <font>
+        <pointsize>11</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLabel#label_Feedback{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0)
+}</string>
+      </property>
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Feedback Window&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
     </item>

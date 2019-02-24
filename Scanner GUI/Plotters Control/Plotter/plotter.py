@@ -265,17 +265,17 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         if (not self.PlotData is None):
             fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
-                self.genLineMatFileh(fold)
+                savename = fold.split("/")[-1].split('.mat')[0]
+                self.genLineMatFileh(fold, savename)
                 
-    def genLineMatFileh(self, fold):
+    def genLineMatFileh(self, fold, savename):
         XZyData = np.asarray(self.LineCutXZYVals)
         XZxData = np.asarray(self.LineCutXZXVals)
 
         xData, yData = XZxData, XZyData ###This part need to be modified
         
         matData = np.transpose(np.vstack((xData, yData)))
-        savename = fold.split("/")[-1].split('.mat')[0]
-        sio.savemat(fold,{savename:matData})
+        sio.savemat(fold, {savename:matData})
         matData = None
         
     def matLinePlotv(self):
@@ -299,6 +299,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def matPlot(self):
         if (not self.PlotData is None):
             fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
+            print fold
             if fold:
                 self.genMatFile(fold)
 
@@ -313,7 +314,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         XX, YY, XXI, YYI, ZZ = X.flatten(), Y.flatten(), XI.flatten(), YI.flatten(), self.PlotData.flatten()
         matData = np.transpose(np.vstack((XXI, YYI, XX, YY, ZZ)))
         savename = fold.split("/")[-1].split('.mat')[0]
-        sio.savemat(fold,{savename:matData})
+        sio.savemat(fold ,{savename:matData})
         matData = None
 ##################
 
@@ -903,11 +904,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.PlotParameters['xPoints'] = np.amax(self.Data[::,self.xIndex])+1  #look up the index
             self.PlotParameters['xscale']  = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / (self.PlotParameters['xPoints'] -1)
             self.PlotParameters['yMin'] = 0.0
-            # print 'xMax', self.PlotParameters['xMax']
-            # print 'xMin', self.PlotParameters['xMin']
-            # print 'deltaX', self.PlotParameters['deltaX']
-            # print 'xPoints', self.PlotParameters['xPoints']
-            # print 'xscale', self.PlotParameters['xscale']
 
             if "2DPlot" in self.DataType:
                 self.PlotParameters['yMax'] = np.amax(self.Data[::,self.NumberofindexVariables+self.yIndex])
@@ -1146,18 +1142,21 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def updateLineCutPlot(self):
         try:
             self.ClearLineCutPlot()
-            if self.horizontalposition > self.PlotParameters['yMax'] or self.horizontalposition < self.PlotParameters['yMin']:
+            xMin, xMax = self.PlotParameters['xMin'] - self.PlotParameters['xscale'] / 2, self.PlotParameters['xMax'] + self.PlotParameters['xscale'] / 2
+            yMin, yMax = self.PlotParameters['yMin'] - self.PlotParameters['yscale'] / 2, self.PlotParameters['yMax'] + self.PlotParameters['yscale'] / 2
+            
+            if self.horizontalposition > yMax or self.horizontalposition < yMin:
                 self.XZPlot.clear()
             else:
-                yindex = int(abs((self.horizontalposition - self.PlotParameters['yMin'])) / self.PlotParameters['yscale'])
+                yindex = int(round(abs((self.horizontalposition - self.PlotParameters['yMin'])) / self.PlotParameters['yscale']))
                 self.LineCutXZXVals = np.linspace(self.PlotParameters['xMin'], self.PlotParameters['xMax'], num = self.PlotParameters['xPoints'])
                 self.LineCutXZYVals = self.PlotData[:,yindex]
                 self.XZPlot.plot(x = self.LineCutXZXVals, y = self.LineCutXZYVals, pen = 0.5)
          
-            if self.verticalposition > self.PlotParameters['xMax'] or self.verticalposition < self.PlotParameters['xMin']:
+            if self.verticalposition > xMax or self.verticalposition < xMin:
                 self.YZPlot.clear()
             else:
-                xindex = int(abs((self.verticalposition - self.PlotParameters['xMin'])) / self.PlotParameters['xscale'])
+                xindex = int(round(abs((self.verticalposition - self.PlotParameters['xMin'])) / self.PlotParameters['xscale']))
                 self.LineCutYZXVals = self.PlotData[xindex]
                 self.LineCutYZYVals = np.linspace(self.PlotParameters['yMin'], self.PlotParameters['yMax'], num = self.PlotParameters['yPoints'])
                 self.YZPlot.plot(x = self.LineCutYZXVals, y = self.LineCutYZYVals, pen = 0.5)
@@ -1262,10 +1261,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         xPoints_Past = self.PlotParameters['xPoints']
         yPoints_Past = self.PlotParameters['yPoints'] 
 
-        self.PlotParameters['xMin'] = self.PlotParameters['xscale'] * xMinIndex + xMin_Past - (self.PlotParameters['xscale'] / 2)
-        self.PlotParameters['xMax'] = self.PlotParameters['xscale'] * xMaxIndex + xMin_Past + (self.PlotParameters['xscale'] / 2)
-        self.PlotParameters['yMin'] = self.PlotParameters['yscale'] * yMinIndex + yMin_Past - (self.PlotParameters['yscale'] / 2)
-        self.PlotParameters['yMax'] = self.PlotParameters['yscale'] * yMaxIndex + yMin_Past + (self.PlotParameters['yscale'] / 2)
+        self.PlotParameters['xMin'] = self.PlotParameters['xscale'] * xMinIndex + xMin_Past
+        self.PlotParameters['xMax'] = self.PlotParameters['xscale'] * xMaxIndex + xMin_Past
+        self.PlotParameters['yMin'] = self.PlotParameters['yscale'] * yMinIndex + yMin_Past
+        self.PlotParameters['yMax'] = self.PlotParameters['yscale'] * yMaxIndex + yMin_Past
         self.PlotParameters['deltaX'] = self.PlotParameters['xMax'] - self.PlotParameters['xMin']
         self.PlotParameters['xPoints'] = xMaxIndex - xMinIndex 
         self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']

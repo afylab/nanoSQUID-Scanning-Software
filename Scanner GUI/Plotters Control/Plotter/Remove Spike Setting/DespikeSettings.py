@@ -25,4 +25,9 @@ class DespikeSet(QtGui.QMainWindow, Ui_DespikesSetting):
     def RefreshTextEdit(self):
         self.lineEdit_AdjacentPoints.setText(str(self.parent.AdjacentPoints))
         self.lineEdit_NumberofSigma.setText(str(self.parent.NumberOfSigma))
-        
+
+    def moveDefault(self):
+        buttonposition = self.parent.pushButton_Despike.mapToGlobal(QtCore.QPoint(0,0))
+        buttonx, buttony = buttonposition.x(), buttonposition.y()
+        Offset = 50
+        self.move(buttonx + Offset, buttony)  
