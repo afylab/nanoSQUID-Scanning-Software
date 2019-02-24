@@ -138,10 +138,14 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 self.Status[i] = 'Error'
             elif statusarray[4] == 1:
                 self.Status[i] = 'MoveBlockedPositive'
-                self.DisableSingleStep(i)
+                self.Direction[i] = 'Still'
+                self.pushButton_Relative[i].setText('Move Relative')
+                self.pushButton_Absolute[i].setText('Move Absolute')
             elif statusarray[5] == 1:
                 self.Status[i] = 'MoveBlockedNegative'
-                self.DisableSingleStep(i)
+                self.Direction[i] = 'Still'
+                self.pushButton_Relative[i].setText('Move Relative')
+                self.pushButton_Absolute[i].setText('Move Absolute')
             elif statusarray[3] == 1 or self.Status[i] == 'TargetReached':#keep Target Reached untill hit move again or click the pushbutton
                 if self.Status[i] == 'TargetReached':
                     pass
@@ -154,8 +158,10 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             elif statusarray[2] == 1:
                 if self.Direction[i] == 'Positive':
                     self.Status[i] = 'Moving positive'
+                    self.DisableSingleStep(i)
                 elif self.Direction[i] == 'Negative':
                     self.Status[i] = 'Moving negative'
+                    self.DisableSingleStep(i)
                 else:
                     print 'Error in determining direction'
             else:
