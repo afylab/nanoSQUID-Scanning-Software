@@ -9,7 +9,7 @@ path = sys.path[0]
 sys.path.append(path + r'\Resources')
 sys.path.append(path + r'\ScanControl')
 sys.path.append(path + r'\LabRADConnect')
-sys.path.append(path + r'\nSOTCharacterizer')
+sys.path.append(path + r'\nSOTCharacterizer')    
 sys.path.append(path + r'\DataVaultBrowser')
 sys.path.append(path + r'\Plotters Control')
 sys.path.append(path + r'\TFCharacterizer')
@@ -24,6 +24,7 @@ sys.path.append(path + r'\QRreader')
 sys.path.append(path + r'\SampleCharacterizer')
 sys.path.append(path + r'\GoToSetpoint')
 sys.path.append(path + r'\DeviceSelect')
+sys.path.append(path + r'\CoarseAttocubeControl')
 
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
@@ -45,6 +46,7 @@ import QRreader
 import gotoSetpoint
 import DeviceSelect
 import SampleCharacterizer
+import CoarseAttocubeControl
 
 import exceptions
 
@@ -68,7 +70,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.LabRAD = LabRADConnect.Window(self.reactor, None)
         self.DeviceSelect = DeviceSelect.Window(self.reactor, None)
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor, None)
-        self.PlottersControl = PlottersControl.CommandingCenter(self.reactor, self)
+        self.PlottersControl = PlottersControl.CommandingCenter(self.reactor, None)
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
         self.Approach = Approach.Window(self.reactor, None)
         self.ApproachMonitor = ApproachMonitor.Window(self.reactor, None)
@@ -79,6 +81,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.QRreader = QRreader.Window(self.reactor,None)
         self.GoToSetpoint = gotoSetpoint.Window(self.reactor, None)
         self.SampleCharacterizer = SampleCharacterizer.Window(self.reactor,None)
+        self.AttocubeCoarseControl = CoarseAttocubeControl.Window(self.reactor,None)
         
         #This module should always be initialized last, and have the modules
         #That are desired to be scriptable be input
@@ -102,6 +105,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.actionNSOT_Setpoint.triggered.connect(self.openSetpointWindow)
         self.actionDevice_Select.triggered.connect(self.openDeviceSelectWindow)
         self.actionSample_Characterizer.triggered.connect(self.openSampleCharacterizerWindow)
+        self.actionAttocube_Coarse_Position_Control.triggered.connect(self.openAttocubeCoarseControlWindow)
 
         #Connectors all layout buttons
         self.push_Layout1.clicked.connect(self.setLayout1)
@@ -240,6 +244,12 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.SampleCharacterizer.moveDefault()
         self.SampleCharacterizer.raise_()
         self.SampleCharacterizer.show()
+
+    def openAttocubeCoarseControlWindow(self):
+        self.AttocubeCoarseControl.moveDefault()
+        self.AttocubeCoarseControl.raise_()
+        self.AttocubeCoarseControl.show()
+        
 #----------------------------------------------------------------------------------------------#
     """ The following section connects actions related to passing LabRAD connections."""
     
@@ -256,6 +266,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.FieldControl.connectLabRAD(dict)
         self.TempControl.connectLabRAD(dict)
         self.SampleCharacterizer.connectLabRAD(dict)
+        self.AttocubeCoarseControl.connectLabRAD(dict)
 
     def disconnectLabRADConnections(self):
         self.DeviceSelect.disconnectLabRAD()
@@ -269,6 +280,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Scripting.disconnectLabRAD()
         self.TempControl.disconnectLabRAD()
         self.SampleCharacterizer.disconnectLabRAD()
+        self.AttocubeCoarseControl.disconnectLabRAD()
 
     def distributeSessionFolder(self, folder):
         self.TFChar.setSessionFolder(folder)
@@ -327,7 +339,8 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.GoToSetpoint.hide()
         self.QRreader.hide()
         self.TempControl.hide()
-        #missing hide from sample char
+        self.SampleCharacterizer.hide()
+        self.AttocubeCoarseControl.hide()
             
     def closeEvent(self, e):
         try:
@@ -343,7 +356,8 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
             self.Scripting.close()
             self.FieldControl.close()
             self.LabRAD.close()
-            #missing from sample char
+            self.SampleCharacterizer.close()
+            self.AttocubeCoarseControl.close()
         except Exception as inst:
             print inst
     
@@ -359,4 +373,3 @@ if __name__=="__main__":
     window.show()
     reactor.runReturn()
     sys.exit(app.exec_())
-

@@ -252,6 +252,7 @@ background: black;
     <addaction name="actionMagnetic_Field_Control"/>
     <addaction name="actionTemperature_Control"/>
     <addaction name="actionNSOT_Setpoint"/>
+    <addaction name="actionAttocube_Coarse_Position_Control"/>
    </widget>
    <widget class="QMenu" name="menuExeriments">
     <property name="title">
@@ -372,6 +373,11 @@ background: black;
   <action name="actionSample_Characterizer">
    <property name="text">
     <string>Sample Characterizer</string>
+   </property>
+  </action>
+  <action name="actionAttocube_Coarse_Position_Control">
+   <property name="text">
+    <string>Attocube Coarse Position Control</string>
    </property>
   </action>
  </widget>
