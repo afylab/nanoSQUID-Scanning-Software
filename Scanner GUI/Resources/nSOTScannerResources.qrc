@@ -1,5 +1,16 @@
 <RCC>
   <qresource prefix="nSOTScanner">
+    <file>Pictures/MannotReachingForward.png</file>
+    <file>Pictures/ManReachingForward.png</file>
+    <file>Pictures/ManOverCurrent.png</file>
+    <file>Pictures/ManError.png</file>
+    <file>Pictures/ManReachGoal.png</file>
+    <file>Pictures/ManRunningRightBlocked.png</file>
+    <file>Pictures/ManRunningLeftBlocked.png</file>
+    <file>Pictures/ManRunningLeft.png</file>
+    <file>Pictures/ManRunningRight.png</file>
+    <file>Pictures/ManStill.png</file>
+    <file>Pictures/Capacitancor.png</file>
     <file>Pictures/overlay Addition.png</file>
     <file>Pictures/overlay Divison.png</file>
     <file>Pictures/overlay Multiply.png</file>
