@@ -42,6 +42,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.cxn = False
         self.ls = False
         
+        #Keep track of if the first monitoring datapoint has been taken yet, to set the relative time
+        self.first_data_point = True
+        
         self.measurementSettings = {
                 'mag Input'        : 'B',
                 'sample Input'     : 'D5', 
@@ -56,6 +59,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         }
         
         self.lockInterface()
+        
         
     def moveDefault(self):    
         self.move(550,10)
@@ -127,7 +131,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.measurementSettings['i'] = float(pid[1])
             self.measurementSettings['d'] = float(pid[2])
             self.measurementSettings['setpoint'] = setpoint
-            #Eventually have this read the settings from the lakeshore, like the pid parameters, inputs, and heater range
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
 
@@ -153,11 +156,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def startTempMonitoring(self, c = None):
         try:
             self.monitoring = True
-            self.time_offset = time.time()
+            if self.first_data_point:
+                self.time_offset = time.clock()
+                self.first_data_point = False
+
             while self.monitoring:
                 magTemp = yield self.ls.read_temp(self.measurementSettings['mag Input'])
                 sampleTemp = yield self.ls.read_temp(self.measurementSettings['sample Input'])
-                t = time.time() - self.time_offset
+                t = time.clock() - self.time_offset
                 #Convert time to hours
                 t = t / 3600
                 
