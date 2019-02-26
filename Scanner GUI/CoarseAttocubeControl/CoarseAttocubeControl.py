@@ -81,7 +81,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
         }
 
         self.Status = ['', '', '']
-        self.Direction =['Still', 'Still', 'Still']
+        self.Direction =['Positive', 'Positive', 'Positive']
         self.lineEdit_Relative = [self.lineEdit_AutoPositionRelative_Axis1, self.lineEdit_AutoPositionRelative_Axis2, self.lineEdit_AutoPositionRelative_Axis3]
         self.lineEdit_Absolute = [self.lineEdit_AutoPositionAbsolute_Axis1, self.lineEdit_AutoPositionAbsolute_Axis2, self.lineEdit_AutoPositionAbsolute_Axis3]
         self.lineEdit_Amplitude = [self.lineEdit_Amplitude_Axis1, self.lineEdit_Amplitude_Axis2, self.lineEdit_Amplitude_Axis3]
@@ -171,24 +171,32 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                     elif self.Direction[i] == 'Negative':
                         self.Status[i] = 'Moving Negative'
                     elif statusarray[3] == 1: #No need to throw an error if target reached.
-                        pass
+                        self.Direction[i] == 'Positive'
+                        self.Status[i] = 'Moving Positive'
                     else:
-                        print 'Do not know the direction so Positive'
+                        if i == 0:
+                            print 'Do not know the direction so Positive and target not reached', self.Direction[i]
+                        self.Direction[i] == 'Positive'
                         self.Status[i] = 'Moving Positive'
                 elif statusarray[2] == 0:
-                    self.Direction[i] = 'Still'
+                    if i == 0:
+                        print 'not moving'
+
                     self.Status[i] = 'Still'
+                    self.Direction[i] = 'Still'
                     self.SetIndicatorStill(i)
                 else:
                     self.Status[i] = 'Still'
                     self.SetIndicatorStill(i)
                     print 'Status unclear'
                     
-                if statusarray[3] == 1 and self.Status[i] != 'TargetReached':
+                if statusarray[3] == 1 :#and self.Status[i] != 'TargetReached'
+                    if i == 0:
+                        print 'prevent'
                     self.Status[i] = 'TargetReached'
                     if self.Compensation[i] == False: #When first detect target reached, disable dc level if compensation is false
                         self.anc350.set_axis_output(i, False, True)
-
+                
                 #Change the Pushbutton
                 stylesheet = '#pushButton_Status_Axis' + str(i+1) + '{\nimage:url(' + self.IconPath[self.Status[i]] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
                 self.pushButton_Status[i].setStyleSheet(stylesheet)
@@ -217,7 +225,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
     def MovingRelative(self, AxisNo):
         try:
             if self.Direction[AxisNo] == 'Still':
-                self.Status[AxisNo] = '' #Clear Target Reached
+                print 'start relative'
                 yield self.anc350.set_axis_output(AxisNo, True, True) #Enable Axis when moving
                 yield self.anc350.set_target_position(AxisNo, self.RelativePosition[AxisNo])
                 yield self.anc350.start_auto_move(AxisNo, True, True)
@@ -225,18 +233,15 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                     self.Direction[AxisNo] = 'Positive'
                 else:
                     self.Direction[AxisNo] = 'Negative'
-                self.SetIndicatorMoving(AxisNo)
             elif self.Direction[AxisNo] == 'Positive' or self.Direction[AxisNo] == 'Negative':
+                print 'stop relative'
                 yield self.anc350.start_auto_move(AxisNo, False, True) #Only stop auto move but not disble the aixs
-                self.Direction[AxisNo] = 'Still'
-                self.SetIndicatorStill(AxisNo)
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
             
     @inlineCallbacks
     def MovingAbsolute(self, AxisNo):
         if self.Direction[AxisNo] == 'Still':
-            self.Status[AxisNo] = '' #Clear Target Reached
             yield self.anc350.set_axis_output(AxisNo, True, True) #Enable Axis when moving
             yield self.anc350.set_target_position(AxisNo, self.AbsolutePosition[AxisNo])
             yield self.anc350.start_auto_move(AxisNo, True, False)
@@ -244,12 +249,8 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 self.Direction[AxisNo] = 'Positive'
             else:
                 self.Direction[AxisNo] = 'Negative'
-            self.SetIndicatorMoving(AxisNo)
         elif self.Direction[AxisNo] == 'Positive' or self.Direction[AxisNo] == 'Negative':
             yield self.anc350.start_auto_move(AxisNo, False, False)
-            self.Direction[AxisNo] = 'Still'
-            self.SetIndicatorStill(AxisNo)
-
 
     @inlineCallbacks
     def StartSingleStep(self, Axis, direction): #forward is 0, backward is 1
@@ -262,7 +263,6 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
 
-    @inlineCallbacks
     def ChangeCompensation(self, AxisNo):
         if self.Compensation[AxisNo]:
             self.Compensation[AxisNo] = False
@@ -271,7 +271,6 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
         else:
             self.Compensation[AxisNo] = True
             stylesheet = '#pushButton_Compensation_Axis' + str(AxisNo+1) + '{\nimage:url(' + self.IconPath['Compensation'] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
-            # yield self.anc350.set_axis_output(AxisNo, True, False)
             self.pushButton_Compensation[AxisNo].setStyleSheet(stylesheet)
 
     def UpdateAutomaticPositioningRelativePosition(self, AxisNo):
