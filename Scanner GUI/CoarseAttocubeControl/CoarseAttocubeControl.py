@@ -116,15 +116,15 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             self.serversConnected = True
 
-            for i in range(3):
-                yield self.UpdateAutomaticPositioningRelativePosition(i)
-                yield self.UpdateAutomaticPositioningAbsolutePosition(i)
-                yield self.UpdateAmplitude(i)
-                yield self.UpdateFrequency(i)
-                yield self.UpdateTargetRange(i)
-                # yield self.anc350.set_axis_output(i, True, False)#Set default status to be no DC level
-
-            self.MonitoringStatus()
+            if self.anc350 != False:
+                for i in range(3):
+                    yield self.UpdateAutomaticPositioningRelativePosition(i)
+                    yield self.UpdateAutomaticPositioningAbsolutePosition(i)
+                    yield self.UpdateAmplitude(i)
+                    yield self.UpdateFrequency(i)
+                    yield self.UpdateTargetRange(i)
+                    # yield self.anc350.set_axis_output(i, True, False)#Set default status to be no DC level
+                self.MonitoringStatus()
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno            
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" + 
@@ -174,14 +174,9 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                         self.Direction[i] == 'Positive'
                         self.Status[i] = 'Moving Positive'
                     else:
-                        if i == 0:
-                            print 'Do not know the direction so Positive and target not reached', self.Direction[i]
                         self.Direction[i] == 'Positive'
                         self.Status[i] = 'Moving Positive'
                 elif statusarray[2] == 0:
-                    if i == 0:
-                        print 'not moving'
-
                     self.Status[i] = 'Still'
                     self.Direction[i] = 'Still'
                     self.SetIndicatorStill(i)
@@ -191,8 +186,6 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                     print 'Status unclear'
                     
                 if statusarray[3] == 1 :#and self.Status[i] != 'TargetReached'
-                    if i == 0:
-                        print 'prevent'
                     self.Status[i] = 'TargetReached'
                     if self.Compensation[i] == False: #When first detect target reached, disable dc level if compensation is false
                         self.anc350.set_axis_output(i, False, True)
@@ -224,8 +217,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
     @inlineCallbacks
     def MovingRelative(self, AxisNo):
         try:
-            if self.Direction[AxisNo] == 'Still':
-                print 'start relative'
+            if self.pushButton_Relative[AxisNo].text() == 'Move Relative':
                 yield self.anc350.set_axis_output(AxisNo, True, True) #Enable Axis when moving
                 yield self.anc350.set_target_position(AxisNo, self.RelativePosition[AxisNo])
                 yield self.anc350.start_auto_move(AxisNo, True, True)
@@ -233,15 +225,15 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                     self.Direction[AxisNo] = 'Positive'
                 else:
                     self.Direction[AxisNo] = 'Negative'
-            elif self.Direction[AxisNo] == 'Positive' or self.Direction[AxisNo] == 'Negative':
-                print 'stop relative'
+            elif self.pushButton_Relative[AxisNo].text() == 'Moving':
                 yield self.anc350.start_auto_move(AxisNo, False, True) #Only stop auto move but not disble the aixs
+                yield self.anc350.set_axis_output(AxisNo, False, True) #Enable Axis when moving
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
             
     @inlineCallbacks
     def MovingAbsolute(self, AxisNo):
-        if self.Direction[AxisNo] == 'Still':
+        if self.pushButton_Absolute[AxisNo].text() == 'Move Absolute':
             yield self.anc350.set_axis_output(AxisNo, True, True) #Enable Axis when moving
             yield self.anc350.set_target_position(AxisNo, self.AbsolutePosition[AxisNo])
             yield self.anc350.start_auto_move(AxisNo, True, False)
@@ -249,17 +241,22 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 self.Direction[AxisNo] = 'Positive'
             else:
                 self.Direction[AxisNo] = 'Negative'
-        elif self.Direction[AxisNo] == 'Positive' or self.Direction[AxisNo] == 'Negative':
+        elif self.pushButton_Absolute[AxisNo].text() == 'Moving':
             yield self.anc350.start_auto_move(AxisNo, False, False)
+            yield self.anc350.set_axis_output(AxisNo, False, True) #Enable Axis when moving
 
     @inlineCallbacks
-    def StartSingleStep(self, Axis, direction): #forward is 0, backward is 1
+    def StartSingleStep(self, AxisNo, direction): #forward is 0, backward is 1
         try:
             if direction == 0:
-                flag = True
-            else:
                 flag = False
-            yield self.anc350.start_single_step(Axis, flag)
+            else:
+                flag = True
+            print 'single', AxisNo
+            yield self.anc350.set_axis_output(AxisNo, True, True) #Enable Axis when moving
+            yield self.sleep(0.2)
+            yield self.anc350.start_single_step(AxisNo, flag)
+            yield self.anc350.set_axis_output(AxisNo, False, True) #Enable Axis when moving
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
 
