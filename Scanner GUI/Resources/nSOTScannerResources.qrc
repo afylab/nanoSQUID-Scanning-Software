@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="nSOTScanner">
+    <file>Pictures/Ferromagnet.png</file>
     <file>Pictures/MannotReachingForward.png</file>
     <file>Pictures/ManReachingForward.png</file>
     <file>Pictures/ManOverCurrent.png</file>
