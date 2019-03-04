@@ -46,9 +46,27 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
          'pA':10**-12,
          'fA':10**-15,
          }
-         
+        
+        self.Dict_Variable = {
+            'FourTerminal_MinVoltage': -0.1,
+            'FourTerminal_MaxVoltage': 0.1,
+            'FourTerminal_Numberofstep': 100,
+            'FourTerminalSetting_Numberofsteps_Status': "Numberofsteps",
+            'FourTerminal_Delay':0.001,
+            'FieldSweep1D_MinField': 0,
+            'FieldSweep1D_MaxField': 1.0,
+            'FieldSweep1D_Numberofstep': 100,
+            'FieldSweep1DSetting_Numberofsteps_Status': "Numberofsteps",
+            'FieldSweep1D_Delay': 0.01,
+            'FieldSweep1D_SweepSpeed': 1.0,
+            'FourTerminalMagneticFieldSetting_MinimumField': 0,
+            'FourTerminalMagneticFieldSetting_MaximumField': 0.01,
+            'FourTerminalMagneticFieldSetting_Numberofsteps': 2,
+            'FourTerminalMagneticFieldSetting_Numberofsteps_Status': "Numberofsteps",
+            'FourTerminalMagneticFieldSetting_FieldSweepSpeed': 1.0
+            }
         self.i=0#delete when FakeDATA is removed
-     
+
 ###########################################initialize the DAC and set all the Output to 0##################
         self.currentDAC_Output=[0.0,0.0,0.0,0.0]
         self.setpointDAC_Output=[0.0,0.0,0.0,0.0]
@@ -85,30 +103,27 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_FourTerminal_NameInput1.setText(self.FourTerminal_NameInput1)
         self.lineEdit_FourTerminal_NameInput2.setText(self.FourTerminal_NameInput2)
 
-        self.lineEdit_FourTerminal_NameOutput1.editingFinished.connect(self.UpdateFourTerminal_NameOutput1)
-        self.lineEdit_Device_Name.editingFinished.connect(self.UpdateDevice_Name)
-        self.lineEdit_FourTerminal_NameInput1.editingFinished.connect(self.UpdateFourTerminal_NameInput1)
-        self.lineEdit_FourTerminal_NameInput2.editingFinished.connect(self.UpdateFourTerminal_NameInput2)
-        
-        
+        self.lineEdit_FourTerminal_NameOutput1.editingFinished.connect(lambda: self.UpdateLineEdit_PlotLabel(self.lineEdit_FourTerminal_NameOutput1, self.FourTerminal_NameOutput1))
+        self.lineEdit_FourTerminal_NameInput1.editingFinished.connect(lambda: self.UpdateLineEdit_PlotLabel(self.lineEdit_FourTerminal_NameInput1, self.FourTerminal_NameInput1))
+        self.lineEdit_FourTerminal_NameInput2.editingFinished.connect(lambda: self.UpdateLineEdit_PlotLabel(self.lineEdit_FourTerminal_NameInput2, self.FourTerminal_NameInput2))
+        self.lineEdit_Device_Name.editingFinished.connect(lambda: self.UpdateLineEdit_General(self.lineEdit_Device_Name, self.Device_Name))
+
 #################FourTerminal sweep default parameter
         self.FourTerminal_ChannelInput=[]
         self.FourTerminal_ChannelOutput=[]
-        self.FourTerminal_MinVoltage=-0.1
-        self.FourTerminal_MaxVoltage=0.1
-        self.FourTerminal_Numberofstep=100
-        self.FourTerminalSetting_Numberofsteps_Status="Numberofsteps"
-        self.FourTerminal_Delay=0.001
-        self.lineEdit_FourTerminal_MinVoltage.setText(formatNum(self.FourTerminal_MinVoltage,6))
-        self.lineEdit_FourTerminal_MaxVoltage.setText(formatNum(self.FourTerminal_MaxVoltage,6))
-        self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(self.FourTerminal_Numberofstep,6))
-        self.lineEdit_FourTerminal_Delay.setText(formatNum(self.FourTerminal_Delay,6))
+
+        self.lineEdit_FourTerminal_MinVoltage.setText(formatNum(self.Dict_Variable['FourTerminal_MinVoltage'],6))
+        self.lineEdit_FourTerminal_MaxVoltage.setText(formatNum(self.Dict_Variable['FourTerminal_MaxVoltage'],6))
+        self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(self.Dict_Variable['FourTerminal_Numberofstep'],6))
+        self.lineEdit_FourTerminal_Delay.setText(formatNum(self.Dict_Variable['FourTerminal_Delay'],6))
 
 #######################################Lineedit Four Terminial
-        self.lineEdit_FourTerminal_MinVoltage.editingFinished.connect(self.UpdateFourTerminal_MinVoltage)
-        self.lineEdit_FourTerminal_MaxVoltage.editingFinished.connect(self.UpdateFourTerminal_MaxVoltage)
+        self.lineEdit_FourTerminal_MinVoltage.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminal_MinVoltage, 'FourTerminal_MinVoltage', [-10.0, 10.0]))
+        self.lineEdit_FourTerminal_MinVoltage.editingFinished.connect(self.UpdateFourTerminal_Numberofstep)
+        self.lineEdit_FourTerminal_MaxVoltage.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminal_MaxVoltage, 'FourTerminal_MaxVoltage', [-10.0, 10.0]))
+        self.lineEdit_FourTerminal_MaxVoltage.editingFinished.connect(self.UpdateFourTerminal_Numberofstep)
         self.lineEdit_FourTerminal_Numberofstep.editingFinished.connect(self.UpdateFourTerminal_Numberofstep)
-        self.lineEdit_FourTerminal_Delay.editingFinished.connect(self.UpdateFourTerminal_Delay)
+        self.lineEdit_FourTerminal_Delay.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminal_Delay, 'FourTerminal_Delay'))
         self.pushButton_FourTerminal_NoSmTpTSwitch.clicked.connect(self.ToggleFourTerminalFourTerminal_Numberofstep)
         
         self.comboBox_FourTerminal_Output1.currentIndexChanged.connect(self.ChangeFourTerminal_Output1_Channel)
@@ -118,18 +133,27 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 #######################################Few Push Button
         self.pushButton_StartFourTerminalSweep.clicked.connect(self.FourTerminalSweep)
         self.pushButton_StartFourTerminalMagneticFieldSweep.clicked.connect(self.FourTerminalMagneticFieldSweep)
-        self.pushButton_StartFourTerminalMagneticFieldAbort.clicked.connect(self.AbortFourTerminalMagneticFieldSweep)
+        self.pushButton_StartFourTerminalMagneticFieldAbort.clicked.connect(self.AbortMagneticFieldSweep)
+
+#######################################Push Button Field Sweep 1D
+        self.pushButton_Abort1DFieldSweep.clicked.connect(self.AbortMagneticFieldSweep)
+        self.pushButton_Start1DFieldSweep.clicked.connect(self.StartFieldSweep1D)
+        self.pushButton_1DFieldSweepSetting_NoSmTpTSwitch.clicked.connect(self.ToggleFieldSweep1D_NumberofstepsandMilifieldperTesla)
+
+        self.lineEdit_1DFieldSweepSetting_MinimumField.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_1DFieldSweepSetting_MinimumField, 'FieldSweep1D_MinField'))
+        self.lineEdit_1DFieldSweepSetting_MinimumField.editingFinished.connect(self.UpdateFieldSweep1D_NumberofstepsandMilifieldperTesla)
+        self.lineEdit_1DFieldSweepSetting_MaximumField.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_1DFieldSweepSetting_MaximumField, 'FieldSweep1D_MaxField'))
+        self.lineEdit_1DFieldSweepSetting_MaximumField.editingFinished.connect(self.UpdateFieldSweep1D_NumberofstepsandMilifieldperTesla)
+        self.lineEdit_1DFieldSweepSetting_Numberofsteps.editingFinished.connect(self.UpdateFieldSweep1D_NumberofstepsandMilifieldperTesla)
+        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed, 'FieldSweep1D_SweepSpeed'))
+        self.lineEdit_1DFieldSweepSetting_Delay.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_1DFieldSweepSetting_Delay, 'FieldSweep1D_Delay'))
 
 #################Four Terminal Magnetic field sweep default parameter
-        self.FourTerminalMagneticFieldSetting_MinimumField=0.0
-        self.FourTerminalMagneticFieldSetting_MaximumField=0.01
-        self.FourTerminalMagneticFieldSetting_Numberofsteps=2
-        self.FourTerminalMagneticFieldSetting_Numberofsteps_Status="Numberofsteps"
-        self.FourTerminalMagneticFieldSetting_FieldSweepSpeed=1
-        self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.setText(formatNum(self.FourTerminalMagneticFieldSetting_MinimumField,6))
-        self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.setText(formatNum(self.FourTerminalMagneticFieldSetting_MaximumField,6))
-        self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.FourTerminalMagneticFieldSetting_Numberofsteps,6))
-        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.setText(formatNum(self.FourTerminalMagneticFieldSetting_FieldSweepSpeed,6))
+
+        self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.setText(formatNum(self.Dict_Variable['FourTerminalMagneticFieldSetting_MinimumField'],6))
+        self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.setText(formatNum(self.Dict_Variable['FourTerminalMagneticFieldSetting_MaximumField'],6))
+        self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],6))
+        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.setText(formatNum(self.Dict_Variable['FourTerminalMagneticFieldSetting_FieldSweepSpeed'],6))
         
         self.comboBox_FourTerminal_Output1.setCurrentIndex(0)
         self.comboBox_FourTerminal_Input1.setCurrentIndex(1)
@@ -138,15 +162,18 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.FourTerminal_Input1=self.comboBox_FourTerminal_Input1.currentIndex()
         self.FourTerminal_Input2=self.comboBox_FourTerminal_Input2.currentIndex()
         
-        self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.editingFinished.connect(self.UpdateFourTerminalMagneticFieldSetting_MinimumField)
-        self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.editingFinished.connect(self.UpdateFourTerminalMagneticFieldSetting_MaximumField)
+#################Four Terminal Magnetic field sweep Line Edit
+        self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField, 'FourTerminalMagneticFieldSetting_MinimumField'))
+        self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.editingFinished.connect(self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla)
+        self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField, 'FourTerminalMagneticFieldSetting_MaximumField'))
+        self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.editingFinished.connect(self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla)
         self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.editingFinished.connect(self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla)
-        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.editingFinished.connect(self.UpdateFourTerminalMagneticFieldSetting_FieldSweepSpeed)
+        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed, 'FourTerminalMagneticFieldSetting_FieldSweepSpeed'))
         self.pushButton_FourTerminalMagneticFieldSetting_NoSmTpTSwitch.clicked.connect(self.ToggleFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla)
+
         self.lineEdit_FourTerminalMagneticFieldSetting_MagneticFieldValue.editingFinished.connect(self.SetupLineCutMagneticFieldValue)
         self.lineEdit_FourTerminalMagneticFieldSetting_GateVoltageValue.editingFinished.connect(self.SetupLineCutGateVoltageValue)
         self.pushButton_FourTerminal2D_AutoLevel.clicked.connect(self.AutoLevelFourTerminal2DPlot)
-
 
 #######################################Lock In part
         self.comboBox_Voltage_LI_Sensitivity_1stdigit.currentIndexChanged.connect(self.ChangeLockinSettings)
@@ -159,41 +186,48 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.comboBox_Current_LI_Expand.currentIndexChanged.connect(self.ChangeLockinSettings)
         self.lineEdit_Voltage_LI_Timeconstant.editingFinished.connect(self.UpdateVoltage_LI_Timeconstant)
         self.lineEdit_Current_LI_Timeconstant.editingFinished.connect(self.UpdateCurrent_LI_Timeconstant)
-        self.lineEdit_Lockin_Info_Frequency.editingFinished.connect(self.UpdateFrequency)
+        self.lineEdit_Lockin_Info_Frequency.editingFinished.connect(lambda: self.UpdateLineEdit_General(self.lineEdit_Lockin_Info_Frequency, 'Frequency'))
         self.UpdateVoltage_LI_Timeconstant()
         self.UpdateCurrent_LI_Timeconstant()
-        self.UpdateFrequency()
+        self.UpdateLineEdit_General(self.lineEdit_Lockin_Info_Frequency, 'Frequency')
         
 #######################################Check Box magnetic Field Sweep
         self.checkBox_FourTerminalMagneticFieldSetting_MoveLineCut.stateChanged.connect(self.updateCheckBox)
         self.checkBox_FourTerminalMagneticFieldSetting_AutoLevel.stateChanged.connect(self.updateCheckBox)
         self.checkBox_FourTerminalMagneticFieldSetting_BacktoZero.stateChanged.connect(self.updateCheckBox)
+        self.checkBox_FieldSweep1D_Loop.stateChanged.connect(self.updateCheckBox)
 
-        
+#################1D Field Sweep default parameter
+        self.lineEdit_1DFieldSweepSetting_MinimumField.setText(formatNum(self.Dict_Variable['FieldSweep1D_MinField'], 6))
+        self.lineEdit_1DFieldSweepSetting_MaximumField.setText(formatNum(self.Dict_Variable['FieldSweep1D_MaxField'], 6))
+        self.lineEdit_1DFieldSweepSetting_Numberofsteps.setText(formatNum(self.Dict_Variable['FieldSweep1D_Numberofstep'], 6))
+        self.lineEdit_1DFieldSweepSetting_FieldSweepSpeed.setText(formatNum(self.Dict_Variable['FieldSweep1D_SweepSpeed'], 6))
+        self.lineEdit_1DFieldSweepSetting_Delay.setText(formatNum(self.Dict_Variable['FieldSweep1D_Delay'], 6))
+
 #######################################Setting For Plotting
         self.randomFill = -0.987654321
         self.current_field = 0.0
         self.posx , self.posy , self.scalex, self.scaley =(0.0,0.0,0.0,0.0)
         self.FourTerminalverticalLineCutPosition , self.FourTerminalhorizontalLineCutPosition=0.0 , 0.0
-        self.AbortFourTerminalMagneticFieldSweep_Flag =False
+        self.AbortMagneticFieldSweep_Flag =False
         self.MoveLineCutFourTerminalMagneticFieldSweep_Flag =True
         self.AutoLevelFourTerminalMagneticFieldSweep_Flag =True
         self.BacktoZeroFourTerminalMagneticFieldSweep_Flag =True
 
-        self.PlotDataFourTerminalResistance2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
-        self.PlotDataFourTerminalConductance2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
-        self.PlotDataFourTerminalVoltage2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
-        self.PlotDataFourTerminalCurrent2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
-
+        self.PlotDataFourTerminalResistance2D=np.zeros([self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],self.Dict_Variable['FourTerminal_Numberofstep']])
+        self.PlotDataFourTerminalConductance2D=np.zeros([self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],self.Dict_Variable['FourTerminal_Numberofstep']])
+        self.PlotDataFourTerminalVoltage2D=np.zeros([self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],self.Dict_Variable['FourTerminal_Numberofstep']])
+        self.PlotDataFourTerminalCurrent2D=np.zeros([self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],self.Dict_Variable['FourTerminal_Numberofstep']])
 
         self.dvFileName=""
         self.ChangeLockinSettings()
         self.moveDefault()
+        self.updateCheckBox()
+
 #######################################
 
 
 #######################################
-
         #Initialize all the labrad connections as none
         self.cxn = False
         self.dv = False
@@ -203,8 +237,6 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         # self.lockInterface()#Change when not testing
 
-
-        
     def moveDefault(self):
         self.move(550,10)
 
@@ -245,6 +277,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             
+            self.current_field = yield self.ips.read_parameter(7)#Read the field
+
             self.unlockInterface()
         except Exception as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
@@ -281,24 +315,109 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.Plot2D.ui.histogram.setLevels(mn, mx)
         
     @inlineCallbacks
+    def StartFieldSweep1D(self, c=None): #1D sweep as a function of magnetic field #This function is unique
+        self.lockInterface()
+        try:
+            self.ClearPlots([self.FieldSweep1D_Plot1, self.FieldSweep1D_Plot2, self.FieldSweep1D_Plot3, self.FieldSweep1D_Plot4])
+
+            self.FieldSweep1D(self.Dict_Variable['FieldSweep1D_MinField'], self.Dict_Variable['FieldSweep1D_MaxField'], 'Up')
+
+            if self.FieldSweep1D_LoopFlag:
+                yield self.sleep(1)
+                self.FieldSweep1D(self.Dict_Variable['FieldSweep1D_MaxField'], self.Dict_Variable['FieldSweep1D_MinField'], 'Down')
+
+        except Exception as inst:
+            print inst, sys.exc_traceback.tb_lineno
+
+        self.unlockInterface()
+        yield self.sleep(0.25)
+        self.saveDataToSessionFolder() #save the screenshot
+
+    @inlineCallbacks
+    def FieldSweep1D(self, start, end, direction):
+        try:
+            self.SetupFourTerminalSweepSetting('MagneticField1D') #Assign the DAC settings and DataVault parameters
+            
+            #Creates a new datavault file and updates the image# labels
+            yield self.newDataVaultFile("MagneticField1D")
+            
+            self.FieldSweep1DXaxis = np.linspace(start, end, self.Dict_Variable['FieldSweep1D_Numberofstep'])
+            
+            self.SetupPlot_Data("MagneticField1D")#self.Plot_Data: a new set of data particularly for ploting
+
+            print 'Ramp to initial field ' + str(start) + 'T'
+            yield self.rampMagneticField(self.current_field, start, self.Dict_Variable['FieldSweep1D_SweepSpeed'])
+
+            self.formatted_data = []
+
+            for self.i in range(0,self.Dict_Variable['FieldSweep1D_Numberofstep']):
+
+                if self.AbortMagneticFieldSweep_Flag:
+                    print "Abort the Sweep."
+                    self.AbortMagneticFieldSweep_Flag = False
+                    break
+
+                print 'Set magnetic field  to: ' + str(self.FieldSweep1DXaxis[self.i])
+                yield self.rampMagneticField(self.current_field, self.FieldSweep1DXaxis[self.i], self.Dict_Variable['FieldSweep1D_SweepSpeed'])
+
+                self.sleep(self.Dict_Variable['FieldSweep1D_Delay'])
+
+                reading = []
+                for channel in self.FourTerminal_ChannelInput:
+                    reading.append(self.dac.read_voltage(channel))
+
+                DummyVoltage=self.Convert_Real_Voltage(reading[0])
+                self.formatted_data.append((self.i, self.FieldSweep1DXaxis[self.i], DummyVoltage))
+                self.Plot_Data[2][self.i] = DummyVoltage
+                if self.FourTerminal_Input2!=4: 
+                    DummyCurrent=self.Convert_Real_Current(reading[1])
+                    self.formatted_data[self.i]+=(DummyCurrent,)
+                    self.Plot_Data[3][self.i] = DummyCurrent
+                    resistance=self.Calculate_Resistance(DummyVoltage,DummyCurrent)
+                    if resistance == 0 :
+                        Conductance = 0.0
+                    else:
+                        Conductance = 1/resistance
+                    self.formatted_data[self.i]+=(resistance,)  #proccessing to Resistance
+                    self.formatted_data[self.i]+=(Conductance,)  #proccessing to Conductance
+                    self.Plot_Data[4][self.i] = resistance
+                    self.Plot_Data[5][self.i] = Conductance
+                
+
+                if direction == 'Up':
+                    color ='r'
+                elif direction == 'Down':
+                    color = 'b'
+
+                self.plotData1D(self.Plot_Data[1],self.Plot_Data[2],self.FieldSweep1D_Plot1, color)
+                if self.FourTerminal_Input2!=4:
+                     self.plotData1D(self.Plot_Data[1],self.Plot_Data[3],self.FieldSweep1D_Plot2, color) #xaxis, yaxis, plot
+                     self.plotData1D(self.Plot_Data[1],self.Plot_Data[4],self.FieldSweep1D_Plot3, color) #xaxis, yaxis, plot
+                     self.plotData1D(self.Plot_Data[1],self.Plot_Data[5],self.FieldSweep1D_Plot4, color) #xaxis, yaxis, plot
+                 
+            yield self.dv.add(self.formatted_data)
+        except Exception as inst:
+            print inst, sys.exc_traceback.tb_lineno
+
+    @inlineCallbacks
     def FourTerminalSweep(self,c=None): #The Four Terminal Sweep without MagneticField
         self.lockInterface()
         try:
-            self.ClearFourTerminalPlot() #Clear the plotted content
+            self.ClearPlots([self.sweepFourTerminal_Plot1, self.sweepFourTerminal_Plot2, self.sweepFourTerminal_Plot3, self.sweepFourTerminal_Plot4])
 
             self.SetupFourTerminalSweepSetting("No Magnetic Field") #Assign the DAC settings and DataVault parameters
             
             #Creates a new datavault file and updates the image# labels
             yield self.newDataVaultFile("No Magnetic Field")
 
-            yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.currentDAC_Output[self.FourTerminal_ChannelOutput[0]],self.FourTerminal_MinVoltage,10000,100)    #ramp to initial value
+            yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.currentDAC_Output[self.FourTerminal_ChannelOutput[0]],self.Dict_Variable['FourTerminal_MinVoltage'],10000,100)    #ramp to initial value
             
             #Give a second after the ramp to allow transients to settle before starting the sweep
             yield self.sleep(1)
 
-            self.FourTerminalXaxis=np.linspace(self.FourTerminal_MinVoltage,self.FourTerminal_MaxVoltage,self.FourTerminal_Numberofstep)  #generating list of voltage at which sweeped
-            self.dac_read = yield self.Buffer_Ramp_Display(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.FourTerminal_MinVoltage],[self.FourTerminal_MaxVoltage],self.FourTerminal_Numberofstep,self.FourTerminal_Delay*1000000) #dac_read[0] is voltage,dac_read[1] is current potentially
-            # self.dac_read = self.FakeDATA(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.FourTerminal_MinVoltage],[self.FourTerminal_MaxVoltage],self.FourTerminal_Numberofstep,self.FourTerminal_Delay)
+            self.FourTerminalXaxis=np.linspace(self.Dict_Variable['FourTerminal_MinVoltage'],self.Dict_Variable['FourTerminal_MaxVoltage'],self.Dict_Variable['FourTerminal_Numberofstep'])  #generating list of voltage at which sweeped
+            self.dac_read = yield self.Buffer_Ramp_Display(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.Dict_Variable['FourTerminal_MinVoltage']],[self.Dict_Variable['FourTerminal_MaxVoltage']],self.Dict_Variable['FourTerminal_Numberofstep'],self.Dict_Variable['FourTerminal_Delay']*1000000) #dac_read[0] is voltage,dac_read[1] is current potentially
+            # self.dac_read = self.FakeDATA(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.Dict_Variable['FourTerminal_MinVoltage']],[self.Dict_Variable['FourTerminal_MaxVoltage']],self.Dict_Variable['FourTerminal_Numberofstep'],self.Dict_Variable['FourTerminal_Delay'])
 
             self.SetupPlot_Data("No Magnetic Field")#self.Plot_Data: a new set of data particularly for ploting
 
@@ -306,13 +425,13 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
             yield self.dv.add(self.formatted_data)
             
-            yield self.plotData1D(self.Plot_Data[1],self.Plot_Data[2],self.sweepFourTerminal_Plot1)
+            yield self.plotData1D(self.Plot_Data[1], self.Plot_Data[2], self.sweepFourTerminal_Plot1)
             if self.FourTerminal_Input2!=4:
                  yield self.plotData1D(self.Plot_Data[1],self.Plot_Data[3],self.sweepFourTerminal_Plot2) #xaxis, yaxis, plot
                  yield self.plotData1D(self.Plot_Data[1],self.Plot_Data[4],self.sweepFourTerminal_Plot3) #xaxis, yaxis, plot
                  yield self.plotData1D(self.Plot_Data[1],self.Plot_Data[5],self.sweepFourTerminal_Plot4) #xaxis, yaxis, plot
                  
-            yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.FourTerminal_MaxVoltage,0.0,10000,100)
+            yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.Dict_Variable['FourTerminal_MaxVoltage'],0.0,10000,100)
         except Exception as inst:
             print inst
 
@@ -326,7 +445,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         self.ConnectLineCut()
         
-        self.MagneticFieldSweepPoints=np.linspace(self.FourTerminalMagneticFieldSetting_MinimumField,self.FourTerminalMagneticFieldSetting_MaximumField,self.FourTerminalMagneticFieldSetting_Numberofsteps)#Generate Magnetic Field Sweep Point
+        self.MagneticFieldSweepPoints=np.linspace(self.Dict_Variable['FourTerminalMagneticFieldSetting_MinimumField'],self.Dict_Variable['FourTerminalMagneticFieldSetting_MaximumField'],self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'])#Generate Magnetic Field Sweep Point
         
         self.SetupPlotParameter()
         
@@ -341,27 +460,27 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             
             yield self.newDataVaultFile("Magnetic Field")
             
-            for self.i in range(0,self.FourTerminalMagneticFieldSetting_Numberofsteps):
-                if self.AbortFourTerminalMagneticFieldSweep_Flag:
+            for self.i in range(0,self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps']):
+                if self.AbortMagneticFieldSweep_Flag:
                     print "Abort the Sweep."
-                    self.AbortFourTerminalMagneticFieldSweep_Flag = False
+                    self.AbortMagneticFieldSweep_Flag = False
                     break
 
                 print 'Starting sweep with magnetic field set to: ' + str(self.MagneticFieldSweepPoints[self.i])
 
                 #Do this properly considering the edge cases
-                yield self.rampMagneticField(self.current_field, self.MagneticFieldSweepPoints[self.i], self.FourTerminalMagneticFieldSetting_FieldSweepSpeed)
+                yield self.rampMagneticField(self.current_field, self.MagneticFieldSweepPoints[self.i], self.Dict_Variable['FourTerminalMagneticFieldSetting_FieldSweepSpeed'])
 
                 #ramp to initial value
-                yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.currentDAC_Output[self.FourTerminal_ChannelOutput[0]],self.FourTerminal_MinVoltage,10000,100)
+                yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.currentDAC_Output[self.FourTerminal_ChannelOutput[0]],self.Dict_Variable['FourTerminal_MinVoltage'],10000,100)
 
                 #Wait for one second to allow transients to settle
                 yield self.sleep(1)
 
-                self.FourTerminalXaxis=np.linspace(self.FourTerminal_MinVoltage,self.FourTerminal_MaxVoltage,self.FourTerminal_Numberofstep)  #generating list of voltage at which sweeped
-                # self.dac_read = self.FakeDATA(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.FourTerminal_MinVoltage],[self.FourTerminal_MaxVoltage],self.FourTerminal_Numberofstep,self.FourTerminal_Delay)
+                self.FourTerminalXaxis=np.linspace(self.Dict_Variable['FourTerminal_MinVoltage'],self.Dict_Variable['FourTerminal_MaxVoltage'],self.Dict_Variable['FourTerminal_Numberofstep'])  #generating list of voltage at which sweeped
+                # self.dac_read = self.FakeDATA(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.Dict_Variable['FourTerminal_MinVoltage']],[self.Dict_Variable['FourTerminal_MaxVoltage']],self.Dict_Variable['FourTerminal_Numberofstep'],self.Dict_Variable['FourTerminal_Delay'])
                 
-                self.dac_read= yield self.Buffer_Ramp_Display(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.FourTerminal_MinVoltage],[self.FourTerminal_MaxVoltage],self.FourTerminal_Numberofstep,self.FourTerminal_Delay*1000000) #dac_read[0] is voltage,dac_read[1] is current potentially
+                self.dac_read= yield self.Buffer_Ramp_Display(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.Dict_Variable['FourTerminal_MinVoltage']],[self.Dict_Variable['FourTerminal_MaxVoltage']],self.Dict_Variable['FourTerminal_Numberofstep'],self.Dict_Variable['FourTerminal_Delay']*1000000) #dac_read[0] is voltage,dac_read[1] is current potentially
                 
                 self.SetupPlot_Data("Magnetic Field")#self.Plot_Data: a new set of data particularly for ploting
 
@@ -383,11 +502,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 if self.AutoLevelFourTerminalMagneticFieldSweep_Flag: #Autolevel
                     self.AutoLevelFourTerminal2DPlot()
                 
-                yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.FourTerminal_MaxVoltage,0.0,10000,100)
+                yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.Dict_Variable['FourTerminal_MaxVoltage'],0.0,10000,100)
 
             if self.BacktoZeroFourTerminalMagneticFieldSweep_Flag:
                 print "Ramp Field Back to Zero"
-                yield self.rampMagneticField(self.current_field, 0.0, self.FourTerminalMagneticFieldSetting_FieldSweepSpeed)
+                yield self.rampMagneticField(self.current_field, 0.0, self.Dict_Variable['FourTerminalMagneticFieldSetting_FieldSweepSpeed'])
 
         except Exception as inst:
             print inst
@@ -396,8 +515,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         yield self.sleep(0.25)
         self.saveDataToSessionFolder() #save the screenshot
 
-    def AbortFourTerminalMagneticFieldSweep(self):
-        self.AbortFourTerminalMagneticFieldSweep_Flag =True
+    def AbortMagneticFieldSweep(self):
+        self.AbortMagneticFieldSweep_Flag =True
         
     @inlineCallbacks
     def rampMagneticField(self, start, end, rate):
@@ -493,7 +612,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 stopfast = self.stopOutput1
                 out_list = [self.outputs['Output 1']-1]
                 in_list = [self.inputs['Input 1']-1]
-                newData = yield self.dac.buffer_ramp(out_list,in_list,[startx],[stopx], self.numberfastdata, self.FourTerminal_Delay*1000000)
+                newData = yield self.dac.buffer_ramp(out_list,in_list,[startx],[stopx], self.numberfastdata, self.Dict_Variable['FourTerminal_Delay']*1000000)
 
             for j in range(0, self.pixels):
                 #Putting in 0 for SSAA voltage (last entry) because not yet being used/read
@@ -503,6 +622,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             print "This is an error message!"
 
 ##########################Update All the parameters#################
+
     def Update_CentralDAC_DACOUTPUT(self,ChannelPort):     #Set the OutputValue
         if ChannelPort==0:
             dummystr=str(self.lineEdit_CentralDAC_DACOUTPUT1.text())
@@ -529,129 +649,116 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 self.setpointDAC_Output[ChannelPort]=dummyval
             self.lineEdit_CentralDAC_DACOUTPUT4.setText(formatNum(self.setpointDAC_Output[ChannelPort],6))
 
-    def UpdateFourTerminal_MinVoltage(self):
-        dummystr=str(self.lineEdit_FourTerminal_MinVoltage.text())
-        dummyval=readNum(dummystr, self , False)
-        if isinstance(dummyval,float) and dummyval<=10.0 and dummyval >=-10.0:
-            self.FourTerminal_MinVoltage=dummyval
-        self.lineEdit_FourTerminal_MinVoltage.setText(formatNum(self.FourTerminal_MinVoltage,6))
-
-    def UpdateFourTerminal_MaxVoltage(self):
-        dummystr=str(self.lineEdit_FourTerminal_MaxVoltage.text())
-        dummyval=readNum(dummystr, self , False)
-        if isinstance(dummyval,float) and dummyval<=10.0 and dummyval >=-10.0:
-            self.FourTerminal_MaxVoltage=dummyval
-        self.lineEdit_FourTerminal_MaxVoltage.setText(formatNum(self.FourTerminal_MaxVoltage,6))
-
     def UpdateFourTerminal_Numberofstep(self):
         dummystr=str(self.lineEdit_FourTerminal_Numberofstep.text())   #read the text
         dummyval=readNum(dummystr, self , False)
+        print self.Dict_Variable['FourTerminal_MaxVoltage'], self.Dict_Variable['FourTerminal_MinVoltage']
         if isinstance(dummyval,float):
-            if self.FourTerminalSetting_Numberofsteps_Status == "Numberofsteps":   #based on status, dummyval is deterimined and update the Numberof steps parameters
-                self.FourTerminal_Numberofstep=int(round(dummyval)) #round here is necessary, without round it cannot do 1001 steps back and force
-            if self.FourTerminalSetting_Numberofsteps_Status == "StepSize":
-                self.FourTerminal_Numberofstep=int(self.StepSizetoNumberofsteps_Convert(self.FourTerminal_MaxVoltage,self.FourTerminal_MinVoltage,float(dummyval)))
+            if self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] == "Numberofsteps":   #based on status, dummyval is deterimined and update the Numberof steps parameters
+                self.Dict_Variable['FourTerminal_Numberofstep']=int(round(dummyval)) #round here is necessary, without round it cannot do 1001 steps back and force
+            if self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] == "StepSize":
+                self.Dict_Variable['FourTerminal_Numberofstep']=int(self.StepSizetoNumberofsteps_Convert(self.Dict_Variable['FourTerminal_MaxVoltage'],self.Dict_Variable['FourTerminal_MinVoltage'],float(dummyval)))
         self.RefreshFourTerminal_Numberofstep()
 
     def RefreshFourTerminal_Numberofstep(self): #Refresh based on the status change the lineEdit text
-        if self.FourTerminalSetting_Numberofsteps_Status == "Numberofsteps":
-            self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(self.FourTerminal_Numberofstep,6))
+        if self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] == "Numberofsteps":
+            self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(self.Dict_Variable['FourTerminal_Numberofstep'],6))
         else:
-            self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(self.NumberofstepstoStepSize_Convert(self.FourTerminal_MaxVoltage,self.FourTerminal_MinVoltage,self.FourTerminal_Numberofstep),6))
+            self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(self.NumberofstepstoStepSize_Convert(self.Dict_Variable['FourTerminal_MaxVoltage'],self.Dict_Variable['FourTerminal_MinVoltage'],self.Dict_Variable['FourTerminal_Numberofstep']),6))
 
     def ToggleFourTerminalFourTerminal_Numberofstep(self):
-        if self.FourTerminalSetting_Numberofsteps_Status == "Numberofsteps":
+        if self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] == "Numberofsteps":
             self.label_FourTerminalNumberofstep.setText('Volt per Steps')
-            self.FourTerminalSetting_Numberofsteps_Status = "StepSize"
+            self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] = "StepSize"
             self.RefreshFourTerminal_Numberofstep() #Change the text first
             self.UpdateFourTerminal_Numberofstep()
         else:
             self.label_FourTerminalNumberofstep.setText('Number of Steps')
-            self.FourTerminalSetting_Numberofsteps_Status = "Numberofsteps"
+            self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] = "Numberofsteps"
             self.RefreshFourTerminal_Numberofstep() #Change the text first
             self.UpdateFourTerminal_Numberofstep()
 
-    def UpdateFourTerminal_Delay(self):
-        dummystr=str(self.lineEdit_FourTerminal_Delay.text())
-        dummyval=readNum(dummystr, self , True)
-        if isinstance(dummyval,float):
-            self.FourTerminal_Delay=float(dummyval)
-        self.lineEdit_FourTerminal_Delay.setText(formatNum(self.FourTerminal_Delay,6))
+    def UpdateLineEdit_General(self, lineEdit, key):
+        self.Dict_Variable[key] = str(lineEdit.text())
 
-    def UpdateDevice_Name(self):
-        self.Device_Name=str(self.lineEdit_Device_Name.text())
-
-    def UpdateFourTerminal_NameOutput1(self):
-        self.FourTerminal_NameOutput1=str(self.lineEdit_FourTerminal_NameOutput1.text())
+    def UpdateLineEdit_PlotLabel(self, lineEdit, key):
+        self.Dict_Variable[key] = str(lineEdit.text())
         self.updateFourTerminalPlotLabel()
 
-    def UpdateFourTerminal_NameInput1(self):
-        self.FourTerminal_NameInput1=str(self.lineEdit_FourTerminal_NameInput1.text())
-        self.updateFourTerminalPlotLabel()
-
-    def UpdateFourTerminal_NameInput2(self):
-        self.FourTerminal_NameInput2=str(self.lineEdit_FourTerminal_NameInput2.text())
-        self.updateFourTerminalPlotLabel()
-
-    def UpdateFourTerminalMagneticFieldSetting_MinimumField(self):
-        dummystr=str(self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.text())
+    def UpdateLineEdit_Parameters(self, lineEdit, key, range = None):
+        dummystr=str(lineEdit.text())
         dummyval=readNum(dummystr, self , False)
         if isinstance(dummyval,float):
-            self.FourTerminalMagneticFieldSetting_MinimumField=dummyval
-        self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.setText(formatNum(self.FourTerminalMagneticFieldSetting_MinimumField,6))
-        self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla()
-
-    def UpdateFourTerminalMagneticFieldSetting_MaximumField(self):
-        dummystr=str(self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.text())
-        dummyval=readNum(dummystr, self , False)
-        if isinstance(dummyval,float):
-            self.FourTerminalMagneticFieldSetting_MaximumField=dummyval
-        self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.setText(formatNum(self.FourTerminalMagneticFieldSetting_MaximumField,6))
-        self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla()
+            if range == None:
+                self.Dict_Variable[key] = dummyval
+            elif dummyval >= range[0] and dummyval <= range[1]:
+                self.Dict_Variable[key] = dummyval
+        lineEdit.setText(formatNum(self.Dict_Variable[key], 6))
 
     def UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla(self):
         dummystr=str(self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.text())   #read the text
         dummyval=readNum(dummystr, self , False)
         if isinstance(dummyval,float):
-            if self.FourTerminalMagneticFieldSetting_Numberofsteps_Status == "Numberofsteps":   #based on status, dummyval is deterimined and update the Numberof steps parameters
-                self.FourTerminalMagneticFieldSetting_Numberofsteps=int(round(dummyval))
-            if self.FourTerminalMagneticFieldSetting_Numberofsteps_Status == "StepSize":
-                self.FourTerminalMagneticFieldSetting_Numberofsteps=int(self.StepSizetoNumberofsteps_Convert(self.FourTerminalMagneticFieldSetting_MaximumField,self.FourTerminalMagneticFieldSetting_MinimumField,float(dummyval)))
+            if self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps_Status'] == "Numberofsteps":   #based on status, dummyval is deterimined and update the Numberof steps parameters
+                self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps']=int(round(dummyval))
+            if self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps_Status'] == "StepSize":
+                self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps']=int(self.StepSizetoNumberofsteps_Convert(self.Dict_Variable['FourTerminalMagneticFieldSetting_MaximumField'],self.Dict_Variable['FourTerminalMagneticFieldSetting_MinimumField'],float(dummyval)))
         self.RefreshFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla()
 
     def RefreshFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla(self): #Refresh based on the status change the lineEdit text
-        if self.FourTerminalMagneticFieldSetting_Numberofsteps_Status == "Numberofsteps":
-            self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.FourTerminalMagneticFieldSetting_Numberofsteps,6))
+        if self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps_Status'] == "Numberofsteps":
+            self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],6))
         else:
-            self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.NumberofstepstoStepSize_Convert(self.FourTerminalMagneticFieldSetting_MaximumField,self.FourTerminalMagneticFieldSetting_MinimumField,self.FourTerminalMagneticFieldSetting_Numberofsteps),6))
+            self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.NumberofstepstoStepSize_Convert(self.Dict_Variable['FourTerminalMagneticFieldSetting_MaximumField'],self.Dict_Variable['FourTerminalMagneticFieldSetting_MinimumField'],self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps']),6))
 
     def ToggleFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla(self):
-        if self.FourTerminalMagneticFieldSetting_Numberofsteps_Status == "Numberofsteps":
+        if self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps_Status'] == "Numberofsteps":
             self.label_FourTerminalMagneticFieldSetting_NumberofSteps.setText('Tesla per Steps')
-            self.FourTerminalMagneticFieldSetting_Numberofsteps_Status = "StepSize"
+            self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps_Status'] = "StepSize"
             self.RefreshFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla() #Change the text first
             self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla()
         else:
             self.label_FourTerminalMagneticFieldSetting_NumberofSteps.setText('Number of Steps')
-            self.FourTerminalMagneticFieldSetting_Numberofsteps_Status = "Numberofsteps"
+            self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps_Status'] = "Numberofsteps"
             self.RefreshFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla() #Change the text first
             self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla()
-       
+
+    def UpdateFieldSweep1D_NumberofstepsandMilifieldperTesla(self):
+        dummystr=str(self.lineEdit_1DFieldSweepSetting_Numberofsteps.text())   #read the text
+        dummyval=readNum(dummystr, self , False)
+        if isinstance(dummyval,float):
+            if self.Dict_Variable['FieldSweep1DSetting_Numberofsteps_Status'] == "Numberofsteps":   #based on status, dummyval is deterimined and update the Numberof steps parameters
+                self.Dict_Variable['FieldSweep1D_Numberofstep']=int(round(dummyval))
+            if self.Dict_Variable['FieldSweep1DSetting_Numberofsteps_Status'] == "StepSize":
+                self.Dict_Variable['FieldSweep1D_Numberofstep']=int(self.StepSizetoNumberofsteps_Convert(self.Dict_Variable['FieldSweep1D_MaxField'],self.Dict_Variable['FieldSweep1D_MinField'], float(dummyval)))
+        self.RefreshFieldSweep1D_NumberofstepsandMilifieldperTesla()
+
+    def RefreshFieldSweep1D_NumberofstepsandMilifieldperTesla(self): #Refresh based on the status change the lineEdit text
+        if self.Dict_Variable['FieldSweep1DSetting_Numberofsteps_Status'] == "Numberofsteps":
+            self.lineEdit_1DFieldSweepSetting_Numberofsteps.setText(formatNum(self.Dict_Variable['FieldSweep1D_Numberofstep'],6))
+        else:
+            self.lineEdit_1DFieldSweepSetting_Numberofsteps.setText(formatNum(self.NumberofstepstoStepSize_Convert(self.Dict_Variable['FieldSweep1D_MaxField'],self.Dict_Variable['FieldSweep1D_MinField'],self.Dict_Variable['FieldSweep1D_Numberofstep']),6))
+
+    def ToggleFieldSweep1D_NumberofstepsandMilifieldperTesla(self):
+        if self.Dict_Variable['FieldSweep1DSetting_Numberofsteps_Status'] == "Numberofsteps":
+            self.label_FieldSweep1D_NumberofStep.setText('Tesla per Steps')
+            self.Dict_Variable['FieldSweep1DSetting_Numberofsteps_Status'] = "StepSize"
+            self.RefreshFieldSweep1D_NumberofstepsandMilifieldperTesla() #Change the text first
+            self.UpdateFieldSweep1D_NumberofstepsandMilifieldperTesla()
+        else:
+            self.label_FieldSweep1D_NumberofStep.setText('Number of Steps')
+            self.Dict_Variable['FieldSweep1DSetting_Numberofsteps_Status'] = "Numberofsteps"
+            self.RefreshFieldSweep1D_NumberofstepsandMilifieldperTesla() #Change the text first
+            self.UpdateFieldSweep1D_NumberofstepsandMilifieldperTesla()    
+
     def NumberofstepstoStepSize_Convert(self,Max,Min,NoS):
-        StepSize=float((Max-Min)/float(NoS-1.0))
+        StepSize=float(abs(Max-Min)/float(NoS-1.0))
         return StepSize
 
     def StepSizetoNumberofsteps_Convert(self,Max,Min,SS):
         Numberofsteps=int((Max-Min)/float(SS)+1)
         return Numberofsteps
 
-    def UpdateFourTerminalMagneticFieldSetting_FieldSweepSpeed(self):
-        dummystr=str(self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.text())
-        dummyval=readNum(dummystr, self , False)
-        if isinstance(dummyval,float):
-            self.FourTerminalMagneticFieldSetting_FieldSweepSpeed=dummyval
-        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.setText(formatNum(self.FourTerminalMagneticFieldSetting_FieldSweepSpeed,6))
-        
     def ChangeFourTerminal_Output1_Channel(self):
         self.FourTerminal_Output1=self.comboBox_FourTerminal_Output1.currentIndex()
 
@@ -688,18 +795,14 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.Current_LI_Timeconstant=dummyval
         self.lineEdit_Current_LI_Timeconstant.setText(formatNum(self.Current_LI_Timeconstant,6))
 
-    def UpdateFrequency(self):
-        dummystr=str(self.lineEdit_Lockin_Info_Frequency.text())
-        dummyval=readNum(dummystr, self , False)
-        if isinstance(dummyval,float):
-            self.Frequency=dummyval
-        self.lineEdit_Lockin_Info_Frequency.setText(formatNum(self.Frequency,6))
         
         
     def updateCheckBox(self):
         self.MoveLineCutFourTerminalMagneticFieldSweep_Flag =self.checkBox_FourTerminalMagneticFieldSetting_MoveLineCut.isChecked()
         self.AutoLevelFourTerminalMagneticFieldSweep_Flag =self.checkBox_FourTerminalMagneticFieldSetting_AutoLevel.isChecked()
         self.BacktoZeroFourTerminalMagneticFieldSweep_Flag =self.checkBox_FourTerminalMagneticFieldSetting_BacktoZero.isChecked()
+        self.FieldSweep1D_LoopFlag =self.checkBox_FieldSweep1D_Loop.isChecked()
+
         ##########################Update All the parameters#################
 
 ##########################Peculiar Function only defined in SampleCharacterizer#############
@@ -761,12 +864,15 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         try:
             yield self.Ramp1_Display(ChannelPort,self.currentDAC_Output[ChannelPort],self.setpointDAC_Output[ChannelPort],10000,100)
         except Exception as inst:
-            print inst
+            print inst, sys.exc_traceback.tb_lineno
 
     def SetupFourTerminalSweepSetting(self,Status):
         #Sets up the lists of inputs and outputs for the dac buffer ramp as well as sets up the names for the columns on datavault
     
-        self.FourTerminal_ChannelOutput=[self.FourTerminal_Output1] #Setup for bufferramp function
+        if Status == 'MagneticField1D':
+            self.FourTerminal_ChannelOutput = ['Magnetic Field']
+        else:
+            self.FourTerminal_ChannelOutput=[self.FourTerminal_Output1] #Setup for bufferramp function
 
         self.FourTerminal_ChannelInput=[self.FourTerminal_Input1] #Setup for bufferramp function
         #If FourTerminal_Input2 is 4, then this corresponds to 'None' having been selected on the GUI, in which case it's a two wire measurement
@@ -774,7 +880,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.FourTerminal_ChannelInput.append(self.FourTerminal_Input2)# Create the list of Channel that we read while sweep #setup for bufferramp function
 
         #datavaultXaxis is the list of independent variables on the sweep
-        self.datavaultXaxis=[self.FourTerminal_NameOutput1+' index', self.FourTerminal_NameOutput1]
+        if Status == 'MagneticField1D':
+            self.datavaultXaxis=['Magnetic Field index', 'Magnetic Field']
+        else:
+            self.datavaultXaxis=[self.FourTerminal_NameOutput1+' index', self.FourTerminal_NameOutput1]
+
         if Status == "Magnetic Field":
             self.datavaultXaxis=['Magnetic Field index', self.FourTerminal_NameOutput1+' index', 'Magnetic Field', self.FourTerminal_NameOutput1]
             
@@ -783,7 +893,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         if self.FourTerminal_Input2!=4:  #add additional data if Input2 is not None
             self.datavaultYaxis=[self.FourTerminal_NameInput1, self.FourTerminal_NameInput2, "Resistance" , "Conductance"]
             
-    def Format_Data(self,Status):
+    def Format_Data(self, Status):
         """
         Format_Data structure:
         #MagneticField Index, Gate Voltage Index, #MagneticField, Gate Voltage, Voltage, #Current, #Resistance
@@ -791,7 +901,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         Gate Voltage Index, Gate Voltage, Voltage, #Current, #Resistance, #MagneticField Index, #MagneticField
         """
         self.formatted_data = []
-        for j in range(0, self.FourTerminal_Numberofstep):
+        for j in range(0, self.Dict_Variable['FourTerminal_Numberofstep']):
             DummyVoltage=self.Convert_Real_Voltage(self.dac_read[0][j])
             if Status == "Magnetic Field":
                 self.formatted_data.append((self.i,j,self.MagneticFieldSweepPoints[self.i],self.FourTerminalXaxis[j],DummyVoltage))
@@ -816,6 +926,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
     def newDataVaultFile(self, Status):
         if Status== "Magnetic Field":
             file = yield self.dv.new('FourTerminal MagneticField ' + self.Device_Name, self.datavaultXaxis,self.datavaultYaxis)
+        elif Status== "MagneticField1D":
+            file = yield self.dv.new('1D Magnetic Field ' + self.Device_Name, self.datavaultXaxis,self.datavaultYaxis)
         else:
             file = yield self.dv.new('FourTerminal ' + self.Device_Name, self.datavaultXaxis,self.datavaultYaxis)
             
@@ -832,23 +944,42 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         yield self.dv.add_parameter('Current Lock in Expand',float(self.comboBox_Current_LI_Expand.currentText()))
         yield self.dv.add_parameter('Voltage Lock in Time Constant(s)',float(self.Voltage_LI_Timeconstant))
         yield self.dv.add_parameter('Current Lock in Time Constant(s)',float(self.Current_LI_Timeconstant))
-        yield self.dv.add_parameter('Lock in Frequency(Hz)',float(self.Frequency))
+        yield self.dv.add_parameter('Lock in Frequency(Hz)',float(self.Dict_Variable['Frequency']))
+        if Status== "MagneticField1D":
+            yield self.dv.add_parameter('DAC Voltage 1',float(self.lineEdit_CentralDAC_DACOUTPUT1.text()))
+            yield self.dv.add_parameter('DAC Voltage 2',float(self.lineEdit_CentralDAC_DACOUTPUT2.text()))
+            yield self.dv.add_parameter('DAC Voltage 3',float(self.lineEdit_CentralDAC_DACOUTPUT3.text()))
+            yield self.dv.add_parameter('DAC Voltage 4',float(self.lineEdit_CentralDAC_DACOUTPUT4.text()))
 
     def SetupPlot_Data(self,Status):
-        """
-        Plot_Data structure:
-        Gate Voltage Index, Gate Voltage, Voltage, #Current, #Resistance, #Conductance #MagneticField Index, #MagneticField
-        """
-        self.Plot_Data=[range(0,self.FourTerminal_Numberofstep)]
-        self.Plot_Data.append(self.FourTerminalXaxis)
-        self.Plot_Data.append([])
-        if self.FourTerminal_Input2!=4:
-            self.Plot_Data.append([])#Current
-            self.Plot_Data.append([])#Resistance
-            self.Plot_Data.append([])#Conductance
-        if Status == "Magnetic Field":
-            self.Plot_Data.append([range(0,self.FourTerminalMagneticFieldSetting_Numberofsteps)])
-            self.Plot_Data.append(self.MagneticFieldSweepPoints)
+        try:
+            """
+            Plot_Data structure:
+            Gate Voltage Index, Gate Voltage, Voltage, #Current, #Resistance, #Conductance #MagneticField Index, #MagneticField
+            (Magnetic Field Index), Magnetic Field
+            """
+            if Status != 'MagneticField1D':
+                self.Plot_Data=[range(0,self.Dict_Variable['FourTerminal_Numberofstep'])]
+                self.Plot_Data.append(self.FourTerminalXaxis)
+            else:
+                self.Plot_Data=[range(0,self.Dict_Variable['FieldSweep1D_Numberofstep'])]
+                self.Plot_Data.append(self.FieldSweep1DXaxis)
+
+            self.Plot_Data.append([])
+            if self.FourTerminal_Input2!=4:
+                self.Plot_Data.append([])#Current
+                self.Plot_Data.append([])#Resistance
+                self.Plot_Data.append([])#Conductance
+            if Status == "Magnetic Field":
+                self.Plot_Data.append([range(0,self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'])])
+                self.Plot_Data.append(self.MagneticFieldSweepPoints)
+            if Status == 'MagneticField1D' and self.FourTerminal_Input2!=4:
+                self.Plot_Data[2] = np.zeros(self.Dict_Variable['FieldSweep1D_Numberofstep'])
+                self.Plot_Data[3] = np.zeros(self.Dict_Variable['FieldSweep1D_Numberofstep'])
+                self.Plot_Data[4] = np.zeros(self.Dict_Variable['FieldSweep1D_Numberofstep'])
+                self.Plot_Data[5] = np.zeros(self.Dict_Variable['FieldSweep1D_Numberofstep'])
+        except Exception as inst:
+            print inst, sys.exc_traceback.tb_lineno
 
     def Convert_Real_Voltage(self,reading): #Take the DAC reading and convert it to real unit (V)
         Real_Voltage=float(reading)/10.0*self.MultiplierVoltage
@@ -869,11 +1000,12 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         
         
 ##########################              Plot Related functions                 #############
-    def plotData1D(self,xaxis,yaxis,plot):
-        plot.plot(x = xaxis, y = yaxis, pen = 0.5)
+    def plotData1D(self,xaxis,yaxis,plot, color = 0.5):
+        plot.plot(x = xaxis, y = yaxis, pen = color)
         
     def setupAdditionalUi(self):
         self.setupFourTerminalPlot()
+        self.setupFieldSweep1DPlot()
         self.setupFourTerminalMagneticFieldResistancePlot()
         self.setupFourTerminalMagneticFieldVoltagePlot()
         self.setupFourTerminalMagneticFieldCurrentPlot()
@@ -893,6 +1025,19 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         
         self.sweepFourTerminal_Plot4 = pg.PlotWidget(parent = self.frame_FourTerminalPlot4)
         self.Setup1DPlot(self.sweepFourTerminal_Plot4, self.Layout_FourTerminalPlot4, 'Conductance', 'Conductance', "S", self.FourTerminal_NameOutput1,"V" )#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
+
+    def setupFieldSweep1DPlot(self):
+        self.FieldSweep1D_Plot1 = pg.PlotWidget(parent = None)
+        self.Setup1DPlot(self.FieldSweep1D_Plot1, self.verticalLayout_1DFieldSweepPlot1, self.FourTerminal_NameInput1, self.FourTerminal_NameInput1, "V", 'MagneticField', "T")#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
+
+        self.FieldSweep1D_Plot2 = pg.PlotWidget(parent = None)
+        self.Setup1DPlot(self.FieldSweep1D_Plot2, self.verticalLayout_1DFieldSweepPlot2, self.FourTerminal_NameInput2, self.FourTerminal_NameInput2, "A", 'MagneticField',"T" )#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
+
+        self.FieldSweep1D_Plot3 = pg.PlotWidget(parent = None)
+        self.Setup1DPlot(self.FieldSweep1D_Plot3, self.verticalLayout_1DFieldSweepPlot3, 'Resistance', 'Resistance', "Ohm", 'MagneticField',"T" )#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
+        
+        self.FieldSweep1D_Plot4 = pg.PlotWidget(parent = None)
+        self.Setup1DPlot(self.FieldSweep1D_Plot4, self.verticalLayout_1DFieldSweepPlot4, 'Conductance', 'Conductance', "S", 'MagneticField',"T" )#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
 
 
     def Setup1DPlot(self, Plot, Layout , Title , yaxis , yunit, xaxis, xunit):
@@ -1032,31 +1177,40 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.sweepFourTerminalMagneticField_Voltage_Plot.setImage(self.PlotDataFourTerminalVoltage2D.T, autoRange = False , autoLevels = True, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
         self.sweepFourTerminalMagneticField_Current_Plot.setImage(self.PlotDataFourTerminalCurrent2D.T, autoRange = False , autoLevels = True, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
         
+    def ClearPlots(self, list):
+        for plot in list:
+            plot.clear()
+
     def ClearFourTerminalPlot(self):
         self.sweepFourTerminal_Plot1.clear()
         self.sweepFourTerminal_Plot2.clear()
         self.sweepFourTerminal_Plot3.clear()
         self.sweepFourTerminal_Plot4.clear()
 
-
     def ClearFourTerminal2DPlot(self):
         self.sweepFourTerminalMagneticField_Resistance_Plot.clear()
         self.sweepFourTerminalMagneticField_Voltage_Plot.clear()
         self.sweepFourTerminalMagneticField_Current_Plot.clear()
         self.sweepFourTerminalMagneticField_Conductance_Plot.clear()
-        self.PlotDataFourTerminalResistance2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
-        self.PlotDataFourTerminalVoltage2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
-        self.PlotDataFourTerminalCurrent2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
-        self.PlotDataFourTerminalConductance2D=np.zeros([self.FourTerminalMagneticFieldSetting_Numberofsteps,self.FourTerminal_Numberofstep])
+        self.PlotDataFourTerminalResistance2D=np.zeros([self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],self.Dict_Variable['FourTerminal_Numberofstep']])
+        self.PlotDataFourTerminalVoltage2D=np.zeros([self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],self.Dict_Variable['FourTerminal_Numberofstep']])
+        self.PlotDataFourTerminalCurrent2D=np.zeros([self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],self.Dict_Variable['FourTerminal_Numberofstep']])
+        self.PlotDataFourTerminalConductance2D=np.zeros([self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],self.Dict_Variable['FourTerminal_Numberofstep']])
         
     def ClearFourTerminalMagneticFieldPlot(self):
         self.ClearFourTerminal2DPlot()
         self.ClearLineCutPlot()
                 
+    def ClearFieldSweep1DPlot(self):
+        self.FieldSweep1D_Plot1.clear()
+        self.FieldSweep1D_Plot2.clear()
+        self.FieldSweep1D_Plot3.clear()
+        self.FieldSweep1D_Plot4.clear()
+
     def SetupPlotParameter(self):
         #set up the parameter for ploting, pos and scale
-        self.posx, self.posy = (self.FourTerminal_MinVoltage , self.FourTerminalMagneticFieldSetting_MinimumField)
-        self.scalex, self.scaley = ((self.FourTerminal_MaxVoltage-self.FourTerminal_MinVoltage)/self.FourTerminal_Numberofstep, (self.FourTerminalMagneticFieldSetting_MaximumField-self.FourTerminalMagneticFieldSetting_MinimumField)/self.FourTerminalMagneticFieldSetting_Numberofsteps)
+        self.posx, self.posy = (self.Dict_Variable['FourTerminal_MinVoltage'] , self.Dict_Variable['FourTerminalMagneticFieldSetting_MinimumField'])
+        self.scalex, self.scaley = ((self.Dict_Variable['FourTerminal_MaxVoltage']-self.Dict_Variable['FourTerminal_MinVoltage'])/self.Dict_Variable['FourTerminal_Numberofstep'], (self.Dict_Variable['FourTerminalMagneticFieldSetting_MaximumField']-self.Dict_Variable['FourTerminalMagneticFieldSetting_MinimumField'])/self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'])
 
     def SetupFourTerminalMageneticField2DPlot(self):
         self.SetupPlotParameter()
@@ -1080,8 +1234,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
 ##########################              LineCut Related functions                 #############
     def InitializeLineCutPlot(self):
-        self.FourTerminalverticalLineCutPosition = self.FourTerminal_MinVoltage
-        self.FourTerminalhorizontalLineCutPosition = self.FourTerminalMagneticFieldSetting_MinimumField
+        self.FourTerminalverticalLineCutPosition = self.Dict_Variable['FourTerminal_MinVoltage']
+        self.FourTerminalhorizontalLineCutPosition = self.Dict_Variable['FourTerminalMagneticFieldSetting_MinimumField']
         self.MoveFourTerminalLineCut()
 
     def SetupLineCutMagneticFieldValue(self): #Corresponding to change in lineEdit
@@ -1106,8 +1260,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.ChangeFourTerminalLineCutValue("")
 
     def UpdateFourTerminalMagneticField_LineCutPlot(self): #Update the Plot based on position of LineCut
-        xindex = int((self.FourTerminalverticalLineCutPosition - self.FourTerminal_MinVoltage)/self.scalex)
-        yindex = int((self.FourTerminalhorizontalLineCutPosition - self.FourTerminalMagneticFieldSetting_MinimumField)/self.scaley)
+        xindex = int((self.FourTerminalverticalLineCutPosition - self.Dict_Variable['FourTerminal_MinVoltage'])/self.scalex)
+        yindex = int((self.FourTerminalhorizontalLineCutPosition - self.Dict_Variable['FourTerminalMagneticFieldSetting_MinimumField'])/self.scaley)
         
         self.ClearLineCutPlot()
         self.FourTerminalMagneticField_Resistance_VersusField_Plot.plot(x=self.MagneticFieldSweepPoints,y=self.PlotDataFourTerminalResistance2D[:,xindex],pen = 0.5)
@@ -1196,7 +1350,6 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         
 ##########################              LineCut Related functions                 #############
 
-
     def updateHistogramLevels(self, hist):
         mn, mx = hist.getLevels()
         self.Plot2D.ui.histogram.setLevels(mn, mx)
@@ -1248,7 +1401,15 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_Voltage_LI_Timeconstant.setEnabled(False)
         self.lineEdit_Current_LI_Timeconstant.setEnabled(False)
         self.lineEdit_Lockin_Info_Frequency.setEnabled(False)
+
+        self.pushButton_Start1DFieldSweep.setEnabled(False)
+        self.lineEdit_1DFieldSweepSetting_MinimumField.setEnabled(False)
+        self.lineEdit_1DFieldSweepSetting_MaximumField.setEnabled(False)
+        self.lineEdit_1DFieldSweepSetting_Numberofsteps.setEnabled(False)
+        self.lineEdit_1DFieldSweepSetting_FieldSweepSpeed.setEnabled(False)
+        self.lineEdit_1DFieldSweepSetting_Delay.setEnabled(False)
         
+
         self.pushButton_StartFourTerminalSweep.setEnabled(False)
 
         self.lineEdit_CentralDAC_DACOUTPUT1.setEnabled(False)
@@ -1292,6 +1453,13 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_Current_LI_Timeconstant.setEnabled(True)
         self.lineEdit_Lockin_Info_Frequency.setEnabled(True)
         
+        self.pushButton_Start1DFieldSweep.setEnabled(True)
+        self.lineEdit_1DFieldSweepSetting_MinimumField.setEnabled(True)
+        self.lineEdit_1DFieldSweepSetting_MaximumField.setEnabled(True)
+        self.lineEdit_1DFieldSweepSetting_Numberofsteps.setEnabled(True)
+        self.lineEdit_1DFieldSweepSetting_FieldSweepSpeed.setEnabled(True)
+        self.lineEdit_1DFieldSweepSetting_Delay.setEnabled(True)
+
         self.pushButton_StartFourTerminalSweep.setEnabled(True)
 
         self.lineEdit_CentralDAC_DACOUTPUT1.setEnabled(True)
