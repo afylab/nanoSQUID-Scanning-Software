@@ -169,7 +169,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             #Change back to local control
             yield self.ips.set_control(2)
             self.setting_value = False
-        self.lineEdit_setpoint.setText(formatNum(self.setpoint))
+        self.lineEdit_setpoint.setText(formatNum(self.setpoint, 4))
         
     @inlineCallbacks
     def setRamprate(self, c = None):

@@ -218,7 +218,7 @@ Bias</string>
    <widget class="QPushButton" name="blinkBtn">
     <property name="geometry">
      <rect>
-      <x>405</x>
+      <x>370</x>
       <y>230</y>
       <width>50</width>
       <height>40</height>
@@ -264,7 +264,7 @@ border-radius: 5px
    <widget class="QPushButton" name="push_readSetpoint">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>295</x>
       <y>230</y>
       <width>50</width>
       <height>40</height>
@@ -779,6 +779,40 @@ background: rgb(144, 140, 9);
     </property>
     <property name="text">
      <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_zeroFeedback">
+    <property name="geometry">
+     <rect>
+      <x>445</x>
+      <y>230</y>
+      <width>50</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#push_zeroFeedback{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#push_zeroFeedback{
+color: rgb(95,107,166);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(95,107,166);
+border-radius: 5px
+}</string>
+    </property>
+    <property name="text">
+     <string>Zero
+Feedback</string>
     </property>
    </widget>
   </widget>

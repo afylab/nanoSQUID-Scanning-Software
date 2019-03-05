@@ -196,7 +196,9 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 'step_retract_time'          : 2.4,    #time required in seconds for full atto retraction
                 'pid_retract_speed'          : 1e-5, #speed in m/s when retracting
                 'pid_retract_time'           : 2.4,    #time required in seconds for full atto retraction
-                'total_retract_dist'         : 24e-6, #distance retracted in meters by the attocube (eventually should update with temperature)
+                'total_retract_dist'         : 24e-6, #total z distance retracted in meters by the attocube (eventually should update with temperature)
+                'auto_retract_dist'          : 2e-6, #distance retracted in meters when a surface event is triggered in constant height mode  
+                'auto_retract_points'          : 3, #distance retracted in meters when a surface event is triggered in constant height mode  
         }
         
         '''
@@ -821,9 +823,9 @@ class Window(QtGui.QMainWindow, ApproachUI):
                     else:
                         points_above_freq_thresh = points_above_freq_thresh + (f > (-1.0*self.freqThreshold))
                         
-                if self.constantHeight and points_above_freq_thresh > 2:
+                if self.constantHeight and points_above_freq_thresh >= self.generalSettings['auto_retract_points']:
                     print 'auto withdrew'
-                    self.withdrawFully()
+                    self.withdrawSpecifiedDistance(self.generalSettings['auto_retract_dist'])
 
                 self.newPLLData.emit(deltaf, phaseError)
 
@@ -1525,7 +1527,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
         #voltage jumps as it resets the integrator value. 
         
         #This also converts from m -> V, because the PID works off of volts, yet the input parameters
-        #are in meters. Also takes into account wether or not the system is currently in the voltage
+        #are in meters. Also takes into account whether or not the system is currently in the voltage
         #divided mode
         try:
             if not self.voltageMultiplied:
@@ -1745,10 +1747,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
             self.lineEdit_CoarseZ.setText(formatNum(np.abs(steps), 4))
         elif self.coarsePositioner == 'Attocube ANC350':
             self.lineEdit_CoarseZ.setText(formatNum(self.coarsePositionerExtension, 4))
-            
-    @inlineCallbacks
-    def withdrawFully(self):
-        yield self.withdrawSpecifiedDistance(self.z_meters_max)
             
     @inlineCallbacks
     def withdrawSpecifiedDistance(self, dist):
@@ -2119,6 +2117,9 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_JPE_Size.editingFinished.connect(self.setJPE_Size)
         self.lineEdit_JPE_Freq.editingFinished.connect(self.setJPE_Freq)
         
+        self.lineEdit_AutoRetractDist.editingFinished.connect(self.setAutoRetractDist)
+        self.lineEdit_AutoRetractPoints.editingFinished.connect(self.setAutoRetractPoints)
+        
         self.loadValues()
       
     def loadValues(self):
@@ -2136,6 +2137,9 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_JPE_Steps.setText(formatNum(self.generalApproachSettings['jpe_steps']))
         self.lineEdit_JPE_Size.setText(formatNum(self.generalApproachSettings['jpe_size']))
         self.lineEdit_JPE_Freq.setText(formatNum(self.generalApproachSettings['jpe_freq']))
+        
+        self.lineEdit_AutoRetractDist.setText(formatNum(self.generalApproachSettings['auto_retract_dist']))
+        self.lineEdit_AutoRetractPoints.setText(formatNum(self.generalApproachSettings['auto_retract_points']))
 
     def setPID_Out(self):
         self.generalApproachSettings['pid_z_output'] = self.comboBox_PID_Out.currentIndex() + 1
@@ -2198,6 +2202,18 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         if isinstance(val,float):
             self.generalApproachSettings['jpe_freq'] = val
         self.lineEdit_JPE_Freq.setText(formatNum(self.generalApproachSettings['jpe_freq'] ))
+    
+    def setAutoRetractDist(self):
+        val = readNum(str(self.lineEdit_AutoRetractDist.text()), self)
+        if isinstance(val,float):
+            self.generalApproachSettings['auto_retract_dist'] = val
+        self.lineEdit_AutoRetractDist.setText(formatNum(self.generalApproachSettings['auto_retract_dist']))
+    
+    def setAutoRetractPoints(self):
+        val = readNum(str(self.lineEdit_AutoRetractPoints.text()), self, False)
+        if isinstance(val,float):
+            self.generalApproachSettings['auto_retract_points'] = int(val)
+        self.lineEdit_AutoRetractPoints.setText(formatNum(self.generalApproachSettings['auto_retract_points']))
     
     def acceptNewValues(self):
         self.accept()

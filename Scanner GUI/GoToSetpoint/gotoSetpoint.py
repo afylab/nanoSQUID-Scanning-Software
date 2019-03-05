@@ -35,6 +35,7 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
         
         self.blinkBtn.clicked.connect(self.blinkOutFunc)
         self.push_readSetpoint.clicked.connect(self.readSetpoint)
+        self.push_zeroFeedback.clicked.connect(self.zeroFeedback)
 
         self.lockInterface()
         
@@ -77,6 +78,7 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
                 
             self.biasChan = dict['channels']['nsot']['nSOT Bias'] - 1
             self.biasRefChan = dict['channels']['nsot']['Bias Reference'] - 1
+            self.feedbackChan = dict['channels']['nsot']['DC Readout'] - 1
             
             self.setpointDict = {'field' : 0, 'bias' : 0}
 
@@ -244,6 +246,16 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
         yield self.blink_server.set_voltage(self.blinkChan, 0)
         yield self.sleep(0.25)
         
+    @inlineCallbacks
+    def zeroFeedback(self, c = None):
+        try:
+            val = yield self.dac.read_voltage(self.feedbackChan)
+            yield self.dac.set_voltage(0,val)
+            print 'Channel 1 Output on the nSOT DAC ADC has been set to ' + str(val) + ' volts to offset the lock points voltage and allow maximal gain on the SR560.'
+        except Exception as inst:
+            print inst
+            
+            
     def lockInterface(self):
         self.fieldSetpntLine.setEnabled(False)
         self.fieldRampRateLine.setEnabled(False)
@@ -258,6 +270,7 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
         self.zeroBiasBtn.setEnabled(False)
         
         self.push_readSetpoint.setEnabled(False)
+        self.push_zeroFeedback.setEnabled(False)
         self.blinkBtn.setEnabled(False)
         
     def unlockInterface(self):
@@ -274,6 +287,7 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
         self.zeroBiasBtn.setEnabled(True)
         
         self.push_readSetpoint.setEnabled(True)
+        self.push_zeroFeedback.setEnabled(True)
         self.blinkBtn.setEnabled(True)
         
     def moveDefault(self):

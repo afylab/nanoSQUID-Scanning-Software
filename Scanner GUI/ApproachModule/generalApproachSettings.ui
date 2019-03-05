@@ -65,7 +65,7 @@ color: rgb(168,168,168);
 QTabBar::tab:selected {background: rgb(50,50,50);}</string>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="tab">
     <property name="styleSheet">
@@ -213,13 +213,13 @@ color:rgb(168,168,168)
      <string notr="true">#tab_2{background: black}</string>
     </property>
     <attribute name="title">
-     <string>Retract Speeds</string>
+     <string>Retract Settings</string>
     </attribute>
     <widget class="QLineEdit" name="lineEdit_Step_Retract_Speed">
      <property name="geometry">
       <rect>
        <x>120</x>
-       <y>80</y>
+       <y>50</y>
        <width>71</width>
        <height>20</height>
       </rect>
@@ -235,7 +235,7 @@ color:rgb(168,168,168)
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>80</y>
+       <y>50</y>
        <width>101</width>
        <height>22</height>
       </rect>
@@ -248,7 +248,7 @@ color:rgb(168,168,168)
      <property name="geometry">
       <rect>
        <x>310</x>
-       <y>160</y>
+       <y>110</y>
        <width>71</width>
        <height>20</height>
       </rect>
@@ -264,7 +264,7 @@ color:rgb(168,168,168)
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>160</y>
+       <y>110</y>
        <width>101</width>
        <height>22</height>
       </rect>
@@ -277,7 +277,7 @@ color:rgb(168,168,168)
      <property name="geometry">
       <rect>
        <x>120</x>
-       <y>160</y>
+       <y>110</y>
        <width>71</width>
        <height>20</height>
       </rect>
@@ -293,7 +293,7 @@ color:rgb(168,168,168)
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>130</y>
+       <y>80</y>
        <width>311</width>
        <height>20</height>
       </rect>
@@ -320,8 +320,8 @@ color:rgb(168,168,168)
     <widget class="QLabel" name="label_8">
      <property name="geometry">
       <rect>
-       <x>80</x>
-       <y>20</y>
+       <x>180</x>
+       <y>10</y>
        <width>111</width>
        <height>20</height>
       </rect>
@@ -333,8 +333,8 @@ color:rgb(168,168,168)
     <widget class="QLineEdit" name="lineEdit_Atto_Retract_Distance">
      <property name="geometry">
       <rect>
-       <x>210</x>
-       <y>20</y>
+       <x>310</x>
+       <y>10</y>
        <width>71</width>
        <height>20</height>
       </rect>
@@ -358,7 +358,7 @@ background: rgb(168,168,168);
      <property name="geometry">
       <rect>
        <x>200</x>
-       <y>160</y>
+       <y>110</y>
        <width>121</width>
        <height>22</height>
       </rect>
@@ -371,7 +371,7 @@ background: rgb(168,168,168);
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>50</y>
+       <y>20</y>
        <width>311</width>
        <height>20</height>
       </rect>
@@ -399,7 +399,7 @@ color:rgb(168,168,168)
      <property name="geometry">
       <rect>
        <x>310</x>
-       <y>80</y>
+       <y>50</y>
        <width>71</width>
        <height>20</height>
       </rect>
@@ -415,13 +415,99 @@ color:rgb(168,168,168)
      <property name="geometry">
       <rect>
        <x>200</x>
-       <y>80</y>
+       <y>50</y>
        <width>121</width>
        <height>22</height>
       </rect>
      </property>
      <property name="text">
       <string>Tot. Retract Time (s):</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_24">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>170</y>
+       <width>111</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Retract Distance (m):</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_AutoRetractDist">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>170</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_title_13">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>140</y>
+       <width>311</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_title{
+color:rgb(168,168,168)
+}</string>
+     </property>
+     <property name="text">
+      <string>Constant Height Auto Retract Settings</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_AutoRetractPoints">
+     <property name="geometry">
+      <rect>
+       <x>310</x>
+       <y>170</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_29">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>170</y>
+       <width>111</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Trigger Points:</string>
      </property>
     </widget>
    </widget>
@@ -770,7 +856,7 @@ color:rgb(168,168,168)
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
-     <x>300</x>
+     <x>310</x>
      <y>220</y>
      <width>75</width>
      <height>23</height>

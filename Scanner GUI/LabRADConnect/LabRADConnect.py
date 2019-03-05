@@ -227,12 +227,12 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         try:
             yield self.cxn.anc350_server.disconnect()
         except:
-            pass
+            print 'Error disconnecting the ANC350 server.'
         
         try: 
             yield self.cxn.disconnect()
         except:
-            pass
+            print 'Error disconnecting the Labrad connection server.'
 
         self.connectionLocalDictionary = self.emptyLocalDictionary.copy()
         self.connectionRemoteDictionary = self.emptyRemoteDictionary.copy()
@@ -294,6 +294,9 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.push_ANC350.setStyleSheet("#push_ANC350{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.label_ANC350_status.setText('Not connected')
+        self.push_AMI430.setStyleSheet("#push_AMI430{" + 
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.label_AMI430_status.setText('Not connected')
         
         self.cxnDisconnected.emit()   
 
