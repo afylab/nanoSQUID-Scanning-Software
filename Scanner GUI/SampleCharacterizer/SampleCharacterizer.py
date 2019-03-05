@@ -54,7 +54,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             'FourTerminalSetting_Numberofsteps_Status': "Numberofsteps",
             'FourTerminal_Delay':0.001,
             'FieldSweep1D_MinField': 0,
-            'FieldSweep1D_MaxField': 1.0,
+            'FieldSweep1D_MaxField': 0.1,
             'FieldSweep1D_Numberofstep': 100,
             'FieldSweep1DSetting_Numberofsteps_Status': "Numberofsteps",
             'FieldSweep1D_Delay': 0.01,
@@ -320,12 +320,24 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         try:
             self.ClearPlots([self.FieldSweep1D_Plot1, self.FieldSweep1D_Plot2, self.FieldSweep1D_Plot3, self.FieldSweep1D_Plot4])
 
-            self.FieldSweep1D(self.Dict_Variable['FieldSweep1D_MinField'], self.Dict_Variable['FieldSweep1D_MaxField'], 'Up')
+            yield self.FieldSweep1D(self.Dict_Variable['FieldSweep1D_MinField'], self.Dict_Variable['FieldSweep1D_MaxField'], 'Up')
 
+            self.plotData1D(self.Plot_Data[1],self.Plot_Data[2],self.FieldSweep1D_Plot1, 'r')
+            if self.FourTerminal_Input2!=4:
+                self.plotData1D(self.Plot_Data[1],self.Plot_Data[3],self.FieldSweep1D_Plot2, 'r') #xaxis, yaxis, plot
+                self.plotData1D(self.Plot_Data[1],self.Plot_Data[4],self.FieldSweep1D_Plot3, 'r') #xaxis, yaxis, plot
+                self.plotData1D(self.Plot_Data[1],self.Plot_Data[5],self.FieldSweep1D_Plot4, 'r') #xaxis, yaxis, plot
+            
             if self.FieldSweep1D_LoopFlag:
                 yield self.sleep(1)
-                self.FieldSweep1D(self.Dict_Variable['FieldSweep1D_MaxField'], self.Dict_Variable['FieldSweep1D_MinField'], 'Down')
+                yield self.FieldSweep1D(self.Dict_Variable['FieldSweep1D_MaxField'], self.Dict_Variable['FieldSweep1D_MinField'], 'Down')
 
+                self.plotData1D(self.Plot_Data[1],self.Plot_Data[2],self.FieldSweep1D_Plot1, 'b')
+                if self.FourTerminal_Input2!=4:
+                    self.plotData1D(self.Plot_Data[1],self.Plot_Data[3],self.FieldSweep1D_Plot2, 'b') #xaxis, yaxis, plot
+                    self.plotData1D(self.Plot_Data[1],self.Plot_Data[4],self.FieldSweep1D_Plot3, 'b') #xaxis, yaxis, plot
+                    self.plotData1D(self.Plot_Data[1],self.Plot_Data[5],self.FieldSweep1D_Plot4, 'b') #xaxis, yaxis, plot
+                
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
 
@@ -349,7 +361,6 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             yield self.rampMagneticField(self.current_field, start, self.Dict_Variable['FieldSweep1D_SweepSpeed'])
 
             self.formatted_data = []
-
             for self.i in range(0,self.Dict_Variable['FieldSweep1D_Numberofstep']):
 
                 if self.AbortMagneticFieldSweep_Flag:
@@ -360,17 +371,18 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 print 'Set magnetic field  to: ' + str(self.FieldSweep1DXaxis[self.i])
                 yield self.rampMagneticField(self.current_field, self.FieldSweep1DXaxis[self.i], self.Dict_Variable['FieldSweep1D_SweepSpeed'])
 
-                self.sleep(self.Dict_Variable['FieldSweep1D_Delay'])
+                yield self.sleep(self.Dict_Variable['FieldSweep1D_Delay'])
 
                 reading = []
                 for channel in self.FourTerminal_ChannelInput:
-                    reading.append(self.dac.read_voltage(channel))
+                    cache = yield self.dac.read_voltage(channel)
+                    reading.append(cache)
 
-                DummyVoltage=self.Convert_Real_Voltage(reading[0])
+                DummyVoltage= self.Convert_Real_Voltage(reading[0])
                 self.formatted_data.append((self.i, self.FieldSweep1DXaxis[self.i], DummyVoltage))
                 self.Plot_Data[2][self.i] = DummyVoltage
                 if self.FourTerminal_Input2!=4: 
-                    DummyCurrent=self.Convert_Real_Current(reading[1])
+                    DummyCurrent = self.Convert_Real_Current(reading[1])
                     self.formatted_data[self.i]+=(DummyCurrent,)
                     self.Plot_Data[3][self.i] = DummyCurrent
                     resistance=self.Calculate_Resistance(DummyVoltage,DummyCurrent)
@@ -382,19 +394,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                     self.formatted_data[self.i]+=(Conductance,)  #proccessing to Conductance
                     self.Plot_Data[4][self.i] = resistance
                     self.Plot_Data[5][self.i] = Conductance
-                
-
-                if direction == 'Up':
-                    color ='r'
-                elif direction == 'Down':
-                    color = 'b'
-
-                self.plotData1D(self.Plot_Data[1],self.Plot_Data[2],self.FieldSweep1D_Plot1, color)
-                if self.FourTerminal_Input2!=4:
-                     self.plotData1D(self.Plot_Data[1],self.Plot_Data[3],self.FieldSweep1D_Plot2, color) #xaxis, yaxis, plot
-                     self.plotData1D(self.Plot_Data[1],self.Plot_Data[4],self.FieldSweep1D_Plot3, color) #xaxis, yaxis, plot
-                     self.plotData1D(self.Plot_Data[1],self.Plot_Data[5],self.FieldSweep1D_Plot4, color) #xaxis, yaxis, plot
-                 
+            
             yield self.dv.add(self.formatted_data)
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
@@ -420,9 +420,9 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             # self.dac_read = self.FakeDATA(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.Dict_Variable['FourTerminal_MinVoltage']],[self.Dict_Variable['FourTerminal_MaxVoltage']],self.Dict_Variable['FourTerminal_Numberofstep'],self.Dict_Variable['FourTerminal_Delay'])
 
             self.SetupPlot_Data("No Magnetic Field")#self.Plot_Data: a new set of data particularly for ploting
-
+            
             self.Format_Data("No Magnetic Field")#Take the Buffer_Ramp Data and save it into self.formatted_data
-
+            
             yield self.dv.add(self.formatted_data)
             
             yield self.plotData1D(self.Plot_Data[1], self.Plot_Data[2], self.sweepFourTerminal_Plot1)
@@ -485,7 +485,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 self.SetupPlot_Data("Magnetic Field")#self.Plot_Data: a new set of data particularly for ploting
 
                 self.Format_Data("Magnetic Field")
-
+                
                 yield self.dv.add(self.formatted_data)
                 
                 yield self.UpdateFourTerminal2DPlot(self.Plot_Data[4],self.Plot_Data[2],self.Plot_Data[3] ,self.Plot_Data[5]) #4 is resistance, 5 the Conductance
@@ -520,65 +520,69 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         
     @inlineCallbacks
     def rampMagneticField(self, start, end, rate):
-        #Eventually add "if ips" vs. "if toellner"
-        '''
-        Initialize communication protocal. only needs to be done once and should be done in the labrad connect module. These lines should be deleteable
-        ###########Black Box#############
-        yield self.ips.set_control(3)
-        yield self.ips.set_comm_protocol(6)
-        yield self.ips.set_control(2)
-        
-        yield self.sleep(0.25)
-        '''
-        if self.dac_toe != None:
-            pass
-
-        elif self.ips != None:
+        try:
+            #Eventually add "if ips" vs. "if toellner"
+            '''
+            Initialize communication protocal. only needs to be done once and should be done in the labrad connect module. These lines should be deleteable
+            ###########Black Box#############
             yield self.ips.set_control(3)
-            yield self.ips.set_fieldsweep_rate(rate)
+            yield self.ips.set_comm_protocol(6)
             yield self.ips.set_control(2)
             
-            t0 = time.time() #Keep track of starting time for setting the field
-            yield self.ips.set_control(3)
-            yield self.ips.set_targetfield(end) #Set the setpoin
-            yield self.ips.set_control(2)
+            yield self.sleep(0.25)
+            '''
+            if self.dac_toe != None:
+                pass
+    
+            elif self.ips != None:
+                yield self.ips.set_control(3)
+                yield self.ips.set_fieldsweep_rate(rate)
+                yield self.ips.set_control(2)
+                
+                t0 = time.time() #Keep track of starting time for setting the field
+                yield self.ips.set_control(3)
+                yield self.ips.set_targetfield(end) #Set the setpoin
+                yield self.ips.set_control(2)
+                
+                yield self.ips.set_control(3)
+                yield self.ips.set_activity(1) #Put ips in go to setpoint mode
+                yield self.ips.set_control(2)
+                
+                print 'Setting field to ' + str(end)
+                while True:
+                    yield self.ips.set_control(3)#
+                    self.current_field = yield self.ips.read_parameter(7)#Read the field
+                    yield self.ips.set_control(2)#
+                    #if within 10 uT of the desired field, break out of the loop
+                    if float(self.current_field[1:]) <= end +0.00001 and float(self.current_field[1:]) >= end -0.00001:#
+                        break
+                    #if after one second we still haven't reached the desired field, then reset the field setpoint and activity
+                    if time.time() - t0 > 1:
+                        yield self.ips.set_control(3)
+                        yield self.ips.set_targetfield(end)
+                        yield self.ips.set_control(2)
+                        
+                        yield self.ips.set_control(3)
+                        yield self.ips.set_activity(1)
+                        yield self.ips.set_control(2)
+                        t0 = time.time()
+                        print 'restarting loop'
             
-            yield self.ips.set_control(3)
-            yield self.ips.set_activity(1) #Put ips in go to setpoint mode
-            yield self.ips.set_control(2)
-            
-            print 'Setting field to ' + str(end)
-            while True:
-                yield self.ips.set_control(3)#
-                self.current_field = yield self.ips.read_parameter(7)#Read the field
-                yield self.ips.set_control(2)#
-                #if within 10 uT of the desired field, break out of the loop
-                if float(self.current_field[1:]) <= end +0.00001 and float(self.current_field[1:]) >= end -0.00001:#
-                    break
-                #if after one second we still haven't reached the desired field, then reset the field setpoint and activity
-                if time.time() - t0 > 1:
-                    yield self.ips.set_control(3)
-                    yield self.ips.set_targetfield(end)
-                    yield self.ips.set_control(2)
-                    
-                    yield self.ips.set_control(3)
-                    yield self.ips.set_activity(1)
-                    yield self.ips.set_control(2)
-                    t0 = time.time()
-                    print 'restarting loop'
-        
-        elif self.ami != None:
-            print 'Setting field to ' + str(end)
-            self.ami.conf_field_targ(end)
-            self.ami.ramp()
-            target_field = float(self.ami.get_field_targ())
-            actual_field = float(self.ami.get_field_mag())
-            while abs(target_field - actual_field) > 1e-3:
-                time.sleep(2)
+            elif self.ami != None:
+                print 'Setting field to ' + str(end)
+                self.ami.conf_field_targ(end)
+                self.ami.ramp()
+                target_field = float(self.ami.get_field_targ())
                 actual_field = float(self.ami.get_field_mag())
-            print 'Field set to ' + str(end)
-
-        self.current_field = end
+                while abs(target_field - actual_field) > 1e-3:
+                    time.sleep(2)
+                    actual_field = float(self.ami.get_field_mag())
+                print 'Field set to ' + str(end)
+    
+            self.current_field = end
+        except Exception as inst:
+            print 'Scan error: ', inst
+            print 'on line: ', sys.exc_traceback.tb_lineno
         
     def saveDataToSessionFolder(self):
         try:
@@ -652,7 +656,6 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
     def UpdateFourTerminal_Numberofstep(self):
         dummystr=str(self.lineEdit_FourTerminal_Numberofstep.text())   #read the text
         dummyval=readNum(dummystr, self , False)
-        print self.Dict_Variable['FourTerminal_MaxVoltage'], self.Dict_Variable['FourTerminal_MinVoltage']
         if isinstance(dummyval,float):
             if self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] == "Numberofsteps":   #based on status, dummyval is deterimined and update the Numberof steps parameters
                 self.Dict_Variable['FourTerminal_Numberofstep']=int(round(dummyval)) #round here is necessary, without round it cannot do 1001 steps back and force

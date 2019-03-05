@@ -644,7 +644,7 @@ color: rgb(168,168,168);
 QTabBar::tab:selected {background: rgb(50,50,50);}</string>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <property name="usesScrollButtons">
        <bool>false</bool>
@@ -3132,7 +3132,6 @@ background:black
                  <number>0</number>
                 </property>
                </layout>
-               <zorder>frame_1DFieldSweep_PlotArea</zorder>
               </widget>
              </item>
             </layout>
@@ -3166,7 +3165,6 @@ background:black
                  <number>0</number>
                 </property>
                </layout>
-               <zorder>frame_1DFieldSweepPlot1</zorder>
               </widget>
              </item>
             </layout>
@@ -3397,7 +3395,7 @@ border:1px solid rgb(168,168,168)
                  <string>0.100</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 <set>Qt::AlignCenter</set>
                 </property>
                 <property name="placeholderText">
                  <string>0.0</string>
@@ -3448,7 +3446,7 @@ border:1px solid rgb(168,168,168)
                  <string>0.100</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 <set>Qt::AlignCenter</set>
                 </property>
                 <property name="placeholderText">
                  <string>0.0</string>
@@ -3505,7 +3503,7 @@ border:1px solid rgb(168,168,168)
                  <string>0.000</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 <set>Qt::AlignCenter</set>
                 </property>
                 <property name="placeholderText">
                  <string>0.0</string>
@@ -3665,7 +3663,7 @@ border:1px solid rgb(168,168,168)
                  <string>0.0100</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 <set>Qt::AlignCenter</set>
                 </property>
                 <property name="placeholderText">
                  <string>0.0</string>
