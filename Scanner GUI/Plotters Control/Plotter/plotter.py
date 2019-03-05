@@ -1180,22 +1180,34 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         if self.SweepingDirection == 'x':
             if abs(x - 0) >= side and abs(x - (self.Number_PlotData_X - 1)) >= side:
                 data = [item[y] for item in self.PlotData][x - side:x + side +1]
+                if type(data) != type([]):
+                    data = data.tolist()
                 data.pop(side)
             elif abs(x - 0) < side:
                 data = [item[y] for item in self.PlotData][0: 2*side + 1]
+                if type(data) != type([]):
+                    data = data.tolist()
                 data.pop(x)
             elif abs(x - (self.Number_PlotData_X - 1)) < side:
                 data = [item[y] for item in self.PlotData][(self.Number_PlotData_X - 1) - (2*side + 1):(self.Number_PlotData_X - 1)]
+                if type(data) != type([]):
+                    data = data.tolist()
                 data.pop(2*side - (self.Number_PlotData_X - 1 - x))
         elif self.SweepingDirection == 'y':
             if abs(y - 0) >= side and abs(y - (self.Number_PlotData_Y - 1)) >= side:
                 data = self.PlotData[x][y - side : y + side + 1]
+                if type(data) != type([]):
+                    data = data.tolist()
                 data.pop(side)
             elif abs(y - 0) < side:
                 data = self.PlotData[x][0: 2*side + 1]
+                if type(data) != type([]):
+                    data = data.tolist()
                 data.pop(y)
             elif abs(y - (self.Number_PlotData_Y - 1)) < side:
                 data = self.PlotData[x][(self.Number_PlotData_Y - 1) - (2*side + 1):(self.Number_PlotData_Y - 1)]
+                if type(data) != type([]):
+                    data = data.tolist()
                 data.pop(2*side - (self.Number_PlotData_Y - 1 - y))
         return np.mean(data), np.std(data)
 
