@@ -1,3 +1,4 @@
+#Worked by Marec, Avi and Raymond
 import sys
 import twisted
 from PyQt4 import QtCore, QtGui, QtTest, uic
@@ -11,6 +12,7 @@ import copy
 import os
 
 path = sys.path[0] + r"\Plotters Control"
+sys.path.append(sys.path[0] + r'\DataVaultBrowser')
 sys.path.append(path + r'\Plotter')
 sys.path.append(path + r'\Process List')
 sys.path.append(path + r'\Multiplier Window')
@@ -18,6 +20,7 @@ sys.path.append(path + r'\Multiplier Window')
 import plotter
 import ProcessWindow
 import MultiplierSettings
+import dirExplorer
 
 Ui_CommandCenter, QtBaseClass = uic.loadUiType(path + r"\PlottersControl.ui")
 
@@ -43,7 +46,7 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
 
     def __init__(self, reactor, parent = None):
         super(CommandingCenter, self).__init__(parent)
-
+        self.dv = False
         self.reactor = reactor
         self.parent = parent
         self.setupUi(self)
@@ -89,14 +92,16 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.subtractMenu.addAction(subYQuad)
         self.pushButton_SubtractOveralAverage.setMenu(self.subtractMenu)
 
-        self.listWidget_Plots.itemDoubleClicked.connect(self.AddtoProcess)
+        # self.listWidget_Plots.itemDoubleClicked.connect(self.EditPlotterName)
         self.pushButton_Subtract.clicked.connect(lambda: self.Process('Subtract'))
         self.pushButton_Addition.clicked.connect(lambda: self.Process('Addition'))
         self.pushButton_Product.clicked.connect(lambda: self.Process('Product'))
         self.pushButton_Division.clicked.connect(lambda: self.Process('Division'))
         self.pushButton_SetArea.clicked.connect(self.SetSelectedArea)
         self.SelectedArea_Flag = False
-        self.pushButton_AddPlotter.clicked.connect(self.AddPlotter)
+        self.pushButton_AddPlotter.clicked.connect(self.BrowseDataVault)
+        self.pushButton_RefreshPlotters.clicked.connect(self.RefreshPlotters)
+        self.pushButton_FineTune.clicked.connect(lambda: self.FineTune(self.listWidget_Plots.selectedItems()))
 
         #####Multiply
         self.multiplier = 1.0
@@ -108,9 +113,27 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         
         self.keyPressed.connect(self.PressingKey)
 
-        self.pushButton_ConnectLabrad.clicked.connect(self.connectLabRADBackup)
+        self.RefreshInterface()
 
+    def RefreshInterface(self):
         self.RefreshPlotList()
+        self.DetermineEnableConditions()
+        for button in self.ButtonsCondition:
+            self.ProcessButton(button)
+
+    def ProcessButton(self, button):
+        button.setEnabled(self.ButtonsCondition[button])
+
+    def DetermineEnableConditions(self):
+        self.ButtonsCondition={
+            self.pushButton_AddPlotter: (not self.dv == False) and (not self.dv is None),
+            self.pushButton_RefreshPlotters: (not self.dv == False) and (not self.dv is None),
+            self.pushButton_SetArea: (self.PlotterList != []),
+            self.pushButton_SubtractOveralAverage: self.PlotterList != [],
+            self.pushButton_savePlot: self.PlotterList != [],
+            self.pushButton_MultiplyAll: self.PlotterList != [],
+            self.pushButton_FineTune: self.PlotterList != []
+        }
 
 #####Labrad Related Function
     @inlineCallbacks
@@ -122,18 +145,7 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             from labrad.wrappers import connectAsync
             self.cxn_pc = yield connectAsync(host = '127.0.0.1', password = 'pass')
             self.dv = yield self.cxn_pc.data_vault
-            self.pushButton_AddPlotter.setEnabled(True)
-        except:
-            pass
-
-    @inlineCallbacks
-    def connectLabRADBackup(self, c):
-        try:
-            from labrad.wrappers import connectAsync
-            self.cxn_pc = yield connectAsync(host = '127.0.0.1', password = 'pass')
-            self.dv = yield self.cxn_pc.data_vault
-            self.pushButton_AddPlotter.setEnabled(True)
-            self.Feedback('Data Vault Connected')
+            self.RefreshInterface()
         except:
             pass
 
@@ -142,14 +154,14 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.cxn_dv = False
         self.gen_dv = False
         self.dv = False
-        self.pushButton_AddPlotter.setEnabled(False)
+        self.RefreshInterface()
 
 #####Labrad Related Function
 
 #####Save Matlab file Related Function
     def SaveAllPlot(self):
         fold = str(QtGui.QFileDialog.getExistingDirectory(self, directory = os.getcwd()))
-        print fold
+        self.Feedback('Save All Data at ' + fold)
         for plotter in self.PlotterList:
             plotter.genMatFile(fold + '/' + plotter.file)
 #####Save Matlab file Related Function
@@ -169,7 +181,7 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
 
             self.ProcessList.RefreshPlotList()
         except Exception as inst:
-            print "Error: ",inst
+            print "Error: ", inst
             print "Occured at line: ", sys.exc_traceback.tb_lineno
 
     def renderItem(self, ListWidgetItem , number): #Based on the plotter.number, dress the Item property
@@ -206,24 +218,6 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         index = self.listWidget_Plots.indexFromItem(item).row()
         self.PlotterList[index].showMaximized()
 
-    def AddtoProcess(self, item):
-        try:
-            if item.backgroundColor() == self.Color_ContainPlotData[1]:#Only Proceed with data contained
-                index = self.listWidget_Plots.indexFromItem(item).row()
-                number = self.PlotterList[index].number
-                if  self.ProcessList.listWidget_PlotsListA.count() <= self.ProcessList.listWidget_PlotsListB.count():
-                    self.ProcessList.PlotsListA.append(number)
-                else:
-                    self.ProcessList.PlotsListB.append(number)
-            else:
-                print "Only Add to Process if Data is loaded"
-
-            self.RefreshPlotList()
-            
-        except Exception as inst:
-            print "Error: ",inst
-            print "Occured at line: ", sys.exc_traceback.tb_lineno
-                
     def Process(self, Process, c = None):
         if self.ProcessList.label_Operation.text() == Process: #If the operation changed, kill the current list
             pass
@@ -246,6 +240,23 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         plotter.indVars = indVars
         plotter.depVars = depVars
 
+    @inlineCallbacks
+    def BrowseDataVault(self, c = None):
+        try:
+            self.dvExplorer = dirExplorer.dataVaultExplorer(self.dv, self.reactor)
+            yield self.dvExplorer.popDirs()
+            self.dvExplorer.show()
+            self.dvExplorer.accepted.connect(lambda: self.OpenData(self.reactor, self.dvExplorer.file, self.dvExplorer.directory)) 
+        except Exception as inst:
+            print "Error: ", inst
+            print "Occured at line: ", sys.exc_traceback.tb_lineno        
+
+    @inlineCallbacks
+    def OpenData(self, c, filelist, directory):
+        for file in filelist:
+            self.AddPlotter()
+            yield self.PlotterList[-1].loadData(file, directory)
+
     def AddPlotter(self):
         try:
             ii= -1 #0 is MainPlot, so the number start with 
@@ -256,7 +267,7 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             self.PlotterList.append(plotter.Plotter(self.reactor, self.dv, ii, self))
             self.PlotterList[-1].moveDefault()
             self.PlotterList[-1].show()
-            self.RefreshPlotList()
+            self.RefreshInterface()
 
         except Exception as inst:
             print "Error: ",inst
@@ -265,12 +276,12 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
     def RemovePlotsListAItem(self, item):
         index = self.listWidget_PlotsListA.indexFromItem(item).row()
         self.PlotsListA.pop(index)
-        self.RefreshPlotList()
+        self.RefreshInterface()
 
     def RemovePlotsListBItem(self, item):
         index = self.listWidget_PlotsListB.indexFromItem(item).row()
         self.PlotsListB.pop(index)
-        self.RefreshPlotList()
+        self.RefreshInterface()
 
     def SetSelectedArea(self):
         if self.SelectedArea_Flag == False:
@@ -284,7 +295,6 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             self.plotter_AreaSelected.AreaSelected.sigRegionChangeFinished.disconnect()
             self.SelectedArea_Flag = False
 
-
     def ApplySelectedArea(self, plotterchanged,):
         AreaSelectedParameters = plotterchanged.AreaSelectedParameters
         pos = plotterchanged.AreaSelected.pos()
@@ -294,6 +304,12 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
                 plotter.AreaSelectedParameters = AreaSelectedParameters
                 plotter.AreaSelected.setSize(size)
                 plotter.AreaSelected.setPos(pos)
+
+#####Refresh Plotters Function
+    def RefreshPlotters(self):
+        for plotter in self.PlotterList:
+            plotter.refreshPlot()
+        self.Feedback('Refresh Finished.')
 
 #####Subtract Related Function
     def subtractOverallAvg(self):
@@ -346,18 +362,46 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             NewData = plotter.PlotData * multiplier
             plotter.PlotData = NewData
             plotter.Plot_Data()
+        self.Feedback('Multiply all by ' + str(multiplier))
+
+    def FineTune(self, plotteritems):
+        try:
+            if len(plotteritems) !=2 :
+                self.Feedback('Please make sure to select two plotters.')
+            else:
+                indexlist = []
+                for item in plotteritems:
+                    indexlist.append(self.listWidget_Plots.indexFromItem(item).row())
+                SelectedAreaData = [self.PlotterList[indexlist[0]].SelectedAreaData, self.PlotterList[indexlist[1]].SelectedAreaData]
+                print self.CalculateAverage(np.absolute(SelectedAreaData[0]-SelectedAreaData[1]))
+        except Exception as inst:
+            print "Error: ", inst
+            print "Occured at line: ", sys.exc_traceback.tb_lineno   
+    
+    def CalculateAverage(self, data):
+        average = np.mean(data)
+        return average
 
     def keyPressEvent(self, event):
         super(CommandingCenter, self).keyPressEvent(event)
         self.keyPressed.emit(event) 
 
     def PressingKey(self, event):
-        print event.key()
         if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
-            item = self.listWidget_Plots.currentItem()
-            if not item is None:
-                index = self.listWidget_Plots.indexFromItem(item).row()
-                self.DeletePlotter(index)
+            itemlist = self.listWidget_Plots.selectedItems ()
+            if not itemlist is None:
+                index = []
+                for item in itemlist:
+                    index.append(self.listWidget_Plots.indexFromItem(item).row())
+                index.sort(reverse = True)
+                for value in index:
+                    self.DeletePlotter(value)
+        elif event.key() == 83: #Ctrl + S
+            itemlist = self.listWidget_Plots.selectedItems ()
+            if not itemlist is None:
+                for item in itemlist:
+                    index = self.listWidget_Plots.indexFromItem(item).row()
+                    self.PlotterList[index].raise_()
     
     def DeletePlotter(self, index):
         self.PlotterList[index].close()

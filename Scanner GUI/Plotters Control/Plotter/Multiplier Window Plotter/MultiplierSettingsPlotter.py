@@ -3,7 +3,7 @@ import sys
 from PyQt4 import QtCore, QtGui, QtTest, uic
 import numpy as np
 
-path = sys.path[0] + r"\Plotters Control\Multiplier Window"
+path = sys.path[0] + r"\Plotters Control\Plotter\Multiplier Window Plotter"
 Ui_MultiplierWindow, QtBaseClass = uic.loadUiType(path + r"\MultiplierSettings.ui")
 
 class MultiplierWindow(QtGui.QMainWindow, Ui_MultiplierWindow):
@@ -25,13 +25,14 @@ class MultiplierWindow(QtGui.QMainWindow, Ui_MultiplierWindow):
         self.lineEdit_Multiplier.setText(str(number))
 
     def moveDefault(self):
-        buttonposition = self.parent.pushButton_MultiplyAll.mapToGlobal(QtCore.QPoint(0,0))
+        buttonposition = self.parent.pushButton_Multiply.mapToGlobal(QtCore.QPoint(0,0))
         buttonx, buttony = buttonposition.x(), buttonposition.y()
         Offset = 50
         self.move(buttonx + Offset, buttony)  
 
     def OK(self):
-        self.parent.MultiplyAllPlotData(self.parent.multiplier)
+        self.parent.MultiplyPlotData(self.parent.multiplier)
+        print '?'
         self.close()
 
     def Cancel(self):

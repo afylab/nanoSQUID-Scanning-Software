@@ -95,6 +95,7 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
 
     def fileSelect(self):
         file = self.fileList.currentItem()
+        print file
         self.currentFile.setText(file.text())
 
     def dataSetInfo(self):

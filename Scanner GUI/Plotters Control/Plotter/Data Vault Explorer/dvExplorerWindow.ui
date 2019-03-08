@@ -14,7 +14,7 @@
    <string>Data Vault Explorer</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../Resources/nSOTScannerResources.qrc">
+   <iconset>
     <normaloff>:/nSOTScanner/Pictures/jj_schema.svg</normaloff>:/nSOTScanner/Pictures/jj_schema.svg</iconset>
   </property>
   <property name="styleSheet">
@@ -260,6 +260,9 @@ QScrollBar:vertical {
    width: 15px;
 }</string>
    </property>
+   <property name="selectionMode">
+    <enum>QAbstractItemView::MultiSelection</enum>
+   </property>
   </widget>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
@@ -384,8 +387,6 @@ border-radius: 5px
    </property>
   </widget>
  </widget>
- <resources>
-  <include location="../../Resources/nSOTScannerResources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

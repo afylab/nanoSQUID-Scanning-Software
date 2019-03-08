@@ -24,7 +24,7 @@ class editDataInfo(QtGui.QMainWindow, Ui_EditDataInfo):
         self.pushButton_ok.clicked.connect(self.updateComments)
         self.pushButton_Cancel.clicked.connect(self.exitEdit)
 
-        self.lineEdit_Title.editingFinished.connect(self.UpdateTitle)
+        self.lineEdit_Title.editingFinished.connect(lambda: self.parent.UpdateTitle(self.lineEdit_Title.text()))
 
     def RefreshInfo(self, c = None):
         try:
@@ -149,14 +149,6 @@ class editDataInfo(QtGui.QMainWindow, Ui_EditDataInfo):
             comments = yield dv.get_comments()
             self.parent.comments = comments
             self.RefreshInfo()
-        
-        
-    
-    def UpdateTitle(self):
-        self.parent.Title = self.lineEdit_Title.text()
-        self.RefreshInfo()
-        self.parent.RefreshInterface()
-        self.parent.parent.RefreshPlotList()
 
     def moveDefault(self):
         buttonposition = self.parent.pushButton_Info.mapToGlobal(QtCore.QPoint(0,0))

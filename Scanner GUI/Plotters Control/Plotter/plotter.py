@@ -27,7 +27,7 @@ sys.path.append(path + r'\ZoomWindow')
 sys.path.append(path + r'\Data Vault Explorer')
 sys.path.append(path + r'\Data Info')
 sys.path.append(path + r'\Remove Spike Setting')
-sys.path.append(path + r'\Multiplier Window')
+sys.path.append(path + r'\Multiplier Window Plotter')
 sys.path.append(path + r'\Subtract Constant Window')
 sys.path.append(path + r'\Plot1D')
 sys.path.append(sys.path[0]+r'\Resources')
@@ -38,7 +38,7 @@ import zoomWindow
 import dvExplorerWindow
 import editDatasetInfo
 import DespikeSettings
-import MultiplierSettings
+import MultiplierSettingsPlotter
 import ConstantSubtract
 import Plot1D
 
@@ -59,10 +59,11 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
             self.Data = None
             self.PlotData = None
+            self.SelectedAreaData = None
             self.TraceFlag = None
             self.DataType = 'None'
             self.NumberofindexVariables = 0
-            self.Title = 'Plotter ' + str(self.number)
+            self.Title = 'Plotter ' + str(self.number) #Title is an important identifier in Plotters since update 3/6/2019
             self.directory = None
             self.PlotParameters = {
                 'xMax': 0.0,
@@ -194,7 +195,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
 
             #####Multiply
             self.multiplier = 1.0
-            self.MultiplyWindow = MultiplierSettings.MultiplierWindow(self.reactor, self)
+            self.MultiplyWindow = MultiplierSettingsPlotter.MultiplierWindow(self.reactor, self)
             self.pushButton_Multiply.clicked.connect(self.MultiplyDialog)
 
             #TraceSelect
@@ -211,7 +212,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.pushButton_lockratio.clicked.connect(self.ToggleAspectRatio)
             self.pushButton_sensitivity.clicked.connect(self.GenerateSensitivity)
             self.pushButton_zoom.clicked.connect(self.zoomArea)
-            self.pushButton_loadData.clicked.connect(self.browseDV)
             self.pushButton_refresh.clicked.connect(self.refreshPlot)
             self.pushButton_Info.clicked.connect(self.displayInfo)
             self.pushButton_Squid.clicked.connect(self.ShowSQUIDProperty)
@@ -227,7 +227,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def DetermineEnableConditions(self):
         self.ButtonsCondition={
             self.pushButton_refresh: (not self.Data is None),
-            self.pushButton_loadData: True,
             self.pushButton_trSelect: self.TraceFlag != None and (not self.Data is None),
             self.pushButton_Multiply: (not self.PlotData is None),
             self.pushButton_Despike: (not self.PlotData is None) and '2DPlot' in self.DataType,
@@ -237,13 +236,33 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.subtract: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.gradient: (not self.PlotData is None) and '2DPlot' in self.DataType,
             self.pushButton_sensitivity: (not self.PlotData is None) and '2DPlot' in self.DataType and 'nSOT vs. Bias Voltage and Field' in self.file and 'DC SSAA Output' in self.comboBox_zAxis.currentText() and 'B Field' in self.comboBox_xAxis.currentText() and 'Bias Voltage' in self.comboBox_yAxis.currentText(),
-            self.pushButton_Squid: self.label_Feeedback.text() == 'Sensitivity Plotted' and (not self.PlotData is None) and '2DPlot' in self.DataType and 'nSOT vs. Bias Voltage and Field' in self.file and 'DC SSAA Output' in self.comboBox_zAxis.currentText() and 'B Field' in self.comboBox_xAxis.currentText() and 'Bias Voltage' in self.comboBox_yAxis.currentText(),
+            self.pushButton_Squid: self.textEdit_Feedback.toPlainText () == 'Sensitivity Plotted' and (not self.PlotData is None) and '2DPlot' in self.DataType and 'nSOT vs. Bias Voltage and Field' in self.file and 'DC SSAA Output' in self.comboBox_zAxis.currentText() and 'B Field' in self.comboBox_xAxis.currentText() and 'Bias Voltage' in self.comboBox_yAxis.currentText(),
             self.diamCalc: False,
             self.savePlot:(not self.PlotData is None),
             self.pushButton_SelectArea: (not self.PlotData is None and '2DPlot' in self.DataType),
             self.pushButton_CropWindow: (not self.PlotData is None and '2DPlot' in self.DataType) and self.SelectedAreaShow
         }
         
+    def UpdateTitle(self, title):
+        OriginalTitle = self.Title
+        self.Title  = title
+        DuplicateFlag = False
+        for plotter in self.parent.PlotterList:
+            if plotter.Title == self.Title and plotter != self:
+                DuplicateFlag = True
+        if DuplicateFlag:
+            self.Title = OriginalTitle
+            print 'Please use a different tilte'
+        else:
+            self.editDataInfo.RefreshInfo()
+            self.RefreshInterface()
+            self.parent.RefreshInterface()
+
+    def RefreshPlot_Data(self):
+        self.Plot_Data()
+        self.RefreshAreaSelected()
+        print 'here'
+
     def RefreshInterface(self):
         self.RefreshFileName()
         self.RefreshTitle()
@@ -357,8 +376,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             yMin, yMax = self.AreaSelectedParameters['yMin'], self.AreaSelectedParameters['yMax']
             Dimx, Dimy = self.PlotParameters['xPoints'], self.PlotParameters['yPoints']
             if xMin >= 0 and xMax < Dimx and yMin >= 0 and yMax < Dimy:
-                self.Data_SelectedArea = self.PlotData[xMin:xMax, yMin:yMax]
-                self.Average_SelectedArea = np.average(self.Data_SelectedArea)
+                self.SelectedAreaData = self.PlotData[xMin:xMax, yMin:yMax]
+                self.Average_SelectedArea = np.average(self.SelectedAreaData)
             else:
                 self.Average_SelectedArea = 0.0
         else:
@@ -372,7 +391,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         ratio = 1000 * math.sqrt(65000)
         Data = self.PlotData / (NoiseData/ ratio)
         self.PlotData = Data
-        self.Plot_Data()
+        self.RefreshPlot_Data()
         self.Feedback('Sensitivity Plotted')
         self.RefreshInterface()
 
@@ -588,7 +607,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def subtractOverallAvg(self):
         self.PlotData = processImageData(self.PlotData, 'Subtract Image Average')
         self.Feedback("Subtracted Overall Average")
-        self.Plot_Data()
+        self.RefreshPlot_Data()
 
     def ConstantSubtractedWindow(self):
         self.SubConstantWindow.raise_()
@@ -599,7 +618,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         if not self.PlotData is None:
             NewData = self.PlotData - number
             self.PlotData = NewData
-            self.Plot_Data()
+            self.RefreshPlot_Data()
             feedback = "Subtracted Constatnt: " + str(number)
             self.Feedback(feedback)
         else:
@@ -608,42 +627,42 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def subtractPlane(self):
         self.PlotData = processImageData(self.PlotData, 'Subtract Image Plane')
         self.Feedback("Subtracted Overall Plane Fit")
-        self.Plot_Data()
+        self.RefreshPlot_Data()
 
     def subtractOverallQuad(self):
         self.PlotData = processImageData(self.PlotData, 'Subtract Image Quadratic')
         self.Feedback("Subtracted Overall Quadratic Fit")
-        self.Plot_Data()
+        self.RefreshPlot_Data()
         
     def subtractXAvg(self):
         self.PlotData = processImageData(self.PlotData, 'Subtract Line Average')
         self.Feedback("Subtracted Line Average in X")
-        self.Plot_Data()
+        self.RefreshPlot_Data()
         
     def subtractYAvg(self):
         self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Average').T
         self.Feedback("Subtracted Line Average in Y")
-        self.Plot_Data()
+        self.RefreshPlot_Data()
 
     def subtractXLinear(self):
         self.PlotData = processImageData(self.PlotData, 'Subtract Line Linear')
         self.Feedback("Subtracted Linear Fit in X")
-        self.Plot_Data()
+        self.RefreshPlot_Data()
     
     def subtractYLinear(self):
         self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Linear').T
         self.Feedback("Subtracted Linear Fit in Y")
-        self.Plot_Data()
+        self.RefreshPlot_Data()
 
     def subtractXQuad(self):
         self.PlotData = processImageData(self.PlotData, 'Subtract Line Quadratic')
         self.Feedback("Subtracted Quadratic Fit in X")
-        self.Plot_Data()
+        self.RefreshPlot_Data()
     
     def subtractYQuad(self):
         self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Quadratic').T
         self.Feedback("Subtracted Quadratic Fit in Y")
-        self.Plot_Data()
+        self.RefreshPlot_Data()
         
 ##################
 
@@ -654,19 +673,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def MultiplyPlotData(self, multiplier):
         NewData = self.PlotData * multiplier
         self.PlotData = NewData
-        self.Plot_Data()
-        
-    @inlineCallbacks
-    def browseDV(self, c = None):
-        try:
-            yield self.sleep(0.1)
-            self.dvExplorer = dvExplorerWindow.dataVaultExplorer(self.dv, self.reactor)
-            yield self.dvExplorer.popDirs()
-            self.dvExplorer.show()
-            self.dvExplorer.accepted.connect(lambda: self.loadData(self.reactor))
-        except Exception as inst:
-            print 'Following error was thrown: ', inst
-            print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+        self.RefreshPlot_Data()
+        self.Feedback('Multiply by ' + str(multiplier))
+        print 'here'
 
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
@@ -840,15 +849,29 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
 
     @inlineCallbacks
-    def loadData(self, c):
+    def loadData(self, file, directory):
         try:
             self.ClearcomboBox()
                     
             #Initialized data set to none
             self.ClearData()
             
+            #Open Data and extract information
+            yield self.dv.open(file)
+            variables = yield self.dv.variables()
+            indVars = []
+            depVars = []
+            for i in variables[0]:
+                indVars.append(str(i[0]))
+            for i in variables[1]:
+                depVars.append(str(i[0]))
+            variables = [indVars, depVars]
+            parameters = yield self.dv.get_parameters()
+            comments = yield self.dv.get_comments()
+
             #Determine the Data Structure, there can be Trace/Retrace or Index/nonIndex
-            dvInfo = self.dvExplorer.dataSetInfo()
+            dvInfo = [file, directory, variables, parameters, comments]
+
             file, directory, indVars, depVars, paramsDict, comments, DataType, TraceFlag, NumberofindexVariables = self.ParseDatainfo(dvInfo)
             
             rawData = yield self.ReadData()
@@ -879,7 +902,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             
             self.RefreshInterface()
             self.editDataInfo.RefreshInfo()
-            self.parent.RefreshPlotList()
+            self.parent.RefreshInterface()
 
             if nanflag:
                 self.Feedback('nan detected in data structure, check data integrity') 
@@ -930,7 +953,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                     self.PlotData[0].append(i[self.NumberofindexVariables])
                     self.PlotData[1].append(i[self.zIndex])
             
-            self.parent.RefreshPlotList()
+            self.parent.RefreshInterface()
 
         except Exception as inst:
                 print 'Following error was thrown: ', inst
@@ -1249,7 +1272,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                         list.append([i,j, abs(self.PlotData[i][j] - avg) / float(std)])
                         self.PlotData[i][j] = self.LinearExtrapolate(i,j)
 
-        self.Plot_Data()
+        self.RefreshPlot_Data()
         feedback = "Remove Spikes Finished, Flattened " + str(number) + " data."
         self.Feedback(feedback)
 
@@ -1292,7 +1315,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.viewBig.setYRange(bounds.y(), bounds.y() + bounds.height())    
 
     def Feedback(self, string):
-        self.label_Feeedback.setText(string) 
+        self.textEdit_Feedback.setText(string) 
 
     def moveDefault(self):
         parentx, parenty = self.parent.mapToGlobal(QtCore.QPoint(0,0)).x(), self.parent.mapToGlobal(QtCore.QPoint(0,0)).y()
@@ -1303,7 +1326,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def closeEvent(self, e):
         self.parent.PlotterList.remove(self)
         self.CloseSubWindow()
-        self.parent.RefreshPlotList()
+        self.parent.RefreshInterface()
         self.close()
     
     def CloseSubWindow(self):

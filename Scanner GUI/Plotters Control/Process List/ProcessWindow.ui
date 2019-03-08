@@ -276,6 +276,9 @@ QScrollBar:vertical {
    width: 15px;
 }</string>
       </property>
+      <property name="dragDropMode">
+       <enum>QAbstractItemView::DropOnly</enum>
+      </property>
      </widget>
     </item>
     <item row="1" column="4" rowspan="4" colspan="3">
@@ -298,6 +301,9 @@ QScrollBar:vertical {
    background: black;
    width: 15px;
 }</string>
+      </property>
+      <property name="dragDropMode">
+       <enum>QAbstractItemView::DropOnly</enum>
       </property>
      </widget>
     </item>

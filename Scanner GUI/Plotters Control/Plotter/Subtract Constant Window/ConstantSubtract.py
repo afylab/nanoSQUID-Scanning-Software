@@ -21,7 +21,7 @@ class SubConstantWindow(QtGui.QMainWindow, Ui_SubConstant):
     def ChangeConstant(self):
         number = float(self.lineEdit_Constant.text())
         self.parent.ConstantSubtracted = number
-        self.lineEdit_Multiplier.setText(str(number))
+        self.lineEdit_Constant.setText(str(number))
 
     def moveDefault(self):
         buttonposition = self.parent.subtract.mapToGlobal(QtCore.QPoint(0,0))
