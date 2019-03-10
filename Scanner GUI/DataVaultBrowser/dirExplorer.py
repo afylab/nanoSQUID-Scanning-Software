@@ -8,104 +8,58 @@ import exceptions
 import time
 import threading
 import copy
-import sys
 
 path = sys.path[0] + r"\DataVaultBrowser"
-
 Ui_dvExplorer, QtBaseClass = uic.loadUiType(path + r"\dvExplorer.ui")
-Ui_EditDataInfo, QtBaseClass = uic.loadUiType(path + r"\editDatasetInfo.ui")
 
+class dataVaultExplorer(QtGui.QMainWindow, Ui_dvExplorer):
+    accepted = QtCore.pyqtSignal()
 
-class editDataInfo(QtGui.QDialog, Ui_EditDataInfo):
-    def __init__(self, dataset, dv, reactor, parent = None):
-        QtGui.QDialog.__init__(self, parent)
-        super(editDataInfo, self).__init__(parent)
-
-
-        self.reactor = reactor
-        self.setupUi(self)
-        self.dv = dv
-        self.dataSet = dataset
-
-        self.ok.clicked.connect(self.updateComments)
-        self.cancel.clicked.connect(self.exitEdit)
-
-        self.name.setWordWrap(True)
-        self.currentComs.setReadOnly(True)
-        self.setupTags(reactor)
-
-    @inlineCallbacks
-    def setupTags(self, c):
-        name = yield self.dv.get_name()
-        params = yield self.dv.get_parameters()
-        coms = yield self.dv.get_comments()
-        self.name.setText(name)
-        self.name.setStyleSheet("QLabel#name {color: rgb(131,131,131);}")
-        self.parameters.setText(str(params))
-        self.parameters.setStyleSheet("QLabel#parameters {color: rgb(131,131,131);}")
-        if str(coms) == '[]':
-            self.currentComs.setText("(None)")
-        else:
-            s = ""
-            for i in coms:
-                s += str(i[2]) + "\n\n" 
-            self.currentComs.setText(str(s))
-
-    @inlineCallbacks
-    def updateComments(self, c):
-        coms = str(self.comments.toPlainText())
-        if coms == '':
-            pass
-        else:
-            yield self.dv.add_comment(coms)
-        self.close()
-        
-    def exitEdit(self):
-        self.close()
-
-class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
     def __init__(self, dv, reactor, parent = None):
         QtGui.QDialog.__init__(self, parent)
         super(dataVaultExplorer, self).__init__(parent)
+        self.setupUi(self)
 
         self.reactor = reactor
-        self.setupUi(self)
         self.dv = dv 
 
-        self.currentDir.setReadOnly(True)
-        self.currentFile.setReadOnly(True)
+        self.curDir = ''
 
         self.dirList.itemDoubleClicked.connect(self.updateDirs)
-        self.fileList.itemClicked.connect(self.fileSelect)
-        self.fileList.itemDoubleClicked.connect(self.displayInfo)
+        self.fileList.itemSelectionChanged.connect(self.fileSelect)
+        self.fileList.itemDoubleClicked.connect(self.fileSelect)
+        self.fileList.itemDoubleClicked.connect(self.selectDirFile)
         self.back.clicked.connect(self.backUp)
         self.home.clicked.connect(self.goHome)
-        self.refresh.clicked.connect(self.popDirs)
+        self.pushButton_dvexplorer_refresh.clicked.connect(self.popDirs)
         self.addDir.clicked.connect(self.makeDir)
         self.select.clicked.connect(self.selectDirFile)
         self.cancelSelect.clicked.connect(self.closeWindow)
-        
-        self.popDirs(reactor)
+
 
     @inlineCallbacks
-    def popDirs(self, c):
-        self.dirList.clear()
-        self.fileList.clear()
-        l = yield self.dv.dir()
-        curDir = yield self.dv.cd()
-        self.curDir = curDir[-1]
-        for i in l[0]:
-            self.dirList.addItem(i)
-        for i in l[1]:
-            self.fileList.addItem(i)
-        if self.curDir == '':
-            self.currentDir.setText('Root')
-            self.dirName.setText('Root')
-            self.dirName.setStyleSheet("QLabel#dirName {color: rgb(131,131,131);}")
-        else:
-            self.currentDir.setText(self.curDir)
-            self.dirName.setText(self.curDir)
-            self.dirName.setStyleSheet("QLabel#dirName {color: rgb(131,131,131);}")
+    def popDirs(self, c = None):
+        try:
+            self.dirList.clear()
+            self.fileList.clear()
+
+            l = yield self.dv.dir()
+
+            for i in l[0]:
+                self.dirList.addItem(i)
+            for i in l[1]:
+                self.fileList.addItem(i)
+
+            if self.curDir == '':
+                self.currentDir.setText('Root')
+                self.dirName.setText('Root')
+                self.dirName.setStyleSheet("QLabel#dirName {color: rgb(131,131,131);}")
+            else:
+                self.currentDir.setText(self.curDir)
+                self.dirName.setText(self.curDir)
+                self.dirName.setStyleSheet("QLabel#dirName {color: rgb(131,131,131);}")
+        except Exception as inst:
+            print inst
 
     @inlineCallbacks
     def updateDirs(self, subdir):
@@ -133,7 +87,6 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
         self.curDir = ''
         self.popDirs(self.reactor)
 
-
     @inlineCallbacks
     def makeDir(self, c):
         direct, ok = QtGui.QInputDialog.getText(self, "Make directory", "Directory Name: " )
@@ -141,43 +94,38 @@ class dataVaultExplorer(QtGui.QDialog, Ui_dvExplorer):
             yield self.dv.mkdir(str(direct))
             self.popDirs(self.reactor)
 
-    @inlineCallbacks
-    def displayInfo(self, c):
-        dataSet = str(self.currentFile.text())
-        yield self.dv.open(str(dataSet))
-        self.editDataInfo = editDataInfo(dataSet, self.dv, c, self)
-        self.editDataInfo.show()
-
     def fileSelect(self):
-        file = self.fileList.currentItem()
-        self.currentFile.setText(file.text())
-
-
-    def dirFileVars(self):
-        info =[self.file, self.directory, self.plotVars]
-        return info
+        selectedItem = self.fileList.selectedItems()
+        self.file = [str(item.text()) for item in selectedItem]
+        if len(self.file) == 1:
+            self.currentFile.setText(self.file[0])
+        elif len(self.file) == 0:
+            self.currentFile.setText('')
+        else:
+            self.currentFile.setText('Selected ' + str(len(self.file)) +' files')
 
     @inlineCallbacks
     def selectDirFile(self, c):
-        self.file =  str(self.currentFile.text())
         self.directory = yield self.dv.cd()
-        try: 
-            yield self.dv.open(self.file)
-            self.plotVars = yield self.dv.variables()
-        except: 
-            self.plotVars = ''
-        self.accept()
+        
+        self.accepted.emit()
 
-    def closeWindow(self):
-        self.reject()
+        #Reset all selected files and close
+        selectedItem = self.fileList.selectedItems()
+        for item in selectedItem:
+            self.fileList.setItemSelected(item, False)
         self.close()
 
-'''
-#Print Error
-try:
-	yield 'something'
-except Exception as inst:
-	print type(inst)
-	print inst.args
-	print inst
-'''
+    def closeWindow(self):
+        self.close()
+
+if __name__ == "__main__":
+	app = QtGui.QApplication([])
+	from qtreactor import pyqt4reactor
+	pyqt4reactor.install()
+	from twisted.internet import reactor
+	window = dataVaultExplorer(reactor)
+	window.show()
+	reactor.run()
+
+
