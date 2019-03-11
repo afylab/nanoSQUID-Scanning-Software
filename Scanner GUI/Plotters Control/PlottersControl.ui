@@ -47,7 +47,7 @@ QScrollBar:vertical {
 }</string>
       </property>
       <property name="dragDropMode">
-       <enum>QAbstractItemView::NoDragDrop</enum>
+       <enum>QAbstractItemView::DragDrop</enum>
       </property>
       <property name="selectionMode">
        <enum>QAbstractItemView::ExtendedSelection</enum>
@@ -448,7 +448,7 @@ border-radius: 5px
         </widget>
        </item>
        <item row="3" column="1">
-        <widget class="QPushButton" name="pushButton_MultiplyAll">
+        <widget class="QPushButton" name="pushButton_MultiplySelected">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -459,17 +459,17 @@ border-radius: 5px
           </sizepolicy>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Multiply all Plotters with constant&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Multiply selected Plotters with constant&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="styleSheet">
-          <string notr="true">QPushButton:disabled#pushButton_MultiplyAll {image:url(:/nSOTScanner/Pictures/lock.png)}
+          <string notr="true">QPushButton:disabled#pushButton_MultiplySelected {image:url(:/nSOTScanner/Pictures/lock.png)}
 
-QPushButton#pushButton_MultiplyAll{
+QPushButton#pushButton_MultiplySelected{
 image:url(:/nSOTScanner/Pictures/Multiply.png);
 background: black;
 }
 
-QPushButton:pressed#pushButton_MultiplyAll{
+QPushButton:pressed#pushButton_MultiplySelected{
 image:url(:/nSOTScanner/Pictures/Multiply.png);
 background: black;
 border: 2px rgb(131,131,131);
@@ -503,6 +503,37 @@ background: black;
 
 QPushButton:pressed#pushButton_FineTune{
 image:url(:/nSOTScanner/Pictures/Fine Tuning.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QPushButton" name="pushButton_Setting">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Settings</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:disabled#pushButton_Setting {image:url(:/nSOTScanner/Pictures/Setting.png)}
+
+#pushButton_Setting{
+image:url(:/nSOTScanner/Pictures/Setting.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_Setting{
+image:url(:/nSOTScanner/Pictures/Setting.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px
