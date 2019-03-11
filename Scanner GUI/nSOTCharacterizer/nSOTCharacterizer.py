@@ -128,6 +128,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         
         self.push_Servers.clicked.connect(self.showServersList)
         
+
         #Initialize to no data to avoid line cut error
         self.isData = False
         
@@ -1242,25 +1243,26 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         else:
             pass
         yield self.sleep(1)
-        print 'Sweeping magnetic field back to zero'
-        if magpower == 'IPS 120-10':
-            if bVal != 0:
-                yield self.ips.set_control(3)
-                #Go to 0 field
-                yield self.ips.set_targetfield(0)
-                yield self.ips.set_activity(2)
-                #Set control method back to local control 
-                yield self.ips.set_control(2)
-            else:
-                pass
-        
-        elif magpower == 'Toellner 8851':
-            if bVal != 0:
-                yield self.toeSweepField(bVal, 0, 0.1)
-                yield self.dac.set_voltage(DAC_set_volt, 0)
-                yield self.dac.set_voltage(DAC_set_current, 0)
-            else:
-                pass
+        if self.checkBox_ZeroField.isChecked():
+            print 'Sweeping magnetic field back to zero'
+            if magpower == 'IPS 120-10':
+                if bVal != 0:
+                    yield self.ips.set_control(3)
+                    #Go to 0 field
+                    yield self.ips.set_targetfield(0)
+                    yield self.ips.set_activity(2)
+                    #Set control method back to local control 
+                    yield self.ips.set_control(2)
+                else:
+                    pass
+
+            elif magpower == 'Toellner 8851':
+                if bVal != 0:
+                    yield self.toeSweepField(bVal, 0, 0.1)
+                    yield self.dac.set_voltage(DAC_set_volt, 0)
+                    yield self.dac.set_voltage(DAC_set_current, 0)
+                else:
+                    pass
                 
         self.refreshInterface()
             
@@ -1747,9 +1749,10 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
             yield self.dac.set_voltage(DAC_out, 0)
             
-            #Go to zero field and set power supply voltage setpoint to zero.
-            yield self.toeSweepField(B_space[-1], 0, B_rate)
-            yield self.dac.set_voltage(DAC_set_volt, 0)
+            if self.checkBox_ZeroField.isChecked():
+                #Go to zero field and set power supply voltage setpoint to zero.
+                yield self.toeSweepField(B_space[-1], 0, B_rate)
+                yield self.dac.set_voltage(DAC_set_volt, 0)
         
         elif magpower == 'IPS 120-10': 
             yield self.ips.set_control(3)
@@ -1879,34 +1882,35 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
             yield self.dac.set_voltage(DAC_out, 0)
             
-            #Go to 0 field
-            yield self.ips.set_control(3)
-            yield self.ips.set_targetfield(0)
-            yield self.ips.set_activity(2)
-            
-            yield self.ips.set_control(3)
-            yield self.ips.set_activity(1)
-            yield self.ips.set_control(2)
-            
-            while True:
+            if self.checkBox_ZeroField.isChecked():
+                #Go to 0 field
                 yield self.ips.set_control(3)
-                curr_field = yield self.ips.read_parameter(7)
+                yield self.ips.set_targetfield(0)
+                yield self.ips.set_activity(2)
+                
+                yield self.ips.set_control(3)
+                yield self.ips.set_activity(1)
                 yield self.ips.set_control(2)
-                if float(curr_field[1:]) <= 0.00001 and float(curr_field[1:]) >= -0.00001:
-                    break
-                if time.time() - t0 > 1:
+                
+                while True:
                     yield self.ips.set_control(3)
-                    yield self.ips.set_targetfield(0)
+                    curr_field = yield self.ips.read_parameter(7)
                     yield self.ips.set_control(2)
-                    
-                    yield self.ips.set_control(3)
-                    yield self.ips.set_activity(1)
-                    yield self.ips.set_control(2)
-                    t0 = time.time()
-                    print 'restarting loop'
-                    if self.abortFlag == True:
+                    if float(curr_field[1:]) <= 0.00001 and float(curr_field[1:]) >= -0.00001:
                         break
-                yield self.sleep(0.25)
+                    if time.time() - t0 > 1:
+                        yield self.ips.set_control(3)
+                        yield self.ips.set_targetfield(0)
+                        yield self.ips.set_control(2)
+                        
+                        yield self.ips.set_control(3)
+                        yield self.ips.set_activity(1)
+                        yield self.ips.set_control(2)
+                        t0 = time.time()
+                        print 'restarting loop'
+                        if self.abortFlag == True:
+                            break
+                    yield self.sleep(0.25)
 
             #Set control method back to local control 
             yield self.ips.set_control(2)    
