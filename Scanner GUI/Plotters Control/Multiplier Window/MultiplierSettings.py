@@ -25,13 +25,13 @@ class MultiplierWindow(QtGui.QMainWindow, Ui_MultiplierWindow):
         self.lineEdit_Multiplier.setText(str(number))
 
     def moveDefault(self):
-        buttonposition = self.parent.pushButton_MultiplyAll.mapToGlobal(QtCore.QPoint(0,0))
+        buttonposition = self.parent.pushButton_MultiplySelected.mapToGlobal(QtCore.QPoint(0,0))
         buttonx, buttony = buttonposition.x(), buttonposition.y()
         Offset = 50
         self.move(buttonx + Offset, buttony)  
 
     def OK(self):
-        self.parent.MultiplyAllPlotData(self.parent.multiplier)
+        self.parent.MultiplySelectedPlotData(self.parent.multiplier)
         self.close()
 
     def Cancel(self):

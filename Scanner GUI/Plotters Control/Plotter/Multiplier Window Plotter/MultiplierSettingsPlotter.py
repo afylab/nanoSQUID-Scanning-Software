@@ -32,7 +32,6 @@ class MultiplierWindow(QtGui.QMainWindow, Ui_MultiplierWindow):
 
     def OK(self):
         self.parent.MultiplyPlotData(self.parent.multiplier)
-        print '?'
         self.close()
 
     def Cancel(self):

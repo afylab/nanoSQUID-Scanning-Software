@@ -215,6 +215,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.pushButton_refresh.clicked.connect(self.refreshPlot)
             self.pushButton_Info.clicked.connect(self.displayInfo)
             self.pushButton_Squid.clicked.connect(self.ShowSQUIDProperty)
+            self.pushButton_Bipolar.clicked.connect(self.SymmetrizeHistogram)
+
 
             self.RefreshInterface()
 
@@ -240,7 +242,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.diamCalc: False,
             self.savePlot:(not self.PlotData is None),
             self.pushButton_SelectArea: (not self.PlotData is None and '2DPlot' in self.DataType),
-            self.pushButton_CropWindow: (not self.PlotData is None and '2DPlot' in self.DataType) and self.SelectedAreaShow
+            self.pushButton_CropWindow: (not self.PlotData is None and '2DPlot' in self.DataType) and self.SelectedAreaShow,
+            self.pushButton_Bipolar: (not self.PlotData is None)
         }
         
     def UpdateTitle(self, title):
@@ -261,7 +264,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def RefreshPlot_Data(self):
         self.Plot_Data()
         self.RefreshAreaSelected()
-        print 'here'
 
     def RefreshInterface(self):
         self.RefreshFileName()
@@ -675,7 +677,6 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.PlotData = NewData
         self.RefreshPlot_Data()
         self.Feedback('Multiply by ' + str(multiplier))
-        print 'here'
 
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
@@ -1313,6 +1314,46 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         bounds = self.AreaSelected.parentBounds()
         self.viewBig.setXRange(bounds.x(), bounds.x()+bounds.width())
         self.viewBig.setYRange(bounds.y(), bounds.y() + bounds.height())    
+
+    def SymmetrizeHistogram(self):
+        level = self.mainPlot.ui.histogram.item.getLevels()
+        high = max(abs(level[0]), abs(level[1]))
+        self.mainPlot.ui.histogram.item.setLevels(-high, high)
+        
+    def MovePlotData(self, dataset, xMove, yMove):# give a dataset, how it should move, return the croped data
+        dataset = np.array(dataset)
+        x, y = dataset.shape()
+        xmin, ymin = 0 + xMove, 0 + yMove
+        xmax, ymax = x - 1 + xMove, y - 1 + yMove
+        if xmin < 0:
+            xmin = 0
+        if ymin < 0:
+            ymin = 0
+        if xmax > x - 1:
+            xmax = x - 1
+        if ymax > y - 1:
+            ymax = y - 1
+        data = dataset[xmin:xmax, ymin:ymax]
+        return data
+
+    def HistogramOfData(self, data, number):
+        try:
+            datamin, datamax = np.amin(data), np.amax(data) #generate the bin for histogram, symmtric around zero
+            interval = (datamax - datamin) / number
+            binlist = np.linspace(datamin, datamax, number - 1)
+            sortedbinlinst = sorted(binlist, key=abs)
+            offset = (sortedbinlinst[0] + sortedbinlinst[1]) / 2
+            binlistmin, binlistmax = datamin + offset, datamax + offset
+            if offset > 0:
+                binlistmin -= 2 * offset
+            elif offset < 0:
+                binlistmax += 2 * offset
+            binlist = np.linspace(binlistmin, binlistmax, number)
+            histogram = np.histogram(data, binlist, density = True)
+            return histogram
+        except Exception as inst:
+                print 'Following error was thrown: ', inst
+                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
 
     def Feedback(self, string):
         self.textEdit_Feedback.setText(string) 

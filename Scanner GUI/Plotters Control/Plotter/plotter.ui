@@ -834,6 +834,37 @@ border-radius: 5px
             </property>
            </widget>
           </item>
+          <item row="0" column="7">
+           <widget class="QPushButton" name="pushButton_Bipolar">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Set the histogram to be symmetric</string>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton:disabled#pushButton_Bipolar {image:url(:/nSOTScanner/Pictures/lock.png)}
+
+#pushButton_Bipolar{
+image:url(:/nSOTScanner/Pictures/Bipolar.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_Bipolar{
+image:url(:/nSOTScanner/Pictures/Bipolar.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>

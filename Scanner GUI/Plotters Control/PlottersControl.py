@@ -16,11 +16,13 @@ sys.path.append(sys.path[0] + r'\DataVaultBrowser')
 sys.path.append(path + r'\Plotter')
 sys.path.append(path + r'\Process List')
 sys.path.append(path + r'\Multiplier Window')
+sys.path.append(path + r'\Plotters Control Setting')
 
 import plotter
 import ProcessWindow
 import MultiplierSettings
 import dirExplorer
+import PlottersControlSetting
 
 Ui_CommandCenter, QtBaseClass = uic.loadUiType(path + r"\PlottersControl.ui")
 
@@ -102,14 +104,16 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.pushButton_AddPlotter.clicked.connect(self.BrowseDataVault)
         self.pushButton_RefreshPlotters.clicked.connect(self.RefreshPlotters)
         self.pushButton_FineTune.clicked.connect(lambda: self.FineTune(self.listWidget_Plots.selectedItems()))
+        self.pushButton_Setting.clicked.connect(self.OpenSetting)
 
         #####Multiply
         self.multiplier = 1.0
         self.MultiplyWindow = MultiplierSettings.MultiplierWindow(self.reactor, self)
-        self.pushButton_MultiplyAll.clicked.connect(self.MultiplyAll)
+        self.pushButton_MultiplySelected.clicked.connect(self.MultiplySelected)
+
+        self.SettingWindow = PlottersControlSetting.SettingWindow(self.reactor, self, self.pushButton_Setting)
 
         self.pushButton_savePlot.clicked.connect(self.SaveAllPlot)
-        
         
         self.keyPressed.connect(self.PressingKey)
 
@@ -131,7 +135,7 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             self.pushButton_SetArea: (self.PlotterList != []),
             self.pushButton_SubtractOveralAverage: self.PlotterList != [],
             self.pushButton_savePlot: self.PlotterList != [],
-            self.pushButton_MultiplyAll: self.PlotterList != [],
+            self.pushButton_MultiplySelected: self.PlotterList != [],
             self.pushButton_FineTune: self.PlotterList != []
         }
 
@@ -353,16 +357,18 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             plotter.subtractOverallConstant(plotter.Average_SelectedArea)
 #####Subtract Related Function
    
-    def MultiplyAll(self):
+    def MultiplySelected(self):
         self.MultiplyWindow.moveDefault()
         self.MultiplyWindow.show()
 
-    def MultiplyAllPlotData(self, multiplier):
+    def MultiplySelectedPlotData(self, multiplier):
+        itemlist = self.listWidget_Plots.selectedItems ()
+        PlotterList = []
+        for item in itemlist:
+            PlotterList.append(self.PlotterList[self.listWidget_Plots.indexFromItem(item).row()])
         for plotter in self.PlotterList:
-            NewData = plotter.PlotData * multiplier
-            plotter.PlotData = NewData
-            plotter.Plot_Data()
-        self.Feedback('Multiply all by ' + str(multiplier))
+            plotter.MultiplyPlotData(multiplier)
+        self.Feedback('Multiply ' + str(len(PlotterList)) + ' plotters by ' + str(multiplier))
 
     def FineTune(self, plotteritems):
         try:
@@ -370,10 +376,18 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
                 self.Feedback('Please make sure to select two plotters.')
             else:
                 indexlist = []
+                plotterlist = []
                 for item in plotteritems:
                     indexlist.append(self.listWidget_Plots.indexFromItem(item).row())
+                    plotterlist.append(self.PlotterList[self.listWidget_Plots.indexFromItem(item).row()])
                 SelectedAreaData = [self.PlotterList[indexlist[0]].SelectedAreaData, self.PlotterList[indexlist[1]].SelectedAreaData]
                 print self.CalculateAverage(np.absolute(SelectedAreaData[0]-SelectedAreaData[1]))
+                histA = self.HistogramOfData(plotterlist[0].PlotData, self.SettingWindow.Setting_Parameter['NumberHistogramBin'])
+                histB = self.HistogramOfData(plotterlist[1].PlotData, self.SettingWindow.Setting_Parameter['NumberHistogramBin'])
+                hist = self.HistogramOfData(plotterlist[0].PlotData - plotterlist[1].PlotData, self.SettingWindow.Setting_Parameter['NumberHistogramBin'])
+                print 'A',histA
+                print 'B',histB
+                print 'A-B',hist
         except Exception as inst:
             print "Error: ", inst
             print "Occured at line: ", sys.exc_traceback.tb_lineno   
@@ -382,6 +396,32 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         average = np.mean(data)
         return average
 
+    def HistogramOfData(self, data, number):
+        try:
+            datamin, datamax = np.amin(data), np.amax(data) #generate the bin for histogram, symmtric around zero
+            print datamin,datamax
+            interval = (datamax - datamin) / number
+            binlist = np.linspace(datamin, datamax, number - 1)
+            sortedbinlist = sorted(binlist, key=abs)
+            print sortedbinlist
+            offset = (sortedbinlist[0] + sortedbinlist[1]) / 2
+            print offset
+            binlistmin, binlistmax = datamin + offset, datamax + offset
+            if offset > 0:
+                binlistmin -= 2 * offset
+            elif offset < 0:
+                binlistmax += 2 * offset
+            binlist = np.linspace(binlistmin, binlistmax, number)
+            histogram = np.histogram(data, binlist, density = True)
+            return histogram
+        except Exception as inst:
+                print 'Following error was thrown: ', inst
+                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+
+    def OpenSetting(self):
+        self.SettingWindow.show()
+        self.SettingWindow.raise_()
+        
     def keyPressEvent(self, event):
         super(CommandingCenter, self).keyPressEvent(event)
         self.keyPressed.emit(event) 
