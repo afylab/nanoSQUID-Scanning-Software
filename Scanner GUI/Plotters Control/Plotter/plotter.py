@@ -30,6 +30,7 @@ sys.path.append(path + r'\Remove Spike Setting')
 sys.path.append(path + r'\Multiplier Window Plotter')
 sys.path.append(path + r'\Subtract Constant Window')
 sys.path.append(path + r'\Plot1D')
+sys.path.append(path + r'\Debug')    
 sys.path.append(sys.path[0]+r'\Resources')
 
 import sensitivityPrompt
@@ -41,6 +42,7 @@ import DespikeSettings
 import MultiplierSettingsPlotter
 import ConstantSubtract
 import Plot1D
+import Debug
 
 plotter = path + r"\plotter.ui"
 Ui_Plotter, QtBaseClass = uic.loadUiType(plotter)
@@ -131,16 +133,19 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             #Function Taking gradiant
             self.gradMenu = QtGui.QMenu()
             gradX = QtGui.QAction(QtGui.QIcon("nablaXIcon.png"), "Gradient along x-axis", self)
-            gradY = QtGui.QAction(QtGui.QIcon("nablaYIcon.png"), "Gradient along y-axis", self)
-            lancSettings = QtGui.QAction("Gradient settings...", self)
             gradX.triggered.connect(self.xDeriv)
-            gradY.triggered.connect(self.yDeriv)
-            lancSettings.triggered.connect(self.derivSettings)
             self.gradMenu.addAction(gradX)
+            gradY = QtGui.QAction(QtGui.QIcon("nablaYIcon.png"), "Gradient along y-axis", self)
+            gradY.triggered.connect(self.yDeriv)
             self.gradMenu.addAction(gradY)
+            lancSettings = QtGui.QAction("Gradient settings...", self)
+            lancSettings.triggered.connect(self.derivSettings)
             self.gradMenu.addAction(lancSettings)
             self.gradient.setMenu(self.gradMenu)
-            self.datPct = 0.1
+            self.SideDataNumber = 5
+            self.PolyFitOrder = 2
+            self.EdgeNumber = 10
+            
 
             #Function Despiking
             self.AdjacentPoints, self.NumberOfSigma = 3, 5
@@ -216,6 +221,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.pushButton_Info.clicked.connect(self.displayInfo)
             self.pushButton_Squid.clicked.connect(self.ShowSQUIDProperty)
             self.pushButton_Bipolar.clicked.connect(self.SymmetrizeHistogram)
+
+            self.DebugPanel = Debug.DebugPanel(self.reactor, self.pushButton_Debug, self)
+            self.pushButton_Debug.clicked.connect(self.OpenDebugPanel)
 
 
             self.RefreshInterface()
@@ -432,10 +440,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         xVals = np.linspace(self.PlotParameters['xMin'], self.PlotParameters['xMax'], num = self.PlotParameters['xPoints'])
         yVals = np.linspace(self.PlotParameters['yMin'], self.PlotParameters['yMax'], num = self.PlotParameters['yPoints'])
         delta = abs(self.PlotParameters['xMax'] - self.PlotParameters['xMin']) / self.PlotParameters['xPoints']
-        N = int(self.PlotParameters['yPoints'] * self.datPct)
 
         for i in range(0, self.PlotData.shape[1]):
-            self.PlotData[:, i] = deriv(self.PlotData[:, i], xVals, N, delta)
+            self.PlotData[:, i] = deriv(self.PlotData[:, i], xVals, self.SideDataNumber, delta, self.PolyFitOrder, self.EdgeNumber)
 
         if self.NSselect == 1:
             self.PlotData = np.absolute(np.true_divide(self.PlotData , self.noiseData))
@@ -576,35 +583,32 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         self.gradient.setFocusPolicy(QtCore.Qt.StrongFocus)
         xVals = np.linspace(self.PlotParameters['xMin'], self.PlotParameters['xMax'], num = self.PlotParameters['xPoints'])
         delta = abs(self.PlotParameters['xMax'] - self.PlotParameters['xMin']) / self.PlotParameters['xPoints']
-        N = int(self.PlotParameters['xPoints'] * self.datPct)
-        if N < 2:
-            self.Feedback("Lanczos window too small.")
-        else:
-            for i in range(0, self.PlotData.shape[1]):
-                self.PlotData[:, i] = deriv(self.PlotData[:,i], xVals, N, delta) 
-               
-            self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.PlotParameters['xMin'], self.PlotParameters['yMin']],scale=[self.PlotParameters['xscale'], self.PlotParameters['yscale']])
-            self.Feedback("Plotted gradient along x-axis.")
-            self.ResetLineCutPlots()
+        for i in range(0, self.PlotData.shape[1]):
+            self.PlotData[:, i] = deriv(self.PlotData[:,i], xVals, self.SideDataNumber, delta, self.PolyFitOrder, self.EdgeNumber) 
+           
+        self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.PlotParameters['xMin'], self.PlotParameters['yMin']],scale=[self.PlotParameters['xscale'], self.PlotParameters['yscale']])
+        self.Feedback("Plotted gradient along x-axis.")
+        self.ResetLineCutPlots()
                 
     def yDeriv(self):
         yVals = np.linspace(self.PlotParameters['yMin'], self.PlotParameters['yMax'], num = self.PlotParameters['yPoints'])
         delta = abs(self.PlotParameters['yMax'] - self.PlotParameters['yMin']) / self.PlotParameters['yPoints']
-        N = int(self.PlotParameters['yPoints'] * self.datPct)
         for i in range(0, self.PlotData.shape[0]):
-            self.PlotData[i, :] = deriv(self.PlotData[i,:], yVals, N, delta)    
+            self.PlotData[i, :] = deriv(self.PlotData[i,:], yVals, self.SideDataNumber, delta, self.PolyFitOrder, self.EdgeNumber)    
         self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.PlotParameters['xMin'], self.PlotParameters['yMin']],scale=[self.PlotParameters['xscale'], self.PlotParameters['yscale']])
         self.Feedback("Plotted gradient along y-axis.")
         self.ResetLineCutPlots()
         
     def derivSettings(self):
-        self.gradSet = gradSettings.gradSet(self.reactor, self.datPct)
+        self.gradSet = gradSettings.gradSet(self.reactor, self.SideDataNumber, self.PolyFitOrder, self.EdgeNumber)
         self.gradSet.show()
         self.gradSet.accepted.connect(self.setLancWindow)
         
     def setLancWindow(self):
-        self.datPct = self.gradSet.dataPercent.value() / 100
-
+        self.SideDataNumber = self.gradSet.dataNumber.value() 
+        self.PolyFitOrder = self.gradSet.PolyFitOrder.value() 
+        self.EdgeNumber = self.gradSet.EdgeNumber.value() 
+        
 ##################Manipulating Plot Data
     def subtractOverallAvg(self):
         self.PlotData = processImageData(self.PlotData, 'Subtract Image Average')
@@ -778,12 +782,18 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 print 'Following error was thrown: ', inst
                 print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
 
-    def RefreshComboIndex(self):
+    def SetupComboIndex(self):
         try:
             if "2DPlot" in self.DataType:
                 for i in self.indVars[self.NumberofindexVariables: len(self.indVars)]:
-                    self.comboBox_xAxis.addItem(i)
-                    self.comboBox_yAxis.addItem(i)
+                    name = i
+                    if self.parent.SettingWindow.checkBox_RealUnit.isChecked():
+                        if name ==  'X Pos. Voltage':
+                            name = 'X position'
+                        elif name == 'Y Pos. Voltage':
+                            name = 'Y position'
+                    self.comboBox_xAxis.addItem(name)
+                    self.comboBox_yAxis.addItem(name)
                     self.comboBox_xAxis.setCurrentIndex(0)#Default
                     self.comboBox_yAxis.setCurrentIndex(1)#Default
             elif "1DPlot" in self.DataType:
@@ -885,14 +895,13 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.setPlotInfo(file, directory, indVars, depVars, paramsDict, comments, DataType, TraceFlag, NumberofindexVariables) #file, directory, indVars, depVars, paramsDict, comments, DataType, TraceFlag = None, NumberofindexVariables = 0
             
             self.Data = self.ProcessRawData(rawData)
-
             ### Assumptions, we have trace/retrace for only 2DPlot
             ### Assumptions, index are in the beginning of the lists
             #This logically follows from setPlotInfo, put it there
-            self.RefreshComboIndex()
+            self.SetupComboIndex()
             #self.TraceFlag gives whether there are trace, self.NumberofindexVariables gives the number of index and should also be where the data starts in self.Data,   self.DataType gives the type of DataPlot
             #Also put this in setPlotInfo
-            
+
             if np.array_equal(self.Data, np.array([])):
                 self.Data = None
                 self.Feedback('Data Empty, check data integrity')
@@ -924,6 +933,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         try:
             self.PlotParameters['xMax'] = np.amax(self.Data[::,self.NumberofindexVariables+self.xIndex])
             self.PlotParameters['xMin'] = np.amin(self.Data[::,self.NumberofindexVariables+self.xIndex])
+            if self.parent.SettingWindow.checkBox_RealUnit.isChecked(): #If checked, make it micron unit
+                self.PlotParameters['xMax'] = self.PlotParameters['xMax'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
+                self.PlotParameters['xMin'] = self.PlotParameters['xMin'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
             self.PlotParameters['deltaX'] = self.PlotParameters['xMax'] - self.PlotParameters['xMin']
             self.PlotParameters['xPoints'] = np.amax(self.Data[::,self.xIndex])+1  #look up the index
             self.PlotParameters['xscale']  = (self.PlotParameters['xMax']-self.PlotParameters['xMin']) / (self.PlotParameters['xPoints'] -1)
@@ -932,9 +944,12 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             if "2DPlot" in self.DataType:
                 self.PlotParameters['yMax'] = np.amax(self.Data[::,self.NumberofindexVariables+self.yIndex])
                 self.PlotParameters['yMin'] = np.amin(self.Data[::,self.NumberofindexVariables+self.yIndex])
-                self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
-                self.PlotParameters['yPoints'] = np.amax(self.Data[::,self.yIndex])+1
-                self.PlotParameters['yscale'] = (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / (self.PlotParameters['yPoints'] - 1)
+            if self.parent.SettingWindow.checkBox_RealUnit.isChecked(): #If checked, make it micron unit
+                self.PlotParameters['yMax'] = self.PlotParameters['yMax'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
+                self.PlotParameters['yMin'] = self.PlotParameters['yMin'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
+            self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
+            self.PlotParameters['yPoints'] = np.amax(self.Data[::,self.yIndex])+1
+            self.PlotParameters['yscale'] = (self.PlotParameters['yMax']-self.PlotParameters['yMin']) / (self.PlotParameters['yPoints'] - 1)
         except Exception as inst:
             print 'Following error was thrown: ', inst
             print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
@@ -1354,6 +1369,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         except Exception as inst:
                 print 'Following error was thrown: ', inst
                 print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+
+    def OpenDebugPanel(self):
+        self.DebugPanel.raise_()
+        self.DebugPanel.show()        
 
     def Feedback(self, string):
         self.textEdit_Feedback.setText(string) 

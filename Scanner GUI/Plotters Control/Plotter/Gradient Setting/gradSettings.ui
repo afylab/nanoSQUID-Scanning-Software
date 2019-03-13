@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>319</width>
-    <height>199</height>
+    <width>322</width>
+    <height>224</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Gradient Settings</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../Resources/nSOTScannerResources.qrc">
+   <iconset resource="../../../Resources/nSOTScannerResources.qrc">
     <normaloff>:/nSOTScanner/Pictures/jj_schema.svg</normaloff>:/nSOTScanner/Pictures/jj_schema.svg</iconset>
   </property>
   <property name="styleSheet">
@@ -31,30 +31,33 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Select the percent of the total number of data points the &lt;br/&gt;Lancsoz differentiator uses to compute the gradient.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Default is 10%.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Input the number of data points  on the side for the &lt;br/&gt;Lancsoz differentiator uses to compute the gradient.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Default is 10.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>110</y>
+     <y>80</y>
      <width>83</width>
      <height>13</height>
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Lancsoz Window:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Data Number:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <widget class="QDoubleSpinBox" name="dataPercent">
+  <widget class="QDoubleSpinBox" name="dataNumber">
    <property name="geometry">
     <rect>
      <x>140</x>
-     <y>105</y>
+     <y>70</y>
      <width>62</width>
      <height>22</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>Number of data on each side </string>
    </property>
    <property name="buttonSymbols">
     <enum>QAbstractSpinBox::NoButtons</enum>
@@ -66,24 +69,11 @@
     <double>0.000000000000000</double>
    </property>
   </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>210</x>
-     <y>110</y>
-     <width>45</width>
-     <height>13</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;(percent)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="okBtn">
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>150</y>
+     <y>180</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -110,8 +100,8 @@ border-radius: 5px
   <widget class="QPushButton" name="cancelBtn">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>150</y>
+     <x>200</x>
+     <y>190</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -135,9 +125,79 @@ border-radius: 5px
     <string>Cancel</string>
    </property>
   </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>110</y>
+     <width>101</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Order of polynomial:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QDoubleSpinBox" name="PolyFitOrder">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>110</y>
+     <width>62</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Order of fit on the edge</string>
+   </property>
+   <property name="buttonSymbols">
+    <enum>QAbstractSpinBox::NoButtons</enum>
+   </property>
+   <property name="decimals">
+    <number>0</number>
+   </property>
+   <property name="value">
+    <double>0.000000000000000</double>
+   </property>
+  </widget>
+  <widget class="QDoubleSpinBox" name="EdgeNumber">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>150</y>
+     <width>62</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Number of edge data to fit, must be bigger than data number</string>
+   </property>
+   <property name="buttonSymbols">
+    <enum>QAbstractSpinBox::NoButtons</enum>
+   </property>
+   <property name="decimals">
+    <number>0</number>
+   </property>
+   <property name="value">
+    <double>0.000000000000000</double>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_4">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>150</y>
+     <width>101</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;Edge Fit Data Number:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
  </widget>
  <resources>
-  <include location="../../Resources/nSOTScannerResources.qrc"/>
+  <include location="../../../Resources/nSOTScannerResources.qrc"/>
  </resources>
  <connections/>
 </ui>

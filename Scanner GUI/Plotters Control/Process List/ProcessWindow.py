@@ -142,7 +142,7 @@ class ProcessWindow(QtGui.QMainWindow, Ui_ProcessWindow):
                 elif 'Product' in operation:
                     PlotDataGenerated = PlotDataA * PlotDataB
                     
-                procedure = plotterA.Title + operation + plotterA.Title
+                procedure = plotterA.Title + operation + plotterB.Title
                 
                 self.parent.AddPlotter()
                 self.transferPlotData(self.parent.PlotterList[-1], PlotDataGenerated, procedure, procedure, procedure, plotterA.PlotParameters, [plotterA.comboBox_xAxis.currentText(),plotterA.comboBox_yAxis.currentText()],[plotterA.comboBox_zAxis.currentText()])

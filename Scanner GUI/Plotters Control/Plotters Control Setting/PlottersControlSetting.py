@@ -18,12 +18,19 @@ class SettingWindow(QtGui.QMainWindow, Ui_SettingWindow):
         self.button = button
 
         self.Setting_Parameter = {
-            'NumberHistogramBin': 20
+            'NumberHistogramBin': 20,
+            'ScaleFactor': 5.36,
+            'Offset': 0.0
         }
 
         self.lineEdit_NumberHistogramBin.editingFinished.connect(lambda: self.UpdateParameter('NumberHistogramBin', self.lineEdit_NumberHistogramBin))
+        self.lineEdit_ScaleFactor.editingFinished.connect(lambda: self.UpdateParameter('ScaleFactor', self.lineEdit_ScaleFactor))
+        self.lineEdit_Offset.editingFinished.connect(lambda: self.UpdateParameter('Offset', self.lineEdit_Offset))
+            
 
         self.UpdateParameter('NumberHistogramBin', self.lineEdit_NumberHistogramBin)
+        self.UpdateParameter('ScaleFactor', self.lineEdit_ScaleFactor)
+        self.UpdateParameter('Offset', self.lineEdit_Offset)
 
     def UpdateParameter(self, key, lineEdit, range = None):
         dummystr=str(lineEdit.text())

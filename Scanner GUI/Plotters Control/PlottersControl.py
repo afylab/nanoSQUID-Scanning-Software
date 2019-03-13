@@ -94,6 +94,16 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.subtractMenu.addAction(subYQuad)
         self.pushButton_SubtractOveralAverage.setMenu(self.subtractMenu)
 
+        # Fine Tuning related functions
+        self.FineTuneMenu = QtGui.QMenu()
+        FineTuneNo1 = QtGui.QAction( "Fine Tune No.1", self)
+        FineTuneNo1.triggered.connect(lambda: self.FineTune(self.listWidget_Plots.selectedItems()))
+        self.FineTuneMenu.addAction(FineTuneNo1)
+        SelectedAreaStandardDeviation = QtGui.QAction( "Selected Area Standard Deviation", self)
+        SelectedAreaStandardDeviation.triggered.connect(lambda: self.SelectedAreaStandardDeviation(self.listWidget_Plots.selectedItems()))
+        self.FineTuneMenu.addAction(SelectedAreaStandardDeviation)
+        self.pushButton_FineTune.setMenu(self.FineTuneMenu)
+
         # self.listWidget_Plots.itemDoubleClicked.connect(self.EditPlotterName)
         self.pushButton_Subtract.clicked.connect(lambda: self.Process('Subtract'))
         self.pushButton_Addition.clicked.connect(lambda: self.Process('Addition'))
@@ -103,7 +113,6 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.SelectedArea_Flag = False
         self.pushButton_AddPlotter.clicked.connect(self.BrowseDataVault)
         self.pushButton_RefreshPlotters.clicked.connect(self.RefreshPlotters)
-        self.pushButton_FineTune.clicked.connect(lambda: self.FineTune(self.listWidget_Plots.selectedItems()))
         self.pushButton_Setting.clicked.connect(self.OpenSetting)
 
         #####Multiply
@@ -392,6 +401,28 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             print "Error: ", inst
             print "Occured at line: ", sys.exc_traceback.tb_lineno   
     
+    def SelectedAreaStandardDeviation(self, plotteritems):
+        try:
+            if len(plotteritems) <= 1 :
+                self.Feedback('Please select plotters.')
+            else:
+                indexlist = []
+                for item in plotteritems:
+                    indexlist.append(self.listWidget_Plots.indexFromItem(item).row())
+                DataRef = self.PlotterList[indexlist[0]].SelectedAreaData
+                for index in indexlist[1:]:
+                    plotter = self.PlotterList[index]
+                    SelectedAreaData = plotter.SelectedAreaData
+                    multiplier, offset = np.polyfit(SelectedAreaData.flatten(), DataRef.flatten(), 1)
+                    plotter.MultiplyPlotData(multiplier)
+                    plotter.subtractOverallConstant(-offset)
+                self.Feedback('Fine Tuning finished')
+
+        except Exception as inst:
+            print "Error: ", inst
+            print "Occured at line: ", sys.exc_traceback.tb_lineno   
+            print SelectedAreaData, len(SelectedAreaData[0]), len(SelectedAreaData[1])
+
     def CalculateAverage(self, data):
         average = np.mean(data)
         return average
