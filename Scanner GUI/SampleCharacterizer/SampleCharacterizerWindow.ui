@@ -644,7 +644,7 @@ color: rgb(168,168,168);
 QTabBar::tab:selected {background: rgb(50,50,50);}</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <property name="usesScrollButtons">
        <bool>false</bool>
@@ -3354,7 +3354,7 @@ border:1px solid rgb(168,168,168)
              <property name="frameShadow">
               <enum>QFrame::Raised</enum>
              </property>
-             <layout class="QGridLayout" name="gridLayout_8" rowstretch="2,1,1,1,1,1,1" columnstretch="7,5,1">
+             <layout class="QGridLayout" name="gridLayout_8" rowstretch="2,1,1,1,1,1,1,0" columnstretch="7,5,1">
               <item row="3" column="1">
                <widget class="QLineEdit" name="lineEdit_1DFieldSweepSetting_Numberofsteps">
                 <property name="sizePolicy">
@@ -3683,6 +3683,39 @@ border:1px solid rgb(168,168,168)
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
+               <widget class="QLabel" name="label">
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Zero Field After&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="2">
+               <widget class="QCheckBox" name="checkBox_FieldSweep1D_BacktoZero">
+                <property name="layoutDirection">
+                 <enum>Qt::LeftToRight</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">setStyleSheet(&quot;margin-left:50%; margin-right:50%;&quot;);
+</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>

@@ -328,7 +328,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 self.plotData1D(self.Plot_Data[1],self.Plot_Data[4],self.FieldSweep1D_Plot3, 'r') #xaxis, yaxis, plot
                 self.plotData1D(self.Plot_Data[1],self.Plot_Data[5],self.FieldSweep1D_Plot4, 'r') #xaxis, yaxis, plot
             
-            if self.FieldSweep1D_LoopFlag:
+            if self.FieldSweep1D_LoopFlag and self.AbortMagneticFieldSweep_Flag == False:# Abort Flag needed for preventing bugs
                 yield self.sleep(1)
                 yield self.FieldSweep1D(self.Dict_Variable['FieldSweep1D_MaxField'], self.Dict_Variable['FieldSweep1D_MinField'], 'Down')
 
@@ -338,16 +338,22 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                     self.plotData1D(self.Plot_Data[1],self.Plot_Data[4],self.FieldSweep1D_Plot3, 'b') #xaxis, yaxis, plot
                     self.plotData1D(self.Plot_Data[1],self.Plot_Data[5],self.FieldSweep1D_Plot4, 'b') #xaxis, yaxis, plot
                 
+            if self.checkBox_FieldSweep1D_BacktoZero.isChecked() and self.AbortMagneticFieldSweep_Flag == False:
+                print 'Set magnetic field  to: ' + str(0)
+                yield self.rampMagneticField(self.current_field, 0, self.Dict_Variable['FieldSweep1D_SweepSpeed'])
+
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
 
         self.unlockInterface()
         yield self.sleep(0.25)
         self.saveDataToSessionFolder() #save the screenshot
+        self.AbortMagneticFieldSweep_Flag = False
 
     @inlineCallbacks
     def FieldSweep1D(self, start, end, direction):
         try:
+            self.AbortMagneticFieldSweep_Flag = False
             self.SetupFourTerminalSweepSetting('MagneticField1D') #Assign the DAC settings and DataVault parameters
             
             #Creates a new datavault file and updates the image# labels
@@ -357,15 +363,14 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             
             self.SetupPlot_Data("MagneticField1D")#self.Plot_Data: a new set of data particularly for ploting
 
-            print 'Ramp to initial field ' + str(start) + 'T'
-            yield self.rampMagneticField(self.current_field, start, self.Dict_Variable['FieldSweep1D_SweepSpeed'])
+            # print 'Ramp to initial field ' + str(start) + 'T'
+            # yield self.rampMagneticField(self.current_field, start, self.Dict_Variable['FieldSweep1D_SweepSpeed'])
 
             self.formatted_data = []
             for self.i in range(0,self.Dict_Variable['FieldSweep1D_Numberofstep']):
 
                 if self.AbortMagneticFieldSweep_Flag:
                     print "Abort the Sweep."
-                    self.AbortMagneticFieldSweep_Flag = False
                     break
 
                 print 'Set magnetic field  to: ' + str(self.FieldSweep1DXaxis[self.i])
@@ -395,7 +400,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                     self.Plot_Data[4][self.i] = resistance
                     self.Plot_Data[5][self.i] = Conductance
             
-            yield self.dv.add(self.formatted_data)
+            if not self.AbortMagneticFieldSweep_Flag:
+                yield self.dv.add(self.formatted_data)
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
 
