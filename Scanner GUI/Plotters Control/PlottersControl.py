@@ -17,12 +17,15 @@ sys.path.append(path + r'\Plotter')
 sys.path.append(path + r'\Process List')
 sys.path.append(path + r'\Multiplier Window')
 sys.path.append(path + r'\Plotters Control Setting')
+sys.path.append(path + r'\TuningForkFitting')
+    
 
 import plotter
 import ProcessWindow
 import MultiplierSettings
 import dirExplorer
 import PlottersControlSetting
+import TuningForkFitting
 
 Ui_CommandCenter, QtBaseClass = uic.loadUiType(path + r"\PlottersControl.ui")
 
@@ -123,6 +126,9 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.SettingWindow = PlottersControlSetting.SettingWindow(self.reactor, self, self.pushButton_Setting)
 
         self.pushButton_savePlot.clicked.connect(self.SaveAllPlot)
+
+        self.pushButton_ACfitting.clicked.connect(self.OpenTuningForkFittingWindow)
+        self.TuningForkFittingWindow = TuningForkFitting.ACFittingWindow(self.reactor, self, self.pushButton_ACfitting)
         
         self.keyPressed.connect(self.PressingKey)
 
@@ -145,7 +151,8 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
             self.pushButton_SubtractOveralAverage: self.PlotterList != [],
             self.pushButton_savePlot: self.PlotterList != [],
             self.pushButton_MultiplySelected: self.PlotterList != [],
-            self.pushButton_FineTune: self.PlotterList != []
+            self.pushButton_FineTune: self.PlotterList != [],
+            self.pushButton_ACfitting: self.PlotterList != []
         }
 
 #####Labrad Related Function
@@ -317,6 +324,11 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
                 plotter.AreaSelectedParameters = AreaSelectedParameters
                 plotter.AreaSelected.setSize(size)
                 plotter.AreaSelected.setPos(pos)
+
+#TuningFork
+    def OpenTuningForkFittingWindow(self):
+        self.TuningForkFittingWindow.raise_()
+        self.TuningForkFittingWindow.show()
 
 #####Refresh Plotters Function
     def RefreshPlotters(self):

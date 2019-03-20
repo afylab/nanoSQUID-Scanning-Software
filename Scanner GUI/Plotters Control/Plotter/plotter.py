@@ -933,7 +933,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         try:
             self.PlotParameters['xMax'] = np.amax(self.Data[::,self.NumberofindexVariables+self.xIndex])
             self.PlotParameters['xMin'] = np.amin(self.Data[::,self.NumberofindexVariables+self.xIndex])
-            if self.parent.SettingWindow.checkBox_RealUnit.isChecked(): #If checked, make it micron unit
+            if self.parent.SettingWindow.checkBox_RealUnit.isChecked() and 'Pos. Voltage' in self.comboBox_xAxis.currentText(): #If checked, make it micron unit
                 self.PlotParameters['xMax'] = self.PlotParameters['xMax'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
                 self.PlotParameters['xMin'] = self.PlotParameters['xMin'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
             self.PlotParameters['deltaX'] = self.PlotParameters['xMax'] - self.PlotParameters['xMin']
@@ -944,7 +944,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             if "2DPlot" in self.DataType:
                 self.PlotParameters['yMax'] = np.amax(self.Data[::,self.NumberofindexVariables+self.yIndex])
                 self.PlotParameters['yMin'] = np.amin(self.Data[::,self.NumberofindexVariables+self.yIndex])
-            if self.parent.SettingWindow.checkBox_RealUnit.isChecked(): #If checked, make it micron unit
+            if self.parent.SettingWindow.checkBox_RealUnit.isChecked() and 'Pos. Voltage' in self.comboBox_yAxis.currentText(): #If checked, make it micron unit
                 self.PlotParameters['yMax'] = self.PlotParameters['yMax'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
                 self.PlotParameters['yMin'] = self.PlotParameters['yMin'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
             self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']

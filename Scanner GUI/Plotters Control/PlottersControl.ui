@@ -24,7 +24,7 @@
 background-color: rgb(0, 0, 0);
 }</string>
    </property>
-   <layout class="QGridLayout" name="gridLayout_3" rowstretch="1,5,3" columnstretch="4,1">
+   <layout class="QGridLayout" name="gridLayout_3" rowstretch="1,6,3" columnstretch="4,1">
     <item row="1" column="0" rowspan="2">
      <widget class="QListWidget" name="listWidget_Plots">
       <property name="styleSheet">
@@ -260,20 +260,7 @@ border-radius: 5px
       <property name="frameShadow">
        <enum>QFrame::Raised</enum>
       </property>
-      <layout class="QGridLayout" name="gridLayout" rowstretch="1,1,1,1,1" columnstretch="1,1">
-       <item row="0" column="0" colspan="2">
-        <widget class="QLabel" name="label_PlotRelated">
-         <property name="styleSheet">
-          <string notr="true">color:rgb(131,131,131)</string>
-         </property>
-         <property name="text">
-          <string>Plot Functions</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
+      <layout class="QGridLayout" name="gridLayout" rowstretch="1,1,1,1,1,1" columnstretch="1,1">
        <item row="1" column="0">
         <widget class="QPushButton" name="pushButton_AddPlotter">
          <property name="enabled">
@@ -315,6 +302,19 @@ border-radius: 5px
          </property>
         </widget>
        </item>
+       <item row="0" column="0" colspan="2">
+        <widget class="QLabel" name="label_PlotRelated">
+         <property name="styleSheet">
+          <string notr="true">color:rgb(131,131,131)</string>
+         </property>
+         <property name="text">
+          <string>Plot Functions</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
        <item row="2" column="0">
         <widget class="QPushButton" name="pushButton_SetArea">
          <property name="enabled">
@@ -350,8 +350,8 @@ border-radius: 5px
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
-        <widget class="QPushButton" name="pushButton_savePlot">
+       <item row="4" column="1">
+        <widget class="QPushButton" name="pushButton_Setting">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -359,18 +359,80 @@ border-radius: 5px
           </sizepolicy>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save all data as matlab files. Select folder and data will be saved as file name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>Settings</string>
          </property>
          <property name="styleSheet">
-          <string notr="true">QPushButton:disabled#pushButton_savePlot {image:url(:/nSOTScanner/Pictures/lock.png)}
+          <string notr="true">QPushButton:disabled#pushButton_Setting {image:url(:/nSOTScanner/Pictures/lock.png)}
 
-#pushButton_savePlot{
-image:url(:/nSOTScanner/Pictures/save.png);
+#pushButton_Setting{
+image:url(:/nSOTScanner/Pictures/Setting.png);
 background: black;
 }
 
-QPushButton:pressed#pushButton_savePlot{
-image:url(:/nSOTScanner/Pictures/save.png);
+QPushButton:pressed#pushButton_Setting{
+image:url(:/nSOTScanner/Pictures/Setting.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QPushButton" name="pushButton_FineTune">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Fine Tune the plotters selected. Please select 2 plotters.</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:disabled#pushButton_FineTune {image:url(:/nSOTScanner/Pictures/lock.png)}
+
+#pushButton_FineTune{
+image:url(:/nSOTScanner/Pictures/Fine Tuning.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_FineTune{
+image:url(:/nSOTScanner/Pictures/Fine Tuning.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="pushButton_RefreshPlotters">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Refresh All Plotters&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:disabled#pushButton_RefreshPlotters {image:url(:/nSOTScanner/Pictures/lock.png)}
+
+#pushButton_RefreshPlotters{
+image:url(:/nSOTScanner/Pictures/refresh.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_RefreshPlotters{
+image:url(:/nSOTScanner/Pictures/refresh.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px
@@ -416,8 +478,8 @@ border-radius: 5px
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QPushButton" name="pushButton_RefreshPlotters">
+       <item row="3" column="0">
+        <widget class="QPushButton" name="pushButton_savePlot">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -425,18 +487,18 @@ border-radius: 5px
           </sizepolicy>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Refresh All Plotters&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save all data as matlab files. Select folder and data will be saved as file name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="styleSheet">
-          <string notr="true">QPushButton:disabled#pushButton_RefreshPlotters {image:url(:/nSOTScanner/Pictures/lock.png)}
+          <string notr="true">QPushButton:disabled#pushButton_savePlot {image:url(:/nSOTScanner/Pictures/lock.png)}
 
-#pushButton_RefreshPlotters{
-image:url(:/nSOTScanner/Pictures/refresh.png);
+#pushButton_savePlot{
+image:url(:/nSOTScanner/Pictures/save.png);
 background: black;
 }
 
-QPushButton:pressed#pushButton_RefreshPlotters{
-image:url(:/nSOTScanner/Pictures/refresh.png);
+QPushButton:pressed#pushButton_savePlot{
+image:url(:/nSOTScanner/Pictures/save.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px
@@ -482,8 +544,8 @@ border-radius: 5px
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
-        <widget class="QPushButton" name="pushButton_FineTune">
+       <item row="5" column="0">
+        <widget class="QPushButton" name="pushButton_ACfitting">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -491,49 +553,18 @@ border-radius: 5px
           </sizepolicy>
          </property>
          <property name="toolTip">
-          <string>Fine Tune the plotters selected. Please select 2 plotters.</string>
+          <string>AC data fitting</string>
          </property>
          <property name="styleSheet">
-          <string notr="true">QPushButton:disabled#pushButton_FineTune {image:url(:/nSOTScanner/Pictures/lock.png)}
+          <string notr="true">QPushButton:disabled#pushButton_ACfitting {image:url(:/nSOTScanner/Pictures/lock.png)}
 
-#pushButton_FineTune{
-image:url(:/nSOTScanner/Pictures/Fine Tuning.png);
+#pushButton_ACfitting{
+image:url(:/nSOTScanner/Pictures/Tuning Fork.png);
 background: black;
 }
 
-QPushButton:pressed#pushButton_FineTune{
-image:url(:/nSOTScanner/Pictures/Fine Tuning.png);
-background: black;
-border: 2px rgb(131,131,131);
-border-radius: 5px
-}</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1">
-        <widget class="QPushButton" name="pushButton_Setting">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="toolTip">
-          <string>Settings</string>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPushButton:disabled#pushButton_Setting {image:url(:/nSOTScanner/Pictures/Setting.png)}
-
-#pushButton_Setting{
-image:url(:/nSOTScanner/Pictures/Setting.png);
-background: black;
-}
-
-QPushButton:pressed#pushButton_Setting{
-image:url(:/nSOTScanner/Pictures/Setting.png);
+QPushButton:pressed#pushButton_ACfitting{
+image:url(:/nSOTScanner/Pictures/Tuning Fork.png);
 background: black;
 border: 2px rgb(131,131,131);
 border-radius: 5px

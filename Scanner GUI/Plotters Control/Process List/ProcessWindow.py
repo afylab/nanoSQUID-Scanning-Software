@@ -146,7 +146,7 @@ class ProcessWindow(QtGui.QMainWindow, Ui_ProcessWindow):
                 
                 self.parent.AddPlotter()
                 self.transferPlotData(self.parent.PlotterList[-1], PlotDataGenerated, procedure, procedure, procedure, plotterA.PlotParameters, [plotterA.comboBox_xAxis.currentText(),plotterA.comboBox_yAxis.currentText()],[plotterA.comboBox_zAxis.currentText()])
-                self.parent.PlotterList[-1].RefreshComboIndex()
+                self.parent.PlotterList[-1].SetupComboIndex()
                 self.parent.PlotterList[-1].ParsePlotData()
                 self.parent.PlotterList[-1].refreshPlot()
                 self.parent.PlotterList[-1].editDataInfo.RefreshInfo()
