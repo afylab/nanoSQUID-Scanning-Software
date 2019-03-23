@@ -96,10 +96,10 @@ class editDataInfo(QtGui.QMainWindow, Ui_EditDataInfo):
 
             #Area Selected
             AreaSelectedParameters = self.parent.AreaSelectedParameters
-            self.lineEdit_xTotal.setText(str(1 + AreaSelectedParameters['xMax'] - AreaSelectedParameters['xMin']))
-            self.lineEdit_yTotal.setText(str(1 + AreaSelectedParameters['yMax'] - AreaSelectedParameters['yMin']))
-            xMin , xMax = AreaSelectedParameters['xMin'], AreaSelectedParameters['xMax'] 
-            yMin , yMax = AreaSelectedParameters['yMin'], AreaSelectedParameters['yMax']
+            self.lineEdit_xTotal.setText(str(AreaSelectedParameters['xMaxIndex'] - AreaSelectedParameters['xMinIndex'] + 1))
+            self.lineEdit_yTotal.setText(str(AreaSelectedParameters['yMaxIndex'] - AreaSelectedParameters['yMinIndex'] + 1))
+            xMin , xMax = AreaSelectedParameters['xMinIndex'], AreaSelectedParameters['xMaxIndex'] 
+            yMin , yMax = AreaSelectedParameters['yMinIndex'], AreaSelectedParameters['yMaxIndex']
 
             if  xMin >= 0 or xMin < Dimx:
                 self.lineEdit_xMin.setText(str(xMin))

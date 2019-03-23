@@ -80,10 +80,10 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
                 'yscale': 0.0
             }
             self.AreaSelectedParameters = {
-                'xMax': 0.0,
-                'xMin': 0.0,
-                'yMax': 0.0,
-                'yMin': 0.0
+                'xMaxIndex': 0.0,
+                'xMinIndex': 0.0,
+                'yMaxIndex': 0.0,
+                'yMinIndex': 0.0
             }
             self.file = ''
             self.indVars = []
@@ -115,7 +115,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.AreaSelected.sigRegionChangeFinished.connect(self.RefreshAreaSelected)
 
             #Function of croping a window
-            self.pushButton_CropWindow.clicked.connect(lambda: self.CropWindow(self.AreaSelectedParameters['xMin'], self.AreaSelectedParameters['xMax'], self.AreaSelectedParameters['yMin'], self.AreaSelectedParameters['yMax']))
+            self.pushButton_CropWindow.clicked.connect(lambda: self.CropWindow(self.AreaSelectedParameters['xMinIndex'], self.AreaSelectedParameters['xMaxIndex'] + 1, self.AreaSelectedParameters['yMinIndex'], self.AreaSelectedParameters['yMaxIndex'] + 1))
 
             #Function of saving matlab file 
             self.saveMenu = QtGui.QMenu()
@@ -276,6 +276,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def RefreshInterface(self):
         self.RefreshFileName()
         self.RefreshTitle()
+        self.editDataInfo.RefreshInfo()
         self.DetermineEnableConditions()
         for button in self.ButtonsCondition:
             self.ProcessButton(button)
@@ -372,18 +373,18 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
     def RefreshSelectedAreaProperty(self):
         if '2DPlot' in self.DataType:
             bounds = self.AreaSelected.parentBounds()#Return the bounding rectangle of this ROI in the coordinate system of its parent. 
-            self.AreaSelectedParameters['xMin'] = int((bounds.x() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
-            self.AreaSelectedParameters['yMin'] = int((bounds.y() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
-            self.AreaSelectedParameters['xMax'] = int((bounds.x() + bounds.width() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'])
-            self.AreaSelectedParameters['yMax'] = int((bounds.y() + bounds.height() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'])
+            self.AreaSelectedParameters['xMinIndex'] = int((bounds.x() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'] + 0.5)
+            self.AreaSelectedParameters['yMinIndex'] = int((bounds.y() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'] + 0.5)
+            self.AreaSelectedParameters['xMaxIndex'] = int((bounds.x() + bounds.width() - self.PlotParameters['xMin']) / self.PlotParameters['xscale'] + 0.5)
+            self.AreaSelectedParameters['yMaxIndex'] = int((bounds.y() + bounds.height() - self.PlotParameters['yMin']) / self.PlotParameters['yscale'] + 0.5)
             self.RedefineSelectedAreaData()
         else:
             pass
     
     def RedefineSelectedAreaData(self):
         if not self.PlotData is None:
-            xMin, xMax = self.AreaSelectedParameters['xMin'], self.AreaSelectedParameters['xMax']
-            yMin, yMax = self.AreaSelectedParameters['yMin'], self.AreaSelectedParameters['yMax']
+            xMin, xMax = self.AreaSelectedParameters['xMinIndex'], self.AreaSelectedParameters['xMaxIndex']
+            yMin, yMax = self.AreaSelectedParameters['yMinIndex'], self.AreaSelectedParameters['yMaxIndex']
             Dimx, Dimy = self.PlotParameters['xPoints'], self.PlotParameters['yPoints']
             if xMin >= 0 and xMax < Dimx and yMin >= 0 and yMax < Dimy:
                 self.SelectedAreaData = self.PlotData[xMin:xMax, yMin:yMax]
@@ -933,7 +934,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         try:
             self.PlotParameters['xMax'] = np.amax(self.Data[::,self.NumberofindexVariables+self.xIndex])
             self.PlotParameters['xMin'] = np.amin(self.Data[::,self.NumberofindexVariables+self.xIndex])
-            if self.parent.SettingWindow.checkBox_RealUnit.isChecked() and 'Pos. Voltage' in self.comboBox_xAxis.currentText(): #If checked, make it micron unit
+            if self.parent.SettingWindow.checkBox_RealUnit.isChecked() and ' position' in self.comboBox_xAxis.currentText(): #If checked, make it micron unit
                 self.PlotParameters['xMax'] = self.PlotParameters['xMax'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
                 self.PlotParameters['xMin'] = self.PlotParameters['xMin'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
             self.PlotParameters['deltaX'] = self.PlotParameters['xMax'] - self.PlotParameters['xMin']
@@ -944,7 +945,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             if "2DPlot" in self.DataType:
                 self.PlotParameters['yMax'] = np.amax(self.Data[::,self.NumberofindexVariables+self.yIndex])
                 self.PlotParameters['yMin'] = np.amin(self.Data[::,self.NumberofindexVariables+self.yIndex])
-            if self.parent.SettingWindow.checkBox_RealUnit.isChecked() and 'Pos. Voltage' in self.comboBox_yAxis.currentText(): #If checked, make it micron unit
+            if self.parent.SettingWindow.checkBox_RealUnit.isChecked() and ' position' in self.comboBox_yAxis.currentText(): #If checked, make it micron unit
                 self.PlotParameters['yMax'] = self.PlotParameters['yMax'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
                 self.PlotParameters['yMin'] = self.PlotParameters['yMin'] * self.parent.SettingWindow.Setting_Parameter['ScaleFactor'] + self.parent.SettingWindow.Setting_Parameter['Offset']
             self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
@@ -1304,26 +1305,32 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
             self.viewBig.setAspectLocked(True, ratio = 1)
 
     def CropWindow(self, xMinIndex, xMaxIndex, yMinIndex, yMaxIndex):
-        CropData = self.PlotData[xMinIndex:xMaxIndex, yMinIndex:yMaxIndex]
-        xMin_Past = self.PlotParameters['xMin']
-        xMax_Past = self.PlotParameters['xMax']
-        yMin_Past = self.PlotParameters['yMin']
-        yMax_Past = self.PlotParameters['yMax']
-        xPoints_Past = self.PlotParameters['xPoints']
-        yPoints_Past = self.PlotParameters['yPoints'] 
+        if xMinIndex >= 0 and xMaxIndex <= self.Number_PlotData_X and yMinIndex >= 0 and yMaxIndex <= self.Number_PlotData_Y: 
+            CropData = self.PlotData[xMinIndex:xMaxIndex, yMinIndex:yMaxIndex]
+            xMin_Past = self.PlotParameters['xMin']
+            xMax_Past = self.PlotParameters['xMax']
+            yMin_Past = self.PlotParameters['yMin']
+            yMax_Past = self.PlotParameters['yMax']
+            xPoints_Past = self.PlotParameters['xPoints']
+            yPoints_Past = self.PlotParameters['yPoints'] 
 
-        self.PlotParameters['xMin'] = self.PlotParameters['xscale'] * xMinIndex + xMin_Past
-        self.PlotParameters['xMax'] = self.PlotParameters['xscale'] * xMaxIndex + xMin_Past
-        self.PlotParameters['yMin'] = self.PlotParameters['yscale'] * yMinIndex + yMin_Past
-        self.PlotParameters['yMax'] = self.PlotParameters['yscale'] * yMaxIndex + yMin_Past
-        self.PlotParameters['deltaX'] = self.PlotParameters['xMax'] - self.PlotParameters['xMin']
-        self.PlotParameters['xPoints'] = xMaxIndex - xMinIndex 
-        self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
-        self.PlotParameters['yPoints'] = yMaxIndex - yMinIndex 
-        
-        self.PlotData = CropData
-        self.Plot_Data()
-        self.RefreshInterface()
+            self.PlotParameters['xMin'] = self.PlotParameters['xscale'] * xMinIndex + xMin_Past
+            self.PlotParameters['xMax'] = self.PlotParameters['xscale'] * xMaxIndex + xMin_Past
+            self.PlotParameters['yMin'] = self.PlotParameters['yscale'] * yMinIndex + yMin_Past
+            self.PlotParameters['yMax'] = self.PlotParameters['yscale'] * yMaxIndex + yMin_Past
+            self.PlotParameters['deltaX'] = self.PlotParameters['xMax'] - self.PlotParameters['xMin']
+            self.PlotParameters['xPoints'] = xMaxIndex - xMinIndex 
+            self.PlotParameters['deltaY'] = self.PlotParameters['yMax'] - self.PlotParameters['yMin']
+            self.PlotParameters['yPoints'] = yMaxIndex - yMinIndex 
+
+            self.PlotData = CropData
+            self.Plot_Data()
+            self.ParsePlotData()
+            self.RefreshSelectedAreaProperty()
+            self.RefreshInterface()
+            self.Feedback('Crop Data Finished')
+        else:
+            self.Feedback('Crop Data Failed, check Crop Window.')
 
     def zoomArea(self):
         bounds = self.AreaSelected.parentBounds()

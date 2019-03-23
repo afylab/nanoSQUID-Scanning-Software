@@ -137,7 +137,7 @@ border-radius: 5px
        </sizepolicy>
       </property>
       <property name="toolTip">
-       <string>Multiply the Data before doing fit help with better accuracy</string>
+       <string>Amplitude fo Tuning Fork</string>
       </property>
       <property name="styleSheet">
        <string notr="true">QLineEdit#lineEdit_Amplitude{
@@ -164,7 +164,7 @@ border-radius: 5px
        </sizepolicy>
       </property>
       <property name="toolTip">
-       <string>Multiply the Data before doing fit help with better accuracy</string>
+       <string>North is zero, clockwise is positive</string>
       </property>
       <property name="styleSheet">
        <string notr="true">QLineEdit#lineEdit_Angle{
