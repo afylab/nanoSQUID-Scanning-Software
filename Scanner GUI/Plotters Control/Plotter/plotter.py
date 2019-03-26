@@ -295,16 +295,16 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         if (not self.PlotData is None):
             fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
-                savename = fold.split("/")[-1].split('.mat')[0]
-                self.genLineMatFileh(fold, savename)
+                self.genLineMatFileh(fold)
                 
-    def genLineMatFileh(self, fold, savename):
+    def genLineMatFileh(self, fold):
         XZyData = np.asarray(self.LineCutXZYVals)
         XZxData = np.asarray(self.LineCutXZXVals)
 
         xData, yData = XZxData, XZyData ###This part need to be modified
         
         matData = np.transpose(np.vstack((xData, yData)))
+        savename = fold.split("/")[-1].split('.mat')[0]
         sio.savemat(fold, {savename:matData})
         matData = None
         
@@ -322,7 +322,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter):
         
         matData = np.transpose(np.vstack((xData, yData)))
         savename = fold.split("/")[-1].split('.mat')[0]
-        sio.savemat(fold,{savename:matData})
+        sio.savemat(fold, {savename:matData})
         matData = None
         
 

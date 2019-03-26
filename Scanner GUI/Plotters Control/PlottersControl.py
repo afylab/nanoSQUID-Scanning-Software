@@ -125,7 +125,17 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
 
         self.SettingWindow = PlottersControlSetting.SettingWindow(self.reactor, self, self.pushButton_Setting)
 
-        self.pushButton_savePlot.clicked.connect(self.SaveAllPlot)
+        self.SaveAllMatlabMenu = QtGui.QMenu()
+        SaveAll2D = QtGui.QAction( "Save 2D Plot", self)
+        SaveAll2D.triggered.connect(lambda: self.SaveAllPlot('2D'))
+        self.SaveAllMatlabMenu.addAction(SaveAll2D)
+        SaveAllhorizontal = QtGui.QAction( "Save horizontal Plot", self)
+        SaveAllhorizontal.triggered.connect(lambda: self.SaveAllPlot('horizontal'))
+        self.SaveAllMatlabMenu.addAction(SaveAllhorizontal)
+        SaveAllVertical = QtGui.QAction( "Save vertical Plot", self)
+        SaveAllVertical.triggered.connect(lambda: self.SaveAllPlot('vertical'))
+        self.SaveAllMatlabMenu.addAction(SaveAllhorizontal)
+        self.pushButton_savePlot.setMenu(self.SaveAllMatlabMenu)
 
         self.pushButton_ACfitting.clicked.connect(self.OpenTuningForkFittingWindow)
         self.TuningForkFittingWindow = TuningForkFitting.ACFittingWindow(self.reactor, self, self.pushButton_ACfitting)
@@ -179,11 +189,18 @@ class CommandingCenter(QtGui.QMainWindow, Ui_CommandCenter):
 #####Labrad Related Function
 
 #####Save Matlab file Related Function
-    def SaveAllPlot(self):
+    def SaveAllPlot(self, PlotType):
         fold = str(QtGui.QFileDialog.getExistingDirectory(self, directory = os.getcwd()))
-        self.Feedback('Save All Data at ' + fold)
+        self.Feedback('Save All ' + PlotType + 'Data at ' + fold)
         for plotter in self.PlotterList:
-            plotter.genMatFile(fold + '/' + plotter.file)
+            FolderAndName = fold + '/D' + plotter.file[0:5]
+            if PlotType == '2D':
+                plotter.genMatFile(FolderAndName)
+            elif PlotType == 'horizontal':
+                plotter.genLineMatFileh(FolderAndName)
+            elif PlotType == 'vertical':
+                plotter.genLineMatFilev(FolderAndName)
+
 #####Save Matlab file Related Function
 
     def ClearListWidget(self):
