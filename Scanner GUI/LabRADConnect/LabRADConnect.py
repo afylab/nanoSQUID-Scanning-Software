@@ -836,35 +836,39 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
            
     @inlineCallbacks
     def chooseSession(self, c = None):
-        if self.connectionLocalDictionary['dv'] is False:
-            msgBox = QtGui.QMessageBox(self)
-            msgBox.setIcon(QtGui.QMessageBox.Information)
-            msgBox.setWindowTitle('Data Vault Connection Missing')
-            msgBox.setText("\r\n Cannot choose data vault folder until connected to data vault.")
-            msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
-            msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
-            msgBox.exec_()
-        else: 
-            dv = self.connectionLocalDictionary['dv']
-            dvExplorer = dirExplorer.dataVaultExplorer(dv, self.reactor, self)
-            if dvExplorer.exec_():
-                fileName, directory, variables = dvExplorer.dirFileVars()
-                try:
-                    yield dv.cd(directory)
-                    directory = directory[1:]
-                    session  = ''
-                    for i in directory:
-                        session = session + '\\' + i
-                    self.session = r'\.datavault' + session
-                    self.lineEdit_Session.setText(self.session)
-                    
-                    self.newDVFolder.emit()
-                except Exception as inst:
-                    print type(inst)
-                    print inst.args
-                    print inst
-                    
+        try:
+            if self.connectionLocalDictionary['dv'] is False:
+                msgBox = QtGui.QMessageBox(self)
+                msgBox.setIcon(QtGui.QMessageBox.Information)
+                msgBox.setWindowTitle('Data Vault Connection Missing')
+                msgBox.setText("\r\n Cannot choose data vault folder until connected to data vault.")
+                msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+                msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+                msgBox.exec_()
+            else: 
+                dv = self.connectionLocalDictionary['dv']
+                dvExplorer = dirExplorer.dataVaultExplorer(dv, self.reactor, self)
+                yield dvExplorer.popDirs()
+                dvExplorer.show()
+                dvExplorer.raise_()
+                dvExplorer.accepted.connect(lambda: self.OpenDataVaultFolder(self.reactor, dv, dvExplorer.directory)) 
+
+        except Exception as inst:
+            print 'Error:', inst, ' on line: ', sys.exc_traceback.tb_lineno                    
                 
+    @inlineCallbacks
+    def OpenDataVaultFolder(self, c, datavault, directory):
+        try:
+            yield datavault.cd(directory)
+            directory = directory[1:]
+            session  = ''
+            for i in directory:
+                session = session + '\\' + i
+            self.session = r'\.datavault' + session
+            self.lineEdit_Session.setText(self.session)
+            self.newDVFolder.emit()
+        except Exception as inst:
+            print 'Error:', inst, ' on line: ', sys.exc_traceback.tb_lineno                    
                     
     def chooseSession_2(self):
         folder = str(QtGui.QFileDialog.getExistingDirectory(self, directory = 'C:\\Users\\cltschirhart\\Data Sets\\ScanData'))
