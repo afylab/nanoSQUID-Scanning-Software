@@ -5,11 +5,13 @@ import numpy as np
 
 path = sys.path[0] + r"\CoarseAttocubeControl"
 sys.path.append(path + r'\Status')
+sys.path.append(path + r'\Debug Panel')
 
 CoarseAttocubeControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\CoarseAttocubeControl.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 
 import Status
+import DebugPy
 
 sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
@@ -104,6 +106,8 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
         
         self.StatusWindow = Status.StatusWindow(self.reactor)
         self.pushButton_StatusMonitor.clicked.connect(self.OpenStatusWindow)
+        self.DebugWindow = DebugPy.DebugWindow(self.reactor, self)
+        self.pushButton_Debug.clicked.connect(self.OpenDebugWindow)
 
 
     @inlineCallbacks
@@ -162,8 +166,10 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                     self.Status[i] = 'Error'
                 elif statusarray[4] == 1:
                     self.Status[i] = 'MoveBlockedRight'
+                    self.SetIndicatorStill(i)
                 elif statusarray[5] == 1:
                     self.Status[i] = 'MoveBlockedLeft'
+                    self.SetIndicatorStill(i)
                 elif statusarray[2] == 1:
                     self.SetIndicatorMoving(i)
                     if self.Direction[i] == 'Positive':
@@ -188,8 +194,10 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 if statusarray[3] == 1 :#and self.Status[i] != 'TargetReached'
                     self.Status[i] = 'TargetReached'
                     if self.Compensation[i] == False: #When first detect target reached, disable dc level if compensation is false
-                        self.anc350.set_axis_output(i, False, True)
-                
+                        # self.anc350.set_axis_output(i, False, True)
+                        # self.anc350.set_dc_voltage(i, 0.0)
+                        pass
+
                 #Change the Pushbutton
                 stylesheet = '#pushButton_Status_Axis' + str(i+1) + '{\nimage:url(' + self.IconPath[self.Status[i]] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
                 self.pushButton_Status[i].setStyleSheet(stylesheet)
@@ -218,7 +226,8 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
     def MovingRelative(self, AxisNo):
         try:
             if self.pushButton_Relative[AxisNo].text() == 'Move Relative':
-                yield self.anc350.set_axis_output(AxisNo, True, True) #Enable Axis when moving
+                print 'move', AxisNo
+                # yield self.anc350.set_axis_output(AxisNo, True, True) #Enable Axis when moving
                 yield self.anc350.set_target_position(AxisNo, self.RelativePosition[AxisNo])
                 yield self.anc350.start_auto_move(AxisNo, True, True)
                 if self.RelativePosition[AxisNo] > 0:
@@ -226,15 +235,17 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 else:
                     self.Direction[AxisNo] = 'Negative'
             elif self.pushButton_Relative[AxisNo].text() == 'Moving':
+                print 'stop', AxisNo
+
                 yield self.anc350.start_auto_move(AxisNo, False, True) #Only stop auto move but not disble the aixs
-                yield self.anc350.set_axis_output(AxisNo, False, True) #Enable Axis when moving
+                # yield self.anc350.set_axis_output(AxisNo, False, False) #Disable Axis when Stop
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
             
     @inlineCallbacks
     def MovingAbsolute(self, AxisNo):
         if self.pushButton_Absolute[AxisNo].text() == 'Move Absolute':
-            yield self.anc350.set_axis_output(AxisNo, True, True) #Enable Axis when moving
+            yield self.anc350.set_axis_output(AxisNo, True, False) #Enable Axis when moving
             yield self.anc350.set_target_position(AxisNo, self.AbsolutePosition[AxisNo])
             yield self.anc350.start_auto_move(AxisNo, True, False)
             if self.AbsolutePosition[AxisNo] > self.CurrentPosition[AxisNo]:
@@ -243,7 +254,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 self.Direction[AxisNo] = 'Negative'
         elif self.pushButton_Absolute[AxisNo].text() == 'Moving':
             yield self.anc350.start_auto_move(AxisNo, False, False)
-            yield self.anc350.set_axis_output(AxisNo, False, True) #Enable Axis when moving
+            yield self.anc350.set_axis_output(AxisNo, False, False) #Disable Axis when Stop
 
     @inlineCallbacks
     def StartSingleStep(self, AxisNo, direction): #forward is 0, backward is 1
@@ -253,10 +264,10 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             else:
                 flag = True
             print 'single', AxisNo
-            yield self.anc350.set_axis_output(AxisNo, True, True) #Enable Axis when moving
-            yield self.sleep(0.2)
+            yield self.anc350.set_axis_output(AxisNo, True, False) #Enable Axis when moving
             yield self.anc350.start_single_step(AxisNo, flag)
-            yield self.anc350.set_axis_output(AxisNo, False, True) #Enable Axis when moving
+            yield self.sleep(0.2)
+            yield self.anc350.set_axis_output(AxisNo, False, False) #Enable Axis when moving
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
 
@@ -362,6 +373,11 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
         self.StatusWindow.moveDefault()
         self.StatusWindow.raise_()
         self.StatusWindow.show()
+        
+    def OpenDebugWindow(self):
+        self.DebugWindow.moveDefault()
+        self.DebugWindow.raise_()
+        self.DebugWindow.show()
 
     def EnableSingleStep(self, AxisNo):
         self.pushButton_SingleStepPlus[AxisNo].setEnabled(True)

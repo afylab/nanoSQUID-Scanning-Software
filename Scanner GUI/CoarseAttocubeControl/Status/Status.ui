@@ -79,7 +79,7 @@ border:1px solid rgb(168,168,168)
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -175,7 +175,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -193,7 +193,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -211,7 +211,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -229,7 +229,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -247,7 +247,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -265,7 +265,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -331,7 +331,7 @@ border:1px solid rgb(168,168,168)
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -427,7 +427,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -445,7 +445,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -463,7 +463,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -481,7 +481,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -499,7 +499,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -517,7 +517,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -583,7 +583,7 @@ border:1px solid rgb(168,168,168)
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -679,7 +679,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -697,7 +697,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -715,7 +715,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -733,7 +733,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -751,7 +751,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
@@ -769,7 +769,7 @@ border-radius: 5px</string>
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">background:gray;
+          <string notr="true">background:green;
 border: 2px solid rgb(0,0,150);
 border-radius: 5px</string>
          </property>
