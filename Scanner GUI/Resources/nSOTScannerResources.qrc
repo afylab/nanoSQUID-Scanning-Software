@@ -1,5 +1,97 @@
 <RCC>
   <qresource prefix="nSOTScanner">
+    <file>Pictures/21232342.bmp</file>
+    <file>Pictures/21232342inverted.bmp</file>
+    <file>Pictures/add.png</file>
+    <file>Pictures/Addition.png</file>
+    <file>Pictures/addPlotIcon.png</file>
+    <file>Pictures/AddPlotter.png</file>
+    <file>Pictures/addWhite.png</file>
+    <file>Pictures/addWhiteHover.png</file>
+    <file>Pictures/ArrowLeft.png</file>
+    <file>Pictures/ArrowRight.png</file>
+    <file>Pictures/backIcon.png</file>
+    <file>Pictures/Bipolar.png</file>
+    <file>Pictures/Capacitancor.png</file>
+    <file>Pictures/Connected.png</file>
+    <file>Pictures/Crop.jpg</file>
+    <file>Pictures/debug.png</file>
+    <file>Pictures/diameter.png</file>
+    <file>Pictures/Disconnected.png</file>
+    <file>Pictures/doublearrow_down.png</file>
+    <file>Pictures/doublearrow_left.png</file>
+    <file>Pictures/doublearrow_right.png</file>
+    <file>Pictures/doublearrow_up.png</file>
+    <file>Pictures/Ferromagnet.png</file>
+    <file>Pictures/Fine Tuning.png</file>
+    <file>Pictures/Flatten.png</file>
+    <file>Pictures/Four Terminal.png</file>
+    <file>Pictures/homeIcon.png</file>
+    <file>Pictures/Info.png</file>
+    <file>Pictures/inverseDiameter.png</file>
+    <file>Pictures/inverseNabla.png</file>
+    <file>Pictures/inverseRes.png</file>
+    <file>Pictures/inverseSigma.png</file>
+    <file>Pictures/inverseZoom.png</file>
+    <file>Pictures/jj_schema.png</file>
+    <file>Pictures/jj_schema.svg</file>
+    <file>Pictures/Landaul Fan.PNG</file>
+    <file>Pictures/lock.jpg</file>
+    <file>Pictures/lock.png</file>
+    <file>Pictures/ManError.png</file>
+    <file>Pictures/MannotReachingForward.png</file>
+    <file>Pictures/ManOverCurrent.png</file>
+    <file>Pictures/ManReachGoal.png</file>
+    <file>Pictures/ManReachingForward.png</file>
+    <file>Pictures/ManRunningLeft.png</file>
+    <file>Pictures/ManRunningLeftBlocked.png</file>
+    <file>Pictures/ManRunningRight.png</file>
+    <file>Pictures/ManRunningRightBlocked.png</file>
+    <file>Pictures/ManStill.png</file>
+    <file>Pictures/map.png</file>
+    <file>Pictures/Multiply.png</file>
+    <file>Pictures/nablaIcon.png</file>
+    <file>Pictures/nablaXIcon.png</file>
+    <file>Pictures/nablaYICon.png</file>
+    <file>Pictures/Overlap - Copy (2).png</file>
+    <file>Pictures/Overlap Addition.png</file>
+    <file>Pictures/Overlap.png</file>
+    <file>Pictures/OverlapDivision.png</file>
+    <file>Pictures/OverlapSubtract.png</file>
+    <file>Pictures/overlay Addition.png</file>
+    <file>Pictures/overlay Divison.png</file>
+    <file>Pictures/overlay Multiply.png</file>
+    <file>Pictures/overlay.png</file>
+    <file>Pictures/overlaySubtract.png</file>
+    <file>Pictures/ratio.png</file>
+    <file>Pictures/refresh.png</file>
+    <file>Pictures/refreshIcon.png</file>
+    <file>Pictures/resIcon.png</file>
+    <file>Pictures/retraceIcon.png</file>
+    <file>Pictures/SampleCharacterizer.py</file>
+    <file>Pictures/save.png</file>
+    <file>Pictures/schematic.png</file>
+    <file>Pictures/SelectArea.png</file>
+    <file>Pictures/SessionSelect.png</file>
+    <file>Pictures/Setting.png</file>
+    <file>Pictures/Show.png</file>
+    <file>Pictures/sigmaIcon.png</file>
+    <file>Pictures/smoothScan.png</file>
+    <file>Pictures/SQUID.png</file>
+    <file>Pictures/squid_icon_1.ico</file>
+    <file>Pictures/squid_icon_1.png</file>
+    <file>Pictures/SQUIDRotated.png</file>
+    <file>Pictures/SQUIDRotated2.png</file>
+    <file>Pictures/stepScan.png</file>
+    <file>Pictures/sunSQUID.png</file>
+    <file>Pictures/Switch.png</file>
+    <file>Pictures/tab_close.png</file>
+    <file>Pictures/Tip-Sample.png</file>
+    <file>Pictures/tiptf.png</file>
+    <file>Pictures/traceIcon.png</file>
+    <file>Pictures/Tuning Fork.png</file>
+    <file>Pictures/unlock.png</file>
+    <file>Pictures/zoomIcon.png</file>
     <file>Pictures/Fine Tuning.png</file>
     <file>Pictures/Ferromagnet.png</file>
     <file>Pictures/MannotReachingForward.png</file>

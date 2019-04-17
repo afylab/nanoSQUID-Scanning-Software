@@ -231,12 +231,12 @@ class ScanImageView(pg.ImageView):
     Extension of pyqtgraph's ImageView. This allows you to plot only part of a dataset. This works by specifying a "random filling" number which, 
     if found during plotting, is ignored from both the plotting and the histogram. 
     '''
-    def __init__(self, parent=None, name="ImageView", view=None, imageItem=None, randFill = -0.1, *args):
+    def __init__(self, parent=None, name="ImageView", view=None, imageItem=None, randFill = 0.0, *args):
         pg.ImageView.__init__(self, parent, name, view, imageItem, *args)
         #Rand fill is the number that gets thrown out of the dataset
         self.randFill = randFill
 
-    def setImage(self, img, autoRange=True, autoLevels=True, levels=None, axes=None, xvals=None, pos=None, scale=None, transform=None, autoHistogramRange=True):
+    def setImage(self, img, autoRange = False, autoLevels = False, levels=None, axes=None, xvals=None, pos=None, scale=None, transform=None, autoHistogramRange=True):
         r0 = np.where(np.all(img == self.randFill, axis = 0))[0]
         c0 = np.where(np.all(img == self.randFill, axis = 1))[0]
         tmp = np.delete(np.delete(img, r0, axis = 1), c0, axis = 0)
@@ -262,11 +262,6 @@ class ScanImageView(pg.ImageView):
         #is being plotted. 
         self.view.enableAutoRange()
         
-    def keyPressEvent(self,ev):
-        pass
-        
-    def keyReleaseEvent(self,ev):
-        pass
     #Eventually also add the following from Avi's code so that if we're plotting point by point (instead of line by line) the histogram doesn't get populated
     '''
     def updateHist(self, autoLevel=False, autoRange=False):
