@@ -198,7 +198,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 'pid_retract_time'           : 2.4,    #time required in seconds for full atto retraction
                 'total_retract_dist'         : 24e-6, #total z distance retracted in meters by the attocube (eventually should update with temperature)
                 'auto_retract_dist'          : 2e-6, #distance retracted in meters when a surface event is triggered in constant height mode  
-                'auto_retract_points'          : 3, #distance retracted in meters when a surface event is triggered in constant height mode  
+                'auto_retract_points'          : 3, #points above frequency threshold before auto retraction is trigged
         }
         
         '''
@@ -1098,7 +1098,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
     def madeSurfaceContact(self):
         #Two different surface detection algorithms are run. the first just monitors the frequency 
         #of the PLL. If enough points are above the frequency threshold, then assume we're in contact.
-        #this number has been aribtrarily set to 10. 
+        #this number has been aribtrarily set to 5. 10 seemed a little slow.  
         points_above_freq_thresh = 0
         for f in self.deltafData:
             if self.radioButton_plus.isChecked():
@@ -1106,7 +1106,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             else:
                 points_above_freq_thresh = points_above_freq_thresh + (f > (-1.0*self.freqThreshold))
     
-        if points_above_freq_thresh > 10:
+        if points_above_freq_thresh > 5:
             print 'Surface contact made with points above frequency threshhold algorithm.'
             return True
             
@@ -1386,11 +1386,11 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 
                 self.contactHeight = z_voltage / self.z_volts_to_meters
                 
-                #Turn off the PID and back off by appropriate amount
-                yield self.hf.set_pid_on(self.PID_Index, False)
+                #Determine voltage to which we want to retract to be at the provided constant height
                 end_voltage = z_voltage - self.PIDApproachSettings['height'] * self.z_volts_to_meters
                 #Find desired retract speed in volts per second
                 retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                #Go to the position. The PID will be turned off by calling the set integrator command
                 yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
                     
                 #Set range such that maximally extended is at the proper distance from the surface. 
@@ -1403,6 +1403,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                     yield self.hf.set_pid_on(self.PID_Index, True)
                     
                     #Wait 60 seconds to clear the buffer of frequencies so that we don't autowithdraw from having hit the surface
+                    #This can probably be done in a more intelligent way in the future to save a minute
                     yield self.sleep(60)
                     
                     #Emit that we can now scan in constant height mode
@@ -1569,9 +1570,9 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 #signal, to ramp the PID
                 
                 #Make sure the pid is off when setting up the integrator changing
-                pid_on = yield self.hf.get_pid_on(self.PID_Index)
-                if pid_on:
-                    yield self.hf.set_pid_on(self.PID_Index, False)
+                #pid_on = yield self.hf.get_pid_on(self.PID_Index)
+                #if pid_on:
+                yield self.hf.set_pid_on(self.PID_Index, False)
 
                 #First turn off proportional and derivative terms, and intergral term to 1 to simplify calculation
                 yield self.hf.set_pid_p(self.PID_Index, 0)

@@ -77,7 +77,7 @@ color:rgb(168,168,168)
       <item>
        <widget class="QSlider" name="horizontalSlider">
         <property name="maximum">
-         <number>3570</number>
+         <number>10770</number>
         </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -155,7 +155,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
       <property name="currentIndex">
        <number>0</number>
       </property>
-      <widget class="QWidget" name="tab" native="true">
+      <widget class="QWidget" name="tab">
        <attribute name="title">
         <string>PLL Monitor</string>
        </attribute>
@@ -195,7 +195,7 @@ background: grey
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_2" native="true">
+      <widget class="QWidget" name="tab_2">
        <attribute name="title">
         <string>Feedback Monitor</string>
        </attribute>
@@ -235,7 +235,7 @@ background: grey
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_3" native="true">
+      <widget class="QWidget" name="tab_3">
        <attribute name="title">
         <string>Z Monitor</string>
        </attribute>

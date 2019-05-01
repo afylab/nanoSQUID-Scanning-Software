@@ -1339,9 +1339,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
         if magpower == 'Toellner 8851':
             yield self.dac.set_voltage(DAC_out, 0)
-            #If minimum bias voltage is not zero, sweep bias to minimum value, 1mV per step with a reasonably short delay
+            #If minimum bias voltage is not zero, sweep bias to minimum value, 1mV per step with a 1ms delay
             if V_min != 0:
-                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_min], int(V_min * 1000), 1000)
+                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_min], np.absolute(int(V_min * 1000)), 1000)
             else:
                 pass
         
@@ -1417,16 +1417,18 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 
             #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
             if V_min != 0:
-                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_min], [0], int(V_min * 1000), 1000)
+                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_min], [0], np.absolute(int(V_min * 1000)), 1000)
             else:
                 pass
     
             yield self.dac.set_voltage(DAC_out, 0)
             
-            #Go to zero field and set power supply voltage setpoint to zero.
-            self.toeSweepField(B_space[-1], 0, B_rate)
-            yield self.dac.set_voltage(DAC_set_volt, 0)
-            yield self.dac.set_voltage(DAC_set_current, 0)
+            
+            if self.checkBox_ZeroField.isChecked():
+                #Go to zero field and set power supply voltage setpoint to zero.
+                self.toeSweepField(B_space[-1], 0, B_rate)
+                yield self.dac.set_voltage(DAC_set_volt, 0)
+                yield self.dac.set_voltage(DAC_set_current, 0)
         
         elif magpower == 'IPS 120-10':
             yield self.ips.set_control(3)
@@ -1448,7 +1450,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         
             #If minimum bias voltage is not zero, sweep bias to minimum value, 1mV per step with a reasonably short delay
             if V_min != 0:
-                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_min], int(V_min * 1000), 1000)
+                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_min], np.absolute(int(V_min * 1000)), 1000)
             else:
                 pass
         
@@ -1532,44 +1534,47 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             
             #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
             if V_min != 0:
-                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_min], [0], int(V_min * 1000), 1000)
+                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_min], [0], np.absolute(int(V_min * 1000)), 1000)
             else:
                 pass
 
             yield self.dac.set_voltage(DAC_out, 0)
             yield self.sleep(0.25)
-            print 'Set nSOT bias to zero, sweeping field to 0T.'
             
-            #Go to 0 field
-            yield self.ips.set_control(3)
-            yield self.ips.set_targetfield(0)
-            yield self.ips.set_control(2)
-            
+            if self.checkBox_ZeroField.isChecked():
+    
+                print 'Set nSOT bias to zero, sweeping field to 0T.'
                 
-            yield self.ips.set_control(3)
-            yield self.ips.set_activity(1)
-            yield self.ips.set_control(2)
-            #wait for field to be reached
-            t0 = time.time()
-            while True:
+                #Go to 0 field
                 yield self.ips.set_control(3)
-                curr_field = yield self.ips.read_parameter(7)
+                yield self.ips.set_targetfield(0)
                 yield self.ips.set_control(2)
-                if float(curr_field[1:]) <= 0.00001 and float(curr_field[1:]) >= -0.00001:
-                    break
-                if time.time() - t0 > 1:
-                    yield self.ips.set_control(3)
-                    yield self.ips.set_targetfield(0)
-                    yield self.ips.set_control(2)
+                
                     
+                yield self.ips.set_control(3)
+                yield self.ips.set_activity(1)
+                yield self.ips.set_control(2)
+                #wait for field to be reached
+                t0 = time.time()
+                while True:
                     yield self.ips.set_control(3)
-                    yield self.ips.set_activity(1)
+                    curr_field = yield self.ips.read_parameter(7)
                     yield self.ips.set_control(2)
-                    t0 = time.time()
-                    print 'restarting loop'
-                    if self.abortFlag == True:
+                    if float(curr_field[1:]) <= 0.00001 and float(curr_field[1:]) >= -0.00001:
                         break
-                yield self.sleep(0.25)
+                    if time.time() - t0 > 1:
+                        yield self.ips.set_control(3)
+                        yield self.ips.set_targetfield(0)
+                        yield self.ips.set_control(2)
+                        
+                        yield self.ips.set_control(3)
+                        yield self.ips.set_activity(1)
+                        yield self.ips.set_control(2)
+                        t0 = time.time()
+                        print 'restarting loop'
+                        if self.abortFlag == True:
+                            break
+                    yield self.sleep(0.25)
 
             #Set control method back to local control 
             yield self.ips.set_control(2)
@@ -2115,12 +2120,9 @@ class DialogBox(QtGui.QDialog, Ui_DialogBox):
             self.magnetPowerSupply.setText('Toellner 8851 Power Supply')
             self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168); font-size: 10pt}")
         if self.sweepParamDict['sweep mode'] == 0:
-            self.sweepModeSetting.setText('Max to Min')
-            self.sweepModeSetting.setStyleSheet("QLabel#sweepModeSetting {color: rgb(168,168,168); font-size: 10pt}")
-        elif self.sweepParamDict['sweep mode'] ==1:
             self.sweepModeSetting.setText('Min to Max')
             self.sweepModeSetting.setStyleSheet("QLabel#sweepModeSetting {color: rgb(168,168,168); font-size: 10pt}")
-        elif self.sweepParamDict['sweep mode'] ==2:
+        elif self.sweepParamDict['sweep mode'] ==1:
             self.sweepModeSetting.setText('Zero to Max/Min')
             self.sweepModeSetting.setStyleSheet("QLabel#sweepModeSetting {color: rgb(168,168,168); font-size: 10pt}")
 
@@ -2221,12 +2223,14 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         if not self.data is None:
             xVals = [x[1] for x in self.data]
             yVals = [x[2] for x in self.data]
+            absxVals = map(abs, xVals)
+            xzeroindex = absxVals.index(np.amin(absxVals))
             xscale = float((np.amax(xVals)) - float(np.amin(xVals))) / float((len(xVals) - 1))
-            index = self.IcLine.value() / xscale
+            index = int(round(self.IcLine.value() / xscale))
             ssaaRes = float(self.ssaaRes.value())*1000
             winding = float(self.ssaaWinding.value())
-            yValue = yVals[index]
-            I_c =  np.round(np.absolute((yValue) / (ssaaRes * winding)) * 1e6, decimals = 2)
+            yValue = yVals[index] - yVals[xzeroindex]
+            I_c =  np.round(np.absolute((yValue) / (ssaaRes * winding)) * 1e6, decimals = 4)
             self.critCurrLine.setText(str(I_c))
                 
     @inlineCallbacks
@@ -2342,7 +2346,6 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                 DAC_in_ref = self.settingsDict['nsot bias input'] - 1
                 DAC_in_sig = self.settingsDict['feedback DC input'] - 1
                 DAC_in_noise = self.settingsDict['noise input'] - 1
-                print DAC_in_sig, DAC_in_ref
                 
                 file_info = yield self.dv.new("nSOT Preliminary Sweep", ['Bias Voltage Index','Bias Voltage'],['DC SSAA Output','Noise'])
                 self.dvFileName = file_info[1]
@@ -2367,11 +2370,12 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
 
                 #Do sweep
                 print 'Ramping up nSOT bias voltage from ' + str(biasMin) + ' to ' + str(biasMax) + '.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMin], [biasMax], biasPoints, delay)
+                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_sig, DAC_in_noise], [biasMin], [biasMax], biasPoints, delay)
 
+                biasvoltage = np.linspace(biasMin, biasMax, biasPoints)
                 formatted_data = []
                 for j in range(0, biasPoints):
-                        formatted_data.append((j, dac_read[0][j], dac_read[1][j], dac_read[2][j]))
+                        formatted_data.append((j, biasvoltage[j], dac_read[0][j], dac_read[1][j]))
                 yield self.dv.add(formatted_data)
 
                 yield self.plotSweepData(formatted_data)
