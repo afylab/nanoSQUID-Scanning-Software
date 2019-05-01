@@ -86,7 +86,8 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         #This module should always be initialized last, and have the modules
         #That are desired to be scriptable be input
         self.Scripting = Scripting.Window(self.reactor, None, self.ScanControl, self.Approach, 
-                                          self.JPEControl, self.nSOTChar, self.FieldControl, self.TempControl)
+                                          self.JPEControl, self.nSOTChar, self.FieldControl, self.TempControl,
+                                          self.SampleCharacterizer)
         
         #Connects all drop down menu button
         self.actionScan_Control.triggered.connect(self.openScanControlWindow)

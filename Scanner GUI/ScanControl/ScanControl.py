@@ -978,7 +978,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def updateAngle(self):
         new_Angle = str(self.lineEdit_Angle.text())
-        val = readNum(new_Angle, self)
+        val = readNum(new_Angle, self, False)
         if isinstance(val,float):
             angle = val
             x = self.Xc + self.H*np.sin(angle*np.pi/180)/2 - self.W*np.cos(angle*np.pi/180)/2
@@ -1213,16 +1213,17 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.push_Scan.setEnabled(False)
     
     def updateScanPlaneCenter(self, voltage):
-        #Take note of the position for the constant height approach
+        #Take note of the position for the constant height approach. Values are in units of meters
         self.z_center = (self.Atto_Z_Voltage + voltage) / self.z_volts_to_meters
         self.x_center = self.Atto_X_Voltage / self.x_volts_to_meters - self.x_meters_max/2
         self.y_center = self.Atto_Y_Voltage / self.y_volts_to_meters - self.y_meters_max/2
+    
     '''
     When in constant height mode, we always want to be moving on a plane. This function takes in the desired X and Y coordinates
     in meters and returns the X, Y, Z voltages that need to be traveled to. 
     '''
     def getPlaneVoltages(self, x,y):
-        z = self.z_center -np.tan(self.x_tilt)*(x-self.x_center) - np.tan(self.y_tilt)*(y-self.y_center)
+        z = self.z_center - np.tan(self.x_tilt)*(x-self.x_center) - np.tan(self.y_tilt)*(y-self.y_center)
         
         #Below is how it used to be done. Reference to make sure new version also does this properly
         #startz = self.Atto_Z_Voltage + self.Atto_Z_Voltage_Offset
@@ -1265,8 +1266,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         try:
             #These speeds are calculated using the manually set delay values
             lineContribution = 2*self.lines * self.lineTime
-            if self.scanSmooth:
-                pixelContribution = (self.lines-1) * self.H / (self.linearSpeed*self.lines)
+            if self.scanSmooth and self.lines > 1:
+                pixelContribution = self.H / (self.linearSpeed)
             else:
                 pixelContribution = 0
             
@@ -1282,8 +1283,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             else:
                 line_DAC = self.pixels
 
-            pixel_x = -self.H * np.sin(np.pi*self.angle/180) * self.x_volts_to_meters / (self.lines - 1)
-            pixel_y = self.H * np.cos(np.pi*self.angle/180) * self.y_volts_to_meters / (self.lines - 1)
+            if self.lines > 1:
+                pixel_x = -self.H * np.sin(np.pi*self.angle/180) * self.x_volts_to_meters / (self.lines - 1)
+                pixel_y = self.H * np.cos(np.pi*self.angle/180) * self.y_volts_to_meters / (self.lines - 1)
+            else:   
+                pixel_x = 0
+                pixel_y = 0
             
             pixel_points = int(np.maximum(np.absolute(pixel_x / (300e-6)), np.absolute(pixel_y / (300e-6))))
             if pixel_points == 0:
@@ -1477,7 +1482,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             if self.scanCoordinates:
                 self.moveROI()
                 self.moveROI3()
-
+            
             #Initialize empty data sets to the appropriate size for whatever data is being taken
             num_datasets = len(self.inputScanOrder)
             pxsize = (num_datasets, self.pixels, self.lines)
@@ -1500,10 +1505,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 in_name_list.append(self.inputs[a-1]['Name'])
                 in_list.append(self.inputs[a-1]['ADC Channel']-1)
             
-            print 'In name list: ' + str(in_name_list)
-            print 'In list: ' + str(in_list)
-            
-            #Define list of outputs for the scan ramps
+            #Define list of outputs for the scan ramps. If scanning in feedback, z voltage is not ramped by the dac. If constant height, it is. 
             if self.scanMode == 'Feedback':
                 out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
             elif self.scanMode == 'Constant Height':
@@ -1543,18 +1545,15 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             for a in self.inputScanOrder:
                 params += (('Input ' + str(num) + ' Name', self.inputs[a-1]['Name']), ('Input ' + str(num) + ' Units', self.inputs[a-1]['Units']) , ('Input ' + str(num) + ' Conversion', self.inputs[a-1]['Conversion']))
                 num += 1
-                     
-            print params
             
             yield self.dv.add_parameters(params)
-            print 'Added params'
             
             self.updateScanParameters()
             
-            print 'Scan parameters updated'
             #Move to the bottom left corner of the scan range 
             yield self.setPosition(self.curr_x, self.curr_y)
             
+            #Start the scan timer
             self.startScanTimer()
             
             for i in range(0,self.lines):
@@ -1687,6 +1686,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 
                 #------------------------------------#
                 
+                #update graph
+                self.currLine = i
+                self.update_gph()
+                
                 if not self.scanning:
                     break
                     
@@ -1714,12 +1717,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     #ramp to next y point
                     print 'Time taken to move to next line: ' + str(time.clock()-tzero)
                     tzero = time.clock()
-
-                #update graph
-                self.currLine = i
-                self.update_gph()
-                print 'Time taken to update graphs: ' + str(time.clock()-tzero)
-           
+                    
         except Exception as inst:
             print 'update_data error: ', str(inst)
             print 'on line: ', sys.exc_traceback.tb_lineno
@@ -1851,7 +1849,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         Move to next line scan calculation
         '''
         #Calculate the speed, number of points, and delta_x/delta_y for moving to the next line
-        if self.lines > 0:
+        #If only doing 1 line, then don't move pixels at all! 
+        if self.lines > 1:
             dx = -self.currH * np.sin(np.pi*self.currAngle/180)/ (self.lines - 1)
             dy = self.currH * np.cos(np.pi*self.currAngle/180)/ (self.lines - 1)
         else:
@@ -1863,7 +1862,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         pixel_points = int(np.maximum(np.absolute(pixel_x / (300e-6)), np.absolute(pixel_y / (300e-6))))
         if pixel_points == 0:
             pixel_points = 1
-        pixel_delay = int(1e6 *self.currW / ((self.lines-1)*self.linearSpeed*pixel_points))
+        if self.lines >1:
+            pixel_delay = int(1e6 *self.currH / ((self.lines-1)*self.linearSpeed*pixel_points))
+        else:
+            pixel_delay = 1e3
         
         self.scanParameters = {
             'line_x'                     : line_x, #volts that need to be moved in the x direction for the scan of a single line
