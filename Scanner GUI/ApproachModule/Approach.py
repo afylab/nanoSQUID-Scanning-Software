@@ -136,7 +136,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.coarsePositionerExtension = 0
 
         self.deltaf_track_length = 100
-        self.deltafData = deque([0]*self.deltaf_track_length)
+        self.deltafData = deque([-200]*self.deltaf_track_length)
         
         self.z_track_length = 20
         self.zData = deque([-50e-9]*self.deltaf_track_length)
@@ -801,7 +801,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             yield self.hf.set_output(self.measurementSettings['pll_output'], True)
             yield self.hf.set_pll_on(self.measurementSettings['pll_output'])
             
-            self.deltafData = deque([0]*self.deltaf_track_length)
+            self.deltafData = deque([-200]*self.deltaf_track_length)
             
             while self.measuring:
                 deltaf = yield self.hf.get_pll_freqdelta(self.measurementSettings['pll_output'])
@@ -1050,7 +1050,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             
             #Empty the deltafData array. This prevents the software from thinking it hit the surface because of 
             #another approach
-            self.deltafData = deque([0]*self.deltaf_track_length)
+            self.deltafData = deque([-200]*self.deltaf_track_length)
             
             #Empty the zData array. This prevents the software from thinking it hit the surface because of
             #another approach
@@ -1295,7 +1295,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 
                 #Empty the deltafData array. This prevents the software from thinking it hit the surface because of 
                 #another approach
-                self.deltafData = deque([0]*self.deltaf_track_length)
+                self.deltafData = deque([-200]*self.deltaf_track_length)
                 
                 #Empty the zData array. This prevents the software from thinking it hit the surface because of
                 #another approach
@@ -1410,6 +1410,10 @@ class Window(QtGui.QMainWindow, ApproachUI):
                     self.updateConstantHeightStatus.emit(True, self.Atto_Z_Voltage)
                     self.constantHeight = True
                     self.label_pidApproachStatus.setText('Constant Height')
+                    self.approaching = False
+                    self.updateApproachStatus.emit(False)
+                else:
+                    self.label_pidApproachStatus.setText('Could not extend to desired height')
                     self.approaching = False
                     self.updateApproachStatus.emit(False)
                     
