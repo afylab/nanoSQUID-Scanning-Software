@@ -71,7 +71,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             yield self.loadInitialValues()
             self.unlockInterface()
-            self.monitor = True
+            self.monitor = True #modified temporarily
             yield self.monitorField()
             
     def disconnectLabRAD(self):
@@ -125,6 +125,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_setpoint.setText(formatNum(float(setpoint[1:])))
         self.lineEdit_ramprate.setText(formatNum(float(ramprate[1:])))
         
+        #self.ramprate = 1.0
+        #self.lineEdit_ramprate.setText('1.0')
+        #yield self.setRamprate()
+        
         yield self.updateSwitchStatus()
         
     @inlineCallbacks
@@ -157,18 +161,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.label_switchStatus.setText('Error')
             self.persist = False
             
-    @inlineCallbacks
     def setSetpoint(self, c = None):
         val = readNum(str(self.lineEdit_setpoint.text()), self, False)
         if isinstance(val,float):
             self.setpoint = val
-            #Set to remote control mode
-            self.setting_value = True
-            yield self.ips.set_control(3)
-            yield self.ips.set_targetfield(val)
-            #Change back to local control
-            yield self.ips.set_control(2)
-            self.setting_value = False
         self.lineEdit_setpoint.setText(formatNum(self.setpoint, 4))
         
     @inlineCallbacks
@@ -198,6 +194,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def gotoSet(self, c = None):
         yield self.ips.set_control(3)
+        yield self.ips.set_targetfield(self.setpoint)
         yield self.ips.set_activity(1)
         yield self.ips.set_control(2)
         
