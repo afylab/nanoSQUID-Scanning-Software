@@ -1481,6 +1481,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                         yield self.ips.set_activity(1)
                         yield self.ips.set_control(2)
                         t0 = time.time()
+                        
+                        if self.abortFlag == True:
+                            break
                         print 'restarting loop'
                     yield self.sleep(0.25)
                     
@@ -1795,6 +1798,8 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                         yield self.ips.set_control(2)
                         yield self.sleep(0.5)
                         t0 = time.time()
+                        if self.abortFlag == True:
+                            break
                     yield self.sleep(0.25)
                     
                     

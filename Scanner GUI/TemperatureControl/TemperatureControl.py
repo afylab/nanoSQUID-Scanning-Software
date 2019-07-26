@@ -144,8 +144,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 
                 #Set pid settings
                 yield self.ls.pid_set(self.measurementSettings['heater output'],self.measurementSettings['p'],self.measurementSettings['p'],self.measurementSettings['d'])
-                #set the new pid settings and heater range and stuff 
-                yield self.ls.range_set(self.measurementSettings['heater output'], self.measurementSettings['heater range'])
+                
+                if str(self.push_heater.text()) == 'Heater On':
+                    #set the new pid settings and heater range and stuff 
+                    yield self.ls.range_set(self.measurementSettings['heater output'], self.measurementSettings['heater range'])
                 
                 #In case record time has changed, update plots to reflect that
                 self.updatePlots()

@@ -89,31 +89,6 @@ background: rgb(144, 140, 9);
      <string/>
     </property>
    </widget>
-   <widget class="QLCDNumber" name="lcd">
-    <property name="geometry">
-     <rect>
-      <x>150</x>
-      <y>0</y>
-      <width>141</width>
-      <height>101</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::NoFrame</enum>
-    </property>
-    <property name="smallDecimalPoint">
-     <bool>true</bool>
-    </property>
-    <property name="numDigits">
-     <number>6</number>
-    </property>
-    <property name="value" stdset="0">
-     <double>0.000000000000000</double>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_display">
     <property name="geometry">
      <rect>
@@ -466,6 +441,32 @@ border-radius: 5px
     </property>
     <property name="text">
      <string>Monitoring Charging</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_fieldval">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>30</y>
+      <width>151</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>18</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="text">
+     <string>0</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
   </widget>

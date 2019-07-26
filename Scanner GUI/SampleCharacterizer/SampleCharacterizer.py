@@ -145,7 +145,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_1DFieldSweepSetting_MaximumField.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_1DFieldSweepSetting_MaximumField, 'FieldSweep1D_MaxField'))
         self.lineEdit_1DFieldSweepSetting_MaximumField.editingFinished.connect(self.UpdateFieldSweep1D_NumberofstepsandMilifieldperTesla)
         self.lineEdit_1DFieldSweepSetting_Numberofsteps.editingFinished.connect(self.UpdateFieldSweep1D_NumberofstepsandMilifieldperTesla)
-        self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed, 'FieldSweep1D_SweepSpeed'))
+        self.lineEdit_1DFieldSweepSetting_FieldSweepSpeed.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_1DFieldSweepSetting_FieldSweepSpeed, 'FieldSweep1D_SweepSpeed'))
         self.lineEdit_1DFieldSweepSetting_Delay.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_1DFieldSweepSetting_Delay, 'FieldSweep1D_Delay'))
 
 #################Four Terminal Magnetic field sweep default parameter
@@ -352,6 +352,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
     @inlineCallbacks
     def FieldSweep1D(self, start, end, direction):
+        print 'hysteresis sweep from ', start, ' to ', end, 'at', self.Dict_Variable['FieldSweep1D_SweepSpeed']
         try:
             self.AbortMagneticFieldSweep_Flag = False
             self.SetupFourTerminalSweepSetting('MagneticField1D') #Assign the DAC settings and DataVault parameters
@@ -367,7 +368,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             # yield self.rampMagneticField(self.current_field, start, self.Dict_Variable['FieldSweep1D_SweepSpeed'])
 
             self.formatted_data = []
-            for self.i in range(0,self.Dict_Variable['FieldSweep1D_Numberofstep']):
+            for self.i in range(0, self.Dict_Variable['FieldSweep1D_Numberofstep']):
 
                 if self.AbortMagneticFieldSweep_Flag:
                     print "Abort the Sweep."
@@ -587,7 +588,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
     
             self.current_field = end
         except Exception as inst:
-            print 'Scan error: ', inst
+            print 'Field error: ', inst, self.current_field
             print 'on line: ', sys.exc_traceback.tb_lineno
         
     def saveDataToSessionFolder(self):
@@ -741,6 +742,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             if self.Dict_Variable['FieldSweep1DSetting_Numberofsteps_Status'] == "StepSize":
                 self.Dict_Variable['FieldSweep1D_Numberofstep']=int(self.StepSizetoNumberofsteps_Convert(self.Dict_Variable['FieldSweep1D_MaxField'],self.Dict_Variable['FieldSweep1D_MinField'], float(dummyval)))
         self.RefreshFieldSweep1D_NumberofstepsandMilifieldperTesla()
+
 
     def RefreshFieldSweep1D_NumberofstepsandMilifieldperTesla(self): #Refresh based on the status change the lineEdit text
         if self.Dict_Variable['FieldSweep1DSetting_Numberofsteps_Status'] == "Numberofsteps":
@@ -948,17 +950,17 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_ImageDir.setText(r'\.datavault' + session)
 
         yield self.dv.add_parameter('Voltage Lock in Sensitivity (V)',self.MultiplierVoltage)
-        yield self.dv.add_parameter('Voltage Lock in Expand',float(self.comboBox_Voltage_LI_Expand.currentText()))
+        yield self.dv.add_parameter('Voltage Lock in Expand',str(self.comboBox_Voltage_LI_Expand.currentText()))
         yield self.dv.add_parameter('Current Lock in Sensitivity (A)',self.MultiplierCurrent)
-        yield self.dv.add_parameter('Current Lock in Expand',float(self.comboBox_Current_LI_Expand.currentText()))
+        yield self.dv.add_parameter('Current Lock in Expand',str(self.comboBox_Current_LI_Expand.currentText()))
         yield self.dv.add_parameter('Voltage Lock in Time Constant(s)',float(self.Voltage_LI_Timeconstant))
         yield self.dv.add_parameter('Current Lock in Time Constant(s)',float(self.Current_LI_Timeconstant))
         yield self.dv.add_parameter('Lock in Frequency(Hz)',float(self.Dict_Variable['Frequency']))
         if Status== "MagneticField1D":
-            yield self.dv.add_parameter('DAC Voltage 1',float(self.lineEdit_CentralDAC_DACOUTPUT1.text()))
-            yield self.dv.add_parameter('DAC Voltage 2',float(self.lineEdit_CentralDAC_DACOUTPUT2.text()))
-            yield self.dv.add_parameter('DAC Voltage 3',float(self.lineEdit_CentralDAC_DACOUTPUT3.text()))
-            yield self.dv.add_parameter('DAC Voltage 4',float(self.lineEdit_CentralDAC_DACOUTPUT4.text()))
+            yield self.dv.add_parameter('DAC Voltage 1',str(self.lineEdit_CentralDAC_DACOUTPUT1.text()))
+            yield self.dv.add_parameter('DAC Voltage 2',str(self.lineEdit_CentralDAC_DACOUTPUT2.text()))
+            yield self.dv.add_parameter('DAC Voltage 3',str(self.lineEdit_CentralDAC_DACOUTPUT3.text()))
+            yield self.dv.add_parameter('DAC Voltage 4',str(self.lineEdit_CentralDAC_DACOUTPUT4.text()))
 
     def SetupPlot_Data(self,Status):
         try:

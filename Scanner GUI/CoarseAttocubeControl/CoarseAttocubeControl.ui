@@ -115,7 +115,7 @@ background: rgb(144, 140, 9);
           </font>
          </property>
          <property name="text">
-          <string>Axis X</string>
+          <string>Axis 1</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -130,7 +130,7 @@ background: rgb(144, 140, 9);
           </font>
          </property>
          <property name="text">
-          <string>Axis Y</string>
+          <string>Axis 2</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -145,7 +145,7 @@ background: rgb(144, 140, 9);
           </font>
          </property>
          <property name="text">
-          <string>Axis Z</string>
+          <string>Axis 3</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

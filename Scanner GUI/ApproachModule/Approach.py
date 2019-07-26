@@ -80,7 +80,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
         
         self.lineEdit_Man_Z_Extension.editingFinished.connect(self.set_man_z_extension)
 
-        self.push_Abort.clicked.connect(self.abortApproachSequence)
+        self.push_Abort.clicked.connect(lambda: self.abortApproachSequence())
         
         self.push_ApproachForFeedback.clicked.connect(self.startFeedbackApproachSequence)
         self.push_PIDApproachForConstant.clicked.connect(self.startPIDConstantHeightApproachSequence)
@@ -1011,11 +1011,12 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.updateConstantHeightStatus.emit(True, self.Atto_Z_Voltage)
         self.constantHeight = True
 
+    @inlineCallbacks
     def abortApproachSequence(self):
         self.approaching = False
         self.updateApproachStatus.emit(False)
         #Turn off PID (just does nothing if it's already off)
-        self.hf.set_pid_on(self.PID_Index, False)
+        yield self.hf.set_pid_on(self.PID_Index, False)
 
         #self.goToFrustratedFeedback()
         
@@ -1548,60 +1549,108 @@ class Window(QtGui.QMainWindow, ApproachUI):
             print inst
             
     @inlineCallbacks
-    def setHF2LI_PID_Integrator(self, val = 0, speed = 1):
+    def setHF2LI_PID_Integrator(self, val = 0, speed = 1, curr_val = None):
         '''
         Function takes the provided speed (in V/s) to set the integrator value from its current value to the desired value. 
         note: this method can only reduce the voltage. This is done to avoid approaching the sample with PID off. Whenever
         getting closer, the PID should always be active. 
         '''
         #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's hard coded in (initialized at start)
+                
+        #Everything below is written as a workaround because there is no way to "Ramp" a voltage with the
+        #PID on the Zurich. Therefore, the software uses internal parameters on the Zurich to set up a fake
+        #signal, to ramp the PID
+        
+        #Some settings are changed in bulk with the set_settings function from the HF2LI server instead of the individual functions written in the server
+        #to reduce latency and minimize the time spent in limbo before withdrawing 
+        tzero = time.clock()
+        
         try:
             self.lockWithdrawSensitiveInputs()
-            curr_val = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+            if curr_val is None:
+                curr_val = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
 
+            #Only allow withdrawing, ie, lowering the voltage 
             if 0 <= val and val <= curr_val:
-            
-                #Before doing anything that turns off the PID and risks damaging the tip, prepare the PID output range
+                #Get the HF2LI device ID in order to be able to do latency minimizing commands
+                dev_ID = yield self.hf.list_devices()
+                dev_ID = dev_ID[0][1]
+                
+                t1 = time.clock()
+                
+                print 'T1: ', t1 - tzero
+                #Calculate center and range to withdraw exactly desired amount
                 center = (curr_val - val)/2 + val
                 range = (curr_val - val)/2
+               
+                #Keep track of what aux out 4 was before this algorithm. Removed to make withdrawing faster
+                #aux_out_sig = yield self.hf.get_aux_output_signal(4)
+                #aux_out_off = yield self.hf.get_aux_output_offset(4)
                 
-                #Center and range is determined such that at most we withdraw to the desired point. 
-                yield self.hf.set_pid_output_center(self.PID_Index, center)
-                yield self.hf.set_pid_output_range(self.PID_Index, range)
+                t2 = time.clock()
                 
-                #Everything below is written as a workaround because there is no way to "Ramp" a voltage with the
-                #PID on the Zurich. Therefore, the software uses internal parameters on the Zurich to set up a fake
-                #signal, to ramp the PID
+                print 'T2: ', t2 - tzero
                 
                 #Make sure the pid is off when setting up the integrator changing
-                #pid_on = yield self.hf.get_pid_on(self.PID_Index)
-                #if pid_on:
                 yield self.hf.set_pid_on(self.PID_Index, False)
 
-                #First turn off proportional and derivative terms, and intergral term to 1 to simplify calculation
-                yield self.hf.set_pid_p(self.PID_Index, 0)
-                yield self.hf.set_pid_i(self.PID_Index, 1)
-                yield self.hf.set_pid_d(self.PID_Index, 0)
-
-                #Sets the PID input signal type to be an auxliary output 
-                yield self.hf.set_pid_input_signal(self.PID_Index, 5)
-                #Sets channel to be aux output 4, which should never be in use elsewhere (as warned on the GUI)
-                yield self.hf.set_pid_input_channel(self.PID_Index, 4)
-
-                #the following two should already be appropriately set, but can't hurt to set them to the proper values again. 
-                #Sets the output signal type to be an auxiliary output offset
-                yield self.hf.set_pid_output_signal(self.PID_Index, 3)
-                #Sets the correct channel of the aux output
-                yield self.hf.set_pid_output_channel(self.PID_Index, self.generalSettings['pid_z_output'])
+                t3 = time.clock()
                 
-                yield self.hf.set_pid_setpoint(self.PID_Index, -speed)
-                #Sets the setpoint to be -speed volts. The input signal (aux output 4), is always left as 0 Volt output. 
+                print 'T3: ', t3 - tzero
+                
+                #First three inputs turn off proportional and derivative terms, and intergral term to 1 to simplify calculation
+                #Next two inputs set the PID input to be aux output 4
+                #Next input sets the PID setpoint to be -speed volts. The input signal (aux output 4), is always left as 0 Volt output. 
                 #This means that the rate at which the voltage changes is this setpoint (-'speed') times the integrator
                 # value (1 /s). So, this changes the voltage at a rate of 'speed' V/s.
+                #Next two inputs set Center and range is determined such that at most we withdraw to the desired point. 
+                #Final input sets aux out 4 to manual mode, 
+                settings = [['/%s/pids/%d/center' % (dev_ID, self.PID_Index-1), str(center)],
+                            ['/%s/pids/%d/range' % (dev_ID, self.PID_Index-1), str(range)],
+                            ['/%s/pids/%d/input' % (dev_ID, self.PID_Index-1), '5'],
+                            ['/%s/pids/%d/inputchannel' % (dev_ID, self.PID_Index-1), '3'],
+                            ['/%s/pids/%d/p' % (dev_ID, self.PID_Index-1), '0'],
+                            ['/%s/pids/%d/i' % (dev_ID, self.PID_Index-1), '1'],
+                            ['/%s/pids/%d/d' % (dev_ID, self.PID_Index-1), '0'],
+                            ['/%s/auxouts/%d/outputselect' % (dev_ID, 4-1), '-1'],
+                            ['/%s/pids/%d/setpoint' % (dev_ID, self.PID_Index-1),str(-speed)]]
+                
+                #Next two inputs set the PID output to be the aux output with the right channel. Probably not necessary
+                #Following can be added back in if necessary
+                # ['/%s/pids/%d/output' % (dev_ID, self.PID_Index-1), '3'],
+                # ['/%s/pids/%d/outputchannel' % (dev_ID, self.PID_Index-1), str(self.generalSettings['pid_z_output']-1)]
+                
+                yield self.hf.set_settings(settings)
+                
+                t4 = time.clock()
+                
+                print 'T4: ', t4 - tzero
+                # yield self.hf.set_pid_p(self.PID_Index, 0)
+                # yield self.hf.set_pid_i(self.PID_Index, 1)
+                # yield self.hf.set_pid_d(self.PID_Index, 0)
+
+                # #Sets the PID input signal type to be an auxliary output 
+                # yield self.hf.set_pid_input_signal(self.PID_Index, 5)
+                # #Sets channel to be aux output 4, which should never be in use elsewhere (as warned on the GUI)
+                # yield self.hf.set_pid_input_channel(self.PID_Index, 4)
+
+                # #the following two should already be appropriately set, but can't hurt to set them to the proper values again. 
+                # #Sets the output signal type to be an auxiliary output offset
+                # yield self.hf.set_pid_output_signal(self.PID_Index, 3)
+                # #Sets the correct channel of the aux output
+                # yield self.hf.set_pid_output_channel(self.PID_Index, self.generalSettings['pid_z_output'])
+                
+                # yield self.hf.set_pid_setpoint(self.PID_Index, -speed)
+                # #Sets the setpoint to be -speed volts. The input signal (aux output 4), is always left as 0 Volt output. 
+                # #This means that the rate at which the voltage changes is this setpoint (-'speed') times the integrator
+                # # value (1 /s). So, this changes the voltage at a rate of 'speed' V/s.
                 
                 #Turn on PID
                 yield self.hf.set_pid_on(self.PID_Index, True)
                 
+                tafter = time.clock()
+                
+                print 'Total time: ', tafter - tzero
                 #Wait the appropriate amount of time
                 expected_time = (curr_val - val)/speed
                 yield self.sleep(expected_time)
@@ -1611,6 +1660,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
 
                 #Set the appropriate PID settings for the PLL, instead of the nonsense set here
                 yield self.setHF2LI_PID_Settings()
+                
                 #Reset the range to the appropriate range
                 if self.voltageMultiplied:
                     if self.voltageMultiplier*10 <= self.z_volts_max:
@@ -1619,10 +1669,15 @@ class Window(QtGui.QMainWindow, ApproachUI):
                         yield self.setPIDOutputRange(self.z_volts_max/self.voltageMultiplier)
                 else:
                     yield self.setPIDOutputRange(self.z_volts_max)
+                    
+                #Return aux output 4 to what it was before. Commented out to make process faster
+                #yield self.hf.set_aux_output_signal(4, aux_out_sig)
+                #yield self.hf.set_aux_output_offset(4, aux_out_off)
 
             self.unlockWithdrawSensitiveInputs()
         except Exception as inst:
-            print "Set integrator error" + str(inst)
+            print "Set integrator error: " + str(inst)
+            print 'Error occured on line: ', sys.exc_traceback.tb_lineno
 
     '''
     Function to smoothly ramp between two voltage points are the desired speed provided in volts/s
@@ -1756,8 +1811,9 @@ class Window(QtGui.QMainWindow, ApproachUI):
     @inlineCallbacks
     def withdrawSpecifiedDistance(self, dist):
         try:          
-            #Abort all approach efforts
-            yield self.abortApproachSequence()
+            #Signal that we are no longer approaching
+            self.approaching = False
+            self.updateApproachStatus.emit(False)
             
             #Signal that no longer in constant height or in feedback
             self.updateConstantHeightStatus.emit(False, self.Atto_Z_Voltage)
@@ -1770,8 +1826,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
             self.push_ApproachForFeedback.setEnabled(False)
             self.push_PIDApproachForConstant.setEnabled(False)
             
-            #Turn PID off
-            yield self.hf.set_pid_on(self.PID_Index, False)
             #Get Zurich voltage output
             z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
             
@@ -1813,7 +1867,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 if self.voltageMultiplied:
                     retract_speed = retract_speed/self.voltageMultiplier
                     
-                yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
+                yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed, curr_val = z_voltage)
             
             if self.Atto_Z_Voltage > 0 and withdrawDistance > 0:
                 start_voltage = self.Atto_Z_Voltage

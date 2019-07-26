@@ -110,7 +110,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     else:
                         val = '  '
                 try:
-                    self.lcd.display(val[1:])
+                    self.label_fieldval.setText(formatNum(float(val[1:]),3))
                 except Exception as inst:
                     print inst
             yield self.sleep(0.5)
@@ -194,7 +194,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def gotoSet(self, c = None):
         yield self.ips.set_control(3)
-        yield self.ips.set_targetfield(self.setpoint)
+        a = yield self.ips.set_targetfield(self.setpoint)
+        print a
         yield self.ips.set_activity(1)
         yield self.ips.set_control(2)
         
