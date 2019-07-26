@@ -37,6 +37,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.cxn = False
         self.ips = False
+        self.dac_toe = False
+        
+        self.currField = 0
+        self.currCurrent = 0 
+        self.currVoltage = 0
         
         self.monitor_param = 'Field'
         self.setting_value = False
@@ -45,7 +50,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.persist = True
         self.lockInterface()
         
-    def moveDefault(self):    
+    def moveDefault(self):
         self.move(550,10)
         
     def connectLabRAD(self, dict):
@@ -56,14 +61,24 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def connectLabRAD(self, dict):
         try:
             self.cxn = dict['servers']['remote']['cxn']
-            self.ips = dict['servers']['remote']['ips120']
+            
+            if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
+                self.dac_toe = dict['servers']['local']['dac_adc']
+                self.magDevice = 'Toellner 8851'
+                self.setToellnerButtonConfig()
+                self.toeCurChan = dict['channels']['system']['toellner dac current'] - 1
+                self.toeVoltsChan = dict['channels']['system']['toellner dac voltage'] - 1
+            elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
+                self.ips = dict['servers']['remote']['ips120']
+                self.magDevice = 'IPS 120-10'
+                self.setDefaultButtonConfig()
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
         if not self.cxn: 
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif not self.ips:
+        elif not self.ips and not self.dac_toe:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
         else:
@@ -93,44 +108,57 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def monitorField(self):
         while self.monitor:
-            if not self.setting_value:
+            if self.magDevice == 'IPS 120-10':
+                if not self.setting_value:
+                    if self.monitor_param == 'Field':
+                        if self.viewChargingInfo:
+                            val = yield self.ips.read_parameter(7)
+                            self.currField = float(val[1:])
+                        else:
+                            val = yield self.ips.read_parameter(18)
+                            self.currField = float(val[1:])
+                    elif self.monitor_param == 'Curr':
+                        if self.viewChargingInfo:
+                            val = yield self.ips.read_parameter(0)
+                            self.currCurrent = float(val[1:])
+                        else:
+                            val = yield self.ips.read_parameter(16)
+                            self.currCurrent = float(val[1:])
+                    elif self.monitor_param == 'Volts':
+                        if self.viewChargingInfo:
+                            val = yield self.ips.read_parameter(1)
+                            self.currVoltage = float(val[1:])
+                        else:
+                            val = '  '
+            try:
                 if self.monitor_param == 'Field':
-                    if self.viewChargingInfo:
-                        val = yield self.ips.read_parameter(7)
-                    else:
-                        val = yield self.ips.read_parameter(18)
+                    self.label_fieldval.setText(formatNum(self.currField),3))
                 elif self.monitor_param == 'Curr':
-                    if self.viewChargingInfo:
-                        val = yield self.ips.read_parameter(0)
-                    else:
-                        val = yield self.ips.read_parameter(16)
+                    self.label_fieldval.setText(formatNum(self.currCurrent),3))
                 elif self.monitor_param == 'Volts':
-                    if self.viewChargingInfo:
-                        val = yield self.ips.read_parameter(1)
-                    else:
-                        val = '  '
-                try:
-                    self.label_fieldval.setText(formatNum(float(val[1:]),3))
-                except Exception as inst:
-                    print inst
+                    self.label_fieldval.setText(formatNum(self.currVoltage),3))
+            except Exception as inst:
+                print inst
             yield self.sleep(0.5)
             
     @inlineCallbacks
     def loadInitialValues(self):
         #Load parameters
-        setpoint = yield self.ips.read_parameter(8)
-        ramprate = yield self.ips.read_parameter(9)
-        self.setpoint = setpoint
-        self.ramprate = ramprate
+        if self.magDevice == 'IPS 120-10':
+            setpoint = yield self.ips.read_parameter(8)
+            ramprate = yield self.ips.read_parameter(9)
+            self.setpoint = setpoint
+            self.ramprate = ramprate
+
+            yield self.updateSwitchStatus()
+        else:
+            self.setpoint = 0.0
+            self.ramprate = 1.0
+            yield self.sleep(0.1)
+            
         self.lineEdit_setpoint.setText(formatNum(float(setpoint[1:])))
         self.lineEdit_ramprate.setText(formatNum(float(ramprate[1:])))
-        
-        #self.ramprate = 1.0
-        #self.lineEdit_ramprate.setText('1.0')
-        #yield self.setRamprate()
-        
-        yield self.updateSwitchStatus()
-        
+
     @inlineCallbacks
     def updateSwitchStatus(self):
         status = yield self.ips.examine()
@@ -172,11 +200,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         val = readNum(str(self.lineEdit_ramprate.text()), self, False)
         if isinstance(val,float):
             self.ramprate = val
-            self.setting_value = True
-            yield self.ips.set_control(3)
-            yield self.ips.set_fieldsweep_rate(val)
-            yield self.ips.set_control(2)
-            self.setting_value = False
+            if self.magDevice == 'IPS 120-10':
+                self.setting_value = True
+                yield self.ips.set_control(3)
+                yield self.ips.set_fieldsweep_rate(val)
+                yield self.ips.set_control(2)
+                self.setting_value = False
+            else:
+                yield self.sleep(0.1)
         self.lineEdit_ramprate.setText(formatNum(self.ramprate))
         
     def viewField(self):
@@ -192,30 +223,52 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.label_display.setText('Volts (V):')
         
     @inlineCallbacks
-    def gotoSet(self, c = None):
+    def gotoSet(self):
+        if self.magDevice == 'IPS 120-10':
+            yield self.gotoSetIPS()
+        else:
+            yield self.toeFieldSweep(self.currField, self.setpoint, self.ramprate)
+        
+    @inlineCallbacks
+    def gotoSetIPS(self, c = None):
+        self.setting_value = True
         yield self.ips.set_control(3)
-        a = yield self.ips.set_targetfield(self.setpoint)
-        print a
+        yield self.ips.set_targetfield(self.setpoint)
         yield self.ips.set_activity(1)
         yield self.ips.set_control(2)
+        self.setting_value = False
         
     @inlineCallbacks
     def gotoZero(self, c = None):
+        if self.magDevice == 'IPS 120-10':
+            yield self.gotoZeroIPS()
+        else:
+            yield self.toeFieldSweep(self.currField, 0, self.ramprate)
+        
+    @inlineCallbacks
+    def gotoZeroIPS(self, c = None):
+        self.setting_value = True
         yield self.ips.set_control(3)
         yield self.ips.set_activity(2)
         yield self.ips.set_control(2)
+        self.setting_value = False
         
+    #Only can be called when in the IPS configuration
     @inlineCallbacks
     def hold(self, c = None):
+        self.setting_value = True
         yield self.ips.set_control(3)
         yield self.ips.set_activity(0)
         yield self.ips.set_control(2)
+        self.setting_value = False
         
     @inlineCallbacks
     def clamp(self, c= None):
+        self.setting_value = True
         yield self.ips.set_control(3)
         yield self.ips.set_activity(4)
         yield self.ips.set_control(2)
+        self.setting_value = False
         
     def toggleView(self):
         if self.viewChargingInfo:
@@ -228,6 +281,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def togglePersist(self, c = None):
         try:
+            self.setting_value = True
             if self.persist:
                 yield self.ips.set_control(3)
                 yield self.ips.set_switchheater(1)
@@ -240,11 +294,66 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 yield self.sleep(0.25)
                 yield self.updateSwitchStatus()
                 yield self.ips.set_control(2)
+            self.setting_value = False
         except Exception as inst:
             print inst
             
+    @inlineCallbacks
+    def toeSweepField(B_i, B_f, B_speed, c = None):
+        #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
+        VV_conv = 3.20
+        #Toellner current set point / DAC voltage out conversion [I_Toellner / V_DAC]
+        IV_conv = 1.0 
+
+        #Field / Current ratio on the dipper magnet (0.132 [Tesla / Amp])
+        IB_conv = 0.132
+
+        #Starting and ending field values in Tesla, use positive field values for now
+        B_range = np.absolute(B_f - B_i)
+
+        #Delay between DAC steps in microseconds
+        magnet_delay = 5000
+        #Converts between microseconds and minutes [us / minute]
+        t_conv = 6e07
+
+        #Sets the appropriate DAC buffer ramp parameters
+        sweep_steps = int((t_conv * B_range) / (B_speed * magnet_delay))  + 1
+        v_start = B_i / (IB_conv * IV_conv)
+        v_end = B_f / (IB_conv * IV_conv)
+
+        #Sets an appropraite voltage set point to ensure that the Toellner power supply stays in constant current mode
+        # assuming a parasitic resistance of R_p between the power supply and magnet
+        overshoot = 5
+        R_p = 2
+        V_setpoint =  (overshoot * R_p * np.amax([B_i, B_f])) / (VV_conv * IB_conv)
+        V_initial = (overshoot * R_p * np.amin([B_i, B_f])) / (VV_conv * IB_conv)
+        if V_setpoint > 10.0:
+            V_setpoint = 10.0
+        else:
+            pass
+        if V_initial > 10.0:
+            V_initial = 10.0
+        else:
+            pass
+
+        #Ramps the DAC such that the Toellner voltage setpoint stays in constant current mode
+        ramp_steps = int(np.absolute(V_setpoint - V_initial) * 1000)
+        ramp_delay = 1000
+        yield self.dac_toe.buffer_ramp([self.toeVoltsChan], [0], [V_initial], [V_setpoint], ramp_steps, ramp_delay)
+        
+        self.currVoltage = V_setpoint
+        
+        #Sweeps field from B_i to B_f
+        print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
+        yield self.dac_toe.buffer_ramp([self.toeCurChan],[0],[v_start],[v_end], sweep_steps, magnet_delay)
+
+        self.currCurrent = B_f/IB_conv
+        
+        self.currField = B_f
+        
+        
     # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous 
-    # delay that allows other labrad / pyqt methods to run   
+    # delay that allows other labrad / pyqt methods to run
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
         other operations to be done elsewhere while paused."""
@@ -280,6 +389,20 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_persistSwitch.setEnabled(True)
         self.lineEdit_setpoint.setEnabled(True)
         self.lineEdit_ramprate.setEnabled(True)
+        
+    def setToellnerButtonConfig(self):
+        self.push_toggleView.hide()
+        self.push_hold.hide()
+        self.push_clamp.hide()
+        self.push_persistSwitch.hide()
+        self.label_switchStatus.hide()
+        
+    def setDefaultButtonConfig(self):
+        self.push_toggleView.show()
+        self.push_hold.show()
+        self.push_clamp.show()
+        self.push_persistSwitch.show()
+        self.label_switchStatus.show()
         
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
