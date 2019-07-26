@@ -14,8 +14,6 @@ import copy
 path = sys.path[0] + r"\nSOTCharacterizer"
 characterGUI = path + r"\character_GUI.ui"
 dialogBox = path + r"\sweepCheck.ui"
-dacSet = path + "\dacChannels.ui"
-acSet = path + r"\acSetting.ui"
 prelimSweep = path + r"\preliminarySweep.ui"
 toeReminder = path + r"\toeReminder.ui"
 gotoSetPoint = path + r"\gotoSetpoint.ui"
@@ -23,8 +21,6 @@ serlist = path + r"\requiredServers.ui"
 
 Ui_MainWindow, QtBaseClass = uic.loadUiType(characterGUI)
 Ui_DialogBox, QtBaseClass = uic.loadUiType(dialogBox)
-Ui_dacSet, QtBaseClass = uic.loadUiType(dacSet)
-Ui_acSet, QtBaseClass = uic.loadUiType(acSet)
 Ui_prelimSweep, QtBaseClass = uic.loadUiType(prelimSweep)
 Ui_toeReminder, QtBaseClass = uic.loadUiType(toeReminder)
 Ui_ServerList, QtBaseClass = uic.loadUiType(serlist)
@@ -53,10 +49,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 'feedback AC input':    1, #1 indexed input on the DAC ADC to read the AC signal (should be coming from a lockin)
                 'Magnet device':        'Toellner 8851', #Device used to control the magnetic field 
         }
-        
-        # AC voltage characteristics, though this functionality is no longer fully set up with the Zurich lockin
-        # If this is ever used again, it should be combined with the previous dictionary
-        self.acSettingsDict = {'freq' : 4.0, 'amp' : 2.0}
         
         #Dictionary of parameters defining the nSOT sweep
         self.sweepParamDict = {'B_min' : 0, 'B_max' : 0.1, 'B_pnts' : 100, 'B_rate' : 1, 'V_min' : 0, 'V_max' : 1, 'V_pnts' : 500, 'delay' : 1,'volt mode' : 'min/max', 'Magnet device' : 'Toellner 8851', 'blink mode' : 'on'}
@@ -87,9 +79,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.liveTracePlotStatus = False
         self.liveRetracePlot.clicked.connect(self.toggleRetraceLineCut)
         self.liveRetracePlotStatus = False
-        
-        #Opens the AC settings windows
-        self.acSetOpen.clicked.connect(self.acSet)
 
         #Shows/hides the color scales on the trace/retrace plots
         self.showTraceGrad.hide()
@@ -255,13 +244,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.prelim.setEnabled(False)
         self.prelimSweep = preliminarySweep(self.reactor, self.dv, self.dac, self.settingsDict, self)
         self.prelimSweep.show()
-           
-    #Opens window to adjust the AC response settings
-    def acSet(self):
-        self.acSetOpen.setEnabled(False)
-        self.acSettings = acSettings(self.acSettingsDict, self)
-        if self.acSettings.exec_():
-            print 'AC Settings: ', self.acSettingsDict
 
     #Initializes an abort of a sweep by changing the self.abortFlag to True
     def initAbort(self):
@@ -641,18 +623,18 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         elif self.biasSIStat == 'num pnts':
             v_pnts = int(self.biasPointsSetValue.text())
         v_speed = self.siFormat(self.biasSpeedSetValue.text())
-        if b_min > b_max:
-            b_max_str, b_min_str = self.fieldMaxSetValue.text(), self.fieldMinSetValue.text()
-            self.fieldMinSetValue.setText(b_max_str)
-            self.fieldMaxSetValue.setText(b_min_str)
-            b_min = self.siFormat(self.fieldMinSetValue.text(), 3)
-            b_max = self.siFormat(self.fieldMaxSetValue.text(), 3)
-        if v_min > v_max:
-            v_max_str, v_min_str = self.biasMaxSetValue.text(), self.biasMinSetValue.text()
-            self.biasMinSetValue.setText(v_max_str)
-            self.biasMaxSetValue.setText(v_min_str)
-            v_min = self.siFormat(self.biasMinSetValue.text(), 3)
-            v_max = self.siFormat(self.biasMaxSetValue.text(), 3)
+        # if b_min > b_max:
+            # b_max_str, b_min_str = self.fieldMaxSetValue.text(), self.fieldMinSetValue.text()
+            # self.fieldMinSetValue.setText(b_max_str)
+            # self.fieldMaxSetValue.setText(b_min_str)
+            # b_min = self.siFormat(self.fieldMinSetValue.text(), 3)
+            # b_max = self.siFormat(self.fieldMaxSetValue.text(), 3)
+        # if v_min > v_max:
+            # v_max_str, v_min_str = self.biasMaxSetValue.text(), self.biasMinSetValue.text()
+            # self.biasMinSetValue.setText(v_max_str)
+            # self.biasMaxSetValue.setText(v_min_str)
+            # v_min = self.siFormat(self.biasMinSetValue.text(), 3)
+            # v_max = self.siFormat(self.biasMaxSetValue.text(), 3)
         if sweepMod == 1:
             if v_min < 0 and v_max > 0:
                 pass
@@ -1318,15 +1300,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         dIdV_out = self.settingsDict['feedback AC input'] - 1
         #DAC in channel to read noise measurement
         noise = self.settingsDict['noise input'] - 1
-
-
-        #AC excitation information for quasi dI/dV measurement. Frequency should be larger than 
-        # ~2 kHz to avoid being filtered out by the lock in AC coupling high pass filter.  
-        #THIS FUNCTIONALITY IS DISABLED AND MUST BE SET MANUALLY ON THE SR830
-        #AC Oscillation amplitude
-        vac_amp = self.acSettingsDict['amp']
-        #Frequency in kilohertz
-        frequency = self.acSettingsDict['freq']
         
         file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
         self.dvFileName = file_info[1]
@@ -1628,15 +1601,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             step = int(np.absolute(self.setpntDict['bias'])) * 1000
             tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [self.setpntDict['bias']], [0], step, 2000)
             
-
-
-        #AC excitation information for quasi dI/dV measurement. Frequency should be larger than 
-        # ~2 kHz to avoid being filtered out by the lock in AC coupling high pass filter.  
-        #THIS FUNCTIONALITY IS DISABLED AND MUST BE SET MANUALLY ON THE SR830
-        #AC Oscillation amplitude
-        vac_amp = self.acSettingsDict['amp']
-        #Frequency in kilohertz
-        frequency = self.acSettingsDict['freq']
         file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
         self.dvFileName = file_info[1]
         self.lineEdit_ImageNum.setText(file_info[1][0:5])
@@ -2017,7 +1981,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.startSweep.setEnabled(False)
         self.prelim.setEnabled(False)
         self.abortSweep.setEnabled(False)
-        self.acSetOpen.setEnabled(False)
         
     def unlockInterface(self):
         self.biasSweepMode.setEnabled(True)
@@ -2036,40 +1999,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.startSweep.setEnabled(True)
         self.prelim.setEnabled(True)
         self.abortSweep.setEnabled(True)
-        self.acSetOpen.setEnabled(True)
             
     def closeEvent(self, e):
         pass
-
-#Window for setting the AC excitation for dI/dV sweeps, probably will never be used
-class acSettings(QtGui.QDialog, Ui_acSet):
-    def __init__(self, acDict, parent = None):
-        super(acSettings, self).__init__(parent)
-        self.setupUi(self)
-        
-        self.acDict = acDict
-        #self.acSettingsDict = {'freq' : 4.0, 'amp' : 2.0}
-        self.window = parent
-
-        self.acFreqValue.setValue(self.acDict['freq'])
-        self.acAmpValue.setValue(self.acDict['amp'])
-
-        self.cancelACSet.clicked.connect(self._close)
-        self.okACSet.clicked.connect(self._ok)
-
-    def closeEvent(self, e):
-        self.window.acSetOpen.setEnabled(True)
-        self.close()
-
-    def _close(self):
-        self.window.acSetOpen.setEnabled(True)
-        self.close()
-    def _ok(self):
-        self.acDict = {'freq' : float(self.acFreqValue.value()), 'amp' : float(self.acAmpValue.value())}
-        self.window.acSettingsDict = copy.copy(self.acDict)
-        
-        self.window.acSetOpen.setEnabled(True)
-        self.close()
 
 #Window for reminding user to turn Toellner output on
 class toellnerReminder(QtGui.QDialog, Ui_toeReminder):

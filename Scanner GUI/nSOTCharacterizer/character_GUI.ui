@@ -250,7 +250,7 @@ background-color: rgb(0, 0, 0);
    <widget class="QPushButton" name="abortSweep">
     <property name="geometry">
      <rect>
-      <x>950</x>
+      <x>995</x>
       <y>50</y>
       <width>71</width>
       <height>23</height>
@@ -1313,34 +1313,6 @@ border-radius: 5px
      </property>
     </item>
    </widget>
-   <widget class="QPushButton" name="acSetOpen">
-    <property name="geometry">
-     <rect>
-      <x>1060</x>
-      <y>50</y>
-      <width>35</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton:pressed#acSetOpen{
-color: rgb(95,107,166);
-background-color:rgb(168,168,168);
-border: 1px solid rgb(95,107,166);
-border-radius: 5px
-}
-
-QPushButton#acSetOpen{
-color: rgb(255,255,51);
-background-color:rgb(0,0,0);
-border: 2px solid  rgb(255,255, 51);
-border-radius: 5px
-}</string>
-    </property>
-    <property name="text">
-     <string>AC</string>
-    </property>
-   </widget>
    <widget class="Line" name="line">
     <property name="geometry">
      <rect>
@@ -2097,7 +2069,6 @@ border-radius: 5px
    <zorder>prelim</zorder>
    <zorder>label_5</zorder>
    <zorder>magnetPower</zorder>
-   <zorder>acSetOpen</zorder>
    <zorder>line</zorder>
    <zorder>line_2</zorder>
    <zorder>line_3</zorder>
