@@ -351,7 +351,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.currField = B_f
         
-        
     # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous 
     # delay that allows other labrad / pyqt methods to run
     def sleep(self,secs):
