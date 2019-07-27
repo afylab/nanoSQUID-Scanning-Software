@@ -289,6 +289,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         
         self.comboBox_MagInput.currentIndexChanged.connect(self.updateMagInput)
         self.comboBox_sampInput.currentIndexChanged.connect(self.updateSampleInput)
+        self.comboBox_potInput.currentIndexChanged.connect(self.updatePotInput)
         
         self.lineEdit_D.editingFinished.connect(self.updateD)
         self.lineEdit_I.editingFinished.connect(self.updateI)
@@ -352,6 +353,23 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             elif self.measurementSettings['sample Input'] == 'D5':
                 self.comboBox_sampInput.setCurrentIndex(7)
                 
+            if self.measurementSettings['pot Input'] == 'A':
+                self.comboBox_potInput.setCurrentIndex(0)
+            elif self.measurementSettings['pot Input'] == 'B':
+                self.comboBox_potInput.setCurrentIndex(1)
+            elif self.measurementSettings['pot Input'] == 'C':
+                self.comboBox_potInput.setCurrentIndex(2)
+            elif self.measurementSettings['pot Input'] == 'D1':
+                self.comboBox_potInput.setCurrentIndex(3)
+            elif self.measurementSettings['pot Input'] == 'D2':
+                self.comboBox_potInput.setCurrentIndex(4)
+            elif self.measurementSettings['pot Input'] == 'D3':
+                self.comboBox_potInput.setCurrentIndex(5)
+            elif self.measurementSettings['pot Input'] == 'D4':
+                self.comboBox_potInput.setCurrentIndex(6)
+            elif self.measurementSettings['pot Input'] == 'D5':
+                self.comboBox_potInput.setCurrentIndex(7)
+                
             if self.measurementSettings['heater range'] == 1:
                 self.radioButton_1.setChecked(True)
             elif self.measurementSettings['heater range'] == 2:
@@ -405,6 +423,24 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.measurementSettings['sample Input'] = 'D4'
         elif self.comboBox_sampInput.currentIndex() == 7:
             self.measurementSettings['sample Input'] = 'D5'
+            
+    def updatePotInput(self):
+        if self.comboBox_potInput.currentIndex() ==0:
+            self.measurementSettings['pot Input'] = 'A'
+        elif self.comboBox_potInput.currentIndex() == 1:
+            self.measurementSettings['pot Input'] = 'B'
+        elif self.comboBox_potInput.currentIndex() == 2:
+            self.measurementSettings['pot Input'] = 'C'
+        elif self.comboBox_potInput.currentIndex() == 3:
+            self.measurementSettings['pot Input'] = 'D1'
+        elif self.comboBox_potInput.currentIndex() == 4:
+            self.measurementSettings['pot Input'] = 'D2'
+        elif self.comboBox_potInput.currentIndex() == 5:
+            self.measurementSettings['pot Input'] = 'D3'
+        elif self.comboBox_potInput.currentIndex() == 6:
+            self.measurementSettings['pot Input'] = 'D4'
+        elif self.comboBox_potInput.currentIndex() == 7:
+            self.measurementSettings['pot Input'] = 'D5'
             
     def updateP(self):
         val = readNum(str(self.lineEdit_P.text()), self, False)
