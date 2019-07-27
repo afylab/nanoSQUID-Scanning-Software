@@ -165,13 +165,13 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 
             if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
                 self.dac_toe = dict['servers']['local']['dac_adc']
-                self.magDevice = 'Toellner 8851'
+                self.settingsDict['Magnet device'] = 'Toellner 8851'
                 self.toeCurChan = dict['channels']['system']['toellner dac current'] - 1
                 self.toeVoltsChan = dict['channels']['system']['toellner dac voltage'] - 1
                 self.magnetPower.addItem('Toellner 8851')
             elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
                 self.ips = dict['servers']['remote']['ips120']
-                self.magDevice = 'IPS 120-10'
+                self.settingsDict['Magnet device'] = 'IPS 120-10'
                 self.magnetPower.addItem('IPS 120-10')
                 
             '''
