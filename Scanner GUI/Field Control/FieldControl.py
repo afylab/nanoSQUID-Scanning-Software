@@ -332,8 +332,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             # assuming a parasitic resistance of R_p between the power supply and magnet
             overshoot = 5
             R_p = 2
-            V_setpoint =  (overshoot * R_p * np.amax([B_i, B_f])) / (VV_conv * IB_conv)
-            V_initial = (overshoot * R_p * np.amin([B_i, B_f])) / (VV_conv * IB_conv)
+            V_setpoint =  (overshoot * R_p * B_f) / (VV_conv * IB_conv)
+            V_initial = (overshoot * R_p * B_i) / (VV_conv * IB_conv)
             if V_setpoint > 10.0:
                 V_setpoint = 10.0
             else:
@@ -357,6 +357,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.currField = B_f
         except Exception as inst:
             print 'SF, ', str(inst )
+            
+    def updateToeField(self, field, curr, volt):
+        self.currField = field
+        self.currVoltage = volt
+        self.currCurrent = curr
+        
     # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous 
     # delay that allows other labrad / pyqt methods to run
     def sleep(self,secs):

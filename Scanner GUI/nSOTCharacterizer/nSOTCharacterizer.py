@@ -27,6 +27,8 @@ Ui_ServerList, QtBaseClass = uic.loadUiType(serlist)
 
 #Main characterization window with plots, sweep paramteres, etc.
 class Window(QtGui.QMainWindow, Ui_MainWindow):
+    newToeField = QtCore.pyqtSignal(float, float, float)
+    
     def __init__(self, reactor, parent = None):
         super(Window, self).__init__(parent)
         #QtGui.QDialog.__init__(self)
@@ -160,16 +162,18 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         try:
             self.cxn = dict['servers']['local']['cxn']
             self.gen_dv = dict['servers']['local']['dv']
-
+                
             if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
                 self.dac_toe = dict['servers']['local']['dac_adc']
+                self.magDevice = 'Toellner 8851'
+                self.toeCurChan = dict['channels']['system']['toellner dac current'] - 1
+                self.toeVoltsChan = dict['channels']['system']['toellner dac voltage'] - 1
                 self.magnetPower.addItem('Toellner 8851')
-                self.settingsDict['Magnet device'] = 'Toellner 8851'
             elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
                 self.ips = dict['servers']['remote']['ips120']
+                self.magDevice = 'IPS 120-10'
                 self.magnetPower.addItem('IPS 120-10')
-                self.settingsDict['Magnet device'] = 'IPS 120-10'
-            
+                
             '''
             Create another connection to labrad in order to have a set of servers opened up in a context
             specific to this module. This allows multiple datavault connections to be editted at the same
@@ -1902,54 +1906,56 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         yield self.sleep(0.25)
     
     @inlineCallbacks
-    def toeSweepField(B_i, B_f, B_speed, c = None):
-        DAC_set_volt, DAC_set_current = self.settingsDict['toellner volts'] - 1, self.settingsDict['toellner current'] - 1
-        DAC_in_ref = self.settingsDict['nsot bias input']
-        #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
-        VV_conv = 3.20
-        #Toellner current set point / DAC voltage out conversion [I_Toellner / V_DAC]
-        IV_conv = 1.0 
+    def toeSweepField(self, B_i, B_f, B_speed, c = None):
+        try:
+            #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
+            VV_conv = 3.20
+            #Toellner current set point / DAC voltage out conversion [I_Toellner / V_DAC]
+            IV_conv = 1.0 
 
-        #Field / Current ratio on the dipper magnet (0.132 [Tesla / Amp])
-        IB_conv = 0.132
+            #Field / Current ratio on the dipper magnet (0.132 [Tesla / Amp])
+            IB_conv = 0.132
 
-        #Starting and ending field values in Tesla, use positive field values for now
-        B_range = np.absolute(B_f - B_i)
+            #Starting and ending field values in Tesla, use positive field values for now
+            B_range = np.absolute(B_f - B_i)
 
-        #Delay between DAC steps in microseconds
-        magnet_delay = 5000
-        #Converts between microseconds and minutes [us / minute]
-        t_conv = 6e07
+            #Delay between DAC steps in microseconds
+            magnet_delay = 1000
+            #Converts between microseconds and minutes [us / minute]
+            t_conv = 6e07
 
-        #Sets the appropriate DAC buffer ramp parameters
-        sweep_steps = int((t_conv * B_range) / (B_speed * magnet_delay))  + 1
-        v_start = B_i / (IB_conv * IV_conv)
-        v_end = B_f / (IB_conv * IV_conv)
+            #Sets the appropriate DAC buffer ramp parameters
+            sweep_steps = int((t_conv * B_range) / (B_speed * magnet_delay))  + 1
+            v_start = B_i / (IB_conv * IV_conv)
+            v_end = B_f / (IB_conv * IV_conv)
 
-        #Sets an appropraite voltage set point to ensure that the Toellner power supply stays in constant current mode
-        # assuming a parasitic resistance of R_p between the power supply and magnet
-        overshoot = 5
-        R_p = 2
-        V_setpoint =  (overshoot * R_p * np.amax([B_i, B_f])) / (VV_conv * IB_conv)
-        V_initial = (overshoot * R_p * np.amin([B_i, B_f])) / (VV_conv * IB_conv)
-        if V_setpoint > 10.0:
-            V_setpoint = 10.0
-        else:
-            pass
-        if V_initial > 10.0:
-            V_initial = 10.0
-        else:
-            pass
+            #Sets an appropraite voltage set point to ensure that the Toellner power supply stays in constant current mode
+            # assuming a parasitic resistance of R_p between the power supply and magnet
+            overshoot = 5
+            R_p = 2
+            V_setpoint =  (overshoot * R_p * B_f) / (VV_conv * IB_conv)
+            V_initial = (overshoot * R_p * B_i) / (VV_conv * IB_conv)
+            if V_setpoint > 10.0:
+                V_setpoint = 10.0
+            else:
+                pass
+            if V_initial > 10.0:
+                V_initial = 10.0
+            else:
+                pass
 
-        #Ramps the DAC such that the Toellner voltage setpoint stays in constant current mode
-        ramp_steps = int(np.absolute(V_setpoint - V_initial) * 1000)
-        ramp_delay = 1000
-        yield self.dac_toe.buffer_ramp([DAC_set_volt], [DAC_in_ref], [V_initial], [V_setpoint], ramp_steps, ramp_delay)
-        
-        #Sweeps field from B_i to B_f
-        print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
-        yield self.dac_toe.buffer_ramp([DAC_set_current],[DAC_in_ref],[v_start],[v_end], sweep_steps, magnet_delay)
-
+            #Ramps the DAC such that the Toellner voltage setpoint stays in constant current mode
+            #ramp_steps = int(np.absolute(V_setpoint - V_initial) * 1000)+1
+            #ramp_delay = 1000
+            #yield self.dac_toe.buffer_ramp([self.toeVoltsChan], [0], [V_initial], [V_setpoint], ramp_steps, ramp_delay)
+            
+            #Sweeps field from B_i to B_f
+            print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
+            yield self.dac_toe.buffer_ramp([self.toeCurChan, self.toeVoltsChan],[0],[v_start, V_initial],[v_end, V_setpoint], sweep_steps, magnet_delay)
+            
+            self.newToeField.emit(B_f, B_f/IB_conv, V_setpoint)
+        except Exception as inst:
+            print 'SF, ', str(inst )
         
     def setSessionFolder(self, folder):
         self.sessionFolder = folder

@@ -127,6 +127,8 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         
         self.TFChar.workingPointSelected.connect(self.distributeWorkingPoint)
 
+        self.nSOTChar.newToeField.connect(self.FieldControl.updateToeField)
+
         self.Approach.newPLLData.connect(self.ApproachMonitor.updatePLLPlots)
         self.Approach.newFdbkDCData.connect(self.ApproachMonitor.updateFdbkDCPlot)
         self.Approach.newFdbkACData.connect(self.ApproachMonitor.updateFdbkACPlot)
