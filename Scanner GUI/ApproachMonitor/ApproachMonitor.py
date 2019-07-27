@@ -26,11 +26,8 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.deltaFData = np.array([])
         self.phaseErrorData = np.array([])
 
-        self.dcTimeData = np.array([])
-        self.dcData = np.array([])
-        
-        self.acTimeData = np.array([])
-        self.acData = np.array([])
+        self.aux2TimeData = np.array([])
+        self.aux2Data = np.array([])
         
         self.zTimeData = np.array([])
         self.zData = np.array([])
@@ -86,6 +83,36 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         tab1.setLayout(tab1_layout)
         self.dTabWidget.addTab(tab1, 'PLL Monitor')
         
+        self.zPlot = pg.PlotWidget(parent = self)
+        self.zPlot.setLabel('left', 'Atto. Z Extension', units = 'm')
+        self.zPlot.setLabel('bottom', 'Time', units = 's')
+        self.zPlot.showAxis('right', show = True)
+        self.zPlot.showAxis('top', show = True)
+        self.zPlot.setTitle('Atto. Z Extension (m) vs. Time (s)')
+        
+        tab2 = QtGui.QWidget()
+        
+        tab2_layout = QtGui.QVBoxLayout()
+        tab2_layout.addWidget(self.zPlot)
+        
+        tab2.setLayout(tab2_layout)
+        self.dTabWidget.addTab(tab2, 'Z Monitor')
+        
+        self.aux2Plot = pg.PlotWidget(parent = self)
+        self.aux2Plot.setLabel('left', 'Aux 2 Input', units = 'V')
+        self.aux2Plot.setLabel('bottom', 'Time', units = 's')
+        self.aux2Plot.showAxis('right', show = True)
+        self.aux2Plot.showAxis('top', show = True)
+        self.aux2Plot.setTitle('Aux 2 Input vs. Time (s)')
+        
+        tab3 = QtGui.QWidget()
+        
+        tab3_layout = QtGui.QVBoxLayout()
+        tab3_layout.addWidget(self.aux2Plot)
+        
+        tab3.setLayout(tab3_layout)
+        self.dTabWidget.addTab(tab3, 'Aux Input Monitor')
+        
         self.fdbkDCPlot = pg.PlotWidget(parent = self)
         self.fdbkDCPlot.setLabel('left', 'Feedback DC', units = 'V')
         self.fdbkDCPlot.setLabel('bottom', 'Time', units = 's')
@@ -100,33 +127,17 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.fdbkACPlot.showAxis('top', show = True)
         self.fdbkACPlot.setTitle('Feedback AC vs. Time (s)')
         
-        tab2 = QtGui.QWidget()
+        tab4 = QtGui.QWidget()
         
-        tab2_layout = QtGui.QVBoxLayout()
-        tab2_layout.addWidget(self.fdbkDCPlot)
-        tab2_layout.addWidget(self.fdbkACPlot)
+        tab4_layout = QtGui.QVBoxLayout()
+        tab4_layout.addWidget(self.fdbkDCPlot)
+        tab4_layout.addWidget(self.fdbkACPlot)
         
-        tab2.setLayout(tab2_layout)
-        self.dTabWidget.addTab(tab2, 'Feedback Monitor')
+        tab4.setLayout(tab4_layout)
+        self.dTabWidget.addTab(tab4, 'Feedback Monitor')
         
-        self.zPlot = pg.PlotWidget(parent = self)
-        self.zPlot.setLabel('left', 'Atto. Z Extension', units = 'm')
-        self.zPlot.setLabel('bottom', 'Time', units = 's')
-        self.zPlot.showAxis('right', show = True)
-        self.zPlot.showAxis('top', show = True)
-        self.zPlot.setTitle('Atto. Z Extension (m) vs. Time (s)')
-        
-        tab3 = QtGui.QWidget()
-        
-        tab3_layout = QtGui.QVBoxLayout()
-        tab3_layout.addWidget(self.zPlot)
-        
-        tab3.setLayout(tab3_layout)
-        self.dTabWidget.addTab(tab3, 'Z Monitor')
-
         self.zPlaceholder.close()
-        self.dcPlaceholder.close()
-        self.acPlaceholder.close()
+        self.aux2Placeholder.close()
         self.deltaFPlaceholder.close()
         self.phasePlaceholder.close()
         self.tabWidget.close()
@@ -142,6 +153,28 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.deltaFData = np.append(self.deltaFData, deltaF)
         self.phaseErrorData = np.append(self.phaseErrorData, phaseError)
         self.plotPLL()
+        
+    def updateAux2Plot(self,volts):
+        if self.first_data_point:
+            self.time_offset = time.clock()
+            self.first_data_point = False
+
+        timepoint = time.clock() - self.time_offset
+
+        self.aux2TimeData = np.append(self.aux2TimeData, timepoint)
+        self.aux2Data = np.append(self.aux2Data, volts)
+        self.plotAux2()
+        
+    def updateZPlot(self,z_meters):
+        if self.first_data_point:
+            self.time_offset = time.clock()
+            self.first_data_point = False
+
+        timepoint = time.clock() - self.time_offset
+        
+        self.zTimeData = np.append(self.zTimeData, timepoint)
+        self.zData = np.append(self.zData, z_meters)
+        self.plotZ()
         
     def updateFdbkDCPlot(self,dc):
         if self.first_data_point:
@@ -165,21 +198,9 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.acData = np.append(self.acData, ac)
         self.plotFdbkAC()
         
-    def updateZPlot(self,z_meters):
-        if self.first_data_point:
-            self.time_offset = time.clock()
-            self.first_data_point = False
-
-        timepoint = time.clock() - self.time_offset
-        
-        self.zTimeData = np.append(self.zTimeData, timepoint)
-        self.zData = np.append(self.zData, z_meters)
-        self.plotZ()
-        
     def plotPlots(self):
         self.plotPLL()
-        self.plotFdbkDC()
-        self.plotFdbkAC()
+        self.plotAux2()
         self.plotZ()
         
     def plotPLL(self):
@@ -197,6 +218,28 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
                 self.phaseErrorPlot.clear()
                 self.phaseErrorPlot.plot(self.pllTimeData[a:], self.phaseErrorData[a:])
 
+    def plotAux2(self):
+        length = len(self.aux2TimeData)
+        if length > 1:
+            if (self.aux2TimeData[length-1] - self.aux2TimeData[0]) <= self.plotTimeRange:
+                self.aux2Plot.clear()
+                self.aux2Plot.plot(self.aux2TimeData, self.aux2Data)
+            else:
+                a = np.argmin(np.abs(self.aux2TimeData - (self.aux2TimeData[length-1] - self.plotTimeRange)))
+                self.aux2Plot.clear()
+                self.aux2Plot.plot(self.aux2TimeData[a:], self.aux2Data[a:])
+                
+    def plotZ(self):
+        length = len(self.zTimeData)
+        if length > 1:
+            if (self.zTimeData[length-1] - self.zTimeData[0]) <= self.plotTimeRange:
+                self.zPlot.clear()
+                self.zPlot.plot(self.zTimeData, self.zData)
+            else:
+                a = np.argmin(np.abs(self.zTimeData - (self.zTimeData[length-1] - self.plotTimeRange)))
+                self.zPlot.clear()
+                self.zPlot.plot(self.zTimeData[a:], self.zData[a:])
+    
     def plotFdbkDC(self):
         length = len(self.dcTimeData)
         if length > 1:
@@ -218,17 +261,6 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
                 a = np.argmin(np.abs(self.acTimeData - (self.acTimeData[length-1] - self.plotTimeRange)))
                 self.fdbkACPlot.clear()
                 self.fdbkACPlot.plot(self.acTimeData[a:], self.acData[a:])
-                
-    def plotZ(self):
-        length = len(self.zTimeData)
-        if length > 1:
-            if (self.zTimeData[length-1] - self.zTimeData[0]) <= self.plotTimeRange:
-                self.zPlot.clear()
-                self.zPlot.plot(self.zTimeData, self.zData)
-            else:
-                a = np.argmin(np.abs(self.zTimeData - (self.zTimeData[length-1] - self.plotTimeRange)))
-                self.zPlot.clear()
-                self.zPlot.plot(self.zTimeData[a:], self.zData[a:])
     
     def zeroTime(self):
         curr_time = time.clock()

@@ -130,6 +130,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.Approach.newPLLData.connect(self.ApproachMonitor.updatePLLPlots)
         self.Approach.newFdbkDCData.connect(self.ApproachMonitor.updateFdbkDCPlot)
         self.Approach.newFdbkACData.connect(self.ApproachMonitor.updateFdbkACPlot)
+        self.Approach.newAux2Data.connect(self.ApproachMonitor.updateAux2Plot)
         self.Approach.newZData.connect(self.ApproachMonitor.updateZPlot)
         
         self.Approach.updateFeedbackStatus.connect(self.ScanControl.updateFeedbackStatus)
@@ -242,14 +243,14 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.DeviceSelect.raise_()
 
     def openSampleCharacterizerWindow(self):
+        self.SampleCharacterizer.showNormal()
         self.SampleCharacterizer.moveDefault()
         self.SampleCharacterizer.raise_()
-        self.SampleCharacterizer.show()
 
     def openAttocubeCoarseControlWindow(self):
+        self.AttocubeCoarseControl.showNormal()
         self.AttocubeCoarseControl.moveDefault()
         self.AttocubeCoarseControl.raise_()
-        self.AttocubeCoarseControl.show()
         
 #----------------------------------------------------------------------------------------------#
     """ The following section connects actions related to passing LabRAD connections."""
@@ -359,6 +360,10 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
             self.LabRAD.close()
             self.SampleCharacterizer.close()
             self.AttocubeCoarseControl.close()
+            self.DeviceSelect.close()
+            self.TempControl.close()
+            self.QRreader.close()
+            self.GoToSetpoint.close()
         except Exception as inst:
             print inst
     

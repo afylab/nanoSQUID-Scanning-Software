@@ -132,11 +132,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                             val = '  '
             try:
                 if self.monitor_param == 'Field':
-                    self.label_fieldval.setText(formatNum(self.currField),3))
+                    self.label_fieldval.setText(formatNum(self.currField,3))
                 elif self.monitor_param == 'Curr':
-                    self.label_fieldval.setText(formatNum(self.currCurrent),3))
+                    self.label_fieldval.setText(formatNum(self.currCurrent,3))
                 elif self.monitor_param == 'Volts':
-                    self.label_fieldval.setText(formatNum(self.currVoltage),3))
+                    self.label_fieldval.setText(formatNum(self.currVoltage,3))
             except Exception as inst:
                 print inst
             yield self.sleep(0.5)

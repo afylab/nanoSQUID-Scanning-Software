@@ -26,6 +26,7 @@ from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtGui.QMainWindow, ApproachUI):
     newPLLData = QtCore.pyqtSignal(float, float)
+    newAux2Data = QtCore.pyqtSignal(float)
     newFdbkDCData = QtCore.pyqtSignal(float)
     newFdbkACData = QtCore.pyqtSignal(float)
     newZData = QtCore.pyqtSignal(float)
@@ -1965,6 +1966,10 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 
                 self.zData.appendleft(z_meters)
                 self.zData.pop()
+                
+                #Also monitor the other aux input
+                aux2_voltage = yield self.hf.get_aux_input_value(self.measurementSettings['z_mon_input']%2+1)
+                self.newAux2Data.emit(aux2_voltage)
                 
                 yield self.sleep(0.1)
             except Exception as inst:

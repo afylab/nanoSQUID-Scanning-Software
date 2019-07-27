@@ -34,6 +34,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.timeData = np.array([])
         self.magTempData = np.array([])
         self.sampleTempData = np.array([])
+        self.potTempData = np.array([])
         
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
@@ -47,7 +48,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.measurementSettings = {
                 'mag Input'        : 'B',
-                'sample Input'     : 'D5', 
+                'sample Input'     : 'D4', 
+                'pot Input'        : 'D5', 
                 'p'                : 50.0,
                 'i'                : 50.0,
                 'd'                : 1.0,       #
@@ -97,7 +99,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Set up UI that isn't easily done from Qt Designer
         self.magTempFrame.close()
         self.magTempPlot = pg.PlotWidget(parent = self)
-        self.magTempPlot.setLabel('left', 'Temperature', units = 'V')
+        self.magTempPlot.setLabel('left', 'Temperature', units = 'K')
         self.magTempPlot.setLabel('bottom', 'Time', units = 'h')
         self.magTempPlot.showAxis('right', show = True)
         self.magTempPlot.showAxis('top', show = True)
@@ -105,14 +107,23 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.sampleTempFrame.close()
         self.sampleTempPlot = pg.PlotWidget(parent = self)
-        self.sampleTempPlot.setLabel('left', 'Temperature', units = 'V')
+        self.sampleTempPlot.setLabel('left', 'Temperature', units = 'K')
         self.sampleTempPlot.setLabel('bottom', 'Time', units = 'h')
         self.sampleTempPlot.showAxis('right', show = True)
         self.sampleTempPlot.showAxis('top', show = True)
         self.sampleTempPlot.setTitle('Sample Temperature vs. Time')
         
+        self.potTempFrame.close()
+        self.potTempPlot = pg.PlotWidget(parent = self)
+        self.potTempPlot.setLabel('left', 'Temperature', units = 'K')
+        self.potTempPlot.setLabel('bottom', 'Time', units = 'h')
+        self.potTempPlot.showAxis('right', show = True)
+        self.potTempPlot.showAxis('top', show = True)
+        self.potTempPlot.setTitle('1K Pot Temperature vs. Time')
+        
         self.horizontalLayout_2.addWidget(self.magTempPlot)
         self.horizontalLayout_2.addWidget(self.sampleTempPlot)
+        self.horizontalLayout_2.addWidget(self.potTempPlot)
         
     @inlineCallbacks
     def readCurrentSettings(self, c = None):
@@ -165,16 +176,19 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             while self.monitoring:
                 magTemp = yield self.ls.read_temp(self.measurementSettings['mag Input'])
                 sampleTemp = yield self.ls.read_temp(self.measurementSettings['sample Input'])
+                potTemp =  yield self.ls.read_temp(self.measurementSettings['pot Input'])
                 t = time.clock() - self.time_offset
                 #Convert time to hours
                 t = t / 3600
                 
                 self.magTempData = np.append(self.magTempData, float(magTemp))
                 self.sampleTempData = np.append(self.sampleTempData, float(sampleTemp))
+                self.potTempData = np.append(self.potTempData, float(potTemp))
                 self.timeData = np.append(self.timeData, float(t))
                 
                 self.lcdNumber_magTemp.display(float(magTemp))
                 self.lcdNumber_sampleTemp.display(float(sampleTemp))
+                self.lcdNumber_potTemp.display(float(potTemp))
                 
                 self.updatePlots()
                 
@@ -191,12 +205,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     self.magTempPlot.plot(self.timeData, self.magTempData)
                     self.sampleTempPlot.clear()
                     self.sampleTempPlot.plot(self.timeData, self.sampleTempData)
+                    self.potTempPlot.clear()
+                    self.potTempPlot.plot(self.timeData, self.potTempData)
                 else:
                     a = np.argmin(np.abs(self.timeData - (self.timeData[length-1] - self.measurementSettings['plot record'])))
                     self.magTempPlot.clear()
                     self.magTempPlot.plot(self.timeData[a:], self.magTempData[a:])
                     self.sampleTempPlot.clear()
                     self.sampleTempPlot.plot(self.timeData[a:], self.sampleTempData[a:])
+                    self.potTempPlot.clear()
+                    self.potTempPlot.plot(self.timeData[a:], self.potTempData[a:])
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
             
