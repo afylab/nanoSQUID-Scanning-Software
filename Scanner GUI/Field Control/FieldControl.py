@@ -1,6 +1,7 @@
 import sys
 from PyQt4 import QtGui, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
+import numpy as np
 
 path = sys.path[0] + r"\Field Control"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\FieldControl.ui")
@@ -35,7 +36,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_setpoint.editingFinished.connect(self.setSetpoint)
         self.lineEdit_ramprate.editingFinished.connect(self.setRamprate)
         
-        self.cxn = False
         self.ips = False
         self.dac_toe = False
         
@@ -60,8 +60,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def connectLabRAD(self, dict):
         try:
-            self.cxn = dict['servers']['remote']['cxn']
-            
             if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
                 self.dac_toe = dict['servers']['local']['dac_adc']
                 self.magDevice = 'Toellner 8851'
@@ -75,13 +73,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
-        if not self.cxn: 
+        if not self.ips and not self.dac_toe:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif not not self.ips or not not self.dac_toe:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-        else:
+        else:   
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             yield self.loadInitialValues()
@@ -91,7 +86,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
     def disconnectLabRAD(self):
         self.monitor = False
-        self.cxn = False
         self.ips120 = False
         self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -107,58 +101,64 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     @inlineCallbacks
     def monitorField(self):
-        while self.monitor:
-            if self.magDevice == 'IPS 120-10':
-                if not self.setting_value:
+        try:
+            while self.monitor:
+                if self.magDevice == 'IPS 120-10':
+                    if not self.setting_value:
+                        if self.monitor_param == 'Field':
+                            if self.viewChargingInfo:
+                                val = yield self.ips.read_parameter(7)
+                                self.currField = float(val[1:])
+                            else:
+                                val = yield self.ips.read_parameter(18)
+                                self.currField = float(val[1:])
+                        elif self.monitor_param == 'Curr':
+                            if self.viewChargingInfo:
+                                val = yield self.ips.read_parameter(0)
+                                self.currCurrent = float(val[1:])
+                            else:
+                                val = yield self.ips.read_parameter(16)
+                                self.currCurrent = float(val[1:])
+                        elif self.monitor_param == 'Volts':
+                            if self.viewChargingInfo:
+                                val = yield self.ips.read_parameter(1)
+                                self.currVoltage = float(val[1:])
+                            else:
+                                val = '  '
+                try:
                     if self.monitor_param == 'Field':
-                        if self.viewChargingInfo:
-                            val = yield self.ips.read_parameter(7)
-                            self.currField = float(val[1:])
-                        else:
-                            val = yield self.ips.read_parameter(18)
-                            self.currField = float(val[1:])
+                        self.label_fieldval.setText(formatNum(self.currField,3))
                     elif self.monitor_param == 'Curr':
-                        if self.viewChargingInfo:
-                            val = yield self.ips.read_parameter(0)
-                            self.currCurrent = float(val[1:])
-                        else:
-                            val = yield self.ips.read_parameter(16)
-                            self.currCurrent = float(val[1:])
+                        self.label_fieldval.setText(formatNum(self.currCurrent,3))
                     elif self.monitor_param == 'Volts':
-                        if self.viewChargingInfo:
-                            val = yield self.ips.read_parameter(1)
-                            self.currVoltage = float(val[1:])
-                        else:
-                            val = '  '
-            try:
-                if self.monitor_param == 'Field':
-                    self.label_fieldval.setText(formatNum(self.currField,3))
-                elif self.monitor_param == 'Curr':
-                    self.label_fieldval.setText(formatNum(self.currCurrent,3))
-                elif self.monitor_param == 'Volts':
-                    self.label_fieldval.setText(formatNum(self.currVoltage,3))
-            except Exception as inst:
-                print inst
-            yield self.sleep(0.5)
+                        self.label_fieldval.setText(formatNum(self.currVoltage,3))
+                except Exception as inst:
+                    print inst
+                yield self.sleep(0.5)
+        except Exception as inst:
+            print inst
             
     @inlineCallbacks
     def loadInitialValues(self):
-        #Load parameters
-        if self.magDevice == 'IPS 120-10':
-            setpoint = yield self.ips.read_parameter(8)
-            ramprate = yield self.ips.read_parameter(9)
-            self.setpoint = setpoint
-            self.ramprate = ramprate
+        try:
+            #Load parameters
+            if self.magDevice == 'IPS 120-10':
+                setpoint = yield self.ips.read_parameter(8)
+                ramprate = yield self.ips.read_parameter(9)
+                self.setpoint = float(setpoint[1:])
+                self.ramprate = float(ramprate[1:])
 
-            yield self.updateSwitchStatus()
-        else:
-            self.setpoint = 0.0
-            self.ramprate = 1.0
-            yield self.sleep(0.1)
-            
-        self.lineEdit_setpoint.setText(formatNum(float(setpoint[1:])))
-        self.lineEdit_ramprate.setText(formatNum(float(ramprate[1:])))
-
+                yield self.updateSwitchStatus()
+            else:
+                self.setpoint = 0.0
+                self.ramprate = 1.0
+                yield self.sleep(0.1)
+                
+            self.lineEdit_setpoint.setText(formatNum(self.setpoint))
+            self.lineEdit_ramprate.setText(formatNum(self.ramprate))
+        except Exception as inst:
+            print inst
+    
     @inlineCallbacks
     def updateSwitchStatus(self):
         status = yield self.ips.examine()
@@ -223,12 +223,15 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.label_display.setText('Volts (V):')
         
     @inlineCallbacks
-    def gotoSet(self):
-        if self.magDevice == 'IPS 120-10':
-            yield self.gotoSetIPS()
-        else:
-            yield self.toeFieldSweep(self.currField, self.setpoint, self.ramprate)
-        
+    def gotoSet(self, c = None):
+        try:
+            if self.magDevice == 'IPS 120-10':
+                yield self.gotoSetIPS()
+            else:
+                yield self.toeSweepField(self.currField, self.setpoint, self.ramprate)
+        except Exception as inst:
+            print 'GTS, ', str(inst)
+            
     @inlineCallbacks
     def gotoSetIPS(self, c = None):
         self.setting_value = True
@@ -240,11 +243,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     @inlineCallbacks
     def gotoZero(self, c = None):
-        if self.magDevice == 'IPS 120-10':
-            yield self.gotoZeroIPS()
-        else:
-            yield self.toeFieldSweep(self.currField, 0, self.ramprate)
-        
+        try:
+            if self.magDevice == 'IPS 120-10':
+                yield self.gotoZeroIPS()
+            else:
+                yield self.toeSweepField(self.currField, 0, self.ramprate)
+        except Exception as inst:
+            print 'GTZ, ', str(inst)
+            
     @inlineCallbacks
     def gotoZeroIPS(self, c = None):
         self.setting_value = True
@@ -299,58 +305,58 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             print inst
             
     @inlineCallbacks
-    def toeSweepField(B_i, B_f, B_speed, c = None):
-        #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
-        VV_conv = 3.20
-        #Toellner current set point / DAC voltage out conversion [I_Toellner / V_DAC]
-        IV_conv = 1.0 
+    def toeSweepField(self, B_i, B_f, B_speed, c = None):
+        try:
+            #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
+            VV_conv = 3.20
+            #Toellner current set point / DAC voltage out conversion [I_Toellner / V_DAC]
+            IV_conv = 1.0 
 
-        #Field / Current ratio on the dipper magnet (0.132 [Tesla / Amp])
-        IB_conv = 0.132
+            #Field / Current ratio on the dipper magnet (0.132 [Tesla / Amp])
+            IB_conv = 0.132
 
-        #Starting and ending field values in Tesla, use positive field values for now
-        B_range = np.absolute(B_f - B_i)
+            #Starting and ending field values in Tesla, use positive field values for now
+            B_range = np.absolute(B_f - B_i)
 
-        #Delay between DAC steps in microseconds
-        magnet_delay = 5000
-        #Converts between microseconds and minutes [us / minute]
-        t_conv = 6e07
+            #Delay between DAC steps in microseconds
+            magnet_delay = 1000
+            #Converts between microseconds and minutes [us / minute]
+            t_conv = 6e07
 
-        #Sets the appropriate DAC buffer ramp parameters
-        sweep_steps = int((t_conv * B_range) / (B_speed * magnet_delay))  + 1
-        v_start = B_i / (IB_conv * IV_conv)
-        v_end = B_f / (IB_conv * IV_conv)
+            #Sets the appropriate DAC buffer ramp parameters
+            sweep_steps = int((t_conv * B_range) / (B_speed * magnet_delay))  + 1
+            v_start = B_i / (IB_conv * IV_conv)
+            v_end = B_f / (IB_conv * IV_conv)
 
-        #Sets an appropraite voltage set point to ensure that the Toellner power supply stays in constant current mode
-        # assuming a parasitic resistance of R_p between the power supply and magnet
-        overshoot = 5
-        R_p = 2
-        V_setpoint =  (overshoot * R_p * np.amax([B_i, B_f])) / (VV_conv * IB_conv)
-        V_initial = (overshoot * R_p * np.amin([B_i, B_f])) / (VV_conv * IB_conv)
-        if V_setpoint > 10.0:
-            V_setpoint = 10.0
-        else:
-            pass
-        if V_initial > 10.0:
-            V_initial = 10.0
-        else:
-            pass
+            #Sets an appropraite voltage set point to ensure that the Toellner power supply stays in constant current mode
+            # assuming a parasitic resistance of R_p between the power supply and magnet
+            overshoot = 5
+            R_p = 2
+            V_setpoint =  (overshoot * R_p * np.amax([B_i, B_f])) / (VV_conv * IB_conv)
+            V_initial = (overshoot * R_p * np.amin([B_i, B_f])) / (VV_conv * IB_conv)
+            if V_setpoint > 10.0:
+                V_setpoint = 10.0
+            else:
+                pass
+            if V_initial > 10.0:
+                V_initial = 10.0
+            else:
+                pass
 
-        #Ramps the DAC such that the Toellner voltage setpoint stays in constant current mode
-        ramp_steps = int(np.absolute(V_setpoint - V_initial) * 1000)
-        ramp_delay = 1000
-        yield self.dac_toe.buffer_ramp([self.toeVoltsChan], [0], [V_initial], [V_setpoint], ramp_steps, ramp_delay)
-        
-        self.currVoltage = V_setpoint
-        
-        #Sweeps field from B_i to B_f
-        print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
-        yield self.dac_toe.buffer_ramp([self.toeCurChan],[0],[v_start],[v_end], sweep_steps, magnet_delay)
+            #Ramps the DAC such that the Toellner voltage setpoint stays in constant current mode
+            #ramp_steps = int(np.absolute(V_setpoint - V_initial) * 1000)+1
+            #ramp_delay = 1000
+            #yield self.dac_toe.buffer_ramp([self.toeVoltsChan], [0], [V_initial], [V_setpoint], ramp_steps, ramp_delay)
+            
+            #Sweeps field from B_i to B_f
+            print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
+            yield self.dac_toe.buffer_ramp([self.toeCurChan, self.toeVoltsChan],[0],[v_start, V_initial],[v_end, V_setpoint], sweep_steps, magnet_delay)
 
-        self.currCurrent = B_f/IB_conv
-        
-        self.currField = B_f
-        
+            self.currVoltage = V_setpoint
+            self.currCurrent = B_f/IB_conv
+            self.currField = B_f
+        except Exception as inst:
+            print 'SF, ', str(inst )
     # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous 
     # delay that allows other labrad / pyqt methods to run
     def sleep(self,secs):
