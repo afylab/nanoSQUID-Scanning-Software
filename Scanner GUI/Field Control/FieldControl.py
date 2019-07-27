@@ -78,7 +78,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         if not self.cxn: 
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-        elif not self.ips and not self.dac_toe:
+        elif not not self.ips or not not self.dac_toe:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
         else:
