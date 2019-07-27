@@ -478,7 +478,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                 
                     if dev_name in AllItems:
                         ComboBox.setCurrentIndex(AllItems.index(dev_name))
-                    elif dev_name == False:
+                    elif dev_name == 'False':
                         pass
                     else:
                         if len(AllItems) > 0:
