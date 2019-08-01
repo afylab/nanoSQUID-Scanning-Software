@@ -330,24 +330,18 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
             #Sets an appropraite voltage set point to ensure that the Toellner power supply stays in constant current mode
             # assuming a parasitic resistance of R_p between the power supply and magnet
-            overshoot = 5
-            R_p = 2
-            V_setpoint =  (overshoot * R_p * B_f) / (VV_conv * IB_conv)
-            V_initial = (overshoot * R_p * B_i) / (VV_conv * IB_conv)
-            if V_setpoint > 10.0:
-                V_setpoint = 10.0
+            R_p = 1
+            V_setpoint =  (R_p * B_f) / (VV_conv * IB_conv)
+            V_initial = (R_p * B_i) / (VV_conv * IB_conv)
+            if V_setpoint > 5.0*VV_conv:
+                V_setpoint = 5.0*VV_conv
             else:
                 pass
-            if V_initial > 10.0:
-                V_initial = 10.0
+            if V_initial > 5.0*VV_conv:
+                V_initial = 5.0*VV_conv
             else:
                 pass
 
-            #Ramps the DAC such that the Toellner voltage setpoint stays in constant current mode
-            #ramp_steps = int(np.absolute(V_setpoint - V_initial) * 1000)+1
-            #ramp_delay = 1000
-            #yield self.dac_toe.buffer_ramp([self.toeVoltsChan], [0], [V_initial], [V_setpoint], ramp_steps, ramp_delay)
-            
             #Sweeps field from B_i to B_f
             print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
             yield self.dac_toe.buffer_ramp([self.toeCurChan, self.toeVoltsChan],[0],[v_start, V_initial],[v_end, V_setpoint], sweep_steps, magnet_delay)
