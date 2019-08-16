@@ -1245,8 +1245,6 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             elif magpower == 'Toellner 8851':
                 if bVal != 0:
                     yield self.toeSweepField(bVal, 0, 0.1)
-                    yield self.dac.set_voltage(DAC_set_volt, 0)
-                    yield self.dac.set_voltage(DAC_set_current, 0)
                 else:
                     pass
                 
@@ -1400,12 +1398,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     
             yield self.dac.set_voltage(DAC_out, 0)
             
-            
-            if self.checkBox_ZeroField.isChecked():
+            if self.checkBox_ZeroField.isChecked() and not self.abortFlag:
                 #Go to zero field and set power supply voltage setpoint to zero.
-                self.toeSweepField(B_space[-1], 0, B_rate)
-                yield self.dac.set_voltage(DAC_set_volt, 0)
-                yield self.dac.set_voltage(DAC_set_current, 0)
+                yield self.toeSweepField(B_space[-1], 0, B_rate)
         
         elif magpower == 'IPS 120-10':
             yield self.ips.set_control(3)
@@ -1725,10 +1720,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
             yield self.dac.set_voltage(DAC_out, 0)
             
-            if self.checkBox_ZeroField.isChecked():
+            if self.checkBox_ZeroField.isChecked() and not self.abortFlag:
                 #Go to zero field and set power supply voltage setpoint to zero.
                 yield self.toeSweepField(B_space[-1], 0, B_rate)
-                yield self.dac.set_voltage(DAC_set_volt, 0)
         
         elif magpower == 'IPS 120-10': 
             yield self.ips.set_control(3)
@@ -1934,12 +1928,12 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             R_p = 1
             V_setpoint =  (R_p * B_f) / (VV_conv * IB_conv)
             V_initial = (R_p * B_i) / (VV_conv * IB_conv)
-            if V_setpoint > 5.0*VV_conv:
-                V_setpoint = 5.0*VV_conv
+            if V_setpoint*VV_conv > 5.0:
+                V_setpoint = 5.0/VV_conv
             else:
                 pass
-            if V_initial > 5.0*VV_conv:
-                V_initial = 5.0*VV_conv
+            if V_initial*VV_conv > 5.0:
+                V_initial = 5.0/VV_conv
             else:
                 pass
             

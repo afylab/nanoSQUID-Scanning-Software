@@ -333,12 +333,12 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             R_p = 1
             V_setpoint =  (R_p * B_f) / (VV_conv * IB_conv)
             V_initial = (R_p * B_i) / (VV_conv * IB_conv)
-            if V_setpoint > 5.0*VV_conv:
-                V_setpoint = 5.0*VV_conv
+            if V_setpoint*VV_conv > 5.0:
+                V_setpoint = 5.0/VV_conv
             else:
                 pass
-            if V_initial > 5.0*VV_conv:
-                V_initial = 5.0*VV_conv
+            if V_initial*VV_conv > 5.0:
+                V_initial = 5.0/VV_conv
             else:
                 pass
 
