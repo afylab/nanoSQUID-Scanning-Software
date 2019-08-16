@@ -134,19 +134,23 @@ class HF2LIServer(LabradServer):
             
         return self.dev_ID
         
-    @setting(103,settings = '*s', returns = '')
+    @setting(103,settings = '**s', returns = '')
     def set_settings(self, c, settings):
         """Simultaneously set all the settings described in the settings input. Settings should be a 
             list of string and input tuples, where the string provides the node information and the
             input is the required input. For example: 
-            setting =   [['/%s/demods/*/enable' % self.dev=ID, 0],
-                        ['/%s/demods/*/trigger' % self.dev=ID, 0],
-                        ['/%s/sigouts/*/enables/*' % self.dev=ID, 0],
-                        ['/%s/scopes/*/enable' % self.dev=ID, 0]]
+            setting =   [['/%s/demods/*/enable' % self.dev_ID, '0'],
+                        ['/%s/demods/*/trigger' % self.dev_ID, '0'],
+                        ['/%s/sigouts/*/enables/*' % self.dev_ID, '0'],
+                        ['/%s/scopes/*/enable' % self.dev_ID, '0']]
             This function allows changing multiple settings quickly, however it requires knowledge 
-            of the node names. Every setting that can be set through this function can also be 
+            of the node names. Most settings that can be set through this function can also be 
             set through other functions."""
-        yield daq.set(settings)
+            
+        for el in settings:
+            el[1] = float(el[1])
+            
+        yield self.daq.set(settings)
         
     @setting(104,returns = '')
     def sync(self,c):
@@ -938,7 +942,7 @@ class HF2LIServer(LabradServer):
         -1          : Manual"""
 
         setting = '/%s/auxouts/%d/outputselect' % (self.dev_ID, aux_out_index-1)
-        dic = yield self.pidAdvisor.get(setting,True)
+        dic = yield self.daq.get(setting,True)
         sig_ind = int(dic[setting])
         returnValue(sig_ind)
 
