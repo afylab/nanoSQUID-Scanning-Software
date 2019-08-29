@@ -846,6 +846,7 @@ void readDAC(int channelDAC)
   o3 = SPI.transfer(spi[0], 0);
   digitalWrite(channelDAC, HIGH);
   voltage = threeByteToVoltage(o1, o2, o3);
+  voltage = (voltage + OS[0]) * GE[0];
   Serial.println(voltage, 5);
 }
 
