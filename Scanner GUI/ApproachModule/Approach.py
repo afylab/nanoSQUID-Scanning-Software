@@ -1790,6 +1790,9 @@ class Window(QtGui.QMainWindow, ApproachUI):
             yield self.anc.start_single_step(2, False)
             yield self.sleep(0.2)
             pos_curr = yield self.anc.get_position(2)
+            if pos_curr < 50e-6:
+                yield self.abortApproachSequence()
+                break
             delta = pos_curr - pos_start
             num_steps += 1
         print "Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps."
