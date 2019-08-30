@@ -176,19 +176,19 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             while self.monitoring:
                 magTemp = yield self.ls.read_temp(self.measurementSettings['mag Input'])
                 sampleTemp = yield self.ls.read_temp(self.measurementSettings['sample Input'])
-                potTemp =  yield self.ls.read_temp(self.measurementSettings['pot Input'])
+                #potTemp =  yield self.ls.read_temp(self.measurementSettings['pot Input'])
                 t = time.clock() - self.time_offset
                 #Convert time to hours
                 t = t / 3600
                 
                 self.magTempData = np.append(self.magTempData, float(magTemp))
                 self.sampleTempData = np.append(self.sampleTempData, float(sampleTemp))
-                self.potTempData = np.append(self.potTempData, float(potTemp))
+                #self.potTempData = np.append(self.potTempData, float(potTemp))
                 self.timeData = np.append(self.timeData, float(t))
                 
                 self.lcdNumber_magTemp.display(float(magTemp))
                 self.lcdNumber_sampleTemp.display(float(sampleTemp))
-                self.lcdNumber_potTemp.display(float(potTemp))
+                #self.lcdNumber_potTemp.display(float(potTemp))
                 
                 self.updatePlots()
                 
@@ -205,16 +205,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     self.magTempPlot.plot(self.timeData, self.magTempData)
                     self.sampleTempPlot.clear()
                     self.sampleTempPlot.plot(self.timeData, self.sampleTempData)
-                    self.potTempPlot.clear()
-                    self.potTempPlot.plot(self.timeData, self.potTempData)
+                    #self.potTempPlot.clear()
+                    #self.potTempPlot.plot(self.timeData, self.potTempData)
                 else:
                     a = np.argmin(np.abs(self.timeData - (self.timeData[length-1] - self.measurementSettings['plot record'])))
                     self.magTempPlot.clear()
                     self.magTempPlot.plot(self.timeData[a:], self.magTempData[a:])
                     self.sampleTempPlot.clear()
                     self.sampleTempPlot.plot(self.timeData[a:], self.sampleTempData[a:])
-                    self.potTempPlot.clear()
-                    self.potTempPlot.plot(self.timeData[a:], self.potTempData[a:])
+                    #self.potTempPlot.clear()
+                    #self.potTempPlot.plot(self.timeData[a:], self.potTempData[a:])
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
             
