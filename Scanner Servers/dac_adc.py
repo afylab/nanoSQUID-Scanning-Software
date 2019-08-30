@@ -230,7 +230,7 @@ class DAC_ADCServer(DeviceServer):
     @setting(104,port='i',returns='v[]')
     def read_voltage(self,c,port):
         """
-        GET_ADC returns the voltage read by an input channel. Do not confuse with GET_DAC; GET_DAC has not been implemented yet.
+        GET_ADC returns the voltage read by an input channel. Not to be confused with read_dac_voltage, which returns the DAC voltage
         """
         dev=self.selectedDevice(c)
         if not (port in range(8)):
@@ -239,6 +239,19 @@ class DAC_ADCServer(DeviceServer):
         yield dev.write("GET_ADC,%i\r"%port)
         ans = yield dev.read()
         self.sigInputRead([str(port),str(ans)])
+        returnValue(float(ans))
+
+    @setting(1040,port='i',returns='v[]')
+    def read_dac_voltage(self,c,port):
+        """
+        GET_DAC returns the voltage set on an output channel. Not to be confused with read_voltage, which returns the ADC voltage
+        """
+        dev=self.selectedDevice(c)
+        if not (port in range(4)):
+            returnValue("Error: invalid port number.")
+            return
+        yield dev.write("GET_DAC,%i\r"%port)
+        ans = yield dev.read()
         returnValue(float(ans))
 
     @setting(105,port='i',ivoltage='v',fvoltage='v',steps='i',delay='i',returns='s')
