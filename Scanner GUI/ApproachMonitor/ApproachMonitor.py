@@ -32,6 +32,12 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.zTimeData = np.array([])
         self.zData = np.array([])
         
+        self.dcTimeData = np.array([])
+        self.dcData = np.array([])
+        
+        self.acTimeData = np.array([])
+        self.acData = np.array([])
+        
         self.plotTimeRange = 30
 
         self.counter = 0
@@ -274,6 +280,8 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.time_offset = time.clock()
         if len(self.pllTimeData) > 0:
             self.pllTimeData = self.pllTimeData - self.pllTimeData[-1]
+        if len(self.aux2TimeData) > 0:
+            self.aux2TimeData = self.aux2TimeData - self.aux2TimeData[-1]
         if len(self.dcTimeData) > 0:
             self.dcTimeData = self.dcTimeData - self.dcTimeData[-1]
         if len(self.acTimeData) > 0:
