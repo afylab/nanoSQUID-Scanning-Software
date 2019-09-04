@@ -1,10 +1,5 @@
 from PyQt4 import QtGui, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
-import twisted
-import numpy as np
-import pyqtgraph as pg
-import exceptions
-import time
 import sys
 import dirExplorer
 import platform
@@ -73,7 +68,8 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         #Saving images of all data taken info
         self.lineEdit_Session_2.setReadOnly(True)
         home = os.path.expanduser("~")
-        self.session_2 = home + '\\Data Sets\\ScanData\\' + str(datetime.date.today())
+        #self.session_2 = home + '\\Data Sets\\ScanData\\' + str(datetime.date.today())
+        self.session_2 = home + '\\Young Lab Dropbox\\NanoSQUID Battle Station\\Data\\Software Screenshots\\' + str(datetime.date.today())
         self.lineEdit_Session_2.setText(self.session_2)
         
         folderExists = os.path.exists(self.session_2)
@@ -225,12 +221,17 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
     @inlineCallbacks
     def disconnectLabRAD(self, c = None):
         try:
-            yield self.cxn.anc350_server.disconnect()
-        except:
+            yield self.connectionLocalDictionary['cxn'].anc350_server.disconnect()
+            print 'Disconnected ANC350'
+        except Exception as inst:
+            print inst
             print 'Error disconnecting the ANC350 server.'
         
         try: 
-            yield self.cxn.disconnect()
+            yield self.connectionLocalDictionary['cxn'].disconnect()
+            print 'Disconnected local'
+            yield self.connectionRemoteDictionary['cxn'].disconnect()
+            print 'Disconnected remote'
         except:
             print 'Error disconnecting the Labrad connection server.'
 
@@ -916,10 +917,4 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 background: black;
                 }'''
         self.centralwidget.setStyleSheet(style)
-        
-        
-        
-        
-        
-        
         
