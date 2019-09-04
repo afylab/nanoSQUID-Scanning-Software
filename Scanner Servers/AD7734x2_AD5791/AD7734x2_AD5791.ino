@@ -1,9 +1,17 @@
 //Ardunio *DUE*code for controlling EVAL-AD7734 ADC and EVAL-AD5791 DAC
 //Andrea Young
 //Carlos Kometter
+//James Ehrets 
+//Liam A. Cohen
+
 //3/23/2018
+//Updated: 09/04/2019 by Liam A. Cohen for DAC + 2xDiff ADC box base line code
+
 #include "SPI.h" // necessary library for SPI communication
 #include <vector>
+#include <DueFlashStorage.h>
+DueFlashStorage dueFlashStorage;
+
 int adc = 10; //The SPI pin for the ADC
 int adc_sync[2] = {36, 24}; //24,36
 int dac[4] = {50, 48, 46, 44}; //The SPI pin for the DAC
@@ -17,7 +25,7 @@ int err = 11;
 int eeprom = 42;
 const int Noperations = 23;
 String operations[Noperations] = {"NOP", "INITIALIZE", "SET", "GET_DAC", "GET_ADC", "RAMP1", "RAMP2", "BUFFER_RAMP", "BUFFER_RAMP_DIS", "RESET", "TALK", "CONVERT_TIME", "*IDN?", "*RDY?", "GET_DUNIT", "SET_DUNIT", "ADC_ZERO_SC_CAL", "ADC_CH_ZERO_SC_CAL", "ADC_CH_FULL_SC_CAL", "DAC_CH_CAL", "FULL_SCALE" , "INQUIRYOSG" , "MESSOSG"};
-int initialized = 0;
+int initialized = 0; //address of where initialized variable is stored
 int delayUnit = 0; // 0=microseconds 1=miliseconds
 int adc_select = 0;
 
@@ -977,7 +985,7 @@ void adc_ch_zero_scale_cal()
 
 void adc_ch_full_scale_cal()
 {
-  for ( int i = 10; i<=1; i = i+1){
+  for ( int i = 0; i<=1; i = i+1){
     SPI.transfer(adc, 0);
     digitalWrite(adc_sync[i], LOW);
     SPI.transfer(adc, 0x38);  // Indicates comm register to access mode register
@@ -1227,10 +1235,10 @@ void loop()
   Serial.flush();
   std::vector<String> comm;
 
-  if (initialized == 0)
+  if (dueFlashStorage.read(initialized) == 1)
   {
     normalMode();
-    initialized = 1;
+    dueFlashStorage.write(initialized, 1);
   }
 
   if (Serial.available())
