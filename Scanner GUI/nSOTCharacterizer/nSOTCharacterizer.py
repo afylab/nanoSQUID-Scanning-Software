@@ -205,7 +205,8 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.settingsDict['nsot bias output'] = dict['channels']['nsot']['nSOT Bias']
             self.settingsDict['nsot bias input'] = dict['channels']['nsot']['Bias Reference']
             self.settingsDict['feedback DC input'] = dict['channels']['nsot']['DC Readout']
-            self.settingsDict['feedback AC input'] = dict['channels']['nsot']['AC Readout']
+            #At some point phase out all the AC input for the characterizer window
+            self.settingsDict['feedback AC input'] = 1
             self.settingsDict['noise input'] = dict['channels']['nsot']['Noise Readout']
             
             self.settingsDict['toellner volts'] = dict['channels']['system']['toellner dac voltage']
