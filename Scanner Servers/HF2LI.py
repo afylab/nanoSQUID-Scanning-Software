@@ -286,6 +286,17 @@ class HF2LIServer(LabradServer):
             setting = ['/%s/sigouts/%d/amplitudes/7' % (self.dev_ID, output_channel-1), amp],
         yield self.daq.set(setting)
         
+    @setting(1180,output_channel = 'i', returns = 'v[]')
+    def get_output_amplitude(self, c, output_channel):
+        """Gets the output amplitude of the provided output channel (1 indexed) in units of the output range."""
+        if output_channel == 1:
+            setting = '/%s/sigouts/%d/amplitudes/6' % (self.dev_ID, output_channel-1)
+        elif output_channel == 2:
+            setting = '/%s/sigouts/%d/amplitudes/7' % (self.dev_ID, output_channel-1)
+        dic = yield self.daq.get(setting, True)
+        amp = float(dic[setting])
+        returnValue(amp)
+        
     @setting(119,output_channel = 'i', range = 'v[]', returns = '')
     def set_output_range(self, c, output_channel, range):
         """Sets the output range of the provided output channel (1 indexed) to the provided input amplitude
@@ -624,6 +635,14 @@ class HF2LIServer(LabradServer):
         """Turns off the PLL"""
         setting = ['/%s/plls/%d/enable' % (self.dev_ID, PLL-1), 0],
         yield self.daq.set(setting)
+        
+    @setting(1480,PLL = 'i', returns = 'b')
+    def get_PLL_on(self, c, PLL):
+        """Turns off the PLL"""
+        setting = '/%s/plls/%d/enable' % (self.dev_ID, PLL-1)
+        dic = yield self.daq.get(setting, True)
+        on = bool(dic[setting])
+        returnValue(on)
 
     @setting(149,PLL = 'i', sigin = 'i', returns = '')
     def set_PLL_input(self, c, PLL, sigin):

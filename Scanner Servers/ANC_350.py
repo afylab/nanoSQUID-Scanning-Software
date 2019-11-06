@@ -69,7 +69,6 @@ sys.path.append(path + r'\ANC350')
 
 import ANC350libv4 as ANC
 
-
 class ANC350Server(LabradServer):
     name = "ANC350 Server"    # Will be labrad name of server
     
@@ -509,7 +508,6 @@ class ANC350Server(LabradServer):
         '''
         yield ANC.setTargetPosition(self.device, axisNo, ctypes.c_double(target))
         
-        
     @setting(128, axisNo ='i', targetRg ='v[]', returns='')
     def set_target_range(self, c, axisNo, targetRg):
         '''
@@ -522,6 +520,19 @@ class ANC350Server(LabradServer):
             None
         '''
         yield ANC.setTargetRange(self.device, axisNo, ctypes.c_double(targetRg))
+        
+    @setting(1280, axisNo ='i', targetGround = 'b', returns='')
+    def set_target_ground(self, c, axisNo, targetGround):
+        '''
+        Defines the range around the target position where the target is considered to be reached.
+
+        Parameters
+            axisNo	Axis number (0 ... 2)
+            target	Target position [m] or [degree]. Internal resulution is 1 nm or 1 microdegree.
+        Returns
+            None
+        '''
+        yield ANC.setTargetGround(self.device, axisNo, targetGround)
         
     @setting(129, axisNo ='i', enable ='b', relative ='b', returns='')
     def start_auto_move(self, c, axisNo, enable, relative):

@@ -9,6 +9,7 @@
 
 #include "SPI.h" // necessary library for SPI communication
 #include <vector>
+#include <math.h>
 #include <DueFlashStorage.h>
 DueFlashStorage dueFlashStorage;
 
@@ -30,7 +31,7 @@ int delayUnit = 0; // 0=microseconds 1=miliseconds
 int adc_select = 0;
 
 float DAC_FULL_SCALE = 10.0;
-
+ 
 // Calibration constans
 float OS[4] = {0.004866, 0.004866, 0.004866, 0.004866}; // offset error
 float GE[4] = {0.9993023, 0.9993023, 0.9993023, 0.9993023}; // gain error
@@ -764,7 +765,7 @@ int bufferRampDis(std::vector<String> DB)
       {
         delayMicroseconds(DB[NchannelsDAC * 2 + 4].toInt());
       }
-      if (j == int(adcCount*float(nSteps-1)/float(nAdcSteps-1)))
+      if (j == round(adcCount*float(nSteps-1)/float(nAdcSteps-1)))
       {
         for (int i = 0; i < NchannelsADC; i++)
         {
