@@ -136,7 +136,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             except Exception as inst:
                 print inst
             try:
-                self.updateOutputAmplitude()
+                range = yield self.hf.get_output_range(self.output)
+                amp = yield self.hf.get_output_amplitude(self.output)
+                self.exAmp = amp*range
+                self.lineEdit_Amplitude.setText(formatNum(self.exAmp))
             except Exception as inst:
                 print inst
             try:

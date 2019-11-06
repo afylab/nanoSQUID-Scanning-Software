@@ -561,7 +561,9 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                     self.current_field = yield self.ips.read_parameter(7)#Read the field
                     yield self.ips.set_control(2)#
                     #if within 10 uT of the desired field, break out of the loop
-                    if float(self.current_field[1:]) <= end +0.00001 and float(self.current_field[1:]) >= end -0.00001:#
+                    print 'Latest field reading is: ', self.current_field
+                    print 'Target field is: ', end
+                    if float(self.current_field[1:]) <= end +0.00002 and float(self.current_field[1:]) >= end -0.00002:#
                         break
                     #if after one second we still haven't reached the desired field, then reset the field setpoint and activity
                     if time.time() - t0 > 1:

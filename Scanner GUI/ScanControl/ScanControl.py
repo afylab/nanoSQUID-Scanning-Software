@@ -301,6 +301,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             
+            yield self.loadCurrentState()
+            
             self.unlockInterface()
         except Exception as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
@@ -322,6 +324,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             
+    @inlineCallbacks
+    def loadCurrentState(self):
+        self.Atto_X_Voltage = yield self.dac.read_dac_voltage(self.outputs['x out']-1)
+        self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out']-1)
+        self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out']-1)
+        
+        self.updatePosition()
+        
     def updateDataVaultDirectory(self):
         curr_folder = yield self.gen_dv.cd()
         yield self.dv.cd(curr_folder)
@@ -1192,7 +1202,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.push_Scan.setEnabled(False)
 
     def updateConstantHeightStatus(self, status, voltage):
-        
+        #print 'Voltage for constant height sent to the scan control module: ', voltage
         self.updateScanPlaneCenter(voltage)
         
         if status:
@@ -1214,7 +1224,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     
     def updateScanPlaneCenter(self, voltage):
         #Take note of the position for the constant height approach. Values are in units of meters
-        self.z_center = (self.Atto_Z_Voltage + voltage) / self.z_volts_to_meters
+        #self.z_center = (self.Atto_Z_Voltage + voltage) / self.z_volts_to_meters
+        self.z_center = (self.Atto_Z_Voltage) / self.z_volts_to_meters
         self.x_center = self.Atto_X_Voltage / self.x_volts_to_meters - self.x_meters_max/2
         self.y_center = self.Atto_Y_Voltage / self.y_volts_to_meters - self.y_meters_max/2
     
