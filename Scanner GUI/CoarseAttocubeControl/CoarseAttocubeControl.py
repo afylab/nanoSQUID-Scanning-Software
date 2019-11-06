@@ -28,10 +28,14 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
         self.pushButton_CapacitorAxis1.clicked.connect(lambda: self.RefreshCapacitance(0, self.label_CapacitanceAxis1))
         self.pushButton_CapacitorAxis2.clicked.connect(lambda: self.RefreshCapacitance(1, self.label_CapacitanceAxis2))
         self.pushButton_CapacitorAxis3.clicked.connect(lambda: self.RefreshCapacitance(2, self.label_CapacitanceAxis3))
-
-        self.pushButton_Compensation_Axis1.clicked.connect(lambda: self.ChangeCompensation(0))
-        self.pushButton_Compensation_Axis2.clicked.connect(lambda: self.ChangeCompensation(1))
-        self.pushButton_Compensation_Axis3.clicked.connect(lambda: self.ChangeCompensation(2))
+        
+        self.checkBox_targetGND_Axis1.stateChanged.connect(lambda: self.toggleTargetGround(0))
+        self.checkBox_targetGND_Axis2.stateChanged.connect(lambda: self.toggleTargetGround(1))
+        self.checkBox_targetGND_Axis3.stateChanged.connect(lambda: self.toggleTargetGround(2))
+        
+        self.checkBox_OutputEnabled_Axis1.stateChanged.connect(lambda: self.toggleOutput(0))
+        self.checkBox_OutputEnabled_Axis2.stateChanged.connect(lambda: self.toggleOutput(1))
+        self.checkBox_OutputEnabled_Axis3.stateChanged.connect(lambda: self.toggleOutput(2))
 
         self.lineEdit_AutoPositionRelative_Axis1.editingFinished.connect(lambda: self.UpdateAutomaticPositioningRelativePosition(0))
         self.lineEdit_AutoPositionAbsolute_Axis1.editingFinished.connect(lambda: self.UpdateAutomaticPositioningAbsolutePosition(0))
@@ -77,9 +81,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             'MoveBlockedLeft': ':/nSOTScanner/Pictures/ManRunningLeftBlocked.png',
             'MoveBlockedRight': ':/nSOTScanner/Pictures/ManRunningRightBlocked.png',
             'TargetReached': ':/nSOTScanner/Pictures/ManReachGoal.png',
-            'Error': ':/nSOTScanner/Pictures/ManError.png',
-            'Compensation': ':/nSOTScanner/Pictures/ManReachingForward.png',
-            'NoCompensation': ':/nSOTScanner/Pictures/MannotReachingForward.png'
+            'Error': ':/nSOTScanner/Pictures/ManError.png'
         }
 
         self.Status = ['', '', '']
@@ -92,9 +94,11 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
         self.pushButton_Relative = [self.pushButton_AutomaticMoveRelative_Axis1, self.pushButton_AutomaticMoveRelative_Axis2, self.pushButton_AutomaticMoveRelative_Axis3]
         self.pushButton_Absolute = [self.pushButton_AutomaticMoveAbsolute_Axis1, self.pushButton_AutomaticMoveAbsolute_Axis2, self.pushButton_AutomaticMoveAbsolute_Axis3]
         self.pushButton_Status = [self.pushButton_Status_Axis1, self.pushButton_Status_Axis2, self.pushButton_Status_Axis3]
-        self.pushButton_Compensation = [self.pushButton_Compensation_Axis1, self.pushButton_Compensation_Axis2, self.pushButton_Compensation_Axis3]
         self.pushButton_SingleStepPlus = [self.pushButton_ManualStepPlus_Axis1, self.pushButton_ManualStepPlus_Axis2, self.pushButton_ManualStepPlus_Axis3]
-        self.pushButton_SingleStepMinus = [self.pushButton_ManualStepMinus_Axis1, self.pushButton_ManualStepMinus_Axis2, self.pushButton_ManualStepMinus_Axis3]        
+        self.pushButton_SingleStepMinus = [self.pushButton_ManualStepMinus_Axis1, self.pushButton_ManualStepMinus_Axis2, self.pushButton_ManualStepMinus_Axis3]
+        self.checkBox_OutputEnabled = [self.checkBox_OutputEnabled_Axis1, self.checkBox_OutputEnabled_Axis2, self.checkBox_OutputEnabled_Axis3]
+        
+        
         self.lcddisplay = [self.lcdNumber_Axis1, self.lcdNumber_Axis2, self.lcdNumber_Axis3]
         self.CurrentPosition = [0.0, 0.0, 0.0]
         self.RelativePosition = [0.0, 0.0, 0.0]
@@ -102,13 +106,13 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
         self.manual_Amplitude = [30.0, 30.0, 40.0]
         self.manual_Frequency = [1000, 1000, 1000]
         self.TargetRange = [500*10**-9, 500*10**-9, 1000*10**-9]
-        self.Compensation = [False, False, False]
+        self.TargetGround = [True, True, True]
+        self.OutputEnabled = [True, True, True]
         
         self.StatusWindow = Status.StatusWindow(self.reactor)
         self.pushButton_StatusMonitor.clicked.connect(self.OpenStatusWindow)
         self.DebugWindow = DebugPy.DebugWindow(self.reactor, self)
         self.pushButton_Debug.clicked.connect(self.OpenDebugWindow)
-
 
     @inlineCallbacks
     def connectLabRAD(self, dict):
@@ -121,18 +125,37 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             self.serversConnected = True
 
             if self.anc350 != False:
-                for i in range(3):
-                    yield self.UpdateAutomaticPositioningRelativePosition(i)
-                    yield self.UpdateAutomaticPositioningAbsolutePosition(i)
-                    yield self.UpdateAmplitude(i)
-                    yield self.UpdateFrequency(i)
-                    yield self.UpdateTargetRange(i)
-                    # yield self.anc350.set_axis_output(i, True, False)#Set default status to be no DC level
-                self.MonitoringStatus()
+                yield self.loadParameters()
+                self.MonitorStatus()
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno            
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
+
+    @inlineCallbacks
+    def loadParameters(self):
+        for i in range(3):
+            #Load parameters in the GUI that can be read
+            amp = yield self.anc350.get_amplitude(i)
+            freq = yield self.anc350.get_frequency(i)
+            self.lineEdit_Amplitude[i].setText(formatNum(amp))
+            self.lineEdit_Frequency[i].setText(formatNum(freq))
+            statusarray = yield self.anc350.get_axis_status(i)
+            if statusarray[1] == 1:
+                self.OutputEnabled[i] = True
+                
+            else: 
+                self.OutputEnabled[i] = False
+            self.checkBox_OutputEnabled[i].setChecked(self.OutputEnabled[i])
+            
+            #Attocube doesn't provide the capability to read the following values from their hardware, so set these 
+            #to our chosen default values
+            yield self.UpdateAutomaticPositioningRelativePosition(i)
+            yield self.UpdateAutomaticPositioningAbsolutePosition(i)
+            yield self.UpdateAmplitude(i)
+            yield self.UpdateFrequency(i)
+            yield self.UpdateTargetRange(i)
+            yield self.anc350.set_target_ground(i, self.TargetGround[i])
 
     def disconnectLabRAD(self):
         self.cxn = False
@@ -144,7 +167,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             "background: rgb(144, 140, 9);border-radius: 4px;}")
             
     @inlineCallbacks
-    def MonitoringStatus(self):
+    def MonitorStatus(self):
         while self.serversConnected:
             try:
                 yield self.RefreshAttocubeStatus()
@@ -193,10 +216,6 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                     
                 if statusarray[3] == 1 :#and self.Status[i] != 'TargetReached'
                     self.Status[i] = 'TargetReached'
-                    if self.Compensation[i] == False: #When first detect target reached, disable dc level if compensation is false
-                        # self.anc350.set_axis_output(i, False, True)
-                        # self.anc350.set_dc_voltage(i, 0.0)
-                        pass
 
                 #Change the Pushbutton
                 stylesheet = '#pushButton_Status_Axis' + str(i+1) + '{\nimage:url(' + self.IconPath[self.Status[i]] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
@@ -226,8 +245,6 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
     def MovingRelative(self, AxisNo):
         try:
             if self.pushButton_Relative[AxisNo].text() == 'Move Relative':
-                print 'move', AxisNo
-                # yield self.anc350.set_axis_output(AxisNo, True, True) #Enable Axis when moving
                 yield self.anc350.set_target_position(AxisNo, self.RelativePosition[AxisNo])
                 yield self.anc350.start_auto_move(AxisNo, True, True)
                 if self.RelativePosition[AxisNo] > 0:
@@ -235,17 +252,13 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 else:
                     self.Direction[AxisNo] = 'Negative'
             elif self.pushButton_Relative[AxisNo].text() == 'Moving':
-                print 'stop', AxisNo
-
                 yield self.anc350.start_auto_move(AxisNo, False, True) #Only stop auto move but not disble the aixs
-                # yield self.anc350.set_axis_output(AxisNo, False, False) #Disable Axis when Stop
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
             
     @inlineCallbacks
     def MovingAbsolute(self, AxisNo):
         if self.pushButton_Absolute[AxisNo].text() == 'Move Absolute':
-            yield self.anc350.set_axis_output(AxisNo, True, False) #Enable Axis when moving
             yield self.anc350.set_target_position(AxisNo, self.AbsolutePosition[AxisNo])
             yield self.anc350.start_auto_move(AxisNo, True, False)
             if self.AbsolutePosition[AxisNo] > self.CurrentPosition[AxisNo]:
@@ -254,7 +267,6 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 self.Direction[AxisNo] = 'Negative'
         elif self.pushButton_Absolute[AxisNo].text() == 'Moving':
             yield self.anc350.start_auto_move(AxisNo, False, False)
-            yield self.anc350.set_axis_output(AxisNo, False, False) #Disable Axis when Stop
 
     @inlineCallbacks
     def StartSingleStep(self, AxisNo, direction): #forward is 0, backward is 1
@@ -263,23 +275,10 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 flag = False
             else:
                 flag = True
-            print 'single', AxisNo
-            yield self.anc350.set_axis_output(AxisNo, True, False) #Enable Axis when moving
             yield self.anc350.start_single_step(AxisNo, flag)
-            yield self.sleep(0.2)
-            yield self.anc350.set_axis_output(AxisNo, False, False) #Enable Axis when moving
+            yield self.sleep(0.1)
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
-
-    def ChangeCompensation(self, AxisNo):
-        if self.Compensation[AxisNo]:
-            self.Compensation[AxisNo] = False
-            stylesheet = '#pushButton_Compensation_Axis' + str(AxisNo+1) + '{\nimage:url(' + self.IconPath['NoCompensation'] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
-            self.pushButton_Compensation[AxisNo].setStyleSheet(stylesheet)
-        else:
-            self.Compensation[AxisNo] = True
-            stylesheet = '#pushButton_Compensation_Axis' + str(AxisNo+1) + '{\nimage:url(' + self.IconPath['Compensation'] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
-            self.pushButton_Compensation[AxisNo].setStyleSheet(stylesheet)
 
     def UpdateAutomaticPositioningRelativePosition(self, AxisNo):
         dummystr=str(self.lineEdit_Relative[AxisNo].text())
@@ -358,6 +357,25 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 yield self.anc350.set_target_range(AxisNo, self.TargetRange[AxisNo])
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
+            
+    @inlineCallbacks
+    def toggleTargetGround(self, AxisNo):
+        if self.TargetGround[AxisNo]:
+            self.TargetGround[AxisNo] = False
+            yield self.anc350.set_target_ground(AxisNo, False)
+        else:
+            self.TargetGround[AxisNo] = True
+            yield self.anc350.set_target_ground(AxisNo, True)
+            
+    @inlineCallbacks
+    def toggleOutput(self, AxisNo):
+        output_on = self.checkBox_OutputEnabled[AxisNo].isChecked()
+        if output_on:
+            self.OutputEnabled[AxisNo] = True
+            yield self.anc350.set_axis_output(AxisNo, True, False)
+        else:
+            self.OutputEnabled[AxisNo] = False
+            yield self.anc350.set_axis_output(AxisNo, False, False)
             
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows

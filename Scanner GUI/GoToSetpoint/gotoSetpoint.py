@@ -30,8 +30,15 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
         self.zeroBiasBtn.clicked.connect(self.zeroBiasFunc)
         self.gotoBiasBtn.clicked.connect(self.gotoBiasFunc)
         
+        self.zeroGateBtn.clicked.connect(self.zeroGateFunc)
+        self.gotoGateBtn.clicked.connect(self.gotoGateFunc)
+        
         self.blinkBtn.clicked.connect(self.blinkOutFunc)
-        self.push_readSetpoint.clicked.connect(self.readSetpoint)
+        self.push_FdbkOn.clicked.connect(lambda: self.toggleFeedback(True))
+        self.push_FdbkOff.clicked.connect(lambda: self.toggleFeedback(False))
+        
+        self.push_readGate.clicked.connect(self.readSetpoint)
+        self.push_readBias.clicked.connect(self.readSetpoint)
 
         self.lockInterface()
         
@@ -63,12 +70,17 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
                 
             self.biasChan = dict['channels']['nsot']['nSOT Bias'] - 1
             self.biasRefChan = dict['channels']['nsot']['Bias Reference'] - 1
+            self.gateChan = dict['channels']['nsot']['nSOT Gate'] - 1
+            self.gateRefChan = dict['channels']['nsot']['Gate Reference'] - 1
             self.feedbackChan = dict['channels']['nsot']['DC Readout'] - 1
             
-            self.setpointDict = {'bias' : 0}
+            self.setpointDict = {'bias' : 0,
+                                 'gate' : 0}
 
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(0, 170, 0);border-radius: 4px;}")
+            
+            yield self.readInitVals()
             
             self.unlockInterface()
             
@@ -86,24 +98,114 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
             self.setpointDict['bias'] = float(curr_bias)
             
             self.currBiasLbl.setText('Current Bias: '+ str(curr_bias) + 'V')
-            self.currStatusLbl.setText('Status: Idle')
+            self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
+            
+            curr_gate = yield self.dac.read_voltage(self.gateRefChan)
+            self.setpointDict['gate'] = float(curr_gate)
+            
+            self.currGateLbl.setText('Current Gate: '+ str(curr_gate) + 'V')
+            self.currGateLbl.setStyleSheet("QLabel#currGateLbl{color: rgb(168,168,168); font:bold 10pt;}")
+            try:
+                curr_fdbk = yield self.blink_server.get_voltage(self.blinkChan)
+                if curr_fdbk <0.2:
+                    self.feedbackButtonColors(True)
+                else:
+                    self.feedbackButtonColors(False)
+            except:
+                print 'Blink server does not have voltage reading capabilities.'
         except Exception as inst:
             print "readInitVals Error: ", inst
 
+    def feedbackButtonColors(self, on):
+        if on: 
+            style = '''QPushButton:pressed#push_FdbkOn{
+                        color: rgb(0,170,0);
+                        background-color:rgb(168,168,168);
+                        border: 1px solid rgb(0,170,0);
+                        border-radius: 5px
+                        }
+
+                        QPushButton#push_FdbkOn{
+                        color: rgb(0,170,0);
+                        background-color:rgb(0,0,0);
+                        border: 2px solid  rgb(0,170,0);
+                        border-radius: 5px
+                        }
+                        '''
+            self.push_FdbkOn.setStyleSheet(style)
+            
+            style = '''QPushButton:pressed#push_FdbkOff{
+                        color: rgb(95,107,166);
+                        background-color:rgb(168,168,168);
+                        border: 1px solid rgb(95,107,166);
+                        border-radius: 5px
+                        }
+
+                        QPushButton#push_FdbkOff{
+                        color: rgb(95,107,166);
+                        background-color:rgb(0,0,0);
+                        border: 2px solid  rgb(95,107,166);
+                        border-radius: 5px
+                        }
+                        '''
+            self.push_FdbkOff.setStyleSheet(style)
+        else:
+            style = '''QPushButton:pressed#push_FdbkOn{
+                        color: rgb(95,107,166);
+                        background-color:rgb(168,168,168);
+                        border: 1px solid rgb(95,107,166);
+                        border-radius: 5px
+                        }
+
+                        QPushButton#push_FdbkOn{
+                        color: rgb(95,107,166);
+                        background-color:rgb(0,0,0);
+                        border: 2px solid  rgb(95,107,166);
+                        border-radius: 5px
+                        }
+                        '''
+            self.push_FdbkOn.setStyleSheet(style)
+            
+            style = '''QPushButton:pressed#push_FdbkOff{
+                        color: rgb(161,0,0);
+                        background-color:rgb(168,168,168);
+                        border: 1px solid rgb(161,0,0);
+                        border-radius: 5px
+                        }
+
+                        QPushButton#push_FdbkOff{
+                        color: rgb(161,0,0);
+                        background-color:rgb(0,0,0);
+                        border: 2px solid  rgb(161,0,0);
+                        border-radius: 5px
+                        }
+                        '''
+            self.push_FdbkOff.setStyleSheet(style)
+    
+    @inlineCallbacks
+    def toggleFeedback(self, on):
+        if on:
+            yield self.blink_server.set_voltage(self.blinkChan, 0)
+        else:
+            yield self.blink_server.set_voltage(self.blinkChan, 5)
+        self.feedbackButtonColors(on)
+        
     def readSetpoint(self):
         self.readInitVals()
      
-
     @inlineCallbacks
     def zeroBiasFunc(self, c = None):
-        curr_bias = float(self.setpointDict['bias'])
-        steps = int(np.absolute(curr_bias) * 1000)
-        delay = 2000
-        tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [0], steps, delay)
-        self.setpointDict['bias'] = 0
-        new_bias = yield self.dac.read_voltage(self.biasRefChan)
-        self.currBiasLbl.setText('Current Bias: ' + str(new_bias) + 'V')
-
+        try:
+            curr_bias = float(self.setpointDict['bias'])
+            steps = int(np.absolute(curr_bias) * 1000 + 5)
+            delay = 2000
+            tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [0], steps, delay)
+            self.setpointDict['bias'] = 0
+            new_bias = yield self.dac.read_voltage(self.biasRefChan)
+            self.currBiasLbl.setText('Current Bias: ' + str(new_bias) + 'V')
+        except Exception as inst:
+            print inst
+            
     @inlineCallbacks
     def gotoBiasFunc(self, c = None):
         flag = False
@@ -116,14 +218,13 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
         steps = np.absolute(int(readNum(self.biasPntsLine.text(), self, False)))
         if not isinstance(steps, int):
             flag = True
-            self.biasSetpntLine.setText('FORMAT ERROR')
+            self.biasPntsLine.setText('FORMAT ERROR')
             
         delay = np.absolute(int(readNum(self.biasDelayLine.text(), self, False))) * 1000
         if not isinstance(delay, int):
             flag = True
-            self.biasSetpntLine.setText('FORMAT ERROR')
+            self.biasDelayLine.setText('FORMAT ERROR')
             
-        print self.setpointDict
         if np.absolute(new_bias) > 10:
             new_bias = 10 * (new_bias / np.absolute(new_bias))
             self.biasSetpntLine.setText(str(new_bias))
@@ -137,25 +238,71 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
             yield self.sleep(0.5)
             
     @inlineCallbacks
+    def zeroGateFunc(self, c = None):
+        curr_gate = float(self.setpointDict['gate'])
+        steps = int(np.absolute(curr_gate) * 1000 + 5)
+        delay = 2000
+        tmp = yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [curr_gate], [0], steps, delay)
+        self.setpointDict['gate'] = 0
+        new_gate = yield self.dac.read_voltage(self.gateRefChan)
+        self.currGateLbl.setText('Current Gate: ' + str(new_gate) + 'V')
+
+    @inlineCallbacks
+    def gotoGateFunc(self, c = None):
+        flag = False
+        
+        new_gate = readNum(self.gateSetpntLine.text(), self, False)
+        if not isinstance(new_gate, float):
+            flag = True
+            self.gateSetpntLine.setText('FORMAT ERROR')
+            
+        steps = np.absolute(int(readNum(self.gatePntsLine.text(), self, False)))
+        if not isinstance(steps, int):
+            flag = True
+            self.gatePntsLine.setText('FORMAT ERROR')
+            
+        delay = np.absolute(int(readNum(self.gateDelayLine.text(), self, False))) * 1000
+        if not isinstance(delay, int):
+            flag = True
+            self.gateDelayLine.setText('FORMAT ERROR')
+            
+        if np.absolute(new_gate) > 10:
+            new_gate = 10 * (new_gate / np.absolute(new_gate))
+            self.gateSetpntLine.setText(str(new_gate))
+            
+        if flag == False:
+            tmp = yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [self.setpointDict['gate']], [new_gate], steps, delay)
+            self.setpointDict['gate'] = new_gate
+            self.currGateLbl.setText('Current Gate: '+ str(new_gate) + 'V')
+            self.currGateLbl.setStyleSheet("QLabel#currGateLbl{color: rgb(168,168,168); font:bold 10pt;}")
+        else:
+            yield self.sleep(0.5)
+            
+    @inlineCallbacks
     def blinkOutFunc(self, c = None):
         yield self.blink_server.set_voltage(self.blinkChan, 5)
+        self.feedbackButtonColors(False)
         yield self.sleep(0.25)
         yield self.blink_server.set_voltage(self.blinkChan, 0)
-        yield self.sleep(0.25)
-        
+        self.feedbackButtonColors(True)
             
     def lockInterface(self):
-
         self.biasSetpntLine.setEnabled(False)
         self.biasPntsLine.setEnabled(False)
         self.biasDelayLine.setEnabled(False)
         
-        
         self.gotoBiasBtn.setEnabled(False)
-        self.zeroBiasBtn.setEnabled(False)
+        self.zeroBiasBtn.setEnabled(False)        
+        self.push_readBias.setEnabled(False)
         
-        self.push_readSetpoint.setEnabled(False)
         self.blinkBtn.setEnabled(False)
+        
+        self.push_FdbkOn.setEnabled(False)
+        self.push_FdbkOff.setEnabled(False)
+        
+        self.gotoGateBtn.setEnabled(False)
+        self.zeroGateBtn.setEnabled(False)
+        self.push_readGate.setEnabled(False)
         
     def unlockInterface(self):
         self.biasSetpntLine.setEnabled(True)
@@ -164,9 +311,16 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
         
         self.gotoBiasBtn.setEnabled(True)
         self.zeroBiasBtn.setEnabled(True)
+        self.push_readBias.setEnabled(True)
         
-        self.push_readSetpoint.setEnabled(True)
         self.blinkBtn.setEnabled(True)
+        
+        self.push_FdbkOn.setEnabled(True)
+        self.push_FdbkOff.setEnabled(True)
+        
+        self.gotoGateBtn.setEnabled(True)
+        self.zeroGateBtn.setEnabled(True)
+        self.push_readGate.setEnabled(True)
         
     def moveDefault(self):
         self.move(550,10)

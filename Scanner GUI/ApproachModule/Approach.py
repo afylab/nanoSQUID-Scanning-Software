@@ -294,38 +294,197 @@ class Window(QtGui.QMainWindow, ApproachUI):
             self.lockFdbkDC()
             self.lockFdbkAC()
             
-            self.zeroHF2LI_Aux_Out()
-            self.initializePID()
+            #self.zeroHF2LI_Aux_Out()
+            #self.initializePID()
+            yield self.loadCurrentState()
             self.monitorZ = True
             self.monitorZVoltage()
-            self.readDACOutput()
-        except:
+            
+            #self.readDACOutput()
+        except Exception as inst:
+            print inst
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
 
     @inlineCallbacks
-    def readDACOutput(self, c = None):
-        #This function determines roughly what the voltage is from the DAC ADC
-        #Useful if the software was closed while a DAC voltage was being output
-    
-        #Get the voltage coming out of the feed
-        total_voltage = yield self.hf.get_aux_input_value(self.measurementSettings['z_mon_input'])
-        #Get Zurich voltage output
-        zurich_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+    def loadCurrentState(self):
+        #load pid values
+        P = yield self.hf.get_pid_p(self.PID_Index)
+        I = yield self.hf.get_pid_i(self.PID_Index)
+        D = yield self.hf.get_pid_d(self.PID_Index)
         
-        if not self.voltageMultiplied:
-            dac_voltage = total_voltage - zurich_voltage
+        #If PID parameters are the Zurich default (ie, the Zurich lock in was power cycled)
+        #set to our default values
+        #Otherwise use the loaded values
+        if P == 1.0 and I == 10.0:
+            yield self.setPIDParameters()
         else:
-            dac_voltage = total_voltage - zurich_voltage*self.voltageMultiplier
-            
-        #print "Intialization determined dac voltage: ", dac_voltage
+            self.PIDApproachSettings['p'] = P/self.z_volts_to_meters
+            self.PIDApproachSettings['i'] = I/self.z_volts_to_meters
+            self.PIDApproachSettings['d'] = D/self.z_volts_to_meters
+            self.lineEdit_P.setText(formatNum(self.PIDApproachSettings['p']))
+            self.lineEdit_I.setText(formatNum(self.PIDApproachSettings['i']))
+            self.lineEdit_D.setText(formatNum(self.PIDApproachSettings['d']))
         
-        if dac_voltage > 0:
-            self.Atto_Z_Voltage = dac_voltage
+        
+        pll_on_1 = yield self.hf.get_pll_on(1)
+        pll_on_2 = yield self.hf.get_pll_on(2)
+        if pll_on_1 or pll_on_2:
+            self.measurementSettings['meas_pll'] = True
+            
+            if pll_on_1:
+                self.measurementSettings['pll_output'] = 1
+            else:
+                self.measurementSettings['pll_output'] = 2
+                
+            freq = yield self.hf.get_pll_freqcenter(self.measurementSettings['pll_output'])
+            phase = yield self.hf.get_pll_setpoint(self.measurementSettings['pll_output'])
+            amp_range = yield self.hf.get_output_range(self.measurementSettings['pll_output'])
+            amp_frac = yield self.hf.get_output_amplitude(self.measurementSettings['pll_output'])
+            freq_range = yield self.hf.get_pll_freqrange(self.measurementSettings['pll_output'])
+            
+            print 'Amp range:', amp_range
+            print 'Amp frac:', amp_frac
+            
+            self.measurementSettings['pll_centerfreq'] = freq
+            self.measurementSettings['pll_phase_setpoint'] = phase
+            self.measurementSettings['pll_output_amp'] = amp_range*amp_frac
+            self.measurementSettings['pll_range'] = freq_range
+            
+            pll_p = yield self.hf.get_pll_p(self.measurementSettings['pll_output'])
+            pll_i = yield self.hf.get_pll_i(self.measurementSettings['pll_output'])
+            pll_d = yield self.hf.get_pll_d(self.measurementSettings['pll_output'])
+            
+            self.measurementSettings['pll_p'] = pll_p
+            self.measurementSettings['pll_i'] = pll_i
+            self.measurementSettings['pll_d'] = pll_d
+            
+            pll_input = yield self.hf.get_pll_input(self.measurementSettings['pll_output'])
+            pll_harmonic = yield self.hf.get_pll_harmonic(self.measurementSettings['pll_output'])
+            
+            self.measurementSettings['pll_input'] = int(pll_input)
+            self.measurementSettings['pll_harmonic'] = int(pll_harmonic)
+            
+            pll_tc = yield self.hf.get_pll_tc(self.measurementSettings['pll_output'])
+            pll_filterorder = yield self.hf.get_pll_filterorder(self.measurementSettings['pll_output'])
+            pll_filterBW = calculate_FilterBW(pll_filterorder, pll_tc)
+            
+            self.measurementSettings['pll_tc'] = pll_tc
+            self.measurementSettings['pll_filterorder'] = pll_filterorder
+            self.measurementSettings['pll_filterBW'] = pll_filterBW
+            
+            #Unlock everything in proper places
+            self.unlockFreq()
+            
+            self.push_StartControllers.setText("Stop Meas.")  
+            style = """ QPushButton#push_StartControllers{
+                    color: rgb(50,168,50);
+                    background-color:rgb(0,0,0);
+                    border: 1px solid rgb(50,168,50);
+                    border-radius: 5px
+                    }  
+                    QPushButton:pressed#push_StartControllers{
+                    color: rgb(168,168,168);
+                    background-color:rgb(95,107,166);
+                    border: 1px solid rgb(168,168,168);
+                    border-radius: 5px
+                    }
+                    """
+            self.push_StartControllers.setStyleSheet(style)
+            self.measuring = True
+            self.push_MeasurementSettings.setEnabled(False)
+            self.startFrequencyMonitoring()
+            
+            
+        pid_on = yield self.hf.get_pid_on(self.PID_Index)
+        if pid_on:
+            setpoint = yield self.hf.get_pid_setpoint(self.PID_Index)
+            
+            delta_f = setpoint - self.measurementSettings['pll_centerfreq']
+            
+            if delta_f >0:
+                self.radioButton_plus.setChecked(True)
+            else:
+                self.radioButton_plus.setChecked(False)
+            
+            self.updateFreqThresh(abs(delta_f))
+
+            self.updateConstantHeightStatus.emit(True, self.Atto_Z_Voltage)
+            self.constantHeight = True
+            self.label_pidApproachStatus.setText('Constant Height')
+            
+            #Set constant height mode
+            #Get and set freq setpoint / threshold in GUI properly
+            
             
     @inlineCallbacks
+    def initializePID(self, c = None):
+        '''
+        This function ensures the integrator value of the PID is set such that the starting output voltage is 0 volts. 
+        By default, when the range is from 0 to 3 V, the starting output voltage is 1.5V; this fixes that problem. 
+        Also sets the output range from 0 to z_volts_max, which is the temperature dependent voltage range.
+        
+        09/02/2019 I cannot reproduce the starting output voltage being the center. It appears now that the voltage
+        stays the same if possible when changing the PID center and range. I don't know how this would have been addressed
+        given that no firmware update has been pushed. Anyways, this function is now no longer being called. 
+        '''
+        try:
+            #Make sure the PID is off
+            pid_on = yield self.hf.get_pid_on(self.PID_Index)
+            if pid_on:
+                yield self.hf.set_pid_on(self.PID_Index, False)
+
+            #Set the output range to be what it needs to be
+            yield self.setPIDOutputRange(self.z_volts_max)
+
+            #Set integral term to 1, and 0 to the rest
+            yield self.hf.set_pid_p(self.PID_Index, 0)
+            yield self.hf.set_pid_d(self.PID_Index, 0)
+            yield self.hf.set_pid_i(self.PID_Index, 1)
+
+            #Sets the PID input signal to be the auxiliary output 
+            yield self.hf.set_pid_input_signal(self.PID_Index, 5)
+            #Sets channel to be aux output 4, which should never be in use elsewhere (as warned on the GUI)
+            yield self.hf.set_pid_input_channel(self.PID_Index, 4)
+
+            #The following two settings get reset elsewhere in the code before running anything important. 
+            #They're useful for understanding the units if the set integrator term (and making sure that
+            # 1 is sufficient.)
+
+            #Sets the output signal type to be an auxiliary output offset
+            yield self.hf.set_pid_output_signal(self.PID_Index, 3)
+            #Sets the correct channel of the aux output
+            yield self.hf.set_pid_output_channel(self.PID_Index, self.generalSettings['pid_z_output'])
+            
+            yield self.hf.set_pid_setpoint(self.PID_Index, -10)
+            #Sets the setpoint to be -10V. The input signal (aux output 4), is always left as 0 Volt output. 
+            #This means that the rate at which the voltage changes is this setpoint (-10V) times the integrator
+            # value (1 /s). So, this changes the voltage at a rate of 10V/s. 
+            
+            #Once monitored, can turn the multiplier to 0 so that the output is always 0 volts. 
+            yield self.hf.set_aux_output_monitorscale(self.generalSettings['pid_z_output'],0)
+            #Set the aux output corresponding the to output going to the attocubes to be monitored. 
+            yield self.hf.set_aux_output_signal(self.generalSettings['pid_z_output'], -2)
+
+            #At this point, turn on the PID. 
+            yield self.hf.set_pid_on(self.PID_Index, True)
+            #Wait for the voltage to go from 5V to 0V (should take 0.5 second). However, there's a weird bug that
+            #if the monitor scale is set to 0, the integrator when the pid is turned on instantly goes to 0. 
+            #Just toggling is sufficient. 
+            yield self.sleep(0.25)
+            #Turn off PID
+            yield self.hf.set_pid_on(self.PID_Index, False)
+            #none of this output any voltage. 
+
+            #turn the multiplier back to 1 for future use. 
+            yield self.hf.set_aux_output_monitorscale(self.generalSettings['pid_z_output'], 1)
+            #set output back to manual control 
+            yield self.hf.set_aux_output_signal(self.generalSettings['pid_z_output'], -1)
+        except Exception as inst:
+            print inst
+
+    @inlineCallbacks
     def zeroHF2LI_Aux_Out(self, c= None):
-        #TODO Check this. This is probably not necessary anymore
         try:
             #Check to see if any PIDs are on. If they are, turn them off. Them being on prevents proper zeroing. 
             pid_on = yield self.hf.get_pid_on(1)
@@ -356,12 +515,34 @@ class Window(QtGui.QMainWindow, ApproachUI):
         except Exception as inst:
             print inst
 
+    @inlineCallbacks
+    def readDACOutput(self, c = None):
+        #This function determines roughly what the voltage is from the DAC ADC
+        #Useful if the software was closed while a DAC voltage was being output
+        #This function should no longer be called now that the dac.read_dac_voltage
+        #command has been implemented. 
+    
+        #Get the voltage coming out of the feed
+        total_voltage = yield self.hf.get_aux_input_value(self.measurementSettings['z_mon_input'])
+        #Get Zurich voltage output
+        zurich_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+        
+        if not self.voltageMultiplied:
+            dac_voltage = total_voltage - zurich_voltage
+        else:
+            dac_voltage = total_voltage - zurich_voltage*self.voltageMultiplier
+            
+        #print "Intialization determined dac voltage: ", dac_voltage
+        
+        if dac_voltage > 0:
+            self.Atto_Z_Voltage = dac_voltage
+
     def disconnectLabRAD(self):
         if self.hf is not False:
             #Makes sure that stops sending signals to monitor Z voltage
             self.monitorZ = False
             #Turn off the PLL 
-            self.hf.set_pll_off(self.measurementSettings['pll_output'])
+            #self.hf.set_pll_off(self.measurementSettings['pll_output'])
         self.cxn = False
         self.cpsc = False
         self.dac = False
@@ -411,8 +592,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
             else:
                 self.lockFdbkAC()
                 
-            if z_mon_input != self.measurementSettings['z_mon_input']:
-                self.readDACOutput()
+            #if z_mon_input != self.measurementSettings['z_mon_input']:
+            #    self.readDACOutput()
         
     def showGenSettings(self):
         GenSet = generalApproachSettings(self.reactor, self.generalSettings, parent = self)
@@ -1024,6 +1205,12 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.label_pidApproachStatus.setText('Idle')
         self.label_stepApproachStatus.setText('Idle')
         
+    @inlineCallbacks
+    def disableSetThreshold(self, time):
+        self.push_setPLLThresh.setEnabled(False)
+        yield self.sleep(time)
+        self.push_setPLLThresh.setEnabled(True)
+        
 #--------------------------------------------------------------------------------------------------------------------------#
     """ The following section contains the PID approach sequence and all related functions."""
         
@@ -1053,6 +1240,10 @@ class Window(QtGui.QMainWindow, ApproachUI):
             #Empty the deltafData array. This prevents the software from thinking it hit the surface because of 
             #another approach
             self.deltafData = deque([-200]*self.deltaf_track_length)
+            
+            #Disable to setPLL threshold button until the queue of deltafdata has been replenished. Otherwise, spamming the set threshhold
+            #button after starting an approach will be spurradic results
+            self.disableSetThreshold(30)
             
             #Empty the zData array. This prevents the software from thinking it hit the surface because of
             #another approach
@@ -1422,68 +1613,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
         except Exception as inst:
             print inst
             print sys.exc_traceback.tb_lineno
-            
-    @inlineCallbacks
-    def initializePID(self, c = None):
-        '''
-        This function ensures the integrator value of the PID is set such that the starting output voltage is 0 volts. 
-        By default, when the range is from 0 to 3 V, the starting output voltage is 1.5V; this fixes that problem. 
-        Also sets the output range from 0 to z_volts_max, which is the temperature dependent voltage range.
-        '''
-        try:
-            #Make sure the PID is off
-            pid_on = yield self.hf.get_pid_on(self.PID_Index)
-            if pid_on:
-                yield self.hf.set_pid_on(self.PID_Index, False)
-
-            #Set the output range to be what it needs to be
-            yield self.setPIDOutputRange(self.z_volts_max)
-
-            #Set integral term to 1, and 0 to the rest
-            yield self.hf.set_pid_p(self.PID_Index, 0)
-            yield self.hf.set_pid_d(self.PID_Index, 0)
-            yield self.hf.set_pid_i(self.PID_Index, 1)
-
-            #Sets the PID input signal to be the auxiliary output 
-            yield self.hf.set_pid_input_signal(self.PID_Index, 5)
-            #Sets channel to be aux output 4, which should never be in use elsewhere (as warned on the GUI)
-            yield self.hf.set_pid_input_channel(self.PID_Index, 4)
-
-            #The following two settings get reset elsewhere in the code before running anything important. 
-            #They're useful for understanding the units if the set integrator term (and making sure that
-            # 1 is sufficient.)
-
-            #Sets the output signal type to be an auxiliary output offset
-            yield self.hf.set_pid_output_signal(self.PID_Index, 3)
-            #Sets the correct channel of the aux output
-            yield self.hf.set_pid_output_channel(self.PID_Index, self.generalSettings['pid_z_output'])
-            
-            yield self.hf.set_pid_setpoint(self.PID_Index, -10)
-            #Sets the setpoint to be -10V. The input signal (aux output 4), is always left as 0 Volt output. 
-            #This means that the rate at which the voltage changes is this setpoint (-10V) times the integrator
-            # value (1 /s). So, this changes the voltage at a rate of 10V/s. 
-            
-            #Once monitored, can turn the multiplier to 0 so that the output is always 0 volts. 
-            yield self.hf.set_aux_output_monitorscale(self.generalSettings['pid_z_output'],0)
-            #Set the aux output corresponding the to output going to the attocubes to be monitored. 
-            yield self.hf.set_aux_output_signal(self.generalSettings['pid_z_output'], -2)
-
-            #At this point, turn on the PID. 
-            yield self.hf.set_pid_on(self.PID_Index, True)
-            #Wait for the voltage to go from 5V to 0V (should take 0.5 second). However, there's a weird bug that
-            #if the monitor scale is set to 0, the integrator when the pid is turned on instantly goes to 0. 
-            #Just toggling is sufficient. 
-            yield self.sleep(0.25)
-            #Turn off PID
-            yield self.hf.set_pid_on(self.PID_Index, False)
-            #none of this output any voltage. This is good in case instructions were ignored and the attocubes were left plugged in. 
-
-            #turn the multiplier back to 1 for future use. 
-            yield self.hf.set_aux_output_monitorscale(self.generalSettings['pid_z_output'], 1)
-            #set output back to manual control 
-            yield self.hf.set_aux_output_signal(self.generalSettings['pid_z_output'], -1)
-        except Exception as inst:
-            print inst
         
         
     @inlineCallbacks
@@ -2067,6 +2196,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.lineEdit_I.setDisabled(True)
         self.lineEdit_D.setDisabled(True)
         self.push_setPLLThresh.setDisabled(True)
+        self.push_addFreq.setDisabled(True)
+        self.push_subFreq.setDisabled(True)
         
     def unlockInterface(self):
         self.push_Home.setEnabled(True)
@@ -2140,6 +2271,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.lineEdit_I.setDisabled(False)
         self.lineEdit_D.setDisabled(False)
         self.push_setPLLThresh.setDisabled(False)
+        self.push_addFreq.setDisabled(False)
+        self.push_subFreq.setDisabled(False)
         
     def updateScanningStatus(self, status):
         print "Scanning status in approach window updated to: "

@@ -75,9 +75,10 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                     'nsot' : {
                         'Bias Reference':    self.comboBox_nSOT_BiasRef,
                         'DC Readout':        self.comboBox_nSOT_DC,
-                        'AC Readout':        self.comboBox_nSOT_AC,
                         'Noise Readout':     self.comboBox_nSOT_Noise,
                         'nSOT Bias':         self.comboBox_nSOT_Bias, 
+                        'nSOT Gate':         self.comboBox_nSOT_Gate, 
+                        'Gate Reference':    self.comboBox_nSOT_GateRef, 
                     },
         }
         }
@@ -105,8 +106,9 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.comboBox_nSOT_BiasRef.currentIndexChanged.connect(self.setNSOTBiasRef)
         self.comboBox_nSOT_Bias.currentIndexChanged.connect(self.setNSOTBias)
         self.comboBox_nSOT_DC.currentIndexChanged.connect(self.setNSOTDC)
-        self.comboBox_nSOT_AC.currentIndexChanged.connect(self.setNSOTAC)
         self.comboBox_nSOT_Noise.currentIndexChanged.connect(self.setNSOTNoise)
+        self.comboBox_nSOT_GateRef.currentIndexChanged.connect(self.setNSOTGateRef)
+        self.comboBox_nSOT_Gate.currentIndexChanged.connect(self.setNSOTGate)
         
         self.comboBox_MagnetPowerSupply.currentIndexChanged.connect(self.setMagnetPowerSupply)
         self.comboBox_MagnetSupplyDevice.currentIndexChanged.connect(self.setMagnetSupplyDevice)
@@ -211,6 +213,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.label_nSOT_Device3.setText(str(self.comboBox_nSOT_DACADC.currentText()))
         self.label_nSOT_Device4.setText(str(self.comboBox_nSOT_DACADC.currentText()))
         self.label_nSOT_Device5.setText(str(self.comboBox_nSOT_DACADC.currentText()))
+        self.label_nSOT_Device6.setText(str(self.comboBox_nSOT_DACADC.currentText()))
         self.setConfigStatus(False)
         
     def setNSOTBiasRef(self):
@@ -225,8 +228,12 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.deviceDictionary['channels']['nsot']['DC Readout'] = int(self.comboBox_nSOT_DC.currentIndex())+1
         self.setConfigStatus(False)
         
-    def setNSOTAC(self):
-        self.deviceDictionary['channels']['nsot']['AC Readout'] = int(self.comboBox_nSOT_AC.currentIndex())+1
+    def setNSOTGateRef(self):
+        self.deviceDictionary['channels']['nsot']['Gate Reference'] = int(self.comboBox_nSOT_GateRef.currentIndex())+1
+        self.setConfigStatus(False)
+        
+    def setNSOTGate(self):
+        self.deviceDictionary['channels']['nsot']['nSOT Gate'] = int(self.comboBox_nSOT_Gate.currentIndex())+1
         self.setConfigStatus(False)
         
     def setNSOTNoise(self):
@@ -400,12 +407,12 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                         'y out':        3,
                     },
                     'nsot' : {
-                        'Bias Reference':    4,
                         'DC Readout':        3,
-                        'AC Readout':        1,
                         'Noise Readout':     2,
                         'nSOT Bias':         4, 
-                        #'nSOT Gate':         3, #implement this later
+                        'Bias Reference':    4,
+                        'nSOT Gate':         1,
+                        'Gate Reference':    1,
                     }
         }
         }

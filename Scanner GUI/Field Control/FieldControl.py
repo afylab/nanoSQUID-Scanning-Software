@@ -136,6 +136,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     print inst
                 yield self.sleep(0.5)
         except Exception as inst:
+            print 'This is it'
             print inst
             
     @inlineCallbacks

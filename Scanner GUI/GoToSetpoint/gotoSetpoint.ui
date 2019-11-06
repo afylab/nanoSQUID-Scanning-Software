@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>525</width>
-    <height>235</height>
+    <height>300</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,7 +19,7 @@
   <property name="maximumSize">
    <size>
     <width>525</width>
-    <height>235</height>
+    <height>300</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -38,18 +38,21 @@
 #line_15{color: rgb(168,168,168)}
 #line_16{color: rgb(168,168,168)}
 #line_17{color: rgb(168,168,168)}
-
-QLabel{
-color: rgb(168,168,168);
-font: bold 10pt;
-}</string>
+#line_18{color: rgb(168,168,168)}
+#line_19{color: rgb(168,168,168)}
+#line_20{color: rgb(168,168,168)}
+#line_21{color: rgb(168,168,168)}
+#line_22{color: rgb(168,168,168)}
+#line_23{color: rgb(168,168,168)}
+#line_24{color: rgb(168,168,168)}
+</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLineEdit" name="biasPntsLine">
     <property name="geometry">
      <rect>
-      <x>157</x>
-      <y>110</y>
+      <x>155</x>
+      <y>145</y>
       <width>45</width>
       <height>20</height>
      </rect>
@@ -67,10 +70,10 @@ font: bold 10pt;
    <widget class="Line" name="line_13">
     <property name="geometry">
      <rect>
-      <x>17</x>
-      <y>61</y>
+      <x>7</x>
+      <y>95</y>
       <width>3</width>
-      <height>139</height>
+      <height>174</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -91,8 +94,8 @@ font: bold 10pt;
    <widget class="QLabel" name="label_11">
     <property name="geometry">
      <rect>
-      <x>217</x>
-      <y>75</y>
+      <x>215</x>
+      <y>110</y>
       <width>21</width>
       <height>16</height>
      </rect>
@@ -104,8 +107,8 @@ font: bold 10pt;
    <widget class="QPushButton" name="zeroBiasBtn">
     <property name="geometry">
      <rect>
-      <x>152</x>
-      <y>180</y>
+      <x>102</x>
+      <y>246</y>
       <width>50</width>
       <height>40</height>
      </rect>
@@ -138,9 +141,9 @@ Bias</string>
    <widget class="Line" name="line_16">
     <property name="geometry">
      <rect>
-      <x>212</x>
-      <y>199</y>
-      <width>50</width>
+      <x>222</x>
+      <y>266</y>
+      <width>37</width>
       <height>3</height>
      </rect>
     </property>
@@ -160,8 +163,8 @@ Bias</string>
    <widget class="QLabel" name="label_7">
     <property name="geometry">
      <rect>
-      <x>27</x>
-      <y>75</y>
+      <x>17</x>
+      <y>110</y>
       <width>90</width>
       <height>16</height>
      </rect>
@@ -173,8 +176,8 @@ Bias</string>
    <widget class="QPushButton" name="blinkBtn">
     <property name="geometry">
      <rect>
-      <x>430</x>
-      <y>70</y>
+      <x>410</x>
+      <y>40</y>
       <width>50</width>
       <height>40</height>
      </rect>
@@ -206,8 +209,8 @@ border-radius: 5px
    <widget class="QLabel" name="currBiasLbl">
     <property name="geometry">
      <rect>
-      <x>280</x>
-      <y>140</y>
+      <x>17</x>
+      <y>215</y>
       <width>296</width>
       <height>16</height>
      </rect>
@@ -216,11 +219,11 @@ border-radius: 5px
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600; color:#a8a8a8;&quot;&gt;Current Bias:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="push_readSetpoint">
+   <widget class="QPushButton" name="push_readBias">
     <property name="geometry">
      <rect>
-      <x>310</x>
-      <y>70</y>
+      <x>165</x>
+      <y>246</y>
       <width>50</width>
       <height>40</height>
      </rect>
@@ -231,14 +234,14 @@ border-radius: 5px
      </font>
     </property>
     <property name="styleSheet">
-     <string notr="true">QPushButton:pressed#push_readSetpoint{
+     <string notr="true">QPushButton:pressed#push_readBias{
 color: rgb(95,107,166);
 background-color:rgb(168,168,168);
 border: 1px solid rgb(95,107,166);
 border-radius: 5px
 }
 
-QPushButton#push_readSetpoint{
+QPushButton#push_readBias{
 color: rgb(95,107,166);
 background-color:rgb(0,0,0);
 border: 2px solid  rgb(95,107,166);
@@ -246,16 +249,16 @@ border-radius: 5px
 }</string>
     </property>
     <property name="text">
-     <string>Read 
-Set</string>
+     <string>Read
+Bias</string>
     </property>
    </widget>
    <widget class="Line" name="line_12">
     <property name="geometry">
      <rect>
-      <x>18</x>
-      <y>60</y>
-      <width>244</width>
+      <x>8</x>
+      <y>95</y>
+      <width>250</width>
       <height>3</height>
      </rect>
     </property>
@@ -275,9 +278,9 @@ Set</string>
    <widget class="Line" name="line_17">
     <property name="geometry">
      <rect>
-      <x>18</x>
-      <y>199</y>
-      <width>50</width>
+      <x>8</x>
+      <y>266</y>
+      <width>25</width>
       <height>3</height>
      </rect>
     </property>
@@ -297,8 +300,8 @@ Set</string>
    <widget class="QLabel" name="label_38">
     <property name="geometry">
      <rect>
-      <x>27</x>
-      <y>145</y>
+      <x>17</x>
+      <y>180</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -313,8 +316,8 @@ Set</string>
    <widget class="QLabel" name="BiasInc">
     <property name="geometry">
      <rect>
-      <x>27</x>
-      <y>110</y>
+      <x>17</x>
+      <y>145</y>
       <width>111</width>
       <height>16</height>
      </rect>
@@ -329,21 +332,27 @@ Set</string>
    <widget class="QLabel" name="label_16">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>10</y>
-      <width>121</width>
-      <height>19</height>
+      <x>20</x>
+      <y>45</y>
+      <width>141</width>
+      <height>31</height>
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; color:#a8a8a8;&quot;&gt;Go To Setpoint&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600; color:#a8a8a8;&quot;&gt;Electronic Feedback Control&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;&lt;br/&gt;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+    <property name="wordWrap">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="gotoBiasBtn">
     <property name="geometry">
      <rect>
-      <x>77</x>
-      <y>180</y>
+      <x>40</x>
+      <y>246</y>
       <width>50</width>
       <height>40</height>
      </rect>
@@ -376,8 +385,8 @@ Bias</string>
    <widget class="QLineEdit" name="biasSetpntLine">
     <property name="geometry">
      <rect>
-      <x>157</x>
-      <y>75</y>
+      <x>155</x>
+      <y>110</y>
       <width>45</width>
       <height>20</height>
      </rect>
@@ -395,8 +404,8 @@ Bias</string>
    <widget class="QLineEdit" name="biasDelayLine">
     <property name="geometry">
      <rect>
-      <x>157</x>
-      <y>145</y>
+      <x>155</x>
+      <y>180</y>
       <width>45</width>
       <height>20</height>
      </rect>
@@ -411,24 +420,11 @@ Bias</string>
      <string>0.0</string>
     </property>
    </widget>
-   <widget class="QLabel" name="currStatusLbl">
-    <property name="geometry">
-     <rect>
-      <x>280</x>
-      <y>180</y>
-      <width>291</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600; color:#a8a8a8;&quot;&gt;Status:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_12">
     <property name="geometry">
      <rect>
-      <x>212</x>
-      <y>145</y>
+      <x>210</x>
+      <y>180</y>
       <width>31</width>
       <height>16</height>
      </rect>
@@ -440,10 +436,10 @@ Bias</string>
    <widget class="Line" name="line_11">
     <property name="geometry">
      <rect>
-      <x>260</x>
-      <y>61</y>
+      <x>258</x>
+      <y>95</y>
       <width>3</width>
-      <height>140</height>
+      <height>174</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -476,6 +472,521 @@ background: rgb(144, 140, 9);
     </property>
     <property name="text">
      <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_FdbkOn">
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>40</y>
+      <width>61</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#push_FdbkOn{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#push_FdbkOn{
+color: rgb(95,107,166);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(95,107,166);
+border-radius: 5px
+}</string>
+    </property>
+    <property name="text">
+     <string>Feedback
+on</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_FdbkOff">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>40</y>
+      <width>61</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#push_FdbkOff{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#push_FdbkOff{
+color: rgb(95,107,166);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(95,107,166);
+border-radius: 5px
+}</string>
+    </property>
+    <property name="text">
+     <string>Feedback
+off</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="gotoGateBtn">
+    <property name="geometry">
+     <rect>
+      <x>305</x>
+      <y>246</y>
+      <width>50</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#gotoGateBtn{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#gotoGateBtn{
+color: rgb(95,107,166);
+background-color:rgb(0,0,0);
+border: 2px solid rgb(95,107,166);
+border-radius: 5px
+}</string>
+    </property>
+    <property name="text">
+     <string>Go To 
+Gate</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_14">
+    <property name="geometry">
+     <rect>
+      <x>515</x>
+      <y>95</y>
+      <width>3</width>
+      <height>174</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_8{color: rgb(168,168,168)}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>3</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="gatePntsLine">
+    <property name="geometry">
+     <rect>
+      <x>410</x>
+      <y>145</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>500</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_18">
+    <property name="geometry">
+     <rect>
+      <x>265</x>
+      <y>266</y>
+      <width>35</width>
+      <height>3</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_9{color: rgb(168,168,168);}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>3</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_19">
+    <property name="geometry">
+     <rect>
+      <x>487</x>
+      <y>266</y>
+      <width>30</width>
+      <height>3</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_9{color: rgb(168,168,168);}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>3</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_readGate">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>246</y>
+      <width>50</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#push_readGate{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#push_readGate{
+color: rgb(95,107,166);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(95,107,166);
+border-radius: 5px
+}</string>
+    </property>
+    <property name="text">
+     <string>Read
+Gate</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_15">
+    <property name="geometry">
+     <rect>
+      <x>265</x>
+      <y>95</y>
+      <width>250</width>
+      <height>3</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_9{color: rgb(168,168,168);}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>3</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_13">
+    <property name="geometry">
+     <rect>
+      <x>465</x>
+      <y>180</y>
+      <width>31</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(ms)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_39">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>180</y>
+      <width>81</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#a8a8a8;&quot;&gt;Step Delay:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="gateSetpntLine">
+    <property name="geometry">
+     <rect>
+      <x>410</x>
+      <y>110</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0.000</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="BiasInc_2">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>145</y>
+      <width>111</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#a8a8a8;&quot;&gt;Number of Steps:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_14">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>110</y>
+      <width>21</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600; color:#a8a8a8;&quot;&gt;(V)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_8">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>110</y>
+      <width>131</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600; color:#a8a8a8;&quot;&gt;Tip Gate Setpoint:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="zeroGateBtn">
+    <property name="geometry">
+     <rect>
+      <x>368</x>
+      <y>246</y>
+      <width>50</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton:pressed#zeroGateBtn{
+color: rgb(95,107,166);
+background-color:rgb(168,168,168);
+border: 1px solid rgb(95,107,166);
+border-radius: 5px
+}
+
+QPushButton#zeroGateBtn{
+color: rgb(95,107,166);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(95,107,166);
+border-radius: 5px
+}</string>
+    </property>
+    <property name="text">
+     <string>Zero
+Gate</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="currGateLbl">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>215</y>
+      <width>296</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600; color:#a8a8a8;&quot;&gt;Current Gate:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_20">
+    <property name="geometry">
+     <rect>
+      <x>264</x>
+      <y>95</y>
+      <width>3</width>
+      <height>174</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_13{color: rgb(168,168,168)}
+#line_11{color: rgb(168,168,168)}
+#line_12{color: rgb(168,168,168)}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>3</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="gateDelayLine">
+    <property name="geometry">
+     <rect>
+      <x>410</x>
+      <y>180</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_21">
+    <property name="geometry">
+     <rect>
+      <x>7</x>
+      <y>90</y>
+      <width>511</width>
+      <height>3</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_9{color: rgb(168,168,168);}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>3</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_22">
+    <property name="geometry">
+     <rect>
+      <x>7</x>
+      <y>30</y>
+      <width>511</width>
+      <height>3</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_9{color: rgb(168,168,168);}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>3</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_23">
+    <property name="geometry">
+     <rect>
+      <x>7</x>
+      <y>30</y>
+      <width>3</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_13{color: rgb(168,168,168)}
+#line_11{color: rgb(168,168,168)}
+#line_12{color: rgb(168,168,168)}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>3</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_24">
+    <property name="geometry">
+     <rect>
+      <x>515</x>
+      <y>30</y>
+      <width>3</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#line_13{color: rgb(168,168,168)}
+#line_11{color: rgb(168,168,168)}
+#line_12{color: rgb(168,168,168)}</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>3</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
     </property>
    </widget>
   </widget>
