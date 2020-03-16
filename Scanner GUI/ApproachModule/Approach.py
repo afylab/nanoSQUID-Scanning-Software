@@ -200,6 +200,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 'total_retract_dist'         : 24e-6, #total z distance retracted in meters by the attocube (eventually should update with temperature)
                 'auto_retract_dist'          : 2e-6, #distance retracted in meters when a surface event is triggered in constant height mode  
                 'auto_retract_points'          : 3, #points above frequency threshold before auto retraction is trigged
+                'atto_distance'              : 6e-6,
+                'atto_delay'                 : 0.1,
         }
         
         '''
@@ -1914,10 +1916,10 @@ class Window(QtGui.QMainWindow, ApproachUI):
         pos_start = yield self.anc.get_position(2)
         num_steps = 0
         delta = 0
-        while delta < 6e-6 and self.approaching:
+        while delta < self.generalSettings['atto_distance'] and self.approaching:
             #Give axis number and direction (False forward, True is backwards)
             yield self.anc.start_single_step(2, False)
-            yield self.sleep(0.2)
+            yield self.sleep(self.generalSettings['atto_delay'])
             pos_curr = yield self.anc.get_position(2)
             if pos_curr < 50e-6:
                 yield self.abortApproachSequence()
@@ -2320,6 +2322,9 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_AutoRetractDist.editingFinished.connect(self.setAutoRetractDist)
         self.lineEdit_AutoRetractPoints.editingFinished.connect(self.setAutoRetractPoints)
         
+        self.lineEdit_Atto_Distance.editingFinished.connect(self.setAttoDist)
+        self.lineEdit_Atto_Delay.editingFinished.connect(self.setAttoDelay)
+        
         self.loadValues()
       
     def loadValues(self):
@@ -2340,6 +2345,9 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         
         self.lineEdit_AutoRetractDist.setText(formatNum(self.generalApproachSettings['auto_retract_dist']))
         self.lineEdit_AutoRetractPoints.setText(formatNum(self.generalApproachSettings['auto_retract_points']))
+        
+        self.lineEdit_Atto_Distance.setText(formatNum(self.generalApproachSettings['atto_distance']))
+        self.lineEdit_Atto_Delay.setText(formatNum(self.generalApproachSettings['atto_delay']))
 
     def setPID_Out(self):
         self.generalApproachSettings['pid_z_output'] = self.comboBox_PID_Out.currentIndex() + 1
@@ -2414,6 +2422,18 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         if isinstance(val,float):
             self.generalApproachSettings['auto_retract_points'] = int(val)
         self.lineEdit_AutoRetractPoints.setText(formatNum(self.generalApproachSettings['auto_retract_points']))
+    
+    def setAttoDist(self):
+        val = readNum(str(self.lineEdit_Atto_Distance.text()), self, False)
+        if isinstance(val,float):
+            self.generalApproachSettings['atto_distance'] = val
+        self.lineEdit_Atto_Distance.setText(formatNum(self.generalApproachSettings['atto_distance']))
+    
+    def setAttoDelay(self):
+        val = readNum(str(self.lineEdit_Atto_Delay.text()), self, False)
+        if isinstance(val,float):
+            self.generalApproachSettings['atto_delay'] = val
+        self.lineEdit_Atto_Delay.setText(formatNum(self.generalApproachSettings['atto_delay']))
     
     def acceptNewValues(self):
         self.accept()
