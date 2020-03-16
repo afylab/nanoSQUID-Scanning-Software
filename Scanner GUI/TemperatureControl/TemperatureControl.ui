@@ -156,7 +156,7 @@ border: 0px;
       <item>
        <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1,0">
         <item>
-         <widget class="QLabel" name="label">
+         <widget class="QLineEdit" name="lineEdit_therm1">
           <property name="font">
            <font>
             <pointsize>14</pointsize>
@@ -164,8 +164,15 @@ border: 0px;
             <bold>true</bold>
            </font>
           </property>
+          <property name="styleSheet">
+           <string notr="true">#lineEdit_therm1{
+background: black;
+border: none;
+color: rgb(168,168,168)
+}</string>
+          </property>
           <property name="text">
-           <string>Magnet Temperature</string>
+           <string>Thermometer 1</string>
           </property>
          </widget>
         </item>
@@ -233,7 +240,7 @@ border: 0px;
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1,0">
         <item>
-         <widget class="QLabel" name="label_2">
+         <widget class="QLineEdit" name="lineEdit_therm2">
           <property name="font">
            <font>
             <pointsize>14</pointsize>
@@ -241,8 +248,15 @@ border: 0px;
             <bold>true</bold>
            </font>
           </property>
+          <property name="styleSheet">
+           <string notr="true">#lineEdit_therm2{
+background: black;
+border: none;
+color: rgb(168,168,168)
+}</string>
+          </property>
           <property name="text">
-           <string>Sample Temperature</string>
+           <string>Thermometer 2</string>
           </property>
          </widget>
         </item>
@@ -285,7 +299,7 @@ border: 0px;
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_3">
+           <widget class="QLabel" name="label_setpoint">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
               <horstretch>0</horstretch>
@@ -344,7 +358,7 @@ border: 0px;
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,1,0">
         <item>
-         <widget class="QLabel" name="label_4">
+         <widget class="QLineEdit" name="lineEdit_therm3">
           <property name="font">
            <font>
             <pointsize>14</pointsize>
@@ -352,8 +366,15 @@ border: 0px;
             <bold>true</bold>
            </font>
           </property>
+          <property name="styleSheet">
+           <string notr="true">#lineEdit_therm3{
+background: black;
+border: none;
+color: rgb(168,168,168)
+}</string>
+          </property>
           <property name="text">
-           <string>1K Pot Temperature</string>
+           <string>Thermometer 3</string>
           </property>
          </widget>
         </item>

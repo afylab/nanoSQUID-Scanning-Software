@@ -30,6 +30,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         self.lineEdit_setpoint.editingFinished.connect(self.setSetpoint)
         
+        self.lineEdit_therm1.editingFinished.connect(self.setTherm1PlotTitle)
+        self.lineEdit_therm2.editingFinished.connect(self.setTherm2PlotTitle)
+        self.lineEdit_therm3.editingFinished.connect(self.setTherm3PlotTitle)
+        
         self.time_offset = 0
         self.timeData = np.array([])
         self.magTempData = np.array([])
@@ -46,22 +50,36 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Keep track of if the first monitoring datapoint has been taken yet, to set the relative time
         self.first_data_point = True
         
+        #For historical reasons, thermometer 1 is called "mag thermometer", thermometer 2 is "sample thermometer" and thermometer 3 is "pot thermometer"
         self.measurementSettings = {
-                'mag Input'        : 'B',
+                'mag Input'        : 'D5',
                 'sample Input'     : 'D4', 
-                'pot Input'        : 'D5', 
+                'pot Input'        : 'B', 
                 'p'                : 50.0,
                 'i'                : 50.0,
                 'd'                : 1.0,       #
-                'setpoint'         : 4.0,       #Setpoint in Kelvin
-                'heater range'     : 3,         #Range for the heater
-                'heater output'    : 1, 
+                'setpoint'         : 4.0,       #Setpoint in Kelvin for closed loop (PID) operation
+                'out percent'      : 0,        #Pencentage output for open loop / manual mode
+                'feedback thermometer' : 2,     #Which thermometer should be used for closed loop heating
+                'heater range'     : 5,         #Range for the heater
+                'heater output'    : 2,         #Either output 1 or 2
+                'heater mode'      : 0,         #0 is closed loop, ie using PID. 1 is open loop, using manual setting mode. 
                 'plot record'      : 1,         #plot length shown in hours
                 'sample delay'     : 1,         #Delay between temperature samples
         }
         
-        self.lockInterface()
+        self.ls350inputs = {
+        'A' : 1,
+        'B' : 2, 
+        'C' : 3, 
+        'D1': 4, 
+        'D2': 5, 
+        'D3': 6, 
+        'D4': 7, 
+        'D5': 8,
+        }
         
+        self.lockInterface()
         
     def moveDefault(self):    
         self.move(550,10)
@@ -103,7 +121,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.magTempPlot.setLabel('bottom', 'Time', units = 'h')
         self.magTempPlot.showAxis('right', show = True)
         self.magTempPlot.showAxis('top', show = True)
-        self.magTempPlot.setTitle('Magnet Temperature vs. Time')
+        self.magTempPlot.setTitle('Thermometer 1 vs. Time')
         
         self.sampleTempFrame.close()
         self.sampleTempPlot = pg.PlotWidget(parent = self)
@@ -111,7 +129,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.sampleTempPlot.setLabel('bottom', 'Time', units = 'h')
         self.sampleTempPlot.showAxis('right', show = True)
         self.sampleTempPlot.showAxis('top', show = True)
-        self.sampleTempPlot.setTitle('Sample Temperature vs. Time')
+        self.sampleTempPlot.setTitle('Thermometer 2 vs. Time')
         
         self.potTempFrame.close()
         self.potTempPlot = pg.PlotWidget(parent = self)
@@ -119,7 +137,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.potTempPlot.setLabel('bottom', 'Time', units = 'h')
         self.potTempPlot.showAxis('right', show = True)
         self.potTempPlot.showAxis('top', show = True)
-        self.potTempPlot.setTitle('1K Pot Temperature vs. Time')
+        self.potTempPlot.setTitle('Thermometer 3 vs. Time')
         
         self.horizontalLayout_2.addWidget(self.magTempPlot)
         self.horizontalLayout_2.addWidget(self.sampleTempPlot)
@@ -141,7 +159,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.measurementSettings['p'] = float(pid[0])
             self.measurementSettings['i'] = float(pid[1])
             self.measurementSettings['d'] = float(pid[2])
-            self.measurementSettings['setpoint'] = setpoint
+            self.measurementSettings['setpoint'] = float(setpoint)
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
 
@@ -154,14 +172,38 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 print self.measurementSettings
                 
                 #Set pid settings
-                yield self.ls.pid_set(self.measurementSettings['heater output'],self.measurementSettings['p'],self.measurementSettings['p'],self.measurementSettings['d'])
+                yield self.ls.pid_set(self.measurementSettings['heater output'],self.measurementSettings['p'],self.measurementSettings['i'],self.measurementSettings['d'])
+                
+                #Set output settings
+                if self.measurementSettings['feedback thermometer'] == 1:
+                    feedback_thermometer = self.ls350inputs[self.measurementSettings['mag Input']]
+                elif self.measurementSettings['feedback thermometer'] == 2:
+                    feedback_thermometer = self.ls350inputs[self.measurementSettings['sample Input']]
+                elif self.measurementSettings['feedback thermometer'] == 3:
+                    feedback_thermometer = self.ls350inputs[self.measurementSettings['pot Input']]
+                
+                if self.measurementSettings['heater mode'] ==0:
+                    yield self.ls.out_mode_set(self.measurementSettings['heater output'], 1, feedback_thermometer, 0)
+                elif self.measurementSettings['heater mode'] ==1:
+                    yield self.ls.out_mode_set(self.measurementSettings['heater output'], 3, feedback_thermometer, 0)
+                
                 
                 if str(self.push_heater.text()) == 'Heater On':
-                    #set the new pid settings and heater range and stuff 
                     yield self.ls.range_set(self.measurementSettings['heater output'], self.measurementSettings['heater range'])
+                
                 
                 #In case record time has changed, update plots to reflect that
                 self.updatePlots()
+                
+                if self.measurementSettings['heater mode'] == 0:
+                    self.label_setpoint.setText('Setpoint (K):')
+                    self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['setpoint']))
+                elif self.measurementSettings['heater mode'] == 1:
+                    self.label_setpoint.setText('Output (%):')
+                    self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['out percent']))
+                else:
+                    self.label_setpoint.setText('WTF?!?!')
+                    
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
             
@@ -224,6 +266,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.ls.range_set(self.measurementSettings['heater output'], self.measurementSettings['heater range'])
             yield self.sleep(0.25)
             range = yield self.ls.range_read(self.measurementSettings['heater output'])
+            
+            #If closed loop operation, turn off the manual heater contribution
+            if self.measurementSettings['heater mode'] == 0:
+                yield self.ls.gpib_write('MOUT%i,%f'%(self.measurementSettings['heater output'],0.0))
+            elif self.measurementSettings['heater mode'] == 1:
+                yield self.ls.gpib_write('MOUT%i,%f'%(self.measurementSettings['heater output'],self.measurementSettings['out percent']))
+            
             if range != 0:
                 self.push_heater.setText('Heater On')
         else:
@@ -234,9 +283,29 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def setSetpoint(self, c = None):
         val = readNum(str(self.lineEdit_setpoint.text()), self, False)
         if isinstance(val,float):
-            self.measurementSettings['setpoint'] = val
-            yield self.ls.setpoint(self.measurementSettings['heater output'], self.measurementSettings['setpoint'])
-        self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['setpoint']))
+            if self.measurementSettings['heater mode'] == 0:
+                self.measurementSettings['setpoint'] = val
+                yield self.ls.setpoint(self.measurementSettings['heater output'], self.measurementSettings['setpoint'])
+            elif self.measurementSettings['heater mode'] == 1:
+                self.measurementSettings['out percent'] = val
+                yield self.ls.gpib_write('MOUT%i,%f'%(self.measurementSettings['heater output'],self.measurementSettings['out percent']))
+                yield self.ls.gpib_write('MOUT%i,%f'%(self.measurementSettings['heater output'],self.measurementSettings['out percent']))
+        if self.measurementSettings['heater mode'] == 0:
+            self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['setpoint']))
+        elif self.measurementSettings['heater mode'] == 1:
+            self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['out percent']))
+            
+    def setTherm1PlotTitle(self):
+        text = str(self.lineEdit_therm1.text())
+        self.magTempPlot.setTitle(text + ' vs. Time')
+        
+    def setTherm2PlotTitle(self):
+        text = str(self.lineEdit_therm2.text())
+        self.sampleTempPlot.setTitle(text + ' vs. Time')
+        
+    def setTherm3PlotTitle(self):
+        text = str(self.lineEdit_therm3.text())
+        self.potTempPlot.setTitle(text + ' vs. Time')
         
     def showServersList(self):
         serList = serversList(self.reactor, self)
@@ -290,6 +359,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.comboBox_MagInput.currentIndexChanged.connect(self.updateMagInput)
         self.comboBox_sampInput.currentIndexChanged.connect(self.updateSampleInput)
         self.comboBox_potInput.currentIndexChanged.connect(self.updatePotInput)
+        self.comboBox_heaterMode.currentIndexChanged.connect(self.updateHeaterMode)
         
         self.lineEdit_D.editingFinished.connect(self.updateD)
         self.lineEdit_I.editingFinished.connect(self.updateI)
@@ -306,6 +376,10 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.radioButton_3.toggled.connect(self.setHeaterRange)
         self.radioButton_4.toggled.connect(self.setHeaterRange)
         self.radioButton_5.toggled.connect(self.setHeaterRange)
+        
+        self.radioButton_fdbk1.toggled.connect(self.setFdbkThermometer)
+        self.radioButton_fdbk2.toggled.connect(self.setFdbkThermometer)
+        self.radioButton_fdbk3.toggled.connect(self.setFdbkThermometer)
         
     def setupAdditionalUi(self):
         pass
@@ -385,6 +459,16 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
                 self.radioButton_heat1.setChecked(True)
             else:
                 self.radioButton_heat2.setChecked(True)
+                
+            if self.measurementSettings['feedback thermometer'] == 1:
+                self.radioButton_fdbk1.setChecked(True)
+            elif self.measurementSettings['feedback thermometer'] == 2:
+                self.radioButton_fdbk2.setChecked(True)
+            elif self.measurementSettings['feedback thermometer'] == 3:
+                self.radioButton_fdbk3.setChecked(True)
+                
+            self.comboBox_heaterMode.setCurrentIndex(self.measurementSettings['heater mode'])
+            
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
             
@@ -442,6 +526,9 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         elif self.comboBox_potInput.currentIndex() == 7:
             self.measurementSettings['pot Input'] = 'D5'
             
+    def updateHeaterMode(self):
+        self.measurementSettings['heater mode'] = self.comboBox_heaterMode.currentIndex()
+            
     def updateP(self):
         val = readNum(str(self.lineEdit_P.text()), self, False)
         if isinstance(val,float):
@@ -489,6 +576,14 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.measurementSettings['heater range'] = 4
         elif self.radioButton_5.isChecked():
             self.measurementSettings['heater range'] = 5
+            
+    def setFdbkThermometer(self):
+        if self.radioButton_fdbk1.isChecked():
+            self.measurementSettings['feedback thermometer'] = 1
+        elif self.radioButton_fdbk2.isChecked():
+            self.measurementSettings['feedback thermometer'] = 2
+        elif self.radioButton_fdbk3.isChecked():
+            self.measurementSettings['feedback thermometer'] = 3
             
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
