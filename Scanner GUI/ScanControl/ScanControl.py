@@ -1533,7 +1533,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
             #Start the scan timer
             self.startScanTimer()
-            
+            #Empty array of the scan data
+            trace_data = []
+            retrace_data = []
             for i in range(0,self.lines):
                 print 'Starting sweep for line ' + str(i) + '.'
                 
@@ -1599,6 +1601,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     for k in range(0,num_datasets):
                         data_point += (self.data[k][j,i],)
                     formated_data.append(data_point)
+                    trace_data.append(data_point)
                 yield self.dv.add(formated_data)
                 print 'Time taken to add data to data vault: ' + str(time.clock()-tzero)
 
@@ -1660,6 +1663,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     for k in range(0,num_datasets):
                         data_point += (self.data_retrace[k][j,i],)
                     formated_data.append(data_point)
+                    retrace_data.append(data_point)
                 yield self.dv.add(formated_data)
                 
                 #------------------------------------#
@@ -1695,7 +1699,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     #ramp to next y point
                     print 'Time taken to move to next line: ' + str(time.clock()-tzero)
                     tzero = time.clock()
-                    
+                
         except Exception as inst:
             print 'update_data error: ', str(inst)
             print 'on line: ', sys.exc_traceback.tb_lineno
@@ -1726,6 +1730,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Wait until all plots are appropriately updated before saving screenshot
         yield self.sleep(0.25)
         self.saveDataToSessionFolder()
+        
+        returnValue([trace_data, retrace_data])
         
     def update_gph(self):
         #Updates the trace, retrace, and mini plots with the plotData and plotData_retract images. 
@@ -1895,7 +1901,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             return False
           
     @inlineCallbacks
-    def startScanTimer(self, c = None):
+    def startScanTimer(self):
         t_zero = time.clock()
         while self.scanning:
             t = time.clock() - t_zero

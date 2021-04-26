@@ -439,12 +439,15 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                  yield self.plotData1D(self.Plot_Data[1],self.Plot_Data[5],self.sweepFourTerminal_Plot4) #xaxis, yaxis, plot
                  
             yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.Dict_Variable['FourTerminal_MaxVoltage'],0.0,10000,100)
+            
         except Exception as inst:
             print inst
 
         self.unlockInterface()
         yield self.sleep(0.25)
         self.saveDataToSessionFolder() #save the screenshot
+        
+        returnValue(self.formatted_data)
 
     @inlineCallbacks
     def FourTerminalMagneticFieldSweep(self,c=None): #The FourTerminal Sweep with Magnetic Field
@@ -820,7 +823,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
 ##########################Peculiar Function only defined in SampleCharacterizer#############
     @inlineCallbacks
-    def Ramp1_Display(self,SweepPort,Startingpoint,Endpoint,Numberofsteps,Delay,c=None): #this is a function that morph ramp1 and add codes for controlling the display
+    def Ramp1_Display(self,SweepPort,Startingpoint,Endpoint,Numberofsteps,Delay): #this is a function that morph ramp1 and add codes for controlling the display
         try:
             self.UpdateDAC_Current_Label(SweepPort,'Sweeping')
             yield self.dac.ramp1(SweepPort,Startingpoint,Endpoint,Numberofsteps,Delay)
