@@ -76,142 +76,11 @@ background: black
     <attribute name="title">
      <string>Coarse Step Settings</string>
     </attribute>
-    <widget class="QLineEdit" name="lineEdit_JPE_Steps">
-     <property name="geometry">
-      <rect>
-       <x>50</x>
-       <y>40</y>
-       <width>71</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_10">
-     <property name="geometry">
-      <rect>
-       <x>260</x>
-       <y>40</y>
-       <width>111</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Freq (Hz):</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_11">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>40</y>
-       <width>111</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Steps:</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_title_8">
-     <property name="geometry">
-      <rect>
-       <x>130</x>
-       <y>10</y>
-       <width>141</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-     </property>
-     <property name="text">
-      <string>JPE Step Settings</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="lineEdit_JPE_Size">
-     <property name="geometry">
-      <rect>
-       <x>180</x>
-       <y>40</y>
-       <width>71</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_12">
-     <property name="geometry">
-      <rect>
-       <x>130</x>
-       <y>40</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Rel. Size:</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="lineEdit_JPE_Freq">
-     <property name="geometry">
-      <rect>
-       <x>310</x>
-       <y>40</y>
-       <width>71</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_13">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>70</y>
-       <width>361</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Note: Additional settings (including temperature and tip height) must be set through the JPE Manual Control module</string>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-    </widget>
     <widget class="QLabel" name="label_title_15">
      <property name="geometry">
       <rect>
-       <x>120</x>
-       <y>110</y>
+       <x>90</x>
+       <y>30</y>
        <width>191</width>
        <height>20</height>
       </rect>
@@ -238,8 +107,8 @@ color:rgb(168,168,168)
     <widget class="QLineEdit" name="lineEdit_Atto_Distance">
      <property name="geometry">
       <rect>
-       <x>70</x>
-       <y>150</y>
+       <x>90</x>
+       <y>90</y>
        <width>71</width>
        <height>20</height>
       </rect>
@@ -254,8 +123,8 @@ color:rgb(168,168,168)
     <widget class="QLineEdit" name="lineEdit_Atto_Delay">
      <property name="geometry">
       <rect>
-       <x>260</x>
-       <y>150</y>
+       <x>280</x>
+       <y>90</y>
        <width>71</width>
        <height>20</height>
       </rect>
@@ -270,8 +139,8 @@ color:rgb(168,168,168)
     <widget class="QLabel" name="label_14">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>150</y>
+       <x>30</x>
+       <y>90</y>
        <width>111</width>
        <height>22</height>
       </rect>
@@ -283,8 +152,8 @@ color:rgb(168,168,168)
     <widget class="QLabel" name="label_15">
      <property name="geometry">
       <rect>
-       <x>190</x>
-       <y>150</y>
+       <x>210</x>
+       <y>90</y>
        <width>111</width>
        <height>22</height>
       </rect>
@@ -597,347 +466,6 @@ color:rgb(168,168,168)
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="tab_3">
-    <property name="styleSheet">
-     <string notr="true">#tab_3{
-background: black
-}</string>
-    </property>
-    <attribute name="title">
-     <string>Output Settings</string>
-    </attribute>
-    <widget class="QLabel" name="label_9">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>140</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Toggle out:</string>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="comboBox_Sumboard_Toggle">
-     <property name="geometry">
-      <rect>
-       <x>90</x>
-       <y>140</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <item>
-      <property name="text">
-       <string>DC Box 1</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 2</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 3</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 4</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 5</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 6</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 7</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 8</string>
-      </property>
-     </item>
-    </widget>
-    <widget class="QLabel" name="label_title_9">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>110</y>
-       <width>181</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-     </property>
-     <property name="text">
-      <string>Summing Board Toggle</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="comboBox_PID_Out">
-     <property name="geometry">
-      <rect>
-       <x>90</x>
-       <y>60</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <item>
-      <property name="text">
-       <string>Aux Out 1</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Aux Out 2</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Aux Out 3</string>
-      </property>
-     </item>
-    </widget>
-    <widget class="QLabel" name="label_27">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>60</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Z  Out:</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_title_10">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>30</y>
-       <width>311</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-     </property>
-     <property name="text">
-      <string>PID Output Settings</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_7">
-     <property name="geometry">
-      <rect>
-       <x>210</x>
-       <y>60</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Z  Out:</string>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="comboBox_Step_Out">
-     <property name="geometry">
-      <rect>
-       <x>290</x>
-       <y>60</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <item>
-      <property name="text">
-       <string>DAC 1</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DAC 2</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DAC 3</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DAC 4</string>
-      </property>
-     </item>
-    </widget>
-    <widget class="QLabel" name="label_title_12">
-     <property name="geometry">
-      <rect>
-       <x>210</x>
-       <y>30</y>
-       <width>311</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-     </property>
-     <property name="text">
-      <string>Step Output Settings</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_18">
-     <property name="geometry">
-      <rect>
-       <x>210</x>
-       <y>140</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Blink out:</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_title_14">
-     <property name="geometry">
-      <rect>
-       <x>210</x>
-       <y>110</y>
-       <width>181</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#label_title{
-color:rgb(168,168,168)
-}</string>
-     </property>
-     <property name="text">
-      <string>Blink Output Setting</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="comboBox_Blink">
-     <property name="geometry">
-      <rect>
-       <x>290</x>
-       <y>140</y>
-       <width>81</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="currentIndex">
-      <number>1</number>
-     </property>
-     <item>
-      <property name="text">
-       <string>DC Box 1</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 2</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 3</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 4</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 5</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 6</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 7</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>DC Box 8</string>
-      </property>
-     </item>
-    </widget>
-   </widget>
   </widget>
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
@@ -959,12 +487,6 @@ color:rgb(168,168,168)
   <tabstop>lineEdit_PID_Retract_Time</tabstop>
   <tabstop>pushButton</tabstop>
   <tabstop>tabWidget</tabstop>
-  <tabstop>comboBox_PID_Out</tabstop>
-  <tabstop>comboBox_Step_Out</tabstop>
-  <tabstop>comboBox_Sumboard_Toggle</tabstop>
-  <tabstop>lineEdit_JPE_Steps</tabstop>
-  <tabstop>lineEdit_JPE_Size</tabstop>
-  <tabstop>lineEdit_JPE_Freq</tabstop>
   <tabstop>lineEdit_Atto_Retract_Distance</tabstop>
   <tabstop>lineEdit_Step_Retract_Speed</tabstop>
  </tabstops>

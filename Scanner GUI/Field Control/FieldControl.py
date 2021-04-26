@@ -1,6 +1,6 @@
 import sys
 from PyQt4 import QtGui, QtCore, uic
-from twisted.internet.defer import inlineCallbacks, Deferred
+from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 
 path = sys.path[0] + r"\Field Control"
@@ -26,7 +26,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_viewField.clicked.connect(self.viewField)
         self.push_viewCurr.clicked.connect(self.viewCurr)
         self.push_viewVolts.clicked.connect(self.viewVolts)
-        self.push_GotoSet.clicked.connect(self.gotoSet)
+        self.push_GotoSet.clicked.connect(self.goToSetpoint)
         self.push_GotoZero.clicked.connect(self.gotoZero)
         self.push_hold.clicked.connect(self.hold)
         self.push_clamp.clicked.connect(self.clamp)
@@ -53,10 +53,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def moveDefault(self):
         self.move(550,10)
         
-    def connectLabRAD(self, dict):
-        #This module does not require any local labrad connections
-        pass
-            
     @inlineCallbacks
     def connectLabRAD(self, dict):
         try:
@@ -125,6 +121,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                                 self.currVoltage = float(val[1:])
                             else:
                                 val = '  '
+                        yield self.updateSwitchStatus()
                 try:
                     if self.monitor_param == 'Field':
                         self.label_fieldval.setText(formatNum(self.currField,3))
@@ -190,14 +187,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.label_switchStatus.setText('Error')
             self.persist = False
             
-    def setSetpoint(self, c = None):
-        val = readNum(str(self.lineEdit_setpoint.text()), self, False)
+    def setSetpoint(self, val = readNum(str(self.lineEdit_setpoint.text()), self, False)):
         if isinstance(val,float):
             self.setpoint = val
         self.lineEdit_setpoint.setText(formatNum(self.setpoint, 4))
         
     @inlineCallbacks
-    def setRamprate(self, c = None):
+    def setRamprate(self):
         val = readNum(str(self.lineEdit_ramprate.text()), self, False)
         if isinstance(val,float):
             self.ramprate = val
@@ -224,22 +220,22 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.label_display.setText('Volts (V):')
         
     @inlineCallbacks
-    def gotoSet(self, c = None):
+    def goToSetpoint(self):
         try:
             if self.magDevice == 'IPS 120-10':
-                yield self.gotoSetIPS()
+                yield self.goToSetpointIPS()
             else:
                 yield self.toeSweepField(self.currField, self.setpoint, self.ramprate)
         except Exception as inst:
             print 'GTS, ', str(inst)
             
     @inlineCallbacks
-    def gotoSetIPS(self, c = None):
+    def goToSetpointIPS(self, B = self.setpoint):
         self.setting_value = True
-        yield self.ips.set_control(3)
-        yield self.ips.set_targetfield(self.setpoint)
-        yield self.ips.set_activity(1)
-        yield self.ips.set_control(2)
+        yield self.ips.set_control(3) #Set IPS to remote communication (prevents user from using the front panel)
+        yield self.ips.set_targetfield(B) #Set targetfield to desired field
+        yield self.ips.set_activity(1) #Set IPS mode to ramping instead of hold
+        yield self.ips.set_control(2) #Set IPS to local control (allows user to edit IPS from the front panel)
         self.setting_value = False
         
     @inlineCallbacks
@@ -262,7 +258,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     #Only can be called when in the IPS configuration
     @inlineCallbacks
-    def hold(self, c = None):
+    def hold(self):
         self.setting_value = True
         yield self.ips.set_control(3)
         yield self.ips.set_activity(0)
@@ -270,7 +266,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.setting_value = False
         
     @inlineCallbacks
-    def clamp(self, c= None):
+    def clamp(self):
         self.setting_value = True
         yield self.ips.set_control(3)
         yield self.ips.set_activity(4)
@@ -297,7 +293,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 yield self.ips.set_control(2)
             else:
                 yield self.ips.set_control(3)
-                yield self.ips.set_switchheater(0)
+                yield self.ips.set_switchheater(2)
                 yield self.sleep(0.25)
                 yield self.updateSwitchStatus()
                 yield self.ips.set_control(2)
@@ -367,9 +363,61 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
         
-#----------------------------------------------------------------------------------------------#         
+#----------------------------------------------------------------------------------------------#
+    """ The following section has functions intended for use when running scripts from the scripting module."""
+        
+    @inlineCallbacks
+    def setField(self, B):
+        #Sets the magnetic field through the currently selected magnet power supply. 
+        #The function stops running only when the field has been reached
+        
+        if self.magDevice == 'Toellner 8851':
+            yield self.toeSweepField(self.currField, B, self.ramprate)
+            
+        elif self.magDevice == 'IPS 120-10':
+            #Got to the desired field on the IPS power supply. 
+            yield self.gotoSetIPS(B) #Set the setpoint and update the IPS mode to sweep to field
+            
+            #Only finish running the gotoField function when the field is reached
+            while True:
+                curr_field = yield ips.read_parameter(7)
+                if float(curr_field[1:]) <= B+0.00001 and float(curr_field[1:]) >= B-0.00001:
+                    break
+                yield self.sleep(0.25)
+            yield self.sleep(0.25)
+            
+    @inlineCallbacks
+    def readField(self):
+        if self.magDevice == 'Toellner 8851':
+            val = self.currField
+        elif self.magDevice == 'IPS 120-10':
+            val = yield self.ips.read_parameter(7)
+        returnValue(val)
+        
+    @inlineCallbacks
+    def readPersistedField(self):
+        if self.magDevice == 'Toellner 8851':
+            val = 'Toeller cannot persist fields'
+        elif self.magDevice == 'IPS 120-10':
+            val = yield self.ips.read_parameter(18)
+        returnValue(val)
+    
+    @inlineCallbacks
+    def setPersist(self, on):
+        self.setting_value = True
+        yield self.ips.set_control(3)
+        if on = True: #Persists the magnet at field
+            yield self.ips.set_switchheater(2)
+        elif on == False: #Heats the switch to enable charging
+            yield self.ips.set_switchheater(1)
+        yield self.sleep(0.25)
+        yield self.updateSwitchStatus()
+        yield self.ips.set_control(2)
+        self.setting_value = False
+    
+#----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""
-           
+    
     def lockInterface(self):
         self.push_viewField.setEnabled(False)
         self.push_viewCurr.setEnabled(False)
@@ -416,5 +464,3 @@ class serversList(QtGui.QDialog, Ui_ServerList):
         self.setupUi(self)
         pos = parent.pos()
         self.move(pos)
-        
-        

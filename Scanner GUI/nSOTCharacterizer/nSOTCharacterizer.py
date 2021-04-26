@@ -7,9 +7,9 @@ import numpy as np
 import pyqtgraph as pg
 import exceptions
 import time
-import threading
 import math
 import copy
+from nSOTScannerFormat import readNum, formatNum
 
 path = sys.path[0] + r"\nSOTCharacterizer"
 characterGUI = path + r"\character_GUI.ui"
@@ -255,23 +255,23 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.abortFlag = True
 
     #Checks the format of number of steps in magnetic field or bias voltage 
-    def pntsFormat(self, lineEdit, type):
-        ans = self.siFormat(lineEdit.text())
+    def pntsFormat(self, lineEdit, form):
+        ans = readNum(str(lineEdit.text()), self, False)
 
         if lineEdit == 'REFORMAT':
             pass
-        elif ans == 'Invalid format':
+        elif type(ans) == str:
             lineEdit.setText('REFORMAT')
         else:
-            if type == 'field':
+            if form == 'field':
                 if self.fieldSIStat == 'num pnts':
                     lineEdit.setText(str(int(ans)))
                     
-            elif type == 'bias':
+            elif form == 'bias':
                 if self.biasSIStat == 'num pnts':
                     lineEdit.setText(str(int(ans)))        
                     
-            elif type == 'delay':
+            elif form == 'delay':
                 pass
     
     #Toggles between number of steps and Tesla/step in the sweep parameter line edits
@@ -280,8 +280,8 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.FieldInc.setText("Millitesla per Step")
             self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
             steps = float(self.fieldPointsSetValue.text())
-            bMax = self.siFormat(self.fieldMaxSetValue.text(), 3)
-            bMin = self.siFormat(self.fieldMinSetValue.text(), 3)
+            bMax = readNum(str(self.fieldMaxSetValue.text()), self, False)
+            bMin = readNum(str(self.fieldMinSetValue.text()), self, False)
             if steps != 1 and steps != 0:
                 inc = np.round((1000 * (bMax - bMin) / (steps - 1)), decimals = 3)
                 self.fieldPointsSetValue.setText(str(inc))
@@ -294,8 +294,8 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.FieldInc.setText("Number of Steps")
             self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
             inc = float(self.fieldPointsSetValue.text())
-            bMax = self.siFormat(self.fieldMaxSetValue.text(), 3)
-            bMin = self.siFormat(self.fieldMinSetValue.text(), 3)
+            bMax = readNum(str(self.fieldMaxSetValue.text()), self, False)
+            bMin = readNum(str(self.fieldMinSetValue.text()), self, False)
             if inc != 0:
                 steps = int(1000 * (bMax - bMin) / (inc)) +1 
                 self.fieldPointsSetValue.setText(str(steps))
@@ -311,8 +311,8 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.BiasInc.setText("Millivolts per Step")
             self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
             steps = float(self.biasPointsSetValue.text())
-            vMax = self.siFormat(self.biasMaxSetValue.text(), 3)
-            vMin = self.siFormat(self.biasMinSetValue.text(), 3)
+            vMax = readNum(str(self.biasMaxSetValue.text()), self, False)
+            vMin = readNum(str(self.biasMinSetValue.text()), self, False)
             if steps != 1:
                 inc = np.round((1000 * (vMax - vMin) / (steps - 1)), decimals = 3)
                 self.biasPointsSetValue.setText(str(inc))
@@ -325,8 +325,8 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.BiasInc.setText("Number of Steps")
             self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
             inc = float(self.biasPointsSetValue.text())
-            vMax = self.siFormat(self.biasMaxSetValue.text(), 3)
-            vMin = self.siFormat(self.biasMinSetValue.text(), 3)
+            vMax = readNum(str(self.biasMaxSetValue.text()), self, False)
+            vMin = readNum(str(self.biasMinSetValue.text()), self, False)
             if inc != 0:
                 steps = int(1000 * (vMax - vMin) / (inc)) + 1
                 self.biasPointsSetValue.setText(str(steps))
@@ -364,62 +364,21 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.hideRetraceGrad.show()
         self.showRetraceGrad.hide()          
         self.showRetraceGrad.raise_()
-
-    #Formats line edits with SI suffixes and/or scientific notation
-    #Why the fuck Avi... I told you this existed already. 
-    #TODO implement the version of this that already exists and is used everywhere else in
-    #the code
-    def siFormat(self, string, digits = None):
-        siDict = {'T': 12, 'G' : 9, 'M' : 6, 'k' : 3, 'c': -2, 'm' : -3, 'u' : -6, 'n' : -9, 'p' : -12}
-        string = str(string)
-        if digits == None:
-            digits = len(string)
-        if not string[-1].isdigit():
-            try:
-                
-                suff = siDict[string[-1]]
-                if 'e' in string[0:-1]:
-                    mant, exp = string[0:-1].split('e')[0], string[0:-1].split('e')[1]
-                    
-                elif 'E' in string[0:-1]:
-                    mant, exp = string[0:-1].split('E')[0], string[0:-1].split('E')[1]
-                else:
-                    mant, exp = string[0:-1], 0
-                num = np.round(np.float(mant), decimals = digits)*10**(suff + np.float(exp))
-                
-                return num
-            except:
-                return 'Invalid format'
-        else:
-            try:
-                
-                if 'e' in string:
-                    mant, exp = string.split('e')[0], string.split('e')[1]
-                    
-                elif 'E' in string:
-                    mant, exp = string.split('E')[0], string.split('E')[1]
-                else:
-                    mant, exp = string, 0
-                num = np.round(np.float(mant), decimals = digits)*10**(np.float(exp))
-                return num 
-            except:
-                return 'Invalid format'
                 
     #Check the format of the magnetic field Min/Max values and ensures that the are in an appropriate range
     def UpdateBVals(self, lineEdit, speed = None):
-        ans = self.siFormat(lineEdit.text(), 3)
+        ans = readNum(str(lineEdit.text()), self, False)
         if lineEdit == 'REFORMAT':
             pass
-        elif ans == 'Invalid format':
+        elif type(ans) == str:
             lineEdit.setText('REFORMAT')
-        
         elif speed == 'speed':
             pass
+            
         #Keeps the field value within 1.25T for the dipper magnet    
         elif self.settingsDict['Magnet device'] == 'Toellner 8851':
             if float(ans) < 0:
                 lineEdit.setText('0')
-
             
             elif -1.25 <= float(ans) <= 1.25:
                 pass
@@ -443,10 +402,10 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
     #Check the format of the bias voltage Min/Max values and ensures that the are in an appropriate range
     def UpdateVVals(self, lineEdit):
-        ans = self.siFormat(lineEdit.text(), 3)
+        ans = readNum(str(lineEdit.text()), self, False)
         if lineEdit == 'REFORMAT':
             pass
-        elif ans == 'Invalid format':
+        elif type(ans) == str:
             lineEdit.setText('REFORMAT')
         #Makes sure the voltage is between -10V and +10V to accomodate the DAC
         elif -10 <= float(ans) <= 10:
@@ -610,36 +569,40 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.checkToe.accepted.connect(self.checkSweep)
             self.checkToe.rejected.connect(self.decline)
 
-    def checkSweep(self):
+    def readSweepParameters(self):
+        #This module has all its sweep parameters stored in the text of the GUI elements.
+        #This function reads the parameters from the GUI elements storing them in the 
+        #module's sweep parameter dictionary 
+        
         sweepMod = self.biasSweepMode.currentIndex()
         blinkMod = self.blink.currentIndex()
-
-        b_min = self.siFormat(self.fieldMinSetValue.text(), 3)
-        b_max = self.siFormat(self.fieldMaxSetValue.text(), 3)
+        
+        b_min = readNum(str(self.fieldMinSetValue.text()), self, False)
+        b_max = readNum(str(self.fieldMaxSetValue.text()), self, False)
         if self.fieldSIStat == 'num pnts':
             b_pnts = int(self.fieldPointsSetValue.text())
         elif self.fieldSIStat == 'field step':
             b_pnts = int(1000 * np.absolute(b_max - b_min) / (float(self.fieldPointsSetValue.text())))
-        b_speed = self.siFormat(self.fieldSpeedSetValue.text(), 3)
-        v_min = self.siFormat(self.biasMinSetValue.text(), 3)
-        v_max = self.siFormat(self.biasMaxSetValue.text(), 3)
+        b_speed = readNum(str(self.fieldSpeedSetValue.text()), self, False)
+        v_min = readNum(str(self.biasMinSetValue.text()), self, False)
+        v_max = readNum(str(self.biasMaxSetValue.text()), self, False)
         if self.biasSIStat == 'bias steps':
             v_pnts = int(1000 * np.absolute(v_max - v_min) / (float(self.biasPointsSetValue.text())))
         elif self.biasSIStat == 'num pnts':
             v_pnts = int(self.biasPointsSetValue.text())
-        v_speed = self.siFormat(self.biasSpeedSetValue.text())
+        v_speed = readNum(str(self.biasSpeedSetValue.text()), self, False)
         # if b_min > b_max:
             # b_max_str, b_min_str = self.fieldMaxSetValue.text(), self.fieldMinSetValue.text()
             # self.fieldMinSetValue.setText(b_max_str)
             # self.fieldMaxSetValue.setText(b_min_str)
-            # b_min = self.siFormat(self.fieldMinSetValue.text(), 3)
-            # b_max = self.siFormat(self.fieldMaxSetValue.text(), 3)
+            # b_min = readNum(str(self.fieldMinSetValue.text()), self, False)
+            # b_max = readNum(str(self.fieldMaxSetValue.text()), self, False)
         # if v_min > v_max:
             # v_max_str, v_min_str = self.biasMaxSetValue.text(), self.biasMinSetValue.text()
             # self.biasMinSetValue.setText(v_max_str)
             # self.biasMaxSetValue.setText(v_min_str)
-            # v_min = self.siFormat(self.biasMinSetValue.text(), 3)
-            # v_max = self.siFormat(self.biasMaxSetValue.text(), 3)
+            # v_min = readNum(str(self.biasMinSetValue.text()), self, False)
+            # v_max = readNum(str(self.biasMaxSetValue.text()), self, False)
         if sweepMod == 1:
             if v_min < 0 and v_max > 0:
                 pass
@@ -652,7 +615,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             vSpeed = '1'
         else:
             pass
-    
+        
         self.bMin = float(b_min)
         self.bMax = float(b_max)
         self.bPoints = int(b_pnts)
@@ -676,12 +639,17 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         
         self.sweepParamDict = {'B_min' : b_min, 'B_max' : b_max, 'B_pnts' : b_pnts, 'B_rate' : b_speed, 'V_min' : v_min, 'V_max' : v_max, 'V_pnts' : v_pnts, 'delay' : v_speed, 'sweep mode' : sweepMod, 'blink mode' : blinkMod, 'Magnet device' : self.settingsDict['Magnet device'], 'sweep time' : TotalTime} 
         
+
+    def checkSweep(self):
+        self.readSweepParameters()
+        
         print '------------------------------------------------------------------------------------'
         print 'Sweep Parameters'
         print self.sweepParamDict
         print 'General Input Settings'
         print self.settingsDict
-        print '-------------------------------------------------------------------------------------'
+        print '------------------------------------------------------------------------------------'
+        
         self.dialog = DialogBox(self.sweepParamDict, self)
         self.dialog.show()    
         self.dialog.accepted.connect(self.initSweep)
@@ -1570,7 +1538,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         negative_points = V_pnts - positive_points
 
         B_rate = self.sweepParamDict['B_rate']
-        delay = 1000 * self.sweepParamDict['delay']
+        delay = int(1000 * self.sweepParamDict['delay'])
         B_space = np.linspace(B_min, B_max, B_pnts)
         
         #DAC OUTPUTS
@@ -1945,6 +1913,55 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.newToeField.emit(B_f, B_f/IB_conv, V_setpoint)
         except Exception as inst:
             print 'SF, ', str(inst )
+        
+#----------------------------------------------------------------------------------------------#
+    """ The following section has functions intended for use when running scripts from the scripting module."""
+    
+    def setMinVoltage(self, vmin):
+        self.biasMinSetValue.setText(formatNum(vmin, 3))
+        self.UpdateVVals(self.biasMinSetValue))
+    
+    def setMaxVoltage(self, vmax):
+        self.biasMaxSetValue.setText(formatNum(vmax, 3))
+        self.UpdateVVals(self.biasMaxSetValue))
+    
+    def setVoltagePoints(self, pnts):
+        self.biasPointsSetValue.setText(formatNum(pnts,10))
+        self.pntsFormat(self.biasPointsSetValue, 'bias')
+        
+    def setBiasDelay(self, delay):
+        self.biasSpeedSetValue.setText(formatNum(pnts,3))
+        self.pntsFormat(self.biasSpeedSetValue, 'delay')
+        
+    def setMinField(self, bmin):
+        self.biasMinSetValue.setText(formatNum(bmin, 3))
+        self.UpdateVVals(self.biasMinSetValue))
+        
+    def setMaxField(self, bmax):
+        self.fieldMaxSetValue.setText(formatNum(bmax, 3))
+        self.UpdateBVals(self.fieldMaxSetValue)
+    
+    def setFieldPoints(self, pnts):
+        self.fieldPointsSetValue.setText(formatNum(pnts, 10))
+        self.pntsFormat(self.fieldPointsSetValue, 'field')
+        
+    def setSweepMode(self, mode):
+        self.biasSweepMode.setCurrentIndex(mode)
+    
+    @inlineCallbacks
+    def readFeedbackVoltage(self):
+        fdbk_input = self.settingsDict['feedback DC input'] - 1
+        val = yield self.dac.read_voltage(fdbk_input)
+        returnValue(val)
+    
+    @inlineCallbacks
+    def startSweep():
+        self.startSweep.setEnabled(False) #Disable the start sweep button to prevent user from starting two sweeps at the same time
+        self.readSweepParameters() #Read the sweep parameters from the GUI elements
+        yield self.initSweep() #Starts the sweep. This re-enables the start sweep button once finished
+        
+#----------------------------------------------------------------------------------------------#
+    """ The following section has generally useful functions."""
         
     def setSessionFolder(self, folder):
         self.sessionFolder = folder
@@ -2336,6 +2353,7 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         except Exception as inst:
             print 'nSOTChar Prelim error: ', inst
             print 'on line: ', sys.exc_traceback.tb_lineno
+            
             
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):

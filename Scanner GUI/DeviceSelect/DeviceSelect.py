@@ -38,7 +38,6 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                         'coarse positioner': self.comboBox_CoarsePositioner
                     },
                     'approach and TF' : {
-                        'dac_adc':  self.comboBox_Approach_DACADC,
                         'dc_box':   self.comboBox_Approach_DCBox,
                         'hf2li':    self.comboBox_Approach_HF2LI
                     },
@@ -64,7 +63,6 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                         'pll output':   self.comboBox_Approach_PLLOutput,
                         'pid z out':    self.comboBox_Approach_PIDZOut,
                         'z monitor':    self.comboBox_Approach_ZMonitor,
-                        'step Z out':   self.comboBox_Approach_StepZOut,
                         'sum board toggle':    self.comboBox_Approach_SumBoard,
                     },
                     'scan' : {
@@ -372,7 +370,6 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                         'coarse positioner': False,
                     },
                     'approach and TF' : {
-                        'dac_adc':  False,
                         'dc_box':   False,
                         'hf2li':    False
                     },
@@ -398,7 +395,6 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                         'pll output':   1,
                         'pid z out':    1,
                         'z monitor':    1,
-                        'step Z out':   1, 
                         'sum board toggle': 1,
                     },
                     'scan' : {

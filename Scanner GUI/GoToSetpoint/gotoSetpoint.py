@@ -33,12 +33,12 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
         self.zeroGateBtn.clicked.connect(self.zeroGateFunc)
         self.gotoGateBtn.clicked.connect(self.gotoGateFunc)
         
-        self.blinkBtn.clicked.connect(self.blinkOutFunc)
-        self.push_FdbkOn.clicked.connect(lambda: self.toggleFeedback(True))
-        self.push_FdbkOff.clicked.connect(lambda: self.toggleFeedback(False))
+        self.blinkBtn.clicked.connect(self.blink)
+        self.push_FdbkOn.clicked.connect(lambda: self.setFeedback(True))
+        self.push_FdbkOff.clicked.connect(lambda: self.setFeedback(False))
         
-        self.push_readGate.clicked.connect(self.readSetpoint)
-        self.push_readBias.clicked.connect(self.readSetpoint)
+        self.push_readGate.clicked.connect(self.readGate)
+        self.push_readBias.clicked.connect(self.readBias)
 
         self.lockInterface()
         
@@ -94,25 +94,9 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
     @inlineCallbacks
     def readInitVals(self, c = None):
         try:
-            curr_bias = yield self.dac.read_voltage(self.biasRefChan)
-            self.setpointDict['bias'] = float(curr_bias)
-            
-            self.currBiasLbl.setText('Current Bias: '+ str(curr_bias) + 'V')
-            self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
-            
-            curr_gate = yield self.dac.read_voltage(self.gateRefChan)
-            self.setpointDict['gate'] = float(curr_gate)
-            
-            self.currGateLbl.setText('Current Gate: '+ str(curr_gate) + 'V')
-            self.currGateLbl.setStyleSheet("QLabel#currGateLbl{color: rgb(168,168,168); font:bold 10pt;}")
-            try:
-                curr_fdbk = yield self.blink_server.get_voltage(self.blinkChan)
-                if curr_fdbk <0.2:
-                    self.feedbackButtonColors(True)
-                else:
-                    self.feedbackButtonColors(False)
-            except:
-                print 'Blink server does not have voltage reading capabilities.'
+            yield self.readBias()
+            yield self.readGate()
+            yield self.readFeedback()
         except Exception as inst:
             print "readInitVals Error: ", inst
 
@@ -183,15 +167,12 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
             self.push_FdbkOff.setStyleSheet(style)
     
     @inlineCallbacks
-    def toggleFeedback(self, on):
+    def setFeedback(self, on):
         if on:
             yield self.blink_server.set_voltage(self.blinkChan, 0)
         else:
             yield self.blink_server.set_voltage(self.blinkChan, 5)
         self.feedbackButtonColors(on)
-        
-    def readSetpoint(self):
-        self.readInitVals()
      
     @inlineCallbacks
     def zeroBiasFunc(self, c = None):
@@ -279,12 +260,63 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
             yield self.sleep(0.5)
             
     @inlineCallbacks
-    def blinkOutFunc(self, c = None):
+    def blink(self, c = None):
         yield self.blink_server.set_voltage(self.blinkChan, 5)
         self.feedbackButtonColors(False)
         yield self.sleep(0.25)
         yield self.blink_server.set_voltage(self.blinkChan, 0)
         self.feedbackButtonColors(True)
+            
+#----------------------------------------------------------------------------------------------#
+    """ The following section has functions intended for use when running scripts from the scripting module."""
+        
+    @inlineCallbacks
+    def setBias(self, bias):
+        self.biasSetpntLine.setText(formatNum(bias))
+        yield self.gotoBiasFunc()
+        
+    @inlineCallbacks
+    def readBias(self):
+        curr_bias = yield self.dac.read_voltage(self.biasRefChan)
+        self.setpointDict['bias'] = float(curr_bias)
+        
+        self.currBiasLbl.setText('Current Bias: '+ str(curr_bias) + 'V')
+        self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
+        
+        returnValue(float(curr_bias))
+        
+    @inlineCallbacks
+    def setGate(self, gate):
+        self.gateSetpntLine.setText(formatNum(gate))
+        yield self.gotoGateFunc()
+        
+    @inlineCallbacks
+    def readGate(self):
+        curr_gate = yield self.dac.read_voltage(self.gateRefChan)
+        self.setpointDict['gate'] = float(curr_gate)
+        
+        self.currGateLbl.setText('Current Gate: '+ str(curr_gate) + 'V')
+        self.currGateLbl.setStyleSheet("QLabel#currGateLbl{color: rgb(168,168,168); font:bold 10pt;}")
+        
+        returnValue(float(curr_gate))
+        
+    @inlineCallbacks
+    def readFeedback(self):
+        feedback = False;
+        try:
+            curr_fdbk = yield self.blink_server.get_voltage(self.blinkChan)
+            if curr_fdbk < 0.2:
+                self.feedbackButtonColors(True)
+                feedback = True
+            else:
+                self.feedbackButtonColors(False)
+                feedback = False
+            returnValue(feedback)
+        except:
+            print 'Blink server does not have voltage reading capabilities.'
+        
+#----------------------------------------------------------------------------------------------#
+    """ The following section has generally useful functions."""
             
     def lockInterface(self):
         self.biasSetpntLine.setEnabled(False)

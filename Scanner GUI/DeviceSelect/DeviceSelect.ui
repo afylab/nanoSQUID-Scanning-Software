@@ -241,7 +241,16 @@ background: black;
         <string>System</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_6" stretch="3,10">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
@@ -584,7 +593,16 @@ background: black;
         <property name="spacing">
          <number>6</number>
         </property>
-        <property name="margin">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
@@ -604,13 +622,6 @@ border: 2px solid rgb(168,168,168)
            <property name="leftMargin">
             <number>9</number>
            </property>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label">
-             <property name="text">
-              <string>DAC ADC</string>
-             </property>
-            </widget>
-           </item>
            <item row="0" column="0">
             <widget class="QLabel" name="label_5">
              <property name="sizePolicy">
@@ -630,9 +641,6 @@ border: 2px solid rgb(168,168,168)
               <string>Device Selection</string>
              </property>
             </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QComboBox" name="comboBox_Approach_DACADC"/>
            </item>
            <item row="1" column="2">
             <spacer name="horizontalSpacer_6">
@@ -660,15 +668,15 @@ border: 2px solid rgb(168,168,168)
            <item row="1" column="4">
             <widget class="QComboBox" name="comboBox_Approach_DCBox"/>
            </item>
-           <item row="2" column="0">
+           <item row="1" column="1">
+            <widget class="QComboBox" name="comboBox_Approach_HF2LI"/>
+           </item>
+           <item row="1" column="0">
             <widget class="QLabel" name="label_3">
              <property name="text">
               <string>HF2LI</string>
              </property>
             </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QComboBox" name="comboBox_Approach_HF2LI"/>
            </item>
           </layout>
          </widget>
@@ -688,23 +696,10 @@ border: 2px solid rgb(168,168,168)
            <enum>QFrame::Raised</enum>
           </property>
           <layout class="QGridLayout" name="gridLayout_2">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_7">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>10</pointsize>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
+           <item row="3" column="1">
+            <widget class="QLabel" name="label_Approach_HF3">
              <property name="text">
-              <string>Input / Output</string>
+              <string/>
              </property>
             </widget>
            </item>
@@ -722,15 +717,14 @@ border: 2px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
-            <widget class="QLabel" name="label_Approach_HF3">
-             <property name="text">
-              <string/>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_7">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
              </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLabel" name="label_8">
              <property name="font">
               <font>
                <pointsize>10</pointsize>
@@ -739,14 +733,7 @@ border: 2px solid rgb(168,168,168)
               </font>
              </property>
              <property name="text">
-              <string>Device</string>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="1">
-            <widget class="QLabel" name="label_Approach_DAC">
-             <property name="text">
-              <string/>
+              <string>Input / Output</string>
              </property>
             </widget>
            </item>
@@ -769,6 +756,20 @@ border: 2px solid rgb(168,168,168)
              </item>
             </widget>
            </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_8">
+             <property name="font">
+              <font>
+               <pointsize>10</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Device</string>
+             </property>
+            </widget>
+           </item>
            <item row="3" column="0">
             <widget class="QLabel" name="label_10">
              <property name="text">
@@ -776,45 +777,14 @@ border: 2px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="7" column="0">
-            <widget class="QLabel" name="label_12">
-             <property name="text">
-              <string>Step Z Output</string>
-             </property>
-            </widget>
-           </item>
-           <item row="8" column="1">
+           <item row="5" column="1">
             <widget class="QLabel" name="label_Approach_DCBox">
              <property name="text">
               <string/>
              </property>
             </widget>
            </item>
-           <item row="7" column="2">
-            <widget class="QComboBox" name="comboBox_Approach_StepZOut">
-             <item>
-              <property name="text">
-               <string>DAC Out 1</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>DAC Out 2</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>DAC Out 3</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>DAC Out 4</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="8" column="0">
+           <item row="5" column="0">
             <widget class="QLabel" name="label_14">
              <property name="text">
               <string>Sum Board Toggle</string>
@@ -835,7 +805,7 @@ border: 2px solid rgb(168,168,168)
              </item>
             </widget>
            </item>
-           <item row="8" column="2">
+           <item row="5" column="2">
             <widget class="QComboBox" name="comboBox_Approach_SumBoard">
              <item>
               <property name="text">
@@ -886,13 +856,6 @@ border: 2px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_20">
-             <property name="text">
-              <string>PLL Output</string>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="2">
             <widget class="QComboBox" name="comboBox_Approach_PLLInput">
              <item>
@@ -927,6 +890,13 @@ border: 2px solid rgb(168,168,168)
              </item>
             </widget>
            </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_20">
+             <property name="text">
+              <string>PLL Output</string>
+             </property>
+            </widget>
+           </item>
            <item row="2" column="1">
             <widget class="QLabel" name="label_Approach_HF2">
              <property name="text">
@@ -941,17 +911,17 @@ border: 2px solid rgb(168,168,168)
              </property>
             </widget>
            </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_24">
-             <property name="text">
-              <string>Z Voltage Monitor</string>
-             </property>
-            </widget>
-           </item>
            <item row="4" column="1">
             <widget class="QLabel" name="label_Approach_HF4">
              <property name="text">
               <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_24">
+             <property name="text">
+              <string>Z Voltage Monitor</string>
              </property>
             </widget>
            </item>
@@ -965,71 +935,6 @@ border: 2px solid rgb(168,168,168)
              <item>
               <property name="text">
                <string>Aux In 2 (&lt;20 kHz)</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="label_41">
-             <property name="text">
-              <string>Feedback Signal 1 Input</string>
-             </property>
-            </widget>
-           </item>
-           <item row="6" column="0">
-            <widget class="QLabel" name="label_42">
-             <property name="text">
-              <string>Feedback Signal 2 Input</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="1">
-            <widget class="QComboBox" name="comboBox_Approach_Sig1Device">
-             <property name="currentIndex">
-              <number>-1</number>
-             </property>
-            </widget>
-           </item>
-           <item row="6" column="1">
-            <widget class="QComboBox" name="comboBox_Approach_Sig2Device"/>
-           </item>
-           <item row="6" column="2">
-            <widget class="QComboBox" name="comboBox_23">
-             <property name="currentIndex">
-              <number>1</number>
-             </property>
-             <item>
-              <property name="text">
-               <string>Aux In 1 (&lt;20 kHz)</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Aux In 2 (&lt;20 kHz)</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="5" column="2">
-            <widget class="QComboBox" name="comboBox_24">
-             <item>
-              <property name="text">
-               <string>DAC In 1</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>DAC In 2</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>DAC In 3</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>DAC In 4</string>
               </property>
              </item>
             </widget>
@@ -1049,7 +954,16 @@ background: black
         <string>Scan Control</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3" stretch="2,9">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
@@ -1339,7 +1253,16 @@ background: black
         <string>nSOT Bias and Characterizer</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_4" stretch="2,9">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
@@ -1762,7 +1685,16 @@ background: black
         <string>Sample Characterizer</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_5" stretch="2,9">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
