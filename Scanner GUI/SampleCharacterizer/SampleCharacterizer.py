@@ -407,7 +407,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             print inst, sys.exc_traceback.tb_lineno
 
     @inlineCallbacks
-    def FourTerminalSweep(self,c=None): #The Four Terminal Sweep without MagneticField
+    def FourTerminalSweep(self): #The Four Terminal Sweep without MagneticField
         self.lockInterface()
         try:
             self.ClearPlots([self.sweepFourTerminal_Plot1, self.sweepFourTerminal_Plot2, self.sweepFourTerminal_Plot3, self.sweepFourTerminal_Plot4])
@@ -873,7 +873,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 self.label_CentralDAC_DACOUTPUT4_Current.setText('Sweeping')
 
     @inlineCallbacks
-    def Set_CentralDAC_DACOUTPUT(self,ChannelPort,c=None):  #bufferramp to the point in 1s
+    def Set_CentralDAC_DACOUTPUT(self,ChannelPort):  #bufferramp to the point in 1s
         try:
             yield self.Ramp1_Display(ChannelPort,self.currentDAC_Output[ChannelPort],self.setpointDAC_Output[ChannelPort],10000,100)
         except Exception as inst:
@@ -1371,6 +1371,54 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
     def setSessionFolder(self, folder):
         self.sessionFolder = folder
 
+#----------------------------------------------------------------------------------------------#
+    """ The following section has functions intended for use when running scripts from the scripting module."""
+    
+    def setFourTermMinVoltage(self, vmin):
+        self.lineEdit_FourTerminal_MinVoltage.setText(formatNum(vmin))
+        self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminal_MinVoltage, 'FourTerminal_MinVoltage', [-10.0, 10.0])
+    
+    def setFourTermMaxVoltage(self, vmax):
+        self.lineEdit_FourTerminal_MaxVoltage.setText(formatNum(vmin))
+        self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminal_MaxVoltage, 'FourTerminal_MaxVoltage', [-10.0, 10.0])
+    
+    def setFourTermVoltagePoints(self, points):
+        if self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] == "StepSize":
+            self.ToggleFourTerminalFourTerminal_Numberofstep()
+        self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(points))
+        self.UpdateFourTerminal_Numberofstep()
+        
+    def setFourTermVoltageStepSize(self, vstep):
+        if self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] == "Numberofsteps":
+            self.ToggleFourTerminalFourTerminal_Numberofstep()
+        self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(vstep))
+        self.UpdateFourTerminal_Numberofstep()
+    
+    def setFourTermDelay(self, delay):
+        self.lineEdit_FourTerminal_Delay.setText(formatNum(delay))
+        self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminal_Delay, 'FourTerminal_Delay')
+        
+    def setFourTermOutput(self, output):
+        self.comboBox_FourTerminal_Output1.setCurrentIndex(output-1)
+        self.FourTerminal_Output1 = output-1
+        
+    def setFourTermVoltageInput(self, inp):
+        self.comboBox_FourTerminal_Input1.setCurrentIndex(inp-1)
+        self.FourTerminal_Input1 = inp-1
+    
+    def setFourTermCurrentInput(self, inp):
+        self.comboBox_FourTerminal_Input2.setCurrentIndex(inp-1)
+        self.FourTerminal_Input2 = inp-1
+    
+    @inlineCallbacks
+    def rampOutputVoltage(self, channel, vfinal, points, delay):
+        #Convert delay from seconds to microseconds. 
+        delay = int(delay*1e6)
+        yield self.Ramp1_Display(channel,self.currentDAC_Output[channel],vfinal,points,delay)
+        
+#----------------------------------------------------------------------------------------------#
+    """ The following section has generally useful functions."""
+    
     # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous
     # delay that allows other labrad / pyqt methods to run
     def sleep(self,secs):
@@ -1379,10 +1427,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         d = Deferred()
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
-
-#----------------------------------------------------------------------------------------------#
-    """ The following section has generally useful functions."""
-
+        
     def lockInterface(self):
         self.lineEdit_FourTerminal_NameOutput1.setEnabled(False)
         self.lineEdit_FourTerminal_NameInput1.setEnabled(False)

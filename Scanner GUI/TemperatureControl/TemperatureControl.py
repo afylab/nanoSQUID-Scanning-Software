@@ -59,7 +59,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 'i'                : 50.0,
                 'd'                : 1.0,       #
                 'setpoint'         : 4.0,       #Setpoint in Kelvin for closed loop (PID) operation
-                'out percent'      : 0,        #Pencentage output for open loop / manual mode
+                'out percent'      : 0,         #Pencentage output for open loop / manual mode
                 'feedback thermometer' : 2,     #Which thermometer should be used for closed loop heating
                 'heater range'     : 5,         #Range for the heater
                 'heater output'    : 2,         #Either output 1 or 2
@@ -175,22 +175,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 yield self.ls.pid_set(self.measurementSettings['heater output'],self.measurementSettings['p'],self.measurementSettings['i'],self.measurementSettings['d'])
                 
                 #Set output settings
-                if self.measurementSettings['feedback thermometer'] == 1:
-                    feedback_thermometer = self.ls350inputs[self.measurementSettings['mag Input']]
-                elif self.measurementSettings['feedback thermometer'] == 2:
-                    feedback_thermometer = self.ls350inputs[self.measurementSettings['sample Input']]
-                elif self.measurementSettings['feedback thermometer'] == 3:
-                    feedback_thermometer = self.ls350inputs[self.measurementSettings['pot Input']]
-                
-                if self.measurementSettings['heater mode'] ==0:
-                    yield self.ls.out_mode_set(self.measurementSettings['heater output'], 1, feedback_thermometer, 0)
-                elif self.measurementSettings['heater mode'] ==1:
-                    yield self.ls.out_mode_set(self.measurementSettings['heater output'], 3, feedback_thermometer, 0)
-                
-                
-                if str(self.push_heater.text()) == 'Heater On':
-                    yield self.ls.range_set(self.measurementSettings['heater output'], self.measurementSettings['heater range'])
-                
+                yield self.setOutputSettings()
                 
                 #In case record time has changed, update plots to reflect that
                 self.updatePlots()
@@ -206,6 +191,23 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     
         except Exception as inst:
             print inst, sys.exc_traceback.tb_lineno
+            
+    @inlineCallbacks
+    def setOutputSettings(self):
+        if self.measurementSettings['feedback thermometer'] == 1:
+            feedback_thermometer = self.ls350inputs[self.measurementSettings['mag Input']]
+        elif self.measurementSettings['feedback thermometer'] == 2:
+            feedback_thermometer = self.ls350inputs[self.measurementSettings['sample Input']]
+        elif self.measurementSettings['feedback thermometer'] == 3:
+            feedback_thermometer = self.ls350inputs[self.measurementSettings['pot Input']]
+        
+        if self.measurementSettings['heater mode'] == 0:
+            yield self.ls.out_mode_set(self.measurementSettings['heater output'], 1, feedback_thermometer, 0)
+        elif self.measurementSettings['heater mode'] == 1:
+            yield self.ls.out_mode_set(self.measurementSettings['heater output'], 3, feedback_thermometer, 0)
+            
+        if str(self.push_heater.text()) == 'Heater On':
+            yield self.ls.range_set(self.measurementSettings['heater output'], self.measurementSettings['heater range'])
             
     @inlineCallbacks
     def startTempMonitoring(self, c = None):
@@ -261,7 +263,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             print inst, sys.exc_traceback.tb_lineno
             
     @inlineCallbacks
-    def toggleHeater(self, c = None):
+    def toggleHeater(self):
         if str(self.push_heater.text()) == 'Heater Off':
             yield self.ls.range_set(self.measurementSettings['heater output'], self.measurementSettings['heater range'])
             yield self.sleep(0.25)
@@ -280,15 +282,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_heater.setText('Heater Off')
             
     @inlineCallbacks
-    def setSetpoint(self, c = None):
-        val = readNum(str(self.lineEdit_setpoint.text()), self, False)
+    def setSetpoint(self, val = readNum(str(self.lineEdit_setpoint.text()), self, False)):
         if isinstance(val,float):
             if self.measurementSettings['heater mode'] == 0:
                 self.measurementSettings['setpoint'] = val
                 yield self.ls.setpoint(self.measurementSettings['heater output'], self.measurementSettings['setpoint'])
             elif self.measurementSettings['heater mode'] == 1:
                 self.measurementSettings['out percent'] = val
-                yield self.ls.gpib_write('MOUT%i,%f'%(self.measurementSettings['heater output'],self.measurementSettings['out percent']))
                 yield self.ls.gpib_write('MOUT%i,%f'%(self.measurementSettings['heater output'],self.measurementSettings['out percent']))
         if self.measurementSettings['heater mode'] == 0:
             self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['setpoint']))
@@ -320,6 +320,87 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
         
+#----------------------------------------------------------------------------------------------#
+    """ The following section has functions intended for use when running scripts from the scripting module."""
+    
+    @inlineCallbacks
+    def readTherm1(self):
+        magTemp = yield self.ls.read_temp(self.measurementSettings['mag Input'])
+        returnValue(magTemp)
+        
+    @inlineCallbacks
+    def readTherm2(self):
+        sampleTemp = yield self.ls.read_temp(self.measurementSettings['sample Input'])
+        returnValue(sampleTemp)
+        
+    @inlineCallbacks
+    def readTherm3(self):
+        potTemp = yield self.ls.read_temp(self.measurementSettings['pot Input'])
+        returnValue(potTemp)
+        
+    @inlineCallbacks
+    def setFeedbackThermometer(self, ind):
+        self.measurementSettings['feedback thermometer'] = ind
+        yield self.setOutputSettings()
+                
+    @inlineCallbacks
+    def setHeaterMode(self, mode):
+        self.measurementSettings['heater mode'] = mode
+        
+        if self.measurementSettings['heater mode'] == 0:
+            self.label_setpoint.setText('Setpoint (K):')
+            self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['setpoint']))
+        elif self.measurementSettings['heater mode'] == 1:
+            self.label_setpoint.setText('Output (%):')
+            self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['out percent']))
+        else:
+            self.label_setpoint.setText('WTF?!?!')
+            
+        yield self.setOutputSettings()
+        
+    @inlineCallbacks
+    def setHeaterOutput(self, output):
+        self.measurementSettings['heater output'] = output
+        yield self.ls.pid_set(self.measurementSettings['heater output'],self.measurementSettings['p'],self.measurementSettings['i'],self.measurementSettings['d'])
+        yield self.setOutputSettings()
+        
+    @inlineCallbacks
+    def setHeaterPID(self, p, i , d):
+        self.measurementSettings['p'] = p
+        self.measurementSettings['i'] = i
+        self.measurementSettings['d'] = d
+        yield self.ls.pid_set(self.measurementSettings['heater output'],self.measurementSettings['p'],self.measurementSettings['i'],self.measurementSettings['d'])
+        
+    @inlineCallbacks
+    def setHeaterRange(self, rang):
+        self.measurementSettings['heater range'] = rang
+        if str(self.push_heater.text()) == 'Heater On':
+                    yield self.ls.range_set(self.measurementSettings['heater output'], self.measurementSettings['heater range'])
+    
+    @inlineCallbacks
+    def setHeaterSetpoint(self, setpoint):
+        self.measurementSettings['setpoint'] = setpoint
+        if self.measurementSettings['heater mode'] == 0:
+            self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['setpoint']))
+        yield self.ls.setpoint(self.measurementSettings['heater output'], self.measurementSettings['setpoint'])
+        
+    @inlineCallbacks
+    def setHeaterPercentage(self, percent):
+        self.measurementSettings['out percent'] = percent
+        if self.measurementSettings['heater mode'] == 1:
+            self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['out percent']))
+        yield self.ls.gpib_write('MOUT%i,%f'%(self.measurementSettings['heater output'],self.measurementSettings['out percent']))
+        
+    @inlineCallbacks
+    def setHeaterOn(self):
+        if str(self.push_heater.text()) == 'Heater Off':
+            yield self.toggleHeater()
+    
+    @inlineCallbacks
+    def setHeaterOff(self):
+        if str(self.push_heater.text()) == 'Heater On':
+            yield self.toggleHeater()
+    
 #----------------------------------------------------------------------------------------------#         
     """ The following section has generally useful functions."""
            

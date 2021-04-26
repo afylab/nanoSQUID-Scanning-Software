@@ -22,6 +22,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.FieldControl = args[4]
         self.TempControl = args[5]
         self.SampleChar = args[6]
+        self.nSOTBias = args[7]
         
         self.setupUi(self)
         self.setupAdditionalUi()
@@ -82,7 +83,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.current_line = 0
             exec code_to_run
             self.current_line = 1
-            yield f(self, self.sleep, self.cxn, self.cxnr, self.ScanControl, self.Approach, self.JPEControl, self.nSOTChar, self.FieldControl, self.TempControl, self.SampleChar)
+            yield f(self, self.sleep, self.cxn, self.cxnr, self.ScanControl, self.Approach, self.JPEControl, self.nSOTChar, self.FieldControl, self.TempControl, self.SampleChar, self.nSOTBias)
             self.runningScript = False
             self.label_status.setText('Script is in editing mode')
             self.unlockInterface()
@@ -118,7 +119,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         in this section is critical to it running correctly. 
         '''
         code_lines = str(self.codeEditor.toPlainText()).splitlines()
-        code_to_run = "@inlineCallbacks\ndef f(self, sleep, cxn, cxnr, ScanControl, Approach, JPEControl, nSOTChar, FieldControl, TempControl, SampleChar):\n "
+        code_to_run = "@inlineCallbacks\ndef f(self, sleep, cxn, cxnr, ScanControl, Approach, JPEControl, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias):\n "
         code_to_run = code_to_run + "yield sleep(0.1)\n "
         i = 1
         prev_line = 'None'

@@ -87,7 +87,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         #That are desired to be scriptable be input
         self.Scripting = Scripting.Window(self.reactor, None, self.ScanControl, self.Approach, 
                                           self.JPEControl, self.nSOTChar, self.FieldControl, self.TempControl,
-                                          self.SampleCharacterizer)
+                                          self.SampleCharacterizer, self.GoToSetpoint)
         
         #Connects all drop down menu button
         self.actionScan_Control.triggered.connect(self.openScanControlWindow)

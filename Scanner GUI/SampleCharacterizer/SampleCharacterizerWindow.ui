@@ -644,7 +644,7 @@ color: rgb(168,168,168);
 QTabBar::tab:selected {background: rgb(50,50,50);}</string>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <property name="usesScrollButtons">
        <bool>false</bool>
@@ -667,8 +667,8 @@ background-color: rgb(0, 0, 0);
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,1">
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_7">
-          <item>
+         <layout class="QGridLayout" name="gridLayout_10">
+          <item row="0" column="0">
            <layout class="QHBoxLayout" name="Layout_FourTerminalPlot1">
             <item>
              <widget class="QFrame" name="frame_FourTerminalPlot1">
@@ -693,7 +693,7 @@ background:black
             </item>
            </layout>
           </item>
-          <item>
+          <item row="0" column="1">
            <layout class="QHBoxLayout" name="Layout_FourTerminalPlot2">
             <item>
              <widget class="QFrame" name="frame_FourTerminalPlot2">
@@ -718,10 +718,10 @@ background:black
             </item>
            </layout>
           </item>
-          <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalPlot3">
+          <item row="1" column="1">
+           <layout class="QHBoxLayout" name="Layout_FourTerminalPlot4">
             <item>
-             <widget class="QFrame" name="frame_FourTerminalPlot3">
+             <widget class="QFrame" name="frame_FourTerminalPlot4">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -743,10 +743,10 @@ background:black
             </item>
            </layout>
           </item>
-          <item>
-           <layout class="QHBoxLayout" name="Layout_FourTerminalPlot4">
+          <item row="1" column="0">
+           <layout class="QHBoxLayout" name="Layout_FourTerminalPlot3">
             <item>
-             <widget class="QFrame" name="frame_FourTerminalPlot4">
+             <widget class="QFrame" name="frame_FourTerminalPlot3">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -861,11 +861,20 @@ border:1px solid rgb(168,168,168)
              <enum>QFrame::Raised</enum>
             </property>
             <layout class="QGridLayout" name="Layout_Voltage_Lockin_Setting_2" rowstretch="1,1,1,0,0" columnstretch="2,1,1,1">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
              <property name="horizontalSpacing">
               <number>2</number>
-             </property>
-             <property name="margin">
-              <number>5</number>
              </property>
              <item row="2" column="0">
               <widget class="QLabel" name="label_Voltage_LI_Expand">
@@ -1201,11 +1210,20 @@ border:1px solid rgb(168,168,168)
              <enum>QFrame::Raised</enum>
             </property>
             <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,1,1,0" columnstretch="2,1,1,1">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
              <property name="horizontalSpacing">
               <number>2</number>
-             </property>
-             <property name="margin">
-              <number>5</number>
              </property>
              <item row="1" column="3">
               <widget class="QComboBox" name="comboBox_Current_LI_Sensitivity_Unit">
@@ -1793,11 +1811,20 @@ border:1px solid rgb(168,168,168)
              <enum>QFrame::Raised</enum>
             </property>
             <layout class="QGridLayout" name="Layout_Preliminary_SweepSettings_2" rowstretch="1,1,1,1" columnstretch="2,2,1">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
              <property name="horizontalSpacing">
               <number>2</number>
-             </property>
-             <property name="margin">
-              <number>5</number>
              </property>
              <item row="2" column="2">
               <widget class="QPushButton" name="pushButton_FourTerminal_NoSmTpTSwitch">
@@ -2528,7 +2555,16 @@ border:1px solid rgb(168,168,168)
              <enum>QFrame::Raised</enum>
             </property>
             <layout class="QGridLayout" name="gridLayout">
-             <property name="margin">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
               <number>0</number>
              </property>
              <item row="1" column="0">
@@ -3102,8 +3138,8 @@ background-color: rgb(0, 0, 0);
           <property name="frameShadow">
            <enum>QFrame::Raised</enum>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_8">
-           <item>
+          <layout class="QGridLayout" name="gridLayout_11">
+           <item row="0" column="0">
             <layout class="QVBoxLayout" name="verticalLayout_1DFieldSweepPlot1">
              <item>
               <widget class="QFrame" name="frame_1DFieldSweepPlot1">
@@ -3128,7 +3164,16 @@ background:black
                 <property name="spacing">
                  <number>0</number>
                 </property>
-                <property name="margin">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
                  <number>0</number>
                 </property>
                </layout>
@@ -3136,7 +3181,7 @@ background:black
              </item>
             </layout>
            </item>
-           <item>
+           <item row="0" column="1">
             <layout class="QVBoxLayout" name="verticalLayout_1DFieldSweepPlot2">
              <item>
               <widget class="QFrame" name="frame_1DFieldSweepPlot2">
@@ -3161,7 +3206,16 @@ background:black
                 <property name="spacing">
                  <number>0</number>
                 </property>
-                <property name="margin">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
                  <number>0</number>
                 </property>
                </layout>
@@ -3169,40 +3223,7 @@ background:black
              </item>
             </layout>
            </item>
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_1DFieldSweepPlot3">
-             <item>
-              <widget class="QFrame" name="frame_1DFieldSweepPlot3">
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">#PlotArea{
-background:black
-}</string>
-               </property>
-               <property name="frameShape">
-                <enum>QFrame::StyledPanel</enum>
-               </property>
-               <property name="frameShadow">
-                <enum>QFrame::Raised</enum>
-               </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_11">
-                <property name="spacing">
-                 <number>0</number>
-                </property>
-                <property name="margin">
-                 <number>0</number>
-                </property>
-               </layout>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
+           <item row="1" column="1">
             <layout class="QVBoxLayout" name="verticalLayout_1DFieldSweepPlot4">
              <item>
               <widget class="QFrame" name="frame_1DFieldSweepPlot4">
@@ -3227,7 +3248,58 @@ background:black
                 <property name="spacing">
                  <number>0</number>
                 </property>
-                <property name="margin">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="1" column="0">
+            <layout class="QVBoxLayout" name="verticalLayout_1DFieldSweepPlot3">
+             <item>
+              <widget class="QFrame" name="frame_1DFieldSweepPlot3">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">#PlotArea{
+background:black
+}</string>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_11">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
                  <number>0</number>
                 </property>
                </layout>

@@ -30,7 +30,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.aspectLocked = True
         self.FrameLocked = True
-        self.LinearSpeedLocked = False
         self.DataLocked = True
         self.scanSmooth = True
         self.scanCoordinates = False
@@ -144,6 +143,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #data point from the plot. 
         self.randomFill = -0.987654321
                 
+        #Specify the voltage step size for smooth scans. 
+        self.voltageStepSize = 300e-6
+        
         #Set up rest of UI (must be done after initializing default values)
         self.setupAdditionalUi()
         self.setupScanningArea()
@@ -151,7 +153,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         #Connect the buttons to the appropriate methods
         self.push_FrameLock.clicked.connect(self.toggleFrameLock)
-        self.push_SpeedLock.clicked.connect(self.toggleSpeedLock)
         self.push_DataLock.clicked.connect(self.toggleDataLock)
         self.push_autoRange.clicked.connect(self.autoRangeImageViews)
         self.push_autoLevel.clicked.connect(self.autoLevelImageViews)
@@ -186,7 +187,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.lineEdit_Angle.editingFinished.connect(self.updateAngle)
         self.lineEdit_Pixels.editingFinished.connect(self.updatePixels)
         self.lineEdit_Lines.editingFinished.connect(self.updateLines)
-        self.lineEdit_LineTime.editingFinished.connect(self.updateLineTime)
         self.lineEdit_Linear.editingFinished.connect(self.updateLinearSpeed)
         self.lineEdit_FileName.editingFinished.connect(self.updateFileName)
         self.lineEdit_XTilt.editingFinished.connect(self.updateXTilt)
@@ -342,8 +342,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
     def setupAdditionalUi(self):
         #Initial read only configuration of line edits
-        self.lineEdit_Linear.setReadOnly(False)
         self.lineEdit_LineTime.setReadOnly(True)
+        self.lineEdit_Linear.setReadOnly(False)
         
         self.comboBox_blinkMode.view().setMinimumWidth(130)
         
@@ -601,19 +601,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.ROI.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = True)
             self.ROI3.removeHandle(1)
             self.ROI3.addScaleHandle((1,1), (.5,.5), name = 'Scale', lockAspect = True)
-            
-    def toggleSpeedLock(self):
-        if self.LinearSpeedLocked == False:
-            self.frame_6.layout().addWidget(self.push_SpeedLock,1,3)
-            self.LinearSpeedLocked = True
-            self.lineEdit_Linear.setReadOnly(True)
-            self.lineEdit_LineTime.setReadOnly(False)
-        else:
-            self.frame_6.layout().addWidget(self.push_SpeedLock,2,3)
-            self.LinearSpeedLocked = False
-            self.lineEdit_Linear.setReadOnly(False)
-            self.lineEdit_LineTime.setReadOnly(True)
-            
+    
     def toggleDataLock(self):
         if self.DataLocked == True:
             self.push_DataLock.setStyleSheet("#push_DataLock{"+
@@ -652,7 +640,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.x = self.curr_x
         self.y = self.curr_y
             
-        self.updateLineEdits()
+        self.updateGUI()
         self.moveROIs()
             
     def autoRangeImageViews(self):
@@ -820,10 +808,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.SquareAspectRatio = self.H / self.W
             self.angle = angle
         
-    def updateGUI(self):
-        self.updateLineEdits()
-        self.updateSpeed()
-        
     def moveROI(self):
         self.ROI.setSize([self.W, self.H], update = False, finish = False)
         if self.scanCoordinates:
@@ -946,25 +930,30 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Update ROIs
                 self.moveROIs()
 
-    def updateLineEdits(self):
+    def updateGUI(self):
+        '''
+        Updates the text elements of the GUI once =the scan range have been changed. 
+        '''
         self.lineEdit_W.setText(formatNum(self.W))
         self.lineEdit_H.setText(formatNum(self.H))
         self.lineEdit_Xc.setText(formatNum(self.Xc))
         self.lineEdit_Yc.setText(formatNum(self.Yc))
         self.lineEdit_Angle.setText(formatNum(self.angle))
-
+        if self.scanSmooth:
+                self.lineTime = self.W / self.linearSpeed
+                self.lineEdit_LineTime.setText(formatNum(self.lineTime))
+    
     def moveROIs(self):
         self.moveROI()
         self.moveROI2()
         self.moveROI3()
+        
 #----------------------------------------------------------------------------------------------#
             
     """ The following section connects actions related to updating scan parameters from
         the line edits."""  
         
-    def updateXc(self):
-        new_Xc = str(self.lineEdit_Xc.text())
-        val = readNum(new_Xc, self)
+    def updateXc(self, val = readNum(str(self.lineEdit_Xc.text()), self)):
         if isinstance(val,float):
             Xc = val
             x = Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
@@ -974,9 +963,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.moveROIs()
         self.lineEdit_Xc.setText(formatNum(self.Xc))
         
-    def updateYc(self):
-        new_Yc = str(self.lineEdit_Yc.text())
-        val = readNum(new_Yc, self)
+    def updateYc(self, val = readNum(str(self.lineEdit_Yc.text()), self)):
         if isinstance(val,float):
             Yc = val
             y = Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
@@ -986,9 +973,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.moveROIs()
         self.lineEdit_Yc.setText(formatNum(self.Yc))
         
-    def updateAngle(self):
-        new_Angle = str(self.lineEdit_Angle.text())
-        val = readNum(new_Angle, self, False)
+    def updateAngle(self, val = readNum(str(self.lineEdit_Angle.text()), self, False)):
         if isinstance(val,float):
             angle = val
             x = self.Xc + self.H*np.sin(angle*np.pi/180)/2 - self.W*np.cos(angle*np.pi/180)/2
@@ -1000,9 +985,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.moveROIs()
         self.lineEdit_Angle.setText(formatNum(self.angle))
         
-    def updateH(self):
-        new_H = str(self.lineEdit_H.text())
-        val = readNum(new_H, self)
+    def updateH(self, val = readNum(str(self.lineEdit_H.text()), self)):
         if isinstance(val,float):
             H = val
             if self.FrameLocked:
@@ -1020,14 +1003,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.x = x
                 self.y = y
                 self.moveROIs()
-                self.updateSpeed()
-
-        self.lineEdit_H.setText(formatNum(self.H))
-        self.lineEdit_W.setText(formatNum(self.W))
         
-    def updateW(self):
-        new_W = str(self.lineEdit_W.text())
-        val = readNum(new_W, self)
+        self.updateGUI()
+        
+    def updateW(self, val = readNum(str(self.lineEdit_W.text()), self)):
         if isinstance(val,float):
             W = val
             if self.FrameLocked:
@@ -1045,22 +1024,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.x = x
                 self.y = y
                 self.moveROIs()
-                self.updateSpeed()
-        self.lineEdit_W.setText(formatNum(self.W))
-        self.lineEdit_H.setText(formatNum(self.H))
+                
+        self.updateGUI()
         
-    def updateSpeed(self):
-        if self.scanSmooth:
-            if self.LinearSpeedLocked:
-                self.lineTime = self.W / self.linearSpeed
-                self.lineEdit_LineTime.setText(formatNum(self.lineTime))
-            else: 
-                self.linearSpeed = self.W / self.lineTime
-                self.lineEdit_Linear.setText(formatNum(self.linearSpeed))
-        self.updateFrameTime()
-        
-    def updatePixels(self):
-        val = readNum(str(self.lineEdit_Pixels.text()), self, False)
+    def updatePixels(self, val = readNum(str(self.lineEdit_Pixels.text()), self, False)):
         if isinstance(val,float) and int(val) > 0:
             self.pixels = int(val)
             if self.DataLocked:
@@ -1069,38 +1036,26 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             else:
                 self.PixelsAspectRatio = float(self.pixels)/float(self.lines)
             if not self.scanSmooth:
-                if self.LinearSpeedLocked:
-                    self.lineTime = self.pixels*self.delayTime
-                    self.lineEdit_LineTime.setText(formatNum(self.lineTime))
-                else:
-                    self.delayTime = self.lineTime / self.pixels
-                    self.lineEdit_Linear.setText(formatNum(self.delayTime))
+                self.lineTime = self.pixels*self.delayTime
+                self.lineEdit_LineTime.setText(formatNum(self.lineTime))
             self.updateFrameTime()
         self.lineEdit_Pixels.setText(formatNum(self.pixels))
         
-    def updateLines(self):
-        new_Lines = str(self.lineEdit_Lines.text())
-        val = readNum(new_Lines, self, False)
+    def updateLines(self, val = readNum(str(self.lineEdit_Lines.text()), self, False)):
         if isinstance(val,float) and int(val) > 0:
             self.lines = int(val)
             if self.DataLocked:
                 self.pixels = int(val*self.PixelsAspectRatio)
                 self.lineEdit_Pixels.setText(formatNum(self.pixels))
                 if not self.scanSmooth:
-                    if self.LinearSpeedLocked:
-                        self.lineTime = self.pixels*self.delayTime
-                        self.lineEdit_LineTime.setText(formatNum(self.lineTime))
-                    else:
-                        self.delayTime = self.lineTime / self.pixels
-                        self.lineEdit_Linear.setText(formatNum(self.delayTime))
+                    self.lineTime = self.pixels*self.delayTime
+                    self.lineEdit_LineTime.setText(formatNum(self.lineTime))
             else:
                 self.PixelsAspectRatio = float(self.pixels)/float(self.lines)
             self.updateFrameTime()
         self.lineEdit_Lines.setText(formatNum(self.lines))
         
-    def updateLinearSpeed(self):
-        new_LinearSpeed = str(self.lineEdit_Linear.text())
-        val = readNum(new_LinearSpeed, self)
+    def updateLinearSpeed(self, val = readNum(str(self.lineEdit_Linear.text()), self)):
         if isinstance(val,float) and val > 0:
             if self.scanSmooth:
                 self.linearSpeed = val
@@ -1115,37 +1070,20 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.lineEdit_Linear.setText(formatNum(self.delayTime))
         self.updateScanParameters()
         self.updateFrameTime()
-
-    def updateLineTime(self):
-        new_LineTime = str(self.lineEdit_LineTime.text())
-        val = readNum(new_LineTime, self, False)
-        if isinstance(val,float):
-            self.lineTime = val
-            if self.scanSmooth:
-                self.linearSpeed = self.W/self.lineTime
-                self.lineEdit_Linear.setText(formatNum(self.linearSpeed))
-            else:
-                self.delayTime = self.lineTime / self.pixels
-                self.lineEdit_Linear.setText(formatNum(self.delayTime))
-        self.lineEdit_LineTime.setText(formatNum(self.lineTime))
-        self.updateScanParameters()
-        self.updateFrameTime()
-
+    
     def updateFileName(self):
         self.fileName = str(self.lineEdit_FileName.text())
         
-    def updateXTilt(self):
-        val = readNum(str(self.lineEdit_XTilt.text()), self, False)
+    def updateXTilt(self, val = readNum(str(self.lineEdit_XTilt.text()), self, False)):
         if isinstance(val,float):
             self.x_tilt = val*np.pi / 180
-            self.updateScanPlaneCenter(0)
+            self.updateScanPlaneCenter()
         self.lineEdit_XTilt.setText(formatNum(self.x_tilt*180 / np.pi))
 
-    def updateYTilt(self):
-        val = readNum(str(self.lineEdit_YTilt.text()), self, False)
+    def updateYTilt(self, val = readNum(str(self.lineEdit_YTilt.text()), self, False)):
         if isinstance(val,float):
             self.y_tilt = val*np.pi / 180
-            self.updateScanPlaneCenter(0)
+            self.updateScanPlaneCenter()
         self.lineEdit_YTilt.setText(formatNum(self.y_tilt*180 / np.pi))
 
     def updateScanMode(self, string):
@@ -1201,9 +1139,16 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 }""")
                 self.push_Scan.setEnabled(False)
 
-    def updateConstantHeightStatus(self, status, voltage):
-        #print 'Voltage for constant height sent to the scan control module: ', voltage
-        self.updateScanPlaneCenter(voltage)
+    @inlineCallbacks
+    def updateConstantHeightStatus(self, status):
+        '''
+        The attocube X and Y voltages are only controlled by the scan module, so unless the software
+        crashes they won't have changed. However, the Approach module can sometimes change the Z voltage
+        from the scanning dac adc. Therefore, before updating the center of the plane always read the 
+        output voltage on the Z channel to make sure there's no mismatch. 
+        '''
+        self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out']-1)
+        self.updateScanPlaneCenter()
         
         if status:
             self.ConstantHeightReady = True
@@ -1222,18 +1167,20 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 }""")
                 self.push_Scan.setEnabled(False)
     
-    def updateScanPlaneCenter(self, voltage):
-        #Take note of the position for the constant height approach. Values are in units of meters
-        #self.z_center = (self.Atto_Z_Voltage + voltage) / self.z_volts_to_meters
+    def updateScanPlaneCenter(self):
+        '''
+        Sets the current x, y, z position to be the center of the scan plane. 
+        '''
         self.z_center = (self.Atto_Z_Voltage) / self.z_volts_to_meters
         self.x_center = self.Atto_X_Voltage / self.x_volts_to_meters - self.x_meters_max/2
         self.y_center = self.Atto_Y_Voltage / self.y_volts_to_meters - self.y_meters_max/2
     
-    '''
-    When in constant height mode, we always want to be moving on a plane. This function takes in the desired X and Y coordinates
-    in meters and returns the X, Y, Z voltages that need to be traveled to. 
-    '''
+    
     def getPlaneVoltages(self, x,y):
+        '''
+        When in constant height mode, we always want to be moving on a plane. This function takes in the desired X and Y coordinates
+        in meters and returns the X, Y, Z voltages that need to be traveled to. 
+        '''
         z = self.z_center - np.tan(self.x_tilt)*(x-self.x_center) - np.tan(self.y_tilt)*(y-self.y_center)
         
         #Below is how it used to be done. Reference to make sure new version also does this properly
@@ -1286,7 +1233,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             line_x = self.W * np.cos(np.pi*self.angle/180) * self.x_volts_to_meters
             line_y = self.W * np.sin(np.pi*self.angle/180) * self.y_volts_to_meters
 
-            line_points = int(np.maximum(np.absolute(line_x / (300e-6)), np.absolute(line_y / (300e-6))))
+            line_points = int(np.maximum(np.absolute(line_x / (self.voltageStepSize)), np.absolute(line_y / (self.voltageStepSize))))
             
             line_ADC = self.pixels
             if self.scanSmooth:
@@ -1301,7 +1248,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 pixel_x = 0
                 pixel_y = 0
             
-            pixel_points = int(np.maximum(np.absolute(pixel_x / (300e-6)), np.absolute(pixel_y / (300e-6))))
+            pixel_points = int(np.maximum(np.absolute(pixel_x / (self.voltageStepSize)), np.absolute(pixel_y / (self.voltageStepSize))))
             if pixel_points == 0:
                 pixel_points = 1
                 
@@ -1415,7 +1362,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             stopz, stopx, stopy = self.getPlaneVoltages(x, y)
             
             #Takes the number of points required for this to be a smooth (300 uV step size)
-            points = int(np.maximum(np.absolute((stopx-startx) / (300e-6)), np.absolute((stopy-starty) / (300e-6))))
+            points = int(np.maximum(np.absolute((stopx-startx) / (self.voltageStepSize)), np.absolute((stopy-starty) / (self.voltageStepSize))))
             #Make sure minimum of 2 point to avoid errors
             if points < 2:
                 points = 2
@@ -1468,10 +1415,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             a = yield self.dac.read()
             
         #Call this the new center of the plane
-        self.updateScanPlaneCenter(0)
+        yield self.updateScanPlaneCenter()
         
     @inlineCallbacks
-    def startScan(self, c= None):
+    def startScan(self):
         try:
             print 'Starting Scan Protocol'
             #Save the values of the current scan as separate variables so that they are not editted by moving around scan windows mid-scan
@@ -1846,7 +1793,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         dy = self.currW * np.sin(np.pi*self.currAngle/180)
         line_z, line_x, line_y = self.getPlaneVoltages(dx, dy) - self.getPlaneVoltages(0,0)
         
-        line_points = int(np.maximum(np.absolute(line_x / (300e-6)), np.absolute(line_y / (300e-6))))
+        line_points = int(np.maximum(np.absolute(line_x / (self.voltageStepSize)), np.absolute(line_y / (self.voltageStepSize))))
         #If the scan range is so small that the number of steps to take with high resolution is 
         #less than the desired number of pixels to have in the scan, set the number of points to
         #be the deisred number of pixels. This means that, in reality, several points will be taken
@@ -1870,7 +1817,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
         pixel_z, pixel_x, pixel_y = self.getPlaneVoltages(dx, dy) - self.getPlaneVoltages(0,0)
         
-        pixel_points = int(np.maximum(np.absolute(pixel_x / (300e-6)), np.absolute(pixel_y / (300e-6))))
+        pixel_points = int(np.maximum(np.absolute(pixel_x / (self.voltageStepSize)), np.absolute(pixel_y / (self.voltageStepSize))))
         if pixel_points == 0:
             pixel_points = 1
         if self.lines >1:
@@ -1947,6 +1894,60 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         except Exception as inst:
             print 'Scan error: ', inst
             print 'on line: ', sys.exc_traceback.tb_lineno
+        
+#----------------------------------------------------------------------------------------------#
+    """ The following section has functions intended for use when running scripts from the scripting module."""
+    
+    def setSpeed(self, speed):
+        if not self.scanSmooth:
+            self.toggleSmoothScan()
+        self.updateLinearSpeed(speed)
+    
+    def setDelay(self, delay):
+        if self.scanSmooth:
+            self.toggleSmoothScan()
+        self.updateLinearSpeed(delay)
+    
+    def setPixels(self, pixels):
+        self.updatePixels(pixels)
+        
+    def setLines(self, lines):
+        self.updateLines(lines)
+        
+    def lockDataAspect(self):
+        if self.DataLocked = False:
+            self.toggleDataLock()
+    
+    def unlockDataAspect(self):
+        if self.DataLocked = True:
+            self.toggleDataLock()
+        
+    def setTilt(self, xtilt, ytilt):
+        self.updateXTilt(xtilt)
+        self.updateYTilt(ytilt)
+        
+    def lockScanAspect(self):
+        if self.FrameLocked = False:
+            self.toggleFrameLock()
+    
+    def unlockScanAspect(self):
+        if self.FrameLocked = True:
+            self.toggleFrameLock()
+        
+    def setXc(self, x):
+        self.updateXc(x)
+        
+    def setYc(self, y):
+        self.updateYc(y)
+        
+    def setH(self, H):
+        self.updateH(H)
+        
+    def setW(self, W):
+        self.updateW(W)
+        
+    def setAngle(self, theta):
+        self.updateAngle(theta)
         
 #----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""
