@@ -33,7 +33,6 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         'dc_box'    : False,
         'ami_430'   : False, 
         'hf2li'     : False,
-        'cpsc'      : False,
         'gpib_server': False, 
         'gpib_manager': False,
         'anc350':       False
@@ -144,7 +143,6 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             #First connect stand alone servers
             self.connectDataVault()
             self.connectHF2LI()
-            self.connectCPSC()
             self.connectANC350()
             
             #Then connect servers with dependencies on GPIB or Serial servers
@@ -258,9 +256,6 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.push_HF2LI.setStyleSheet("#push_HF2LI{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.label_HF2LI_status.setText('Not connected')
-        self.push_CPSC.setStyleSheet("#push_CPSC{" + 
-            "background: rgb(144, 140, 9);border-radius: 4px;}")
-        self.label_CPSC_status.setText('Not connected')
         self.push_GPIBServer.setStyleSheet("#push_GPIBServer{" + 
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.label_GPIBServer_status.setText('Not connected')
@@ -372,33 +367,6 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 self.label_HF2LI_status.setText('Connection Failed')
         self.cxnAttemptLocalDictionary['hf2li'] = True
         self.emitLocalConnectionDictionary()
-
-    @inlineCallbacks
-    def connectCPSC(self, c = None):
-        if self.connectionLocalDictionary['cxn'] is False:
-            self.push_CPSC.setStyleSheet("#push_CPSC{" + 
-            "background: rgb(144, 140, 9);border-radius: 4px;}")
-            self.label_CPSC_status.setText('Not connected')
-        else: 
-            cxn = self.connectionLocalDictionary['cxn']
-            try:
-                cpsc = yield cxn.cpsc_server
-                dev_connected = yield cpsc.detect_device()
-                if dev_connected:
-                    self.push_CPSC.setStyleSheet("#push_CPSC{" + 
-                    "background: rgb(0,170,0);border-radius: 4px;}")
-                    self.label_CPSC_status.setText('Connected')
-                    self.connectionLocalDictionary['cpsc'] = cpsc
-                else:
-                    self.push_CPSC.setStyleSheet("#push_CPSC{" + 
-                    "background: rgb(161,0,0);border-radius: 4px;}")
-                    self.label_CPSC_status.setText('No device detected') 
-            except Exception as inst:
-                self.push_CPSC.setStyleSheet("#push_CPSC{" + 
-                "background: rgb(161,0,0);border-radius: 4px;}")
-                self.label_CPSC_status.setText('Connection Failed')
-        self.cxnAttemptLocalDictionary['cpsc'] = True
-        self.emitLocalConnectionDictionary()
         
     @inlineCallbacks
     def connectANC350(self, c = None):
@@ -432,7 +400,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             
     """ The following section has the methods for connecting independent remote devices."""
     @inlineCallbacks
-    def connectRemoteLabRAD(self, c = None):
+    def connectRemoteLabRAD(self):
         from labrad.wrappers import connectAsync
         try:
             #Connects to the manager on the 4K system monitoring computer. Eventually add a way to

@@ -187,7 +187,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.label_switchStatus.setText('Error')
             self.persist = False
             
-    def setSetpoint(self, val = readNum(str(self.lineEdit_setpoint.text()), self, False)):
+    def setSetpoint(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_setpoint.text()), self, False)
         if isinstance(val,float):
             self.setpoint = val
         self.lineEdit_setpoint.setText(formatNum(self.setpoint, 4))
@@ -230,7 +232,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             print 'GTS, ', str(inst)
             
     @inlineCallbacks
-    def goToSetpointIPS(self, B = self.setpoint):
+    def goToSetpointIPS(self, B = None):
+        if B is None:
+            B = self.setpoint
         self.setting_value = True
         yield self.ips.set_control(3) #Set IPS to remote communication (prevents user from using the front panel)
         yield self.ips.set_targetfield(B) #Set targetfield to desired field
@@ -406,7 +410,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def setPersist(self, on):
         self.setting_value = True
         yield self.ips.set_control(3)
-        if on = True: #Persists the magnet at field
+        if on == True: #Persists the magnet at field
             yield self.ips.set_switchheater(2)
         elif on == False: #Heats the switch to enable charging
             yield self.ips.set_switchheater(1)

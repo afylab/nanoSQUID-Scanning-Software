@@ -259,7 +259,7 @@ border-radius: 5px
    <widget class="QLineEdit" name="lineEdit_Withdraw">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>170</x>
       <y>20</y>
       <width>61</width>
       <height>20</height>
@@ -275,7 +275,7 @@ border-radius: 5px
    <widget class="QPushButton" name="push_Withdraw">
     <property name="geometry">
      <rect>
-      <x>120</x>
+      <x>70</x>
       <y>10</y>
       <width>81</width>
       <height>31</height>
@@ -317,7 +317,7 @@ border-radius: 5px
    <widget class="QLabel" name="label_withdraw">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>170</x>
       <y>10</y>
       <width>61</width>
       <height>11</height>
@@ -1433,7 +1433,7 @@ border-radius: 5px
    <widget class="QPushButton" name="push_GenSettings">
     <property name="geometry">
      <rect>
-      <x>300</x>
+      <x>250</x>
       <y>10</y>
       <width>191</width>
       <height>31</height>

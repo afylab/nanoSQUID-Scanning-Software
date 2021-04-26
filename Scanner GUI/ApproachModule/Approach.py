@@ -16,7 +16,7 @@ import time
 from collections import deque
 
 path = sys.path[0] + r"\ApproachModule"
-ApproachUI, QtBaseClass = uic.loadUiType(path + r"\Approach-v2.ui")
+ApproachUI, QtBaseClass = uic.loadUiType(path + r"\Approach.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 Ui_generalApproachSettings, QtBaseClass = uic.loadUiType(path + r"\generalApproachSettings.ui")
 Ui_MeasurementSettings, QtBaseClass = uic.loadUiType(path + r"\MeasurementSettings.ui")
@@ -33,7 +33,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
     updateFeedbackStatus = QtCore.pyqtSignal(bool)
     updateConstantHeightStatus = QtCore.pyqtSignal(bool)
     updateApproachStatus = QtCore.pyqtSignal(bool)
-    updateJPEConnectStatus = QtCore.pyqtSignal(bool)
 
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
@@ -58,14 +57,10 @@ class Window(QtGui.QMainWindow, ApproachUI):
         #Connect incrementing buttons
         self.push_addFreq.clicked.connect(self.incrementFreqThresh)
         self.push_subFreq.clicked.connect(self.decrementFreqThresh)
-        self.push_addFeedback.clicked.connect(self.incrementFeedbackThresh)
-        self.push_subFeedback.clicked.connect(self.decrementFeedbackThresh)
         
         self.push_setZExtension.clicked.connect(self.setZExtension)
 
         self.lineEdit_freqSet.editingFinished.connect(self.setFreqThresh)
-        self.lineEdit_feedbackSet.editingFinished.connect(self.setFeedbackThresh)
-        self.lineEdit_feedbackACSet.editingFinished.connect(self.setFeedbackACThresh)
 
         self.lineEdit_P.editingFinished.connect(self.set_p)
         self.lineEdit_I.editingFinished.connect(self.set_i)
@@ -74,10 +69,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.lineEdit_PID_Const_Height.editingFinished.connect(self.set_pid_const_height)
         self.lineEdit_PID_Step_Size.editingFinished.connect(self.set_pid_step_size)
         self.lineEdit_PID_Step_Speed.editingFinished.connect(self.set_pid_step_speed)
-        
-        self.lineEdit_Step_Const_Height.editingFinished.connect(self.set_step_const_height)
-        self.lineEdit_Step_Step_Size.editingFinished.connect(self.set_step_step_size)
-        self.lineEdit_Step_Step_Speed.editingFinished.connect(self.set_step_step_speed)
         
         self.lineEdit_Man_Z_Extension.editingFinished.connect(self.set_man_z_extension)
 
@@ -97,11 +88,10 @@ class Window(QtGui.QMainWindow, ApproachUI):
         
         self.push_setPLLThresh.clicked.connect(self.setPLLThreshold)
         
-        self.push_frustrateFeedback.clicked.connect(self.startFrustratedFeedback)
+        self.push_frustrateFeedback.clicked.connect(self.setFrustratedFeedback)
         
         #Initialize all the labrad connections as not connected
         self.cxn = False
-        self.cpsc = False
         self.anc = False
         self.dac = False
         self.hf = False
@@ -130,8 +120,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
         #Height at which the previous approach made contact
         self.contactHeight = 0
         
-        #Keep track of motion, either from the JPEs or the attocube positioners
-        self.JPE_Steps = []
+        #Keep track of motion from the attocube positioners. 
+        #Exists for historical reasons, probably best to just use the attocube coarse position module
         self.coarsePositionerExtension = 0
 
         self.deltaf_track_length = 100
@@ -169,10 +159,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 'pll_rate'            : 1.842e+6,  #Sampling rate of the PLL. Cannot be changed, despite it being spit out by the pid advisor. Just... is what it is. 
                 'pll_output'          : 1,         #hf2li output to be used to completel PLL loop. 
                 'pll_output_amp'      : 0.001,      #output amplitude   
-                'fdbk_dc_input'       : 4,         # 1 indexed input of DAC ADC (5 and 6 correspond to Aux 1 and 2 from Zurich)
-                'fdbk_dc_setpoint'    : 0,         # DC setpoint from which to determine the change in feebdack output
-                'fdbk_ac_input'       : 6,         # 1 indexed input of DAC ADC (5 and 6 correspond to Aux 1 and 2 from Zurich)
-                'fdbk_ac_setpoint'    : 0,         # AC setpoint from which to determine the change in feebdack output
                 }
         
         '''
@@ -223,7 +209,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
         #Initialize values based off of the numbers put in the lineEdit in the ui file
         self.setFreqThresh()
 
-        self.lockInterface()
+        #self.lockInterface()
 
     def moveDefault(self):
         self.move(10,170)
@@ -232,13 +218,10 @@ class Window(QtGui.QMainWindow, ApproachUI):
     def connectLabRAD(self, dict):
         try:
             self.cxn = dict['servers']['local']['cxn']
-            self.cpsc = dict['servers']['local']['cpsc']
             self.anc = dict['servers']['local']['anc350']
 
             if dict['devices']['system']['coarse positioner'] == 'Attocube ANC350':
                 print 'Using ANC350 for Coarse Position Control'
-            elif dict['devices']['system']['coarse positioner'] == 'JPE CPSC':
-                print 'Using JPE for Coarse Position Control'
                 
             self.coarsePositioner = dict['devices']['system']['coarse positioner']
                 
@@ -503,7 +486,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
             #Turn off the PLL 
             #self.hf.set_pll_off(self.measurementSettings['pll_output'])
         self.cxn = False
-        self.cpsc = False
         self.dac = False
         self.dcbox = False
         self.hf = False
@@ -544,14 +526,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
         if GenSet.exec_():
             self.generalSettings = GenSet.getValues()
             
-    def updateJPESettings(self, newSettings):
-        self.generalSettings['jpe_temperature'] = newSettings['temp']
-        self.generalSettings['jpe_module_address'] = newSettings['module_address']
-        self.generalSettings['jpe_toggle'] = newSettings['toggle_channel']
-        
-    def updateJPEConnected(self, connected):
-        self.JPEConnected = connected
-            
     def setupAdditionalUi(self):
         self.freqSlider.close()
         self.freqSlider = MySlider(parent = self.centralwidget)
@@ -565,29 +539,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
         
         self.freqSlider.logValueChanged.connect(self.updateFreqThresh)
         
-        self.feedbackSlider.close()
-        self.feedbackSlider = MySlider(parent = self.centralwidget)
-        self.feedbackSlider.setGeometry(120,175,260,70)
-        self.feedbackSlider.setMinimum(0)
-        self.feedbackSlider.setMaximum(1000000)
-        self.feedbackSlider.setStyleSheet("QSlider::groove:horizontal {border: 1px solid #bbb;background: white;height: 10px;border-radius: 4px;}QSlider::sub-page:horizontal {background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,    stop: 0 #66e, stop: 1 #bbf);background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,    stop: 0 #bbf, stop: 1 #55f);border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::add-page:horizontal {background: #fff;border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::handle:horizontal {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #eee, stop:1 #ccc);border: 1px solid #777;width: 13px;margin-top: -2px;margin-bottom: -2px;border-radius: 4px;}QSlider::handle:horizontal:hover {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #fff, stop:1 #ddd);border: 1px solid #444;border-radius: 4px;}QSlider::sub-page:horizontal:disabled {background: #bbb;border-color: #999;}QSlider::add-page:horizontal:disabled {background: #eee;border-color: #999;}QSlider::handle:horizontal:disabled {background: #eee;border: 1px solid #aaa;border-radius: 4px;}")
-        self.feedbackSlider.setTickPos([0.0008, 0.001, 0.002, 0.004,0.006, 0.008, 0.01,0.02,0.04,0.06, 0.08,0.1, 0.2, 0.4, 0.6, 0.8, 1, 2])
-        self.feedbackSlider.setNumPos([0.001, 0.01,0.1,1])
-        self.feedbackSlider.lower()
-        
-        self.feedbackSlider.logValueChanged.connect(self.updateFeedbackThresh)
-        
-        self.feedbackACSlider.close()
-        self.feedbackACSlider = MySlider(parent = self.centralwidget)
-        self.feedbackACSlider.setGeometry(120,250,260,70)
-        self.feedbackACSlider.setMinimum(0)
-        self.feedbackACSlider.setMaximum(1000000)
-        self.feedbackACSlider.setStyleSheet("QSlider::groove:horizontal {border: 1px solid #bbb;background: white;height: 10px;border-radius: 4px;}QSlider::sub-page:horizontal {background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,    stop: 0 #66e, stop: 1 #bbf);background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,    stop: 0 #bbf, stop: 1 #55f);border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::add-page:horizontal {background: #fff;border: 1px solid #777;height: 10px;border-radius: 4px;}QSlider::handle:horizontal {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #eee, stop:1 #ccc);border: 1px solid #777;width: 13px;margin-top: -2px;margin-bottom: -2px;border-radius: 4px;}QSlider::handle:horizontal:hover {background: qlineargradient(x1:0, y1:0, x2:1, y2:1,    stop:0 #fff, stop:1 #ddd);border: 1px solid #444;border-radius: 4px;}QSlider::sub-page:horizontal:disabled {background: #bbb;border-color: #999;}QSlider::add-page:horizontal:disabled {background: #eee;border-color: #999;}QSlider::handle:horizontal:disabled {background: #eee;border: 1px solid #aaa;border-radius: 4px;}")
-        self.feedbackACSlider.setTickPos([0.0008, 0.001, 0.002, 0.004,0.006, 0.008, 0.01,0.02,0.04,0.06, 0.08,0.1, 0.2, 0.4, 0.6, 0.8, 1, 2])
-        self.feedbackACSlider.setNumPos([0.001, 0.01,0.1,1])
-        self.feedbackACSlider.lower()
-        
-        self.feedbackACSlider.logValueChanged.connect(self.updateFeedbackACThresh)
 
     def set_p(self):
         val = readNum(str(self.lineEdit_P.text()), self)
@@ -613,7 +564,9 @@ class Window(QtGui.QMainWindow, ApproachUI):
             self.setPIDParameters()
         self.lineEdit_D.setText(formatNum(self.PIDApproachSettings['d']))
         
-    def set_pid_const_height(self, val = readNum(str(self.lineEdit_PID_Const_Height.text()), self)):
+    def set_pid_const_height(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_PID_Const_Height.text()), self)
         if isinstance(val,float):
             if val < 0:
                 val = 0
@@ -676,7 +629,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             print inst
 
     @inlineCallbacks
-    def setFreqThreshholdSign(self, c = None):
+    def setFreqThreshholdSign(self):
         if self.measurementSettings['pll_centerfreq'] is not None and not self.withdrawing:
             if self.radioButton_plus.isChecked():
                 yield self.hf.set_pid_setpoint(self.PID_Index, self.measurementSettings['pll_centerfreq'] + self.freqThreshold)
@@ -966,7 +919,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                         
                     if self.approaching:
                         #Empty the zData array. This prevents the software from thinking it hit the surface because of
-                        #the approach prior to the JPEs setpping
+                        #the approach prior to the coarse positioners setpping
                         self.zData = deque([-50e-9]*self.z_track_length)
                         #Turn back on
                         yield self.hf.set_pid_on(self.PID_Index, True)
@@ -1506,42 +1459,9 @@ class Window(QtGui.QMainWindow, ApproachUI):
         
     @inlineCallbacks
     def stepCoarsePositioners(self):
-        if self.coarsePositioner == 'JPE CPSC':
-            yield self.stepJPEs()
-        elif self.coarsePositioner == 'Attocube ANC350':
+        if self.coarsePositioner == 'Attocube ANC350':
             yield self.stepANC350()
-        
-    @inlineCallbacks
-    def stepJPEs(self):
-    
-        if not self.cpsc.checkweights():
-            self.throwWeightsWarning()
-        else:
-            self.label_pidApproachStatus.setText('Stepping with JPEs')
-        
-            self.CPStepping = True
-            
-            #Make sure the JPEs are electrically connected
-            yield self.connectJPEs()
-            
-            print 'Printing JPE Settings', int(self.generalSettings['jpe_module_address']), int(self.generalSettings['jpe_temperature']), int(self.generalSettings['jpe_freq']), int(self.generalSettings['jpe_size']), -1.0*self.generalSettings['jpe_steps'],30
-            #Step JPE by specified amount in z direction (30 at the end ensures that we move w/ high torque)
-            yield self.cpsc.move_z(int(self.generalSettings['jpe_module_address']), int(self.generalSettings['jpe_temperature']), int(self.generalSettings['jpe_freq']), int(self.generalSettings['jpe_size']), -1.0*self.generalSettings['jpe_steps'],30)
-            #Add to list of steps taken with auto approach
-            self.JPE_Steps.append([int(self.generalSettings['jpe_module_address']), int(self.generalSettings['jpe_temperature']), int(self.generalSettings['jpe_freq']), int(self.generalSettings['jpe_size']), -1.0*self.generalSettings['jpe_steps']])
-            try:
-                self.updateCoarseSteps()
-            except Exception as inst:
-                print inst
-                
-            #Make sure the JPEs are electrically disconnected during rest of approach
-            yield self.disconnectJPEs()
-                
-            #Give time to make sure that deltaf settles back to true value from violent JPE steps
-            #Might be unnecessary
-            yield self.sleep(0.5)
-            self.CPStepping = False
-            
+                    
     @inlineCallbacks
     def stepANC350(self, c= None):
         #Set module to coarse positioners are stepping
@@ -1593,12 +1513,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.CPStepping = False
         
     def updateCoarseSteps(self):
-        if self.coarsePositioner == 'JPE CPSC':
-            steps = 0
-            for a in self.JPE_Steps:
-                steps = steps + a[4]
-            self.lineEdit_CoarseZ.setText(formatNum(np.abs(steps), 4))
-        elif self.coarsePositioner == 'Attocube ANC350':
+        if self.coarsePositioner == 'Attocube ANC350':
             self.lineEdit_CoarseZ.setText(formatNum(self.coarsePositionerExtension, 4))
             
     @inlineCallbacks
@@ -1615,7 +1530,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
         
             #Disable buttons for insane button clickers like Charles Tschirhart <3
             self.push_Withdraw.setEnabled(False)
-            self.push_StepApproachForConstant.setEnabled(False)
             self.push_ApproachForFeedback.setEnabled(False)
             self.push_PIDApproachForConstant.setEnabled(False)
             
@@ -1694,7 +1608,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 yield self.setDAC_Voltage(self.Atto_Z_Voltage, -z_voltage, speed)
                 
             self.push_Withdraw.setEnabled(True)
-            self.push_StepApproachForConstant.setEnabled(True)
             self.push_ApproachForFeedback.setEnabled(True)
             self.push_PIDApproachForConstant.setEnabled(True)
             
@@ -1800,17 +1713,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
 #----------------------------------------------------------------------------------------------#         
     """ The following section has generally useful functions."""  
     
-    def throwWeightsWarning(self):
-        msgBox = QtGui.QMessageBox(self)
-        msgBox.setIcon(QtGui.QMessageBox.Information)
-        msgBox.setWindowTitle('JPE Step Sizes Set Improperly')
-        msgBox.setText("\r\n The relative step sizes for the JPEs are set improperly. The relative step size for one or more of the knobs is set to 0.")
-        msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
-        msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
-        msgBox.exec_()
-    
     def lockInterface(self):
-        self.push_Home.setEnabled(False)
         self.push_Withdraw.setEnabled(False)
         self.push_GenSettings.setEnabled(False)
         
@@ -1821,14 +1724,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.push_ApproachForFeedback.setEnabled(False)
         self.push_PIDApproachForConstant.setEnabled(False)
         
-        self.push_StepApproachForConstant.setEnabled(False)
-        
         self.push_addFreq.setEnabled(False)
         self.push_subFreq.setEnabled(False)
-        self.push_addFeedback.setEnabled(False)
-        self.push_subFeedback.setEnabled(False)
-        self.push_addFeedbackAC.setEnabled(False)
-        self.push_subFeedbackAC.setEnabled(False)
         
         self.push_setZExtension.setEnabled(False)
         
@@ -1841,9 +1738,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.lineEdit_PID_Const_Height.setDisabled(True)
         self.lineEdit_PID_Step_Size.setDisabled(True)
         self.lineEdit_PID_Step_Speed.setDisabled(True)
-        self.lineEdit_Step_Const_Height.setDisabled(True)
-        self.lineEdit_Step_Step_Size.setDisabled(True)
-        self.lineEdit_Step_Step_Speed.setDisabled(True)
         self.lineEdit_P.setDisabled(True)
         self.lineEdit_I.setDisabled(True)
         self.lineEdit_D.setDisabled(True)
@@ -1853,22 +1747,12 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.checkBox_autoThreshold.setEnabled(False)
         
         self.lockFreq()
-        self.lockFdbkDC()
-        self.lockFdbkAC()
 
     def lockFreq(self):
         self.lineEdit_freqSet.setDisabled(True)
         self.freqSlider.setEnabled(False)
         self.radioButton_plus.setEnabled(False)
         self.radioButton_minus.setEnabled(False)
-        
-    def lockFdbkDC(self):
-        self.feedbackSlider.setEnabled(False)
-        self.lineEdit_feedbackSet.setDisabled(True)
-        
-    def lockFdbkAC(self):
-        self.feedbackACSlider.setEnabled(False)
-        self.lineEdit_feedbackACSet.setDisabled(True)
         
     def lockWithdrawSensitiveInputs(self):
         self.lockFreq()
@@ -1882,7 +1766,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.push_subFreq.setDisabled(True)
         
     def unlockInterface(self):
-        self.push_Home.setEnabled(True)
         self.push_Withdraw.setEnabled(True)
         self.push_GenSettings.setEnabled(True)
         
@@ -1893,14 +1776,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.push_ApproachForFeedback.setEnabled(True)
         self.push_PIDApproachForConstant.setEnabled(True)
         
-        self.push_StepApproachForConstant.setEnabled(True)
-        
         self.push_addFreq.setEnabled(True)
         self.push_subFreq.setEnabled(True)
-        self.push_addFeedback.setEnabled(True)
-        self.push_subFeedback.setEnabled(True)
-        self.push_addFeedbackAC.setEnabled(True)
-        self.push_subFeedbackAC.setEnabled(True)
         
         self.push_setZExtension.setEnabled(True)
         
@@ -1913,9 +1790,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.lineEdit_PID_Const_Height.setDisabled(False)
         self.lineEdit_PID_Step_Size.setDisabled(False)
         self.lineEdit_PID_Step_Speed.setDisabled(False)
-        self.lineEdit_Step_Const_Height.setDisabled(False)
-        self.lineEdit_Step_Step_Size.setDisabled(False)
-        self.lineEdit_Step_Step_Speed.setDisabled(False)
         self.lineEdit_P.setDisabled(False)
         self.lineEdit_I.setDisabled(False)
         self.lineEdit_D.setDisabled(False)
@@ -1924,8 +1798,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
         
         self.checkBox_autoThreshold.setEnabled(True)
         
-        self.unlockFdbkAC()
-        self.unlockFdbkDC()
         self.unlockFreq()
         
     def unlockFreq(self):
@@ -1933,14 +1805,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.freqSlider.setEnabled(True)
         self.radioButton_plus.setEnabled(True)
         self.radioButton_minus.setEnabled(True)
-        
-    def unlockFdbkDC(self):
-        self.feedbackSlider.setEnabled(True)
-        self.lineEdit_feedbackSet.setDisabled(False)
-        
-    def unlockFdbkAC(self):
-        self.feedbackACSlider.setEnabled(True)
-        self.lineEdit_feedbackACSet.setDisabled(False)
         
     def unlockWithdrawSensitiveInputs(self):
         if self.measurementSettings['meas_pll']:
@@ -1990,10 +1854,6 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         
         self.lineEdit_PID_Retract_Speed.editingFinished.connect(self.setPID_Retract_Speed)
         self.lineEdit_PID_Retract_Time.editingFinished.connect(self.setPID_Retract_Time)
-        
-        self.lineEdit_JPE_Steps.editingFinished.connect(self.setJPE_Steps)
-        self.lineEdit_JPE_Size.editingFinished.connect(self.setJPE_Size)
-        self.lineEdit_JPE_Freq.editingFinished.connect(self.setJPE_Freq)
         
         self.lineEdit_AutoRetractDist.editingFinished.connect(self.setAutoRetractDist)
         self.lineEdit_AutoRetractPoints.editingFinished.connect(self.setAutoRetractPoints)
@@ -2100,8 +1960,6 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.hf = server
         
         self.checkBox_pll.stateChanged.connect(self.setMeasPLL)
-        self.checkBox_fdbkDC.stateChanged.connect(self.setMeasFdbkDC)
-        self.checkBox_fdbkAC.stateChanged.connect(self.setMeasFdbkAC)
             
         self.lineEdit_TargetBW.editingFinished.connect(self.setPLL_TargetBW)
         self.lineEdit_PLL_Range.editingFinished.connect(self.setPLL_Range)
@@ -2118,13 +1976,6 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
 
         self.lineEdit_PLL_Amplitude.editingFinished.connect(self.setPLL_Output_Amplitude)
         self.comboBox_PLL_Output.currentIndexChanged.connect(self.setPLL_Output)
-
-        self.comboBox_DC_Input.currentIndexChanged.connect(self.setFdbk_DC_Input)
-        self.lineEdit_DC_Setpoint.editingFinished.connect(self.setFdbk_DC_Setpoint)
-        self.comboBox_AC_Input.currentIndexChanged.connect(self.setFdbk_AC_Input)
-        self.lineEdit_AC_Setpoint.editingFinished.connect(self.setFdbk_AC_Setpoint)
-        
-        self.comboBox_ZMonitor_Input.currentIndexChanged.connect(self.setZMonitor_Input)
         
         self.loadValues()
         self.createLoadingColors()

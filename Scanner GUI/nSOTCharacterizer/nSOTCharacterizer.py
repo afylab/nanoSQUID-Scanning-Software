@@ -219,7 +219,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         except Exception as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-            print 'nsot labrad connect', inst
+            print 'nsot char labrad connect', inst
             exc_type, exc_obj, exc_tb = sys.exc_info()
             print 'line num ', exc_tb.tb_lineno
             
@@ -1919,11 +1919,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
     
     def setMinVoltage(self, vmin):
         self.biasMinSetValue.setText(formatNum(vmin, 3))
-        self.UpdateVVals(self.biasMinSetValue))
+        self.UpdateVVals(self.biasMinSetValue)
     
     def setMaxVoltage(self, vmax):
         self.biasMaxSetValue.setText(formatNum(vmax, 3))
-        self.UpdateVVals(self.biasMaxSetValue))
+        self.UpdateVVals(self.biasMaxSetValue)
     
     def setVoltagePoints(self, pnts):
         self.biasPointsSetValue.setText(formatNum(pnts,10))
@@ -1935,7 +1935,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         
     def setMinField(self, bmin):
         self.biasMinSetValue.setText(formatNum(bmin, 3))
-        self.UpdateVVals(self.biasMinSetValue))
+        self.UpdateVVals(self.biasMinSetValue)
         
     def setMaxField(self, bmax):
         self.fieldMaxSetValue.setText(formatNum(bmax, 3))

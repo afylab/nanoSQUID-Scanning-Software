@@ -89,7 +89,6 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         
         self.push_loadConfig.clicked.connect(self.loadNewConfigurationInfo)
         
-        self.comboBox_Approach_DACADC.currentIndexChanged.connect(self.setApproachDACADC)
         self.comboBox_Approach_DCBox.currentIndexChanged.connect(self.setApproachDCBox)
         self.comboBox_Approach_HF2LI.currentIndexChanged.connect(self.setApproachHF2LI)
         
@@ -139,25 +138,6 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                         }'''
         self.pushButton_configStatus.setStyleSheet(sheet)
         
-    def setApproachDACADC(self):
-        self.deviceDictionary['devices']['approach and TF']['dac_adc'] = str(self.comboBox_Approach_DACADC.currentText())
-        
-        self.label_Approach_DAC.setText(str(self.comboBox_Approach_DACADC.currentText()))
-        
-        ComboBox1 = self.comboBox_Approach_Sig1Device
-        ComboBox2 = self.comboBox_Approach_Sig2Device
-        
-        AllItems = [ComboBox1.itemText(i) for i in range(ComboBox1.count())]
-        
-        for item in AllItems:
-            if str(item).startswith('DA'):
-                ComboBox1.removeItem(AllItems.index(item))
-                ComboBox2.removeItem(AllItems.index(item))
-        
-        ComboBox1.addItem(str(self.comboBox_Approach_DACADC.currentText()))
-        ComboBox2.addItem(str(self.comboBox_Approach_DACADC.currentText()))
-        self.setConfigStatus(False)
-        
     def setApproachDCBox(self):
         self.deviceDictionary['devices']['approach and TF']['dc_box'] = str(self.comboBox_Approach_DCBox.currentText())
         self.label_Approach_DCBox.setText(str(self.comboBox_Approach_DCBox.currentText()))
@@ -169,19 +149,6 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.label_Approach_HF2.setText(str(self.comboBox_Approach_HF2LI.currentText()))
         self.label_Approach_HF3.setText(str(self.comboBox_Approach_HF2LI.currentText()))
         self.label_Approach_HF4.setText(str(self.comboBox_Approach_HF2LI.currentText()))
-        
-        ComboBox1 = self.comboBox_Approach_Sig1Device
-        ComboBox2 = self.comboBox_Approach_Sig2Device
-        
-        AllItems = [ComboBox1.itemText(i) for i in range(ComboBox1.count())]
-                
-        for item in AllItems:
-            if str(item).startswith('dev'):
-                ComboBox1.removeItem(AllItems.index(item))
-                ComboBox2.removeItem(AllItems.index(item))
-        
-        ComboBox1.addItem(str(self.comboBox_Approach_HF2LI.currentText()))
-        ComboBox2.addItem(str(self.comboBox_Approach_HF2LI.currentText()))
         self.setConfigStatus(False)
         
     def setScanDACADC(self):
@@ -314,9 +281,6 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                 list = yield dict['hf2li'].list_devices()
                 for device in list:
                     self.comboBox_Approach_HF2LI.addItem(device[1])
-                    
-            if not not dict['cpsc']:
-                self.comboBox_CoarsePositioner.addItem('JPE CPSC')
                 
             if not not dict['anc350']:
                 self.comboBox_CoarsePositioner.addItem('Attocube ANC350')

@@ -967,44 +967,6 @@ border-radius: 5px
       <string>Stand Alone Servers</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_CPSC_status">
-     <property name="geometry">
-      <rect>
-       <x>100</x>
-       <y>20</y>
-       <width>121</width>
-       <height>15</height>
-      </rect>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#label_CPSC_status{
-color:rgb(168,168,168);
-qproperty-alignment: 'AlignVCenter | AlignCenter';
-}</string>
-     </property>
-     <property name="text">
-      <string>Not connected</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_CSPC">
-     <property name="geometry">
-      <rect>
-       <x>-10</x>
-       <y>20</y>
-       <width>80</width>
-       <height>15</height>
-      </rect>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#label_HF2LI{
-color:rgb(168,168,168);
-qproperty-alignment: 'AlignVCenter | AlignRight';
-}</string>
-     </property>
-     <property name="text">
-      <string>JPE CPSC:</string>
-     </property>
-    </widget>
     <widget class="QLabel" name="label_HF2LI">
      <property name="geometry">
       <rect>
@@ -1059,30 +1021,11 @@ qproperty-alignment: 'AlignVCenter | AlignCenter';
       <string>Not connected</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="push_CPSC">
-     <property name="geometry">
-      <rect>
-       <x>80</x>
-       <y>20</y>
-       <width>15</width>
-       <height>15</height>
-      </rect>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">#push_CPSC{
-background:rgb(144, 140, 9);
-border-radius: 4px;
-}</string>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
     <widget class="QPushButton" name="push_DataVault">
      <property name="geometry">
       <rect>
        <x>80</x>
-       <y>40</y>
+       <y>20</y>
        <width>15</width>
        <height>15</height>
       </rect>
@@ -1101,7 +1044,7 @@ background: rgb(144, 140, 9);
      <property name="geometry">
       <rect>
        <x>100</x>
-       <y>40</y>
+       <y>20</y>
        <width>121</width>
        <height>15</height>
       </rect>
@@ -1120,7 +1063,7 @@ qproperty-alignment: 'AlignVCenter | AlignCenter';
      <property name="geometry">
       <rect>
        <x>-10</x>
-       <y>40</y>
+       <y>20</y>
        <width>80</width>
        <height>15</height>
       </rect>
@@ -1135,7 +1078,7 @@ qproperty-alignment: 'AlignVCenter | AlignCenter';
     <widget class="QLabel" name="label_ANC350">
      <property name="geometry">
       <rect>
-       <x>235</x>
+       <x>-10</x>
        <y>40</y>
        <width>80</width>
        <height>15</height>
@@ -1151,7 +1094,7 @@ qproperty-alignment: 'AlignVCenter | AlignCenter';
     <widget class="QPushButton" name="push_ANC350">
      <property name="geometry">
       <rect>
-       <x>325</x>
+       <x>80</x>
        <y>40</y>
        <width>15</width>
        <height>15</height>
@@ -1170,7 +1113,7 @@ border-radius: 4px;
     <widget class="QLabel" name="label_ANC350_status">
      <property name="geometry">
       <rect>
-       <x>345</x>
+       <x>100</x>
        <y>40</y>
        <width>121</width>
        <height>15</height>
