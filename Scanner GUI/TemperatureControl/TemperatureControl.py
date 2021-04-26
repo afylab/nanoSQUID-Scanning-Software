@@ -282,7 +282,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.push_heater.setText('Heater Off')
             
     @inlineCallbacks
-    def setSetpoint(self, val = readNum(str(self.lineEdit_setpoint.text()), self, False)):
+    def setSetpoint(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_setpoint.text()), self, False)
         if isinstance(val,float):
             if self.measurementSettings['heater mode'] == 0:
                 self.measurementSettings['setpoint'] = val

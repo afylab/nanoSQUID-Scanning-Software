@@ -14,8 +14,7 @@ sys.path.append(path + r'\DataVaultBrowser')
 sys.path.append(path + r'\Plotters Control')
 sys.path.append(path + r'\TFCharacterizer')
 sys.path.append(path + r'\ApproachModule')
-sys.path.append(path + r'\ApproachMonitor') 
-sys.path.append(path + r'\JPEPositionControl')
+sys.path.append(path + r'\ApproachMonitor')
 sys.path.append(path + r'\PositionCalibration')
 sys.path.append(path + r'\Field Control')
 sys.path.append(path + r'\ScriptingModule')
@@ -37,7 +36,6 @@ import PlottersControl
 import TFCharacterizer
 import Approach
 import ApproachMonitor
-import JPEControl
 import PositionCalibration
 import FieldControl
 import Scripting
@@ -74,7 +72,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
         self.Approach = Approach.Window(self.reactor, None)
         self.ApproachMonitor = ApproachMonitor.Window(self.reactor, None)
-        self.JPEControl = JPEControl.Window(self.reactor, None)
         self.PosCalibration = PositionCalibration.Window(self.reactor, None)
         self.FieldControl = FieldControl.Window(self.reactor, None)
         self.TempControl = TemperatureControl.Window(self.reactor,None)
@@ -85,8 +82,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         
         #This module should always be initialized last, and have the modules
         #That are desired to be scriptable be input
-        self.Scripting = Scripting.Window(self.reactor, None, self.ScanControl, self.Approach, 
-                                          self.JPEControl, self.nSOTChar, self.FieldControl, self.TempControl,
+        self.Scripting = Scripting.Window(self.reactor, None, self.ScanControl, self.Approach, self.nSOTChar, self.FieldControl, self.TempControl,
                                           self.SampleCharacterizer, self.GoToSetpoint)
         
         #Connects all drop down menu button
@@ -97,7 +93,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.actionTF_Characterizer.triggered.connect(self.openTFCharWindow)
         self.actionApproach_Control.triggered.connect(self.openApproachWindow)
         self.actionApproach_Monitor.triggered.connect(self.openApproachMonitorWindow)
-        self.actionJPE_Coarse_Position_Control.triggered.connect(self.openJPEControlWindow)
         self.actionAttocube_Position_Calibration.triggered.connect(self.openPosCalibrationWindow)
         self.actionMagnetic_Field_Control.triggered.connect(self.openFieldControlWindow)
         self.actionRun_Scripts.triggered.connect(self.openScriptingModule)
@@ -137,15 +132,10 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         
         self.Approach.updateFeedbackStatus.connect(self.ScanControl.updateFeedbackStatus)
         self.Approach.updateConstantHeightStatus.connect(self.ScanControl.updateConstantHeightStatus)
-        self.Approach.updateApproachStatus.connect(self.JPEControl.updateApproachStatus)
-        self.Approach.updateJPEConnectStatus.connect(self.JPEControl.updateJPEConnected)
         
         self.PosCalibration.newTemperatureCalibration.connect(self.setVoltageCalibration)
         
         self.ScanControl.updateScanningStatus.connect(self.Approach.updateScanningStatus)
-
-        self.JPEControl.newJPESettings.connect(self.Approach.updateJPESettings)
-        self.JPEControl.updateJPEConnectStatus.connect(self.Approach.updateJPEConnected)
         
         #Make sure default calibration is emitted 
         self.PosCalibration.emitCalibration()
@@ -203,11 +193,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.ApproachMonitor.showNormal()
         self.ApproachMonitor.moveDefault()
         self.ApproachMonitor.raise_()
-            
-    def openJPEControlWindow(self):
-        self.JPEControl.showNormal()
-        self.JPEControl.moveDefault()
-        self.JPEControl.raise_()
 
     def openPosCalibrationWindow(self):
         self.PosCalibration.showNormal()
@@ -264,7 +249,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.ScanControl.connectLabRAD(dict)
         self.TFChar.connectLabRAD(dict)
         self.Approach.connectLabRAD(dict)
-        self.JPEControl.connectLabRAD(dict)
         self.Scripting.connectLabRAD(dict)
         self.GoToSetpoint.connectLabRAD(dict)
         self.FieldControl.connectLabRAD(dict)
@@ -279,7 +263,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.ScanControl.disconnectLabRAD()
         self.TFChar.disconnectLabRAD()
         self.Approach.disconnectLabRAD()
-        self.JPEControl.disconnectLabRAD()
         self.FieldControl.disconnectLabRAD()
         self.Scripting.disconnectLabRAD()
         self.TempControl.disconnectLabRAD()
@@ -338,7 +321,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.TFChar.hide()
         self.Approach.hide()
         self.ApproachMonitor.hide()
-        self.JPEControl.hide()
         self.PosCalibration.hide()
         self.GoToSetpoint.hide()
         self.QRreader.hide()
@@ -355,7 +337,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
             self.TFChar.close()
             self.Approach.close()
             self.ApproachMonitor.close()
-            self.JPEControl.close()
             self.PosCalibration.close()
             self.Scripting.close()
             self.FieldControl.close()

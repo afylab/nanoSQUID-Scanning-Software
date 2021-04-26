@@ -17,12 +17,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.reactor = reactor
         self.ScanControl = args[0]
         self.Approach = args[1]
-        self.JPEControl = args[2]
-        self.nSOTChar = args[3]
-        self.FieldControl = args[4]
-        self.TempControl = args[5]
-        self.SampleChar = args[6]
-        self.nSOTBias = args[7]
+        self.nSOTChar = args[2]
+        self.FieldControl = args[3]
+        self.TempControl = args[4]
+        self.SampleChar = args[5]
+        self.nSOTBias = args[6]
         
         self.setupUi(self)
         self.setupAdditionalUi()
@@ -83,7 +82,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.current_line = 0
             exec code_to_run
             self.current_line = 1
-            yield f(self, self.sleep, self.cxn, self.cxnr, self.ScanControl, self.Approach, self.JPEControl, self.nSOTChar, self.FieldControl, self.TempControl, self.SampleChar, self.nSOTBias)
+            yield f(self, self.sleep, self.cxn, self.cxnr, self.ScanControl, self.Approach, self.nSOTChar, self.FieldControl, self.TempControl, self.SampleChar, self.nSOTBias)
             self.runningScript = False
             self.label_status.setText('Script is in editing mode')
             self.unlockInterface()
@@ -119,7 +118,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         in this section is critical to it running correctly. 
         '''
         code_lines = str(self.codeEditor.toPlainText()).splitlines()
-        code_to_run = "@inlineCallbacks\ndef f(self, sleep, cxn, cxnr, ScanControl, Approach, JPEControl, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias):\n "
+        code_to_run = "@inlineCallbacks\ndef f(self, sleep, cxn, cxnr, ScanControl, Approach, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias):\n "
         code_to_run = code_to_run + "yield sleep(0.1)\n "
         i = 1
         prev_line = 'None'

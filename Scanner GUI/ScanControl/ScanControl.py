@@ -953,7 +953,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     """ The following section connects actions related to updating scan parameters from
         the line edits."""  
         
-    def updateXc(self, val = readNum(str(self.lineEdit_Xc.text()), self)):
+    def updateXc(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_Xc.text()), self)
         if isinstance(val,float):
             Xc = val
             x = Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
@@ -963,7 +965,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.moveROIs()
         self.lineEdit_Xc.setText(formatNum(self.Xc))
         
-    def updateYc(self, val = readNum(str(self.lineEdit_Yc.text()), self)):
+    def updateYc(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_Yc.text()), self)
         if isinstance(val,float):
             Yc = val
             y = Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
@@ -973,7 +977,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.moveROIs()
         self.lineEdit_Yc.setText(formatNum(self.Yc))
         
-    def updateAngle(self, val = readNum(str(self.lineEdit_Angle.text()), self, False)):
+    def updateAngle(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_Angle.text()), self, False)
         if isinstance(val,float):
             angle = val
             x = self.Xc + self.H*np.sin(angle*np.pi/180)/2 - self.W*np.cos(angle*np.pi/180)/2
@@ -985,7 +991,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.moveROIs()
         self.lineEdit_Angle.setText(formatNum(self.angle))
         
-    def updateH(self, val = readNum(str(self.lineEdit_H.text()), self)):
+    def updateH(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_H.text()), self)
         if isinstance(val,float):
             H = val
             if self.FrameLocked:
@@ -1006,7 +1014,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.updateGUI()
         
-    def updateW(self, val = readNum(str(self.lineEdit_W.text()), self)):
+    def updateW(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_W.text()), self)
         if isinstance(val,float):
             W = val
             if self.FrameLocked:
@@ -1027,7 +1037,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 
         self.updateGUI()
         
-    def updatePixels(self, val = readNum(str(self.lineEdit_Pixels.text()), self, False)):
+    def updatePixels(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_Pixels.text()), self, False)
         if isinstance(val,float) and int(val) > 0:
             self.pixels = int(val)
             if self.DataLocked:
@@ -1041,7 +1053,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.updateFrameTime()
         self.lineEdit_Pixels.setText(formatNum(self.pixels))
         
-    def updateLines(self, val = readNum(str(self.lineEdit_Lines.text()), self, False)):
+    def updateLines(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_Lines.text()), self, False)
         if isinstance(val,float) and int(val) > 0:
             self.lines = int(val)
             if self.DataLocked:
@@ -1055,7 +1069,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.updateFrameTime()
         self.lineEdit_Lines.setText(formatNum(self.lines))
         
-    def updateLinearSpeed(self, val = readNum(str(self.lineEdit_Linear.text()), self)):
+    def updateLinearSpeed(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_Linear.text()), self)
         if isinstance(val,float) and val > 0:
             if self.scanSmooth:
                 self.linearSpeed = val
@@ -1074,13 +1090,17 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def updateFileName(self):
         self.fileName = str(self.lineEdit_FileName.text())
         
-    def updateXTilt(self, val = readNum(str(self.lineEdit_XTilt.text()), self, False)):
+    def updateXTilt(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_XTilt.text()), self, False)
         if isinstance(val,float):
             self.x_tilt = val*np.pi / 180
             self.updateScanPlaneCenter()
         self.lineEdit_XTilt.setText(formatNum(self.x_tilt*180 / np.pi))
 
-    def updateYTilt(self, val = readNum(str(self.lineEdit_YTilt.text()), self, False)):
+    def updateYTilt(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_YTilt.text()), self, False)
         if isinstance(val,float):
             self.y_tilt = val*np.pi / 180
             self.updateScanPlaneCenter()
@@ -1915,11 +1935,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.updateLines(lines)
         
     def lockDataAspect(self):
-        if self.DataLocked = False:
+        if self.DataLocked == False:
             self.toggleDataLock()
     
     def unlockDataAspect(self):
-        if self.DataLocked = True:
+        if self.DataLocked == True:
             self.toggleDataLock()
         
     def setTilt(self, xtilt, ytilt):
@@ -1927,11 +1947,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.updateYTilt(ytilt)
         
     def lockScanAspect(self):
-        if self.FrameLocked = False:
+        if self.FrameLocked == False:
             self.toggleFrameLock()
     
     def unlockScanAspect(self):
-        if self.FrameLocked = True:
+        if self.FrameLocked == True:
             self.toggleFrameLock()
         
     def setXc(self, x):
@@ -1959,7 +1979,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_FrameLock.setEnabled(False)
         self.push_scanCoordinates.setEnabled(False)
         self.push_aspectLocked.setEnabled(False)
-        self.push_SpeedLock.setEnabled(False)
         self.push_setView.setEnabled(False)
         self.push_apply2DFit.setEnabled(False)
         self.push_autoLevel.setEnabled(False)
@@ -2011,7 +2030,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_FrameLock.setEnabled(True)
         self.push_scanCoordinates.setEnabled(True)
         self.push_aspectLocked.setEnabled(True)
-        self.push_SpeedLock.setEnabled(True)
         self.push_setView.setEnabled(True)
         self.push_apply2DFit.setEnabled(True)
         self.push_autoLevel.setEnabled(True)

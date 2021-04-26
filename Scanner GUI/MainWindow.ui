@@ -247,7 +247,6 @@ background: black;
     <property name="title">
      <string>User Channels</string>
     </property>
-    <addaction name="actionJPE_Coarse_Position_Control"/>
     <addaction name="actionAttocube_Position_Calibration"/>
     <addaction name="actionMagnetic_Field_Control"/>
     <addaction name="actionTemperature_Control"/>
