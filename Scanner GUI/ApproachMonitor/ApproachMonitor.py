@@ -17,11 +17,18 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         
         self.reactor = reactor
         self.setupUi(self)
+        #setup UI elements that cannot be done through QT designer
         self.setupAdditionalUi()
 
+        #move to default location
         self.moveDefault()
 
+        #t=0 time in plots
         self.time_offset = 0
+        
+        #initiallize empty np arrays for data to be plotted. 
+        #Right now, these grow infinitely large. Maybe worth 
+        #limiting their size at some point
         self.pllTimeData = np.array([])
         self.deltaFData = np.array([])
         self.phaseErrorData = np.array([])
@@ -32,29 +39,27 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.zTimeData = np.array([])
         self.zData = np.array([])
         
-        self.dcTimeData = np.array([])
-        self.dcData = np.array([])
-        
-        self.acTimeData = np.array([])
-        self.acData = np.array([])
-        
+        #Time range to plot
         self.plotTimeRange = 30
 
+        #When the following is true, the code sets self.time_offset = time.clock.
+        #This only occurs for the first datapoint sent to this module
+        self.first_data_point = True
+
+        #super secret counter for super secret reasons
         self.counter = 0
         
+        #Connect GUI elements to appropriate methods
         self.push_zeroTime.clicked.connect(self.zeroTime)
-        #Requires no labrad connections
-        
         self.horizontalSlider.valueChanged[int].connect(self.setPlotTime)
 
-        self.first_data_point = True
-        
     def moveDefault(self):    
         self.move(550,10)
         self.resize(600,500)
             
     def setupAdditionalUi(self):
-        #Set up UI that isn't easily done from Qt Designer
+        #Set up UI that isn't easily done from Qt Designer. Initializes detachable tabs
+        #that can be dragged around and adds plots to them setting the axes labels properly.
         self.dTabWidget = DetachableTabWidget()
         style = '''QTabWidget::pane { border: 0; }
                     QTabBar::tab{background: black;
@@ -119,29 +124,6 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         tab3.setLayout(tab3_layout)
         self.dTabWidget.addTab(tab3, 'Aux Input Monitor')
         
-        self.fdbkDCPlot = pg.PlotWidget(parent = self)
-        self.fdbkDCPlot.setLabel('left', 'Feedback DC', units = 'V')
-        self.fdbkDCPlot.setLabel('bottom', 'Time', units = 's')
-        self.fdbkDCPlot.showAxis('right', show = True)
-        self.fdbkDCPlot.showAxis('top', show = True)
-        self.fdbkDCPlot.setTitle('Feedback DC vs. Time (s)')
-
-        self.fdbkACPlot = pg.PlotWidget(parent = self)
-        self.fdbkACPlot.setLabel('left', 'Feedback AC', units = 'V')
-        self.fdbkACPlot.setLabel('bottom', 'Time', units = 's')
-        self.fdbkACPlot.showAxis('right', show = True)
-        self.fdbkACPlot.showAxis('top', show = True)
-        self.fdbkACPlot.setTitle('Feedback AC vs. Time (s)')
-        
-        tab4 = QtGui.QWidget()
-        
-        tab4_layout = QtGui.QVBoxLayout()
-        tab4_layout.addWidget(self.fdbkDCPlot)
-        tab4_layout.addWidget(self.fdbkACPlot)
-        
-        tab4.setLayout(tab4_layout)
-        self.dTabWidget.addTab(tab4, 'Feedback Monitor')
-        
         self.zPlaceholder.close()
         self.aux2Placeholder.close()
         self.deltaFPlaceholder.close()
@@ -149,6 +131,7 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.tabWidget.close()
         
     def updatePLLPlots(self, deltaF, phaseError):
+        # Updates the PLL plots with new deltaF and phaseError datapoints received from the approach module
         if self.first_data_point:
             self.time_offset = time.clock()
             self.first_data_point = False
@@ -161,6 +144,7 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.plotPLL()
         
     def updateAux2Plot(self,volts):
+        # Updates the Aux input 2 plots with voltage datapoints received from the approach module
         if self.first_data_point:
             self.time_offset = time.clock()
             self.first_data_point = False
@@ -172,6 +156,7 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.plotAux2()
         
     def updateZPlot(self,z_meters):
+        # Updates the z extension plots with datapoints received from the approach module
         if self.first_data_point:
             self.time_offset = time.clock()
             self.first_data_point = False
@@ -182,41 +167,23 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.zData = np.append(self.zData, z_meters)
         self.plotZ()
         
-    def updateFdbkDCPlot(self,dc):
-        if self.first_data_point:
-            self.time_offset = time.clock()
-            self.first_data_point = False
-
-        timepoint = time.clock() - self.time_offset
-
-        self.dcTimeData = np.append(self.dcTimeData, timepoint)
-        self.dcData = np.append(self.dcData, dc)
-        self.plotFdbkDC()
-        
-    def updateFdbkACPlot(self,ac):
-        if self.first_data_point:
-            self.time_offset = time.clock()
-            self.first_data_point = False
-
-        timepoint = time.clock() - self.time_offset
-        
-        self.acTimeData = np.append(self.acTimeData, timepoint)
-        self.acData = np.append(self.acData, ac)
-        self.plotFdbkAC()
-        
     def plotPlots(self):
+        #Refresh all the plots
         self.plotPLL()
         self.plotAux2()
         self.plotZ()
         
     def plotPLL(self):
+        #Refresh the PLL plots
         length = len(self.pllTimeData)
         if length > 1:
+            #Plot all datapoints if they occured in less time than the specified plotTimeRange
             if (self.pllTimeData[length-1] - self.pllTimeData[0]) <= self.plotTimeRange:
                 self.deltaFPlot.clear()
                 self.deltaFPlot.plot(self.pllTimeData, self.deltaFData)
                 self.phaseErrorPlot.clear()
                 self.phaseErrorPlot.plot(self.pllTimeData, self.phaseErrorData)
+            #Otherwise only plot those that occurred in the specified plotTimeRange
             else:
                 a = np.argmin(np.abs(self.pllTimeData - (self.pllTimeData[length-1] - self.plotTimeRange)))
                 self.deltaFPlot.clear()
@@ -225,72 +192,61 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
                 self.phaseErrorPlot.plot(self.pllTimeData[a:], self.phaseErrorData[a:])
 
     def plotAux2(self):
+        #Refresh the Aux 2 plot
         length = len(self.aux2TimeData)
         if length > 1:
+            #Plot all datapoints if they occured in less time than the specified plotTimeRange
             if (self.aux2TimeData[length-1] - self.aux2TimeData[0]) <= self.plotTimeRange:
                 self.aux2Plot.clear()
                 self.aux2Plot.plot(self.aux2TimeData, self.aux2Data)
+            #Otherwise only plot those that occurred in the specified plotTimeRange
             else:
                 a = np.argmin(np.abs(self.aux2TimeData - (self.aux2TimeData[length-1] - self.plotTimeRange)))
                 self.aux2Plot.clear()
                 self.aux2Plot.plot(self.aux2TimeData[a:], self.aux2Data[a:])
                 
     def plotZ(self):
+        #Refresh the z extension plot
         length = len(self.zTimeData)
         if length > 1:
+            #Plot all datapoints if they occured in less time than the specified plotTimeRange
             if (self.zTimeData[length-1] - self.zTimeData[0]) <= self.plotTimeRange:
                 self.zPlot.clear()
                 self.zPlot.plot(self.zTimeData, self.zData)
+            #Otherwise only plot those that occurred in the specified plotTimeRange
             else:
                 a = np.argmin(np.abs(self.zTimeData - (self.zTimeData[length-1] - self.plotTimeRange)))
                 self.zPlot.clear()
                 self.zPlot.plot(self.zTimeData[a:], self.zData[a:])
     
-    def plotFdbkDC(self):
-        length = len(self.dcTimeData)
-        if length > 1:
-            if (self.dcTimeData[length-1] - self.dcTimeData[0]) <= self.plotTimeRange:
-                self.fdbkDCPlot.clear()
-                self.fdbkDCPlot.plot(self.dcTimeData, self.dcData)
-            else:
-                a = np.argmin(np.abs(self.dcTimeData - (self.dcTimeData[length-1] - self.plotTimeRange)))
-                self.fdbkDCPlot.clear()
-                self.fdbkDCPlot.plot(self.dcTimeData[a:], self.dcData[a:])
-    
-    def plotFdbkAC(self):
-        length = len(self.acTimeData)
-        if length > 1:
-            if (self.acTimeData[length-1] - self.acTimeData[0]) <= self.plotTimeRange:
-                self.fdbkACPlot.clear()
-                self.fdbkACPlot.plot(self.acTimeData, self.acData)
-            else:
-                a = np.argmin(np.abs(self.acTimeData - (self.acTimeData[length-1] - self.plotTimeRange)))
-                self.fdbkACPlot.clear()
-                self.fdbkACPlot.plot(self.acTimeData[a:], self.acData[a:])
-    
     def zeroTime(self):
-        curr_time = time.clock()
-        if curr_time - self.time_offset < 0.25:
+        #Get the time relative to the offset when the function is run
+        timepoint = time.clock() - self.time_offset
+        
+        #super secret code
+        if timepoint < 0.25:
             self.counter = self.counter + 1
             if self.counter >= 2:
                 self.flashSQUID()
         else:
             self.counter = 0
-            
-        self.time_offset = time.clock()
+
+        #Shift all the time data to be zero at the current time point
         if len(self.pllTimeData) > 0:
-            self.pllTimeData = self.pllTimeData - self.pllTimeData[-1]
+            self.pllTimeData = self.pllTimeData - timepoint
         if len(self.aux2TimeData) > 0:
-            self.aux2TimeData = self.aux2TimeData - self.aux2TimeData[-1]
-        if len(self.dcTimeData) > 0:
-            self.dcTimeData = self.dcTimeData - self.dcTimeData[-1]
-        if len(self.acTimeData) > 0:
-            self.acTimeData = self.acTimeData - self.acTimeData[-1]
+            self.aux2TimeData = self.aux2TimeData - timepoint
         if len(self.zTimeData) > 0:
-            self.zTimeData = self.zTimeData - self.zTimeData[-1]
+            self.zTimeData = self.zTimeData - timepoint
+            
+        #Set the current time to be the new offset
+        self.time_offset = time.clock()
+
+        #Update all the plots
         self.plotPlots()
 
     def setPlotTime(self, num):
+        #Changes the plotTimeRange and updates the plots when changed
         self.plotTimeRange = 30 + num
         self.lcdNumber.display(self.plotTimeRange)
         self.plotPlots()
@@ -306,6 +262,7 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         
     @inlineCallbacks
     def flashSQUID(self):
+        #super secret
         style = '''
                 QPushButton#push_zeroTime{
                 image:url(:/nSOTScanner/Pictures/SQUIDRotated.png);
