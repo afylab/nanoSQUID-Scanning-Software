@@ -82,7 +82,7 @@ color: rgb(168,168,168)
 }</string>
    </property>
    <property name="text">
-    <string>•  CPSC Coarse Piezos</string>
+    <string>•  Coarse Positioners</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_6">
@@ -100,7 +100,7 @@ color: rgb(168,168,168)
 }</string>
    </property>
    <property name="text">
-    <string>•  DAC ADC</string>
+    <string>•  Scanning DAC ADC</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_7">

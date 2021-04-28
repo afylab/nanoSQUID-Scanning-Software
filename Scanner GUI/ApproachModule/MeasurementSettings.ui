@@ -405,6 +405,9 @@ border-radius: 8px;
        <height>22</height>
       </rect>
      </property>
+     <property name="editable">
+      <bool>true</bool>
+     </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
@@ -593,6 +596,9 @@ color:rgb(168,168,168)
        <width>71</width>
        <height>20</height>
       </rect>
+     </property>
+     <property name="editable">
+      <bool>true</bool>
      </property>
      <property name="currentIndex">
       <number>0</number>

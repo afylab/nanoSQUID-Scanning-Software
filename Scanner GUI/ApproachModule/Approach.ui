@@ -707,44 +707,6 @@ border-radius: 5px
      <string>-</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit_CoarseZ">
-    <property name="geometry">
-     <rect>
-      <x>360</x>
-      <y>350</y>
-      <width>51</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="toolTip">
-     <string>Coarse steps taken in the Z direction by the JPEs. 1000 steps corresponds to roughly 25 microns at room temperature.</string>
-    </property>
-    <property name="text">
-     <string>0</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-    <property name="readOnly">
-     <bool>true</bool>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_19">
-    <property name="geometry">
-     <rect>
-      <x>350</x>
-      <y>320</y>
-      <width>71</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Coarse Steps:</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_20">
     <property name="geometry">
      <rect>
@@ -786,7 +748,7 @@ color: rgb(168,168,168)
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>260</y>
+      <y>300</y>
       <width>71</width>
       <height>41</height>
      </rect>
@@ -1486,7 +1448,6 @@ border-radius: 5px
   <tabstop>lineEdit_PID_Const_Height</tabstop>
   <tabstop>push_Abort</tabstop>
   <tabstop>push_frustrateFeedback</tabstop>
-  <tabstop>lineEdit_CoarseZ</tabstop>
   <tabstop>lineEdit_FineZ</tabstop>
   <tabstop>push_Withdraw</tabstop>
   <tabstop>lineEdit_Withdraw</tabstop>
