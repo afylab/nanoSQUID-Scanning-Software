@@ -17,6 +17,7 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         
         self.reactor = reactor
         self.setupUi(self)
+        
         #setup UI elements that cannot be done through QT designer
         self.setupAdditionalUi()
 
@@ -49,7 +50,7 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         #super secret counter for super secret reasons
         self.counter = 0
         
-        #Connect GUI elements to appropriate methods
+        #Connect GUI elements to appropriate functions
         self.push_zeroTime.clicked.connect(self.zeroTime)
         self.horizontalSlider.valueChanged[int].connect(self.setPlotTime)
 

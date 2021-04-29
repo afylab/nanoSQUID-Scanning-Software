@@ -125,8 +125,6 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
         self.nSOTChar.newToeField.connect(self.FieldControl.updateToeField)
 
         self.Approach.newPLLData.connect(self.ApproachMonitor.updatePLLPlots)
-        self.Approach.newFdbkDCData.connect(self.ApproachMonitor.updateFdbkDCPlot)
-        self.Approach.newFdbkACData.connect(self.ApproachMonitor.updateFdbkACPlot)
         self.Approach.newAux2Data.connect(self.ApproachMonitor.updateAux2Plot)
         self.Approach.newZData.connect(self.ApproachMonitor.updateZPlot)
         
@@ -242,19 +240,19 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
 #----------------------------------------------------------------------------------------------#
     """ The following section connects actions related to passing LabRAD connections."""
     
-    def distributeDeviceInfo(self,dict):
+    def distributeDeviceInfo(self,dic):
         #Call connectLabRAD functions for relevant modules
-        self.PlottersControl.connectLabRAD(dict)
-        self.nSOTChar.connectLabRAD(dict)
-        self.ScanControl.connectLabRAD(dict)
-        self.TFChar.connectLabRAD(dict)
-        self.Approach.connectLabRAD(dict)
-        self.Scripting.connectLabRAD(dict)
-        self.GoToSetpoint.connectLabRAD(dict)
-        self.FieldControl.connectLabRAD(dict)
-        self.TempControl.connectLabRAD(dict)
-        self.SampleCharacterizer.connectLabRAD(dict)
-        self.AttocubeCoarseControl.connectLabRAD(dict)
+        self.PlottersControl.connectLabRAD(dic)
+        self.nSOTChar.connectLabRAD(dic)
+        self.ScanControl.connectLabRAD(dic)
+        self.TFChar.connectLabRAD(dic)
+        self.Approach.connectLabRAD(dic)
+        self.Scripting.connectLabRAD(dic)
+        self.GoToSetpoint.connectLabRAD(dic)
+        self.FieldControl.connectLabRAD(dic)
+        self.TempControl.connectLabRAD(dic)
+        self.SampleCharacterizer.connectLabRAD(dic)
+        self.AttocubeCoarseControl.connectLabRAD(dic)
 
     def disconnectLabRADConnections(self):
         self.DeviceSelect.disconnectLabRAD()

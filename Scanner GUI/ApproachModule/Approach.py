@@ -110,7 +110,6 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.voltageMultiplied = False #Is the voltage from the Zurich being multiplied down
         self.voltageMultiplier = 0.1   #Stores the Zurich voltage multiplier for scanning in feedback
         self.CPStepping = False        #Are coarse positioners are steppping
-        self.DACRamping = False        #Is the scanning DAC ramping the Z voltage
         self.withdrawing = False       #Is the tip in the process of being withdraw
         self.autoThresholding = False  #Is the software calculating the frequency threshold for the PID
         self.monitorZ = False          #Should the module monitor the Z voltage
@@ -1335,7 +1334,10 @@ class Window(QtGui.QMainWindow, ApproachUI):
     @inlineCallbacks
     def startFeedbackApproachSequence(self):
         try:
-            #This function assumes that we are already within the DAC extension range of the surface. 
+            '''
+            This function assumes that we are already within the DAC extension range of the surface.  It was written a long
+            time ago and has not been tested in forever. Do not trust!
+            '''
         
             #TODO make automated check to make sure that sum box is changing voltage
             #mode appropriately. Probably toggle voltage, then go up to 1V output?
@@ -1355,20 +1357,20 @@ class Window(QtGui.QMainWindow, ApproachUI):
             #start PID approach sequence
             self.approaching = True
             
-            
+            #Read voltage from just the DAC-ADC
             self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.generalSettings['step_z_output'] - 1)
             
             #If the voltage is not yet in the multiplied mode and it needs to be,
             #then we need to withdraw fully to do so safely
             if not self.voltageMultiplied and self.voltageMultiplier < 1:
                 #Withdraw fully. This zeros both the Zurich and DAC voltage. 
-                yield self. withdraw(self.z_meters_max)
+                yield self.withdraw(self.z_meters_max)
             
             #If the voltage is multiplied, but needs to not be, then we also 
             #need to withdraw
             if self.voltageMultiplied and self.voltageMultiplier == 1:
                 #Withdraw fully. This zeros both the Zurich and DAC voltage. 
-                yield self. withdraw(self.z_meters_max)
+                yield self.withdraw(self.z_meters_max)
                 
             if self.approaching:
                 #Make sure the PID is off
@@ -1480,24 +1482,24 @@ class Window(QtGui.QMainWindow, ApproachUI):
             print "Feedback Sequence error:"
             print inst
          
-    
-    '''
-    Function to smoothly ramp between two voltage points are the desired speed provided in volts/s
-    '''
     @inlineCallbacks
     def setDAC_Voltage(self, start, end, speed):
+        '''
+        Smoothly ramps between two voltage points at the desired speed provided in volts/s
+        '''
         if float(start) != float(end) and end >=0:
             #points required to make smooth ramp of 300 microvolt steps (the limit of 16 bit dac)
             points = np.abs(int((start-end) / (300e-6)))
             #delay in microseconds between each point to get the right speed
             delay = int(300 / speed)
 
-            self.DACRamping = True
             yield self.dac.ramp1(self.generalSettings['step_z_output'] - 1, float(start), float(end), points, delay)
+            #This sleep step is necessary because the ramp1 command on the DAC-ADCs is bad. It doesn't return any value, so the
+            #function thinks it's done running (in an asynchronous sense) when it times out instead of when it's done ramping. 
             yield self.sleep(points * delay / 1e6)
-            self.DACRamping = False
             self.Atto_Z_Voltage = float(end)
             
+            #If ramp1 times out, then the buffer doesn't get cleared properly and it needs to be done here
             if points * delay / 1e6 > 0.9: 
                 a = yield self.dac.read()
                 while a != '':
@@ -1531,6 +1533,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             #Keep track of how much distance still needs to be withdrawn after each step
             withdrawDistance = dist
             
+            #if the zurich voltage is non zero
             if z_voltage >= 0.001: 
                 #Find desired end voltage
                 end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters
@@ -1542,6 +1545,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 print 'Zurich end voltage: '
                 print end_voltage
                 
+                #If we need to withdraw by more than just the voltage from the Zurich, keep track of how much
                 if end_voltage < 0:
                     end_voltage = 0
                     #Remaining withdraw distance
@@ -1559,12 +1563,13 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 #Find desired retract speed in volts per second
                 retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
                 
-                #If output voltage is being divided by 10, multiply by 10 to compensate
+                #If output voltage is being multiplied down, divide it by the down multiplication factor to compensate
                 if self.voltageMultiplied:
                     retract_speed = retract_speed/self.voltageMultiplier
                     
                 yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed, curr_val = z_voltage)
             
+            #If there's a voltage from the scanning DAC-ADC and we still need to withdraw to reach the withdraw distance goal
             if self.Atto_Z_Voltage > 0 and withdrawDistance > 0:
                 start_voltage = self.Atto_Z_Voltage
                 end_voltage = self.Atto_Z_Voltage - withdrawDistance * self.z_volts_to_meters
@@ -1606,6 +1611,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
     @inlineCallbacks
     def initializePID(self):
         '''
+        Deprecated Function: kept around in case it's useful. 
+        
         This function ensures the integrator value of the PID is set such that the starting output voltage is 0 volts. 
         By default, when the range is from 0 to 3 V, the starting output voltage is 1.5V; this fixes that problem. 
         Also sets the output range from 0 to z_volts_max, which is the temperature dependent voltage range.
@@ -1673,7 +1680,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
     @inlineCallbacks
     def zeroHF2LI_Aux_Out(self):
         '''
-        This function zeros all of the HF2LI aux outputs. Again, once upon a time it was useful but no more. 
+        Deprecated Function: kept around in case it's useful. 
+        This function zeros all of the HF2LI aux outputs.
         '''
         try:
             #Check to see if any PIDs are on. If they are, turn them off. Them being on prevents proper zeroing. 
@@ -1709,13 +1717,16 @@ class Window(QtGui.QMainWindow, ApproachUI):
     """ The following section has functions intended for use when running scripts from the scripting module."""
         
     def setHeight(self, height):
+        #Set the height to be withdrawn after surface contact with a constant height PID approach
         self.set_pid_const_height(height)
         
     @inlineCallbacks
     def approachConstHeight(self):
+        #Approach for constant height with PID
         yield self.startPIDConstantHeightApproachSequence()
     
     def getContactPosition(self):
+        #Get the z extension of the previous surface contact
         return self.contactHeight
         
     @inlineCallbacks
@@ -1748,6 +1759,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
     """ The following section has generally useful functions."""  
     
     def lockInterface(self):
+        #Renders it impossible to interact with all the GUI elements in the main module
         self.push_Withdraw.setEnabled(False)
         self.push_GenSettings.setEnabled(False)
         
@@ -1783,15 +1795,15 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.lockFreq()
 
     def lockFreq(self):
+        #Locks the GUI elements for changing PLL / PID frequency threshhold
         self.lineEdit_freqSet.setDisabled(True)
         self.freqSlider.setEnabled(False)
         self.radioButton_plus.setEnabled(False)
         self.radioButton_minus.setEnabled(False)
         
     def lockWithdrawSensitiveInputs(self):
+        #Locks all GUI elements that should't be changed while withdrawing
         self.lockFreq()
-        self.lockFdbkDC()
-        self.lockFdbkAC()
         self.lineEdit_P.setDisabled(True)
         self.lineEdit_I.setDisabled(True)
         self.lineEdit_D.setDisabled(True)
@@ -1800,6 +1812,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.push_subFreq.setDisabled(True)
         
     def unlockInterface(self):
+        #Unlocks everything
         self.push_Withdraw.setEnabled(True)
         self.push_GenSettings.setEnabled(True)
         
@@ -1835,18 +1848,16 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.unlockFreq()
         
     def unlockFreq(self):
+        #Unlocks frequency GUI elements
         self.lineEdit_freqSet.setDisabled(False)
         self.freqSlider.setEnabled(True)
         self.radioButton_plus.setEnabled(True)
         self.radioButton_minus.setEnabled(True)
         
     def unlockWithdrawSensitiveInputs(self):
+        #Unlocks withdraw sensitive GUI elements
         if self.measurementSettings['meas_pll']:
             self.unlockFreq()
-        if self.measurementSettings['meas_fdbk_dc']:
-            self.unlockFdbkDC()
-        if self.measurementSettings['meas_fdbk_ac']:
-            self.unlockFdbkAC()
         self.lineEdit_P.setDisabled(False)
         self.lineEdit_I.setDisabled(False)
         self.lineEdit_D.setDisabled(False)
@@ -1855,9 +1866,10 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.push_subFreq.setDisabled(False)
         
     def updateScanningStatus(self, status):
-        print "Scanning status in approach window updated to: "
-        print status
-        self.DACRamping = status
+        if status:
+            self.label_pidApproachStatus.setText('Scanning')
+        else:
+            self.label_pidApproachStatus.setText('Idle')
         
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
@@ -1879,9 +1891,10 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         super(generalApproachSettings, self).__init__(parent)
         self.setupUi(self)
         
-        self.pushButton.clicked.connect(self.acceptNewValues)
-
         self.generalApproachSettings = settings
+        
+        #Connect all the GUI elements
+        self.pushButton.clicked.connect(self.acceptNewValues)
 
         self.lineEdit_Step_Retract_Speed.editingFinished.connect(self.setStep_Retract_Speed)
         self.lineEdit_Step_Retract_Time.editingFinished.connect(self.setStep_Retract_Time)
@@ -1895,9 +1908,11 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_Atto_Distance.editingFinished.connect(self.setAttoDist)
         self.lineEdit_Atto_Delay.editingFinished.connect(self.setAttoDelay)
         
+        #Display the loaded input settings into the GUI
         self.loadValues()
       
     def loadValues(self):
+        #Update each lineEdit with the values specified by the input settings 
         self.lineEdit_Step_Retract_Time.setText(formatNum(self.generalApproachSettings['step_retract_time']))
         self.lineEdit_Step_Retract_Speed.setText(formatNum(self.generalApproachSettings['step_retract_speed']))
         self.lineEdit_PID_Retract_Time.setText(formatNum(self.generalApproachSettings['pid_retract_time']))
@@ -1909,10 +1924,8 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_Atto_Distance.setText(formatNum(self.generalApproachSettings['atto_distance']))
         self.lineEdit_Atto_Delay.setText(formatNum(self.generalApproachSettings['atto_delay']))
         
-    def setSumboard_toggle(self):
-        self.generalApproachSettings['sumboard_toggle'] = self.comboBox_Sumboard_Toggle.currentIndex() + 1
-        
     def setStep_Retract_Speed(self):
+        #Set the retracting speed in m/s when withdrawing with the DAC-ADC
         val = readNum(str(self.lineEdit_Step_Retract_Speed.text()), self)
         if isinstance(val,float):
             self.generalApproachSettings['step_retract_speed'] = val
@@ -1921,6 +1934,7 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_Step_Retract_Time.setText(formatNum(self.generalApproachSettings['step_retract_time']))
         
     def setStep_Retract_Time(self):
+        #Set the time in seconds to fully retract from full extension when withdrawing with the DAC-ADC
         val = readNum(str(self.lineEdit_Step_Retract_Time.text()), self, False)
         if isinstance(val,float):
             self.generalApproachSettings['step_retract_time'] = val
@@ -1929,6 +1943,7 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_Step_Retract_Time.setText(formatNum(self.generalApproachSettings['step_retract_time']))
 
     def setPID_Retract_Speed(self):
+        #Set the retracting speed in m/s when withdrawing with the DAC-ADC
         val = readNum(str(self.lineEdit_PID_Retract_Speed.text()), self)
         if isinstance(val,float):
             self.generalApproachSettings['pid_retract_speed'] = val
@@ -1937,6 +1952,7 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_PID_Retract_Time.setText(formatNum(self.generalApproachSettings['pid_retract_time']))
         
     def setPID_Retract_Time(self):
+        #Set the time in seconds to fully retract from full extension when withdrawing with the HF2LI
         val = readNum(str(self.lineEdit_PID_Retract_Time.text()), self, False)
         if isinstance(val,float):
             self.generalApproachSettings['pid_retract_time'] = val
@@ -1945,24 +1961,28 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
         self.lineEdit_PID_Retract_Time.setText(formatNum(self.generalApproachSettings['pid_retract_time']))
     
     def setAutoRetractDist(self):
+        #Set the distance to auto retract when the frequency monitor notices an event while in constant height mode
         val = readNum(str(self.lineEdit_AutoRetractDist.text()), self)
         if isinstance(val,float):
             self.generalApproachSettings['auto_retract_dist'] = val
         self.lineEdit_AutoRetractDist.setText(formatNum(self.generalApproachSettings['auto_retract_dist']))
     
     def setAutoRetractPoints(self):
+        #Set the number of PLL points that neeed to be above the set frequency threshold to trigger an auto retraction event
         val = readNum(str(self.lineEdit_AutoRetractPoints.text()), self, False)
         if isinstance(val,float):
             self.generalApproachSettings['auto_retract_points'] = int(val)
         self.lineEdit_AutoRetractPoints.setText(formatNum(self.generalApproachSettings['auto_retract_points']))
     
     def setAttoDist(self):
+        #Set the distance in meters that the attocube `coarse positioners attempt to move forward at each step of the woodpecker approach
         val = readNum(str(self.lineEdit_Atto_Distance.text()), self, False)
         if isinstance(val,float):
             self.generalApproachSettings['atto_distance'] = val
         self.lineEdit_Atto_Distance.setText(formatNum(self.generalApproachSettings['atto_distance']))
     
     def setAttoDelay(self):
+        #Set the delay time between steps taken by the attocube coarse positioners
         val = readNum(str(self.lineEdit_Atto_Delay.text()), self, False)
         if isinstance(val,float):
             self.generalApproachSettings['atto_delay'] = val

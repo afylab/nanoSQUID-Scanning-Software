@@ -92,6 +92,12 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.comboBox_Approach_DCBox.currentIndexChanged.connect(self.setApproachDCBox)
         self.comboBox_Approach_HF2LI.currentIndexChanged.connect(self.setApproachHF2LI)
         
+        self.comboBox_Approach_PLLInput.currentIndexChanged.connect(self.setApproachPLLInput)
+        self.comboBox_Approach_PLLOutput.currentIndexChanged.connect(self.setApproachPLLOutput)
+        self.comboBox_Approach_PIDZOut.currentIndexChanged.connect(self.setApproachPIDZOut)
+        self.comboBox_Approach_ZMonitor.currentIndexChanged.connect(self.setApproachZMonitor)
+        self.comboBox_Approach_SumBoard.currentIndexChanged.connect(self.setApproachSumBoard)
+        
         self.comboBox_Scan_DACADC.currentIndexChanged.connect(self.setScanDACADC)
         
         self.comboBox_Scan_ZOut.currentIndexChanged.connect(self.setScanZOut)
@@ -138,6 +144,62 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
                         }'''
         self.pushButton_configStatus.setStyleSheet(sheet)
         
+    def resetDeviceDictionary(self):
+        self.deviceDictionary = {
+        'servers': {
+        #Gets autopopulated from the labrad connect server emitted 
+        },
+        'devices': {
+                    'system' : {
+                        'magnet supply':  False,
+                        'specific supply':   False,
+                        'blink device':  False,
+                        'coarse positioner': False,
+                    },
+                    'approach and TF' : {
+                        'dc_box':   False,
+                        'hf2li':    False
+                    },
+                    'scan' : {
+                        'dac_adc':  False
+                    },
+                    'nsot' : {
+                        'dac_adc':  False
+                    },
+                    'sample' : {
+                        'dac_adc':  False,
+                        'dc_box':   False,
+                    }
+        },
+        'channels':{
+                    'system' : {
+                        'toellner dac voltage':  4,
+                        'toellner dac current':  3,
+                        'blink channel':  2,
+                    },
+                    'approach and TF' : {
+                        'pll input':    1,
+                        'pll output':   1,
+                        'pid z out':    1,
+                        'z monitor':    1,
+                        'sum board toggle': 1,
+                    },
+                    'scan' : {
+                        'z out':        1,
+                        'x out':        2,
+                        'y out':        3,
+                    },
+                    'nsot' : {
+                        'DC Readout':        3,
+                        'Noise Readout':     2,
+                        'nSOT Bias':         4, 
+                        'Bias Reference':    4,
+                        'nSOT Gate':         1,
+                        'Gate Reference':    1,
+                    }
+        }
+        }
+        
     def setApproachDCBox(self):
         self.deviceDictionary['devices']['approach and TF']['dc_box'] = str(self.comboBox_Approach_DCBox.currentText())
         self.label_Approach_DCBox.setText(str(self.comboBox_Approach_DCBox.currentText()))
@@ -149,6 +211,26 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.label_Approach_HF2.setText(str(self.comboBox_Approach_HF2LI.currentText()))
         self.label_Approach_HF3.setText(str(self.comboBox_Approach_HF2LI.currentText()))
         self.label_Approach_HF4.setText(str(self.comboBox_Approach_HF2LI.currentText()))
+        self.setConfigStatus(False)
+        
+    def setApproachPLLInput(self):
+        self.deviceDictionary['channels']['approach and TF']['pll input'] = int(self.comboBox_Approach_PLLInput.currentIndex())+1
+        self.setConfigStatus(False)
+        
+    def setApproachPLLOutput(self):
+        self.deviceDictionary['channels']['approach and TF']['pll output'] = int(self.comboBox_Approach_PLLOutput.currentIndex())+1
+        self.setConfigStatus(False)
+        
+    def setApproachPIDZOut(self):
+        self.deviceDictionary['channels']['approach and TF']['pid z out'] = int(self.comboBox_Approach_PIDZOut.currentIndex())+1
+        self.setConfigStatus(False)
+        
+    def setApproachZMonitor(self):
+        self.deviceDictionary['channels']['approach and TF']['z monitor'] = int(self.comboBox_Approach_ZMonitor.currentIndex())+1
+        self.setConfigStatus(False)
+        
+    def setApproachSumBoard(self):
+        self.deviceDictionary['channels']['approach and TF']['sum board toggle'] = int(self.comboBox_Approach_SumBoard.currentIndex())+1
         self.setConfigStatus(False)
         
     def setScanDACADC(self):
@@ -320,62 +402,6 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         except Exception as inst:
             print 'connectRemote', inst
             print 'on line: ', sys.exc_traceback.tb_lineno
-        
-    def resetDeviceDictionary(self):
-        self.deviceDictionary = {
-        'servers': {
-        #Gets autopopulated from the labrad connect server emitted 
-        },
-        'devices': {
-                    'system' : {
-                        'magnet supply':  False,
-                        'specific supply':   False,
-                        'blink device':  False,
-                        'coarse positioner': False,
-                    },
-                    'approach and TF' : {
-                        'dc_box':   False,
-                        'hf2li':    False
-                    },
-                    'scan' : {
-                        'dac_adc':  False
-                    },
-                    'nsot' : {
-                        'dac_adc':  False
-                    },
-                    'sample' : {
-                        'dac_adc':  False,
-                        'dc_box':   False,
-                    }
-        },
-        'channels':{
-                    'system' : {
-                        'toellner dac voltage':  4,
-                        'toellner dac current':  3,
-                        'blink channel':  2,
-                    },
-                    'approach and TF' : {
-                        'pll input':    1,
-                        'pll output':   1,
-                        'pid z out':    1,
-                        'z monitor':    1,
-                        'sum board toggle': 1,
-                    },
-                    'scan' : {
-                        'z out':        1,
-                        'x out':        2,
-                        'y out':        3,
-                    },
-                    'nsot' : {
-                        'DC Readout':        3,
-                        'Noise Readout':     2,
-                        'nSOT Bias':         4, 
-                        'Bias Reference':    4,
-                        'nSOT Gate':         1,
-                        'Gate Reference':    1,
-                    }
-        }
-        }
         
     def disconnectLabRAD(self):
         #Reinitialize deviceDictionary to be empty
