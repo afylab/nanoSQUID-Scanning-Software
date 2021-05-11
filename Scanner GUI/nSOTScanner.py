@@ -1,6 +1,5 @@
 import sys
-from PyQt4 import Qt, QtGui, QtCore, uic
-import time
+from PyQt4 import QtGui, uic
 import ctypes
 myappid = 'YoungLab.nSOTScannerSoftware'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
@@ -25,8 +24,6 @@ sys.path.append(path + r'\GoToSetpoint')
 sys.path.append(path + r'\DeviceSelect')
 sys.path.append(path + r'\CoarseAttocubeControl')
 
-# I am adding something
-
 UI_path = path + r"\MainWindow.ui"
 MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
 
@@ -47,8 +44,6 @@ import gotoSetpoint
 import DeviceSelect
 import SampleCharacterizer
 import CoarseAttocubeControl
-
-import exceptions
 
 class MainWindow(QtGui.QMainWindow, MainWindowUI):
     test = 0

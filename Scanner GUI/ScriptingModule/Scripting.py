@@ -1,19 +1,19 @@
 import sys
 from PyQt4 import QtGui, QtCore, uic
-from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
+from twisted.internet.defer import inlineCallbacks, Deferred #, returnValue
 
 path = sys.path[0] + r"\ScriptingModule"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\Scripting.ui")
 
-#Not required, but strongly recommended functions used to format numbers in a particular way. 
+#Not required, but strongly recommended functions used to format numbers in a particular way.
 sys.path.append(sys.path[0]+'\Resources')
-from nSOTScannerFormat import readNum, formatNum
+#from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtGui.QMainWindow, ScanControlWindowUI):
-    
+
     def __init__(self, reactor, parent=None, *args):
         super(Window, self).__init__(parent)
-        
+
         self.reactor = reactor
         self.ScanControl = args[0]
         self.Approach = args[1]
@@ -22,43 +22,43 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.TempControl = args[4]
         self.SampleChar = args[5]
         self.nSOTBias = args[6]
-        
+
         self.setupUi(self)
         self.setupAdditionalUi()
 
         self.moveDefault()
-        
+
         self.push_run.clicked.connect(self.runScript)
         self.push_abort.clicked.connect(self.abortScript)
         self.push_load.clicked.connect(self.loadFile)
         self.push_save.clicked.connect(self.saveFile)
-        
-        #Have Ctrl+S 
+
+        #Have Ctrl+S
         QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self.codeEditor, self.saveFile, context=QtCore.Qt.WidgetShortcut)
-        
+
         #Initialize all the labrad connections as none
         self.cxn = None
         self.cxnr = None
-        
+
         self.runningScript = False
-        
+
         self.push_abort.setEnabled(False)
-        
+
     def moveDefault(self):
         self.move(550,10)
         self.resize(700,510)
-        
+
     @inlineCallbacks
     def connectLabRAD(self, dict):
         from labrad.wrappers import connectAsync
         self.cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
-        
+
         self.cxnr = yield connectAsync(host = '4KMonitor', password = 'pass')
-        
+
     def disconnectLabRAD(self):
         self.cxn = None
         self.cxnr = None
-            
+
     def setupAdditionalUi(self):
         #Set up UI that isn't easily done from Qt Designer
         self.codeEditor.close()
@@ -66,7 +66,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.verticalLayout.removeItem(self.horizontalLayout)
         self.verticalLayout.addWidget(self.codeEditor)
         self.verticalLayout.addItem(self.horizontalLayout)
-        
+
     @inlineCallbacks
     def runScript(self, c = None):
         #Define variables that can be used in the script.
@@ -77,7 +77,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             code_to_run = self.formatCode()
         except Exception as inst:
             print "Error when formatting code: ", inst
-            
+
         try:
             self.current_line = 0
             exec code_to_run
@@ -86,7 +86,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.runningScript = False
             self.label_status.setText('Script is in editing mode')
             self.unlockInterface()
-        except ScriptAborted as e:
+        except ScriptAborted:
             self.runningScript = False
             self.label_status.setText('Script aborted on line ' + str(self.current_line))
             self.unlockInterface()
@@ -111,11 +111,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
     def abortScript(self):
         self.runningScript = False
-        
+
     def formatCode(self):
         '''Format the code, inputting statements to be able to interrupt the script
         and updating which line of code is currently running. Note that whitespace
-        in this section is critical to it running correctly. 
+        in this section is critical to it running correctly.
         '''
         code_lines = str(self.codeEditor.toPlainText()).splitlines()
         code_to_run = "@inlineCallbacks\ndef f(self, sleep, cxn, cxnr, ScanControl, Approach, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias):\n "
@@ -125,7 +125,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         for line in code_lines:
             #detect number of space on next line
             spaces = self.detectSpaces(line)
-            #inlineCallbacks header is special and needs to be right before the next line in the code, 
+            #inlineCallbacks header is special and needs to be right before the next line in the code,
             if '@inlineCallbacks' not in prev_line:
                 #Add code that updates which line of code is being run
                 code_to_run = code_to_run + spaces + "self.current_line = " + str(i) + "\n "
@@ -136,14 +136,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             code_to_run = code_to_run + line + "\n "
             prev_line = line
             i = i + 1
-        code_to_run = code_to_run + "\n" 
+        code_to_run = code_to_run + "\n"
         return code_to_run
-        
+
     def detectSpaces(self,line):
         '''Returns a string with all the whitespace at the beginning of the input line of code'''
         num = len(line) - len(line.lstrip())
         return line[0:num]
-        
+
     def loadFile(self):
         file = str(QtGui.QFileDialog.getOpenFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts'))
         if file:
@@ -151,7 +151,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             message = f.read()
             self.codeEditor.setPlainText(message)
             f.close()
-        
+
     def saveFile(self):
         file = str(QtGui.QFileDialog.getSaveFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts'))
         if file:
@@ -159,29 +159,29 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             message = self.codeEditor.toPlainText()
             f.write(message)
             f.close()
-        
+
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
         other operations to be done elsewhere while paused."""
         d = Deferred()
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
-        
-#----------------------------------------------------------------------------------------------#         
+
+#----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""
-           
+
     def lockInterface(self):
         self.push_run.setEnabled(False)
         self.push_save.setEnabled(False)
         self.push_load.setEnabled(False)
         self.push_abort.setEnabled(True)
-        
+
     def unlockInterface(self):
         self.push_run.setEnabled(True)
         self.push_save.setEnabled(True)
         self.push_load.setEnabled(True)
         self.push_abort.setEnabled(False)
-        
+
 class LineNumberArea(QtGui.QWidget):
 
     def __init__(self, editor):
@@ -198,7 +198,7 @@ class LineNumberArea(QtGui.QWidget):
 class CodeEditor(QtGui.QPlainTextEdit):
     def __init__(self, parent = None):
         super(QtGui.QPlainTextEdit, self).__init__(parent)
-        
+
         self.lineNumberArea = LineNumberArea(self)
 
         self.connect(self, QtCore.SIGNAL('blockCountChanged(int)'), self.updateLineNumberAreaWidth)
@@ -208,7 +208,7 @@ class CodeEditor(QtGui.QPlainTextEdit):
         self.updateLineNumberAreaWidth(0)
 
         self.setTabStopWidth(20)
-        
+
     def lineNumberAreaWidth(self):
         digits = 1
         count = max(1, self.blockCount())
@@ -280,7 +280,7 @@ class CodeEditor(QtGui.QPlainTextEdit):
             selection.cursor.clearSelection()
             extraSelections.append(selection)
         self.setExtraSelections(extraSelections)
-        
+
 class ScriptAborted(Exception):
      def __init__(self, value):
          self.value = value
