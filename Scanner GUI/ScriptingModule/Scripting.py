@@ -68,7 +68,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.verticalLayout.addItem(self.horizontalLayout)
 
     @inlineCallbacks
-    def runScript(self, c = None):
+    def runScript(self):
         #Define variables that can be used in the script.
         self.lockInterface()
         self.runningScript = True
@@ -80,7 +80,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         try:
             self.current_line = 0
-            exec code_to_run
+            exec code_to_run # Generates function f
             self.current_line = 1
             yield f(self, self.sleep, self.cxn, self.cxnr, self.ScanControl, self.Approach, self.nSOTChar, self.FieldControl, self.TempControl, self.SampleChar, self.nSOTBias)
             self.runningScript = False

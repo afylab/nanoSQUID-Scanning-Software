@@ -1,14 +1,11 @@
 from __future__ import division
 import sys
-import twisted
-from PyQt4 import QtCore, QtGui, QtTest, uic
-from twisted.internet.defer import inlineCallbacks, Deferred
+from PyQt4 import QtCore, QtGui, uic
+from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 import pyqtgraph as pg
-import exceptions
 import time
 import math
-import copy
 from nSOTScannerFormat import readNum, formatNum
 
 path = sys.path[0] + r"\nSOTCharacterizer"
@@ -16,7 +13,6 @@ characterGUI = path + r"\character_GUI.ui"
 dialogBox = path + r"\sweepCheck.ui"
 prelimSweep = path + r"\preliminarySweep.ui"
 toeReminder = path + r"\toeReminder.ui"
-gotoSetPoint = path + r"\gotoSetpoint.ui"
 serlist = path + r"\requiredServers.ui"
 
 Ui_MainWindow, QtBaseClass = uic.loadUiType(characterGUI)
@@ -28,18 +24,21 @@ Ui_ServerList, QtBaseClass = uic.loadUiType(serlist)
 #Main characterization window with plots, sweep paramteres, etc.
 class Window(QtGui.QMainWindow, Ui_MainWindow):
     newToeField = QtCore.pyqtSignal(float, float, float)
-    
+
     def __init__(self, reactor, parent = None):
         super(Window, self).__init__(parent)
         #QtGui.QDialog.__init__(self)
         self.parent = parent
-        
         self.reactor = reactor
+
+        #Initialize GUI element
         self.setupUi(self)
-        self.setUpPlots()
-        self.magnetPower.clear()
-    
-        #Dictionaries of the wiring and instrument settings
+        self.setupAdditionalUi()
+
+        #By default empty the magnet power supply comboBox
+        self.comboBox_magnetPower.clear()
+
+        #Dictionaries of the wiring and instrument settings with some default values
         self.settingsDict = {
                 'blink':                2, #1 index DAC or DC box channel
                 'nsot bias output':     1, #1 index bias output on the DAC ADC
@@ -48,49 +47,68 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 'nsot bias input':      4, #1 indexed input on the DAC ADC to read the nsot bias voltage
                 'feedback DC input':    3, #1 indexed input on the DAC ADC to read the DC feedback signal
                 'noise input':          2, #1 indexed input on the DAC ADC to read the noise
-                'feedback AC input':    1, #1 indexed input on the DAC ADC to read the AC signal (should be coming from a lockin)
-                'Magnet device':        'Toellner 8851', #Device used to control the magnetic field 
+                'Magnet device':        'Toellner 8851', #Device used to control the magnetic field
         }
-        
+
         #Dictionary of parameters defining the nSOT sweep
-        self.sweepParamDict = {'B_min' : 0, 'B_max' : 0.1, 'B_pnts' : 100, 'B_rate' : 1, 'V_min' : 0, 'V_max' : 1, 'V_pnts' : 500, 'delay' : 1,'volt mode' : 'min/max', 'Magnet device' : 'Toellner 8851', 'blink mode' : 'on'}
-        #Dictionary the keeps track of the setpoints in magnetic field and bias voltage that are set by the 'Go To Setpoint' window
-        self.setpntDict = {'field' : 0, 'bias' : 0}
-        #Flag that tells the main window whether the nSOT is at a field or bias setpoint
-        self.atSetpoint = False
-        self.fieldPos = 0
-        self.plotNoPlot = 0
-        
-        #Open the window reminding the user to turn on the Toellner output, or goes straight to the window used to confirm the sweep parameters if using the IPS
-        self.startSweep.clicked.connect(self.toeCheck)
+        self.sweepParamDict = { 'B_min' : 0,
+                                'B_max' : 0.1,
+                                'B_pnts' : 101,
+                                'B_step' : 0.1/100,
+                                'B_rate' : 1,
+                                'V_min' : 0,
+                                'V_max' : 1,
+                                'V_pnts' : 501,
+                                'V_step' : 1/500,
+                                'delay' : 0.001,
+                                'sweep mode' : 0,
+                                'blink mode' : 0,
+                                'Magnet device' : 'Toellner 8851',
+                                'sweep time' : '1 hours 0 minutes'}
+
+        #Initialize plots
+        self.plt_pos = [0, 0] #Position of the bottom left corner of the plot
+        self.plt_scale = [0.1 / 101, 1 / 501] #Scale factor for the size of each pixel
+
+        #Initialize empty arrays for the data for plotting
+        self.curTraceData = np.zeros([101,501])
+        self.noiseTraceData =np.zeros([101,501])
+        self.curRetraceData = np.zeros([101,501])
+        self.noiseRetraceData = np.zeros([101,501])
+
+        self.updatePlots()
+
+        #Starts a sweep
+        self.push_startSweep.clicked.connect(self.startSweep)
+
         #Flag used to initiate an abort function in the middle of a sweep
         self.abortFlag = False
-        self.abortSweep.setEnabled(False)
-        self.abortSweep.clicked.connect(self.initAbort)
+        self.push_abortSweep.clicked.connect(self.abortSweep)
+
         #Opens the preliminary sweep window
-        self.prelim.clicked.connect(self.runPrelimSweep)
-        
+        self.push_prelim.clicked.connect(self.runPrelimSweep)
+
         #Toggles between number of steps and Tesla/Volts per step in the sweep parameter display in the main window
-        self.fieldStepsInc.clicked.connect(self.toggleFieldSteps)
+        self.push_fieldStepsInc.clicked.connect(self.toggleFieldSteps)
         self.fieldSIStat = 'num pnts'
-        self.biasStepsInc.clicked.connect(self.toggleBiasSteps)
+        self.push_biasStepsInc.clicked.connect(self.toggleBiasSteps)
         self.biasSIStat = 'num pnts'
-        
+
         #Adds/removes the ability to take line cuts in the displayed data
-        self.liveTracePlot.clicked.connect(self.toggleTraceLineCut)
-        self.liveTracePlotStatus = False
-        self.liveRetracePlot.clicked.connect(self.toggleRetraceLineCut)
-        self.liveRetracePlotStatus = False
+        self.liveTracePlotStatus = False #By default, do not automatically update the trace linecuts
+        self.liveRetracePlotStatus = False #By default, do not automatically update the retrace linecuts
+        self.push_liveTracePlot.clicked.connect(self.toggleTraceLineCut)
+        self.push_liveRetracePlot.clicked.connect(self.toggleRetraceLineCut)
 
         #Shows/hides the color scales on the trace/retrace plots
-        self.showTraceGrad.hide()
-        self.hideTraceGrad.raise_()
-        self.hideTraceGrad.clicked.connect(self.shrinkTracePlot)
-        self.showTraceGrad.clicked.connect(self.enlargeTracePlot)
-        self.showRetraceGrad.hide()
-        self.hideRetraceGrad.raise_()
-        self.hideRetraceGrad.clicked.connect(self.shrinkRetracePlot)
-        self.showRetraceGrad.clicked.connect(self.enlargeRetracePlot)
+        self.push_showTraceGrad.hide()
+        self.push_hideTraceGrad.raise_()
+        self.push_hideTraceGrad.clicked.connect(self.hideTraceHistogram)
+        self.push_showTraceGrad.clicked.connect(self.showTraceHistogram)
+        self.push_showRetraceGrad.hide()
+        self.push_hideRetraceGrad.raise_()
+        self.push_hideRetraceGrad.clicked.connect(self.hideRetraceHistogram)
+        self.push_showRetraceGrad.clicked.connect(self.showRetraceHistogram)
 
         #Updates the position of the vertical/horizontal line cuts when the value in the corresponding line-edit in changed
         self.vCutTracePos.editingFinished.connect(self.changeVLine)
@@ -98,344 +116,50 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.vCutRetracePos.editingFinished.connect(self.changeVLine)
         self.hCutRetracePos.editingFinished.connect(self.changeHLine)
 
+        #Updates the estimate of the SQUID diameter when the measurement lines are moved
+        self.MeasureLine1.sigPositionChangeFinished.connect(self.UpdateFieldPeriod)
+        self.MeasureLine2.sigPositionChangeFinished.connect(self.UpdateFieldPeriod)
+        self.pushButton_Show.clicked.connect(self.ToggleMeasurementLine)
+        self.Flag_MeasurementLineShowing = True
+
         #Toggles between showing 1D plots along vertical/horizontal lines
-        self.currentBiasTraceSelect.currentIndexChanged.connect(self.toggle_bottomTracePlot)
-        self.currentBiasRetraceSelect.currentIndexChanged.connect(self.toggle_bottomRetracePlot)
+        self.comboBox_traceLinecut.currentIndexChanged.connect(self.toggle_bottomTracePlot)
+        self.comboBox_retraceLinecut.currentIndexChanged.connect(self.toggle_bottomRetracePlot)
+
+        #Updates the bias and blink modes
+        self.comboBox_biasSweepMode.currentIndexChanged.connect(self.updateBiasSweepMode)
+        self.comboBox_blinkMode.currentIndexChanged.connect(self.updateBlinkMode)
 
         #Checks that the min/max field/bias values are in a sensible range and in the correct format
-        self.fieldMaxSetValue.editingFinished.connect(lambda: self.UpdateBVals(self.fieldMaxSetValue))
-        self.fieldMinSetValue.editingFinished.connect(lambda: self.UpdateBVals(self.fieldMinSetValue))
-        self.fieldPointsSetValue.editingFinished.connect(lambda: self.pntsFormat(self.fieldPointsSetValue, 'field'))
-        self.fieldSpeedSetValue.editingFinished.connect(lambda: self.UpdateBVals(self.fieldSpeedSetValue, 'speed'))
+        self.lineEdit_fieldMax.editingFinished.connect(self.updateFieldMax)
+        self.lineEdit_fieldMin.editingFinished.connect(self.updateFieldMin)
+        self.lineEdit_fieldPoints.editingFinished.connect(self.updateFieldPoints)
+        self.lineEdit_fieldSpeed.editingFinished.connect(self.updateFieldSpeed)
 
-        self.biasMaxSetValue.editingFinished.connect(lambda: self.UpdateVVals(self.biasMaxSetValue))
-        self.biasMinSetValue.editingFinished.connect(lambda: self.UpdateVVals(self.biasMinSetValue))
-        self.biasPointsSetValue.editingFinished.connect(lambda: self.pntsFormat(self.biasPointsSetValue, 'bias'))
-        self.biasSpeedSetValue.editingFinished.connect(lambda: self.pntsFormat(self.biasSpeedSetValue, 'delay'))
-        
+        self.lineEdit_biasMax.editingFinished.connect(self.updateBiasMax)
+        self.lineEdit_biasMin.editingFinished.connect(self.updateBiasMin)
+        self.lineEdit_biasPoints.editingFinished.connect(self.updateBiasPoints)
+        self.lineEdit_biasDelay.editingFinished.connect(self.updateBiasDelay)
+
         #Toggles between plotting the Feedback voltage and Noise signal in either the trace or retrace plots
-        self.tabsTrace.currentChanged.connect(self.toggleTracePlots)
-        self.tabsRetrace.currentChanged.connect(self.toggleRetracePlots)
-        
+        self.tab_trace.currentChanged.connect(self.toggleTracePlots)
+        self.tab_retrace.currentChanged.connect(self.toggleRetracePlots)
+
         self.push_Servers.clicked.connect(self.showServersList)
-        
 
-        #Initialize to no data to avoid line cut error
-        self.isData = False
-        
         #Initialize the servers to False
-        self.cxn = False
         self.gen_dv = False
-        self.cxn_nsot = False
         self.dv = False
         self.dac = False
         self.dac_toe = False
         self.ips = False
         self.blink_server = False
-        
-        self.lockInterface()
 
-    def UpdateFieldPeriod(self):
-        pos1 = self.MeasureLine1.value()
-        pos2 = self.MeasureLine2.value()
-        period = abs(pos1 - pos2)
-        self.lineEdit_FieldPeriod.setText(str(round(period * 1000, 1)))
-        fluxquanta = 2.0678338 / (10.0 ** 15)
-        area = fluxquanta / period
-        diameter = 2 * math.sqrt(area / math.pi)
-        self.lineEdit_Diameter.setText(str(round(diameter * 10.0 ** 9, 1)))
+        #By default lock the interface
+        #self.lockInterface()
 
-    def ToggleMeasurementLine(self):
-        if self.Flag_MeasurementLineShowing:
-            self.view0.removeItem(self.MeasureLine1)
-            self.view0.removeItem(self.MeasureLine2)
-        else:
-            self.view0.addItem(self.MeasureLine1)
-            self.view0.addItem(self.MeasureLine2)
-        self.Flag_MeasurementLineShowing = not self.Flag_MeasurementLineShowing
-
-    def moveDefault(self):
-        self.move(550,10)
-        
-    @inlineCallbacks
-    def connectLabRAD(self, dict):
-        try:
-            self.cxn = dict['servers']['local']['cxn']
-            self.gen_dv = dict['servers']['local']['dv']
-                
-            if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
-                self.dac_toe = dict['servers']['local']['dac_adc']
-                self.settingsDict['Magnet device'] = 'Toellner 8851'
-                self.toeCurChan = dict['channels']['system']['toellner dac current'] - 1
-                self.toeVoltsChan = dict['channels']['system']['toellner dac voltage'] - 1
-                self.magnetPower.addItem('Toellner 8851')
-            elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
-                self.ips = dict['servers']['remote']['ips120']
-                self.settingsDict['Magnet device'] = 'IPS 120-10'
-                self.magnetPower.addItem('IPS 120-10')
-                
-            '''
-            Create another connection to labrad in order to have a set of servers opened up in a context
-            specific to this module. This allows multiple datavault connections to be editted at the same
-            time, or communication with multiple DACs / other devices 
-            '''
-            
-            from labrad.wrappers import connectAsync
-            self.cxn_nsot = yield connectAsync(host = '127.0.0.1', password = 'pass')
-            self.dv = yield self.cxn_nsot.data_vault
-            curr_folder = yield self.gen_dv.cd()
-            yield self.dv.cd(curr_folder)
-            
-            self.dac = yield self.cxn_nsot.dac_adc
-            self.dac.select_device(dict['devices']['nsot']['dac_adc'])
-            
-            print dict['devices']['system']['blink device']
-            if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
-                self.blink_server = yield self.cxn_nsot.ad5764_dcbox
-                self.blink_server.select_device(dict['devices']['system']['blink device'])
-                print 'DC BOX Blink Device'
-            elif dict['devices']['system']['blink device'].startswith('DA'):
-                self.blink_server = yield self.cxn_nsot.dac_adc
-                self.blink_server.select_device(dict['devices']['system']['blink device'])
-                print 'DAC ADC Blink Device'
-            
-            self.blinkDevice = dict['devices']['system']['blink device']
-            self.settingsDict['blink'] = dict['channels']['system']['blink channel']
-            
-            self.settingsDict['nsot bias output'] = dict['channels']['nsot']['nSOT Bias']
-            self.settingsDict['nsot bias input'] = dict['channels']['nsot']['Bias Reference']
-            self.settingsDict['feedback DC input'] = dict['channels']['nsot']['DC Readout']
-            #At some point phase out all the AC input for the characterizer window
-            self.settingsDict['feedback AC input'] = 1
-            self.settingsDict['noise input'] = dict['channels']['nsot']['Noise Readout']
-            
-            self.settingsDict['toellner volts'] = dict['channels']['system']['toellner dac voltage']
-            self.settingsDict['toellner current'] = dict['channels']['system']['toellner dac current']
-            
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(0, 170, 0);border-radius: 4px;}")
-            
-            self.unlockInterface()
-        except Exception as inst:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")
-            print 'nsot char labrad connect', inst
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print 'line num ', exc_tb.tb_lineno
-            
-    def disconnectLabRAD(self):
-        self.magnetPower.removeItem(0)
-        self.cxn = False
-        self.gen_dv = False
-        self.cxn_nsot = False
-        self.dv = False
-        self.dac = False
-        self.dac_toe = False
-        self.ips = False
-        self.blink_server = False
-        self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(144, 140, 9);border-radius: 4px;}")
-            
-    def updateDataVaultDirectory(self):
-        curr_folder = yield self.gen_dv.cd()
-        yield self.dv.cd(curr_folder)
-            
-    def showServersList(self):
-        serList = serversList(self.reactor, self)
-        serList.exec_()
-    
-    #Opens the preliminary sweep window
-    def runPrelimSweep(self):
-        self.prelim.setEnabled(False)
-        self.prelimSweep = preliminarySweep(self.reactor, self.dv, self.dac, self.settingsDict, self)
-        self.prelimSweep.show()
-
-    #Initializes an abort of a sweep by changing the self.abortFlag to True
-    def initAbort(self):
-        self.abortFlag = True
-
-    #Checks the format of number of steps in magnetic field or bias voltage 
-    def pntsFormat(self, lineEdit, form):
-        ans = readNum(str(lineEdit.text()), self, False)
-
-        if lineEdit == 'REFORMAT':
-            pass
-        elif type(ans) == str:
-            lineEdit.setText('REFORMAT')
-        else:
-            if form == 'field':
-                if self.fieldSIStat == 'num pnts':
-                    lineEdit.setText(str(int(ans)))
-                    
-            elif form == 'bias':
-                if self.biasSIStat == 'num pnts':
-                    lineEdit.setText(str(int(ans)))        
-                    
-            elif form == 'delay':
-                pass
-    
-    #Toggles between number of steps and Tesla/step in the sweep parameter line edits
-    def toggleFieldSteps(self):
-        if self.fieldSIStat == 'num pnts':
-            self.FieldInc.setText("Millitesla per Step")
-            self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
-            steps = float(self.fieldPointsSetValue.text())
-            bMax = readNum(str(self.fieldMaxSetValue.text()), self, False)
-            bMin = readNum(str(self.fieldMinSetValue.text()), self, False)
-            if steps != 1 and steps != 0:
-                inc = np.round((1000 * (bMax - bMin) / (steps - 1)), decimals = 3)
-                self.fieldPointsSetValue.setText(str(inc))
-                self.fieldSIStat = 'field step'
-            else:
-                self.FieldInc.setText("Millitesla per Step")
-                self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
-                self.fieldSIStat = 'field step'
-        else:
-            self.FieldInc.setText("Number of Steps")
-            self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
-            inc = float(self.fieldPointsSetValue.text())
-            bMax = readNum(str(self.fieldMaxSetValue.text()), self, False)
-            bMin = readNum(str(self.fieldMinSetValue.text()), self, False)
-            if inc != 0:
-                steps = int(1000 * (bMax - bMin) / (inc)) +1 
-                self.fieldPointsSetValue.setText(str(steps))
-                self.fieldSIStat = 'num pnts'
-            else:
-                self.FieldInc.setText("Number of Steps")
-                self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
-                self.fieldSIStat = 'num pnts'              
-
-    #Toggles between number of steps and Volts/step in the sweep parameter line edits
-    def toggleBiasSteps(self):
-        if self.biasSIStat == 'num pnts':
-            self.BiasInc.setText("Millivolts per Step")
-            self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
-            steps = float(self.biasPointsSetValue.text())
-            vMax = readNum(str(self.biasMaxSetValue.text()), self, False)
-            vMin = readNum(str(self.biasMinSetValue.text()), self, False)
-            if steps != 1:
-                inc = np.round((1000 * (vMax - vMin) / (steps - 1)), decimals = 3)
-                self.biasPointsSetValue.setText(str(inc))
-                self.biasSIStat = 'bias step'
-            else:
-                self.BiasInc.setText("Millivolts per Step")
-                self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
-                self.biasSIStat = 'bias step'
-        else:
-            self.BiasInc.setText("Number of Steps")
-            self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
-            inc = float(self.biasPointsSetValue.text())
-            vMax = readNum(str(self.biasMaxSetValue.text()), self, False)
-            vMin = readNum(str(self.biasMinSetValue.text()), self, False)
-            if inc != 0:
-                steps = int(1000 * (vMax - vMin) / (inc)) + 1
-                self.biasPointsSetValue.setText(str(steps))
-                self.biasSIStat = 'num pnts'
-            else:
-                self.BiasInc.setText("Number of Steps")
-                self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
-                self.biasSIStat = 'num pnts'            
-
-    #Hides/shows the color scales on the Trace and Retrace plots
-    def shrinkTracePlot(self):
-        self.tracePlot.ui.histogram.hide()
-        self.noiseTracePlot.ui.histogram.hide()
-        self.hideTraceGrad.hide()
-        self.showTraceGrad.show()
-        self.showTraceGrad.raise_()
-
-    def enlargeTracePlot(self):
-        self.tracePlot.ui.histogram.show()
-        self.noiseTracePlot.ui.histogram.show()
-        self.hideTraceGrad.show()
-        self.showTraceGrad.hide()      
-        self.showTraceGrad.raise_()          
-
-    def shrinkRetracePlot(self):
-        self.retracePlot.ui.histogram.hide()
-        self.noiseRetracePlot.ui.histogram.hide()
-        self.hideRetraceGrad.hide()
-        self.showRetraceGrad.show()
-        self.showRetraceGrad.raise_()
-
-    def enlargeRetracePlot(self):
-        self.retracePlot.ui.histogram.show()
-        self.noiseRetracePlot.ui.histogram.show()
-        self.hideRetraceGrad.show()
-        self.showRetraceGrad.hide()          
-        self.showRetraceGrad.raise_()
-                
-    #Check the format of the magnetic field Min/Max values and ensures that the are in an appropriate range
-    def UpdateBVals(self, lineEdit, speed = None):
-        ans = readNum(str(lineEdit.text()), self, False)
-        if lineEdit == 'REFORMAT':
-            pass
-        elif type(ans) == str:
-            lineEdit.setText('REFORMAT')
-        elif speed == 'speed':
-            pass
-            
-        #Keeps the field value within 1.25T for the dipper magnet    
-        elif self.settingsDict['Magnet device'] == 'Toellner 8851':
-            if float(ans) < 0:
-                lineEdit.setText('0')
-            
-            elif -1.25 <= float(ans) <= 1.25:
-                pass
-            elif float(ans) >= 1.25:
-                lineEdit.setText('1.25')
-
-
-            elif float(ans) <= -1.25:
-                lineEdit.setText('-1.25')
-                        
-        #Keeps the field value within 5T for the cryostat magnet
-        elif self.settingsDict['Magnet device'] == 'IPS 120-10':
-            if -5 <= float(ans) <= 5:
-                pass
-            elif float(ans) >= 5:
-                lineEdit.setText('5')
-
-
-            elif float(ans) <= -5:
-                lineEdit.setText('-5')    
-
-    #Check the format of the bias voltage Min/Max values and ensures that the are in an appropriate range
-    def UpdateVVals(self, lineEdit):
-        ans = readNum(str(lineEdit.text()), self, False)
-        if lineEdit == 'REFORMAT':
-            pass
-        elif type(ans) == str:
-            lineEdit.setText('REFORMAT')
-        #Makes sure the voltage is between -10V and +10V to accomodate the DAC
-        elif -10 <= float(ans) <= 10:
-            pass
-        elif float(ans) >= 10:
-            lineEdit.setText('10.00')
-        elif float(ans) <= -10:
-            lineEdit.setText('-10.00')
-
-    def setUpPlots(self):
-        self.vTraceLine = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
-        self.hTraceLine = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
-        self.vTraceLine.sigPositionChangeFinished.connect(self.updateVLineBox)
-        self.hTraceLine.sigPositionChangeFinished.connect(self.updateHLineBox)
-        
-        self.vTraceNoiseLine = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
-        self.hTraceNoiseLine = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
-        self.vTraceNoiseLine.sigPositionChangeFinished.connect(self.updateVLineBox)
-        self.hTraceNoiseLine.sigPositionChangeFinished.connect(self.updateHLineBox)
-
-        self.vRetraceLine = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
-        self.hRetraceLine = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
-        self.vRetraceLine.sigPositionChangeFinished.connect(self.updateVLineBox)
-        self.hRetraceLine.sigPositionChangeFinished.connect(self.updateHLineBox)
-        
-        self.vRetraceNoiseLine = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
-        self.hRetraceNoiseLine = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
-        self.vRetraceNoiseLine.sigPositionChangeFinished.connect(self.updateVLineBox)
-        self.hRetraceNoiseLine.sigPositionChangeFinished.connect(self.updateHLineBox)
-
+    def setupAdditionalUi(self):
+        #Set up the plot for the DC output trace data
         self.view0 = pg.PlotItem(name = "Field-Bias-DC Volts")
         self.view0.setLabel('left', text='Bias Voltage', units = 'V')
         self.view0.setLabel('bottom', text='Magnetic Field', units = 'T')
@@ -453,19 +177,22 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.view0.setXRange(-1.25,1.25,0)
         self.view0.setYRange(-10,10, 0)
 
+        #Set up interactive verical and horizontal lines for the trace DC output plot linecuts
+        self.vTraceLine = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
+        self.hTraceLine = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
+        self.vTraceLine.sigPositionChangeFinished.connect(self.updateVLineBox)
+        self.hTraceLine.sigPositionChangeFinished.connect(self.updateHLineBox)
         self.view0.addItem(self.vTraceLine, ignoreBounds = True)
         self.view0.addItem(self.hTraceLine, ignoreBounds =True)
 
-        #Raymond's addition
+        #Add interactive vertical lines to be aligned with features of the
+        #SQUID interference pattern to estimate the SQUID diameter
         self.MeasureLine1 = pg.InfiniteLine(pos = 0.1, angle = 90, movable = True, pen = 'b', hoverPen = (50, 50, 200))
         self.MeasureLine2 = pg.InfiniteLine(pos = 0.2, angle = 90, movable = True, pen = 'b', hoverPen = (50, 50, 200))
-        self.MeasureLine1.sigPositionChangeFinished.connect(self.UpdateFieldPeriod)
-        self.MeasureLine2.sigPositionChangeFinished.connect(self.UpdateFieldPeriod)
-        self.pushButton_Show.clicked.connect(self.ToggleMeasurementLine)
-        self.Flag_MeasurementLineShowing = True
         self.view0.addItem(self.MeasureLine1, ignoreBounds = True)
         self.view0.addItem(self.MeasureLine2, ignoreBounds = True)
 
+        #Set up the plot for the noise of the trace data
         self.view1 = pg.PlotItem(name = "Field-Bias-Noise")
         self.view1.setLabel('left', text='Bias Voltage', units = 'V')
         self.view1.setLabel('bottom', text='Magnetic Field', units = 'T')
@@ -482,10 +209,16 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.view1.invertY(False)
         self.view1.setXRange(-1.25,1.25,0)
         self.view1.setYRange(-10,10, 0)
-        
+
+        #Set up interactive verical and horizontal lines for the trace noise plot linecuts
+        self.vTraceNoiseLine = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
+        self.hTraceNoiseLine = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
+        self.vTraceNoiseLine.sigPositionChangeFinished.connect(self.updateVLineBox)
+        self.hTraceNoiseLine.sigPositionChangeFinished.connect(self.updateHLineBox)
         self.view1.addItem(self.vTraceNoiseLine, ignoreBounds = True)
         self.view1.addItem(self.hTraceNoiseLine, ignoreBounds =True)
 
+        #Set up the plot for the DC output retrace data
         self.view2 = pg.PlotItem(name = "Field-Bias-DC Volts")
         self.view2.setLabel('left', text='Bias Voltage', units = 'V')
         self.view2.setLabel('bottom', text='Magnetic Field', units = 'T')
@@ -503,9 +236,15 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.view2.setXRange(-1.25,1.25,0)
         self.view2.setYRange(-10,10, 0)
 
+        #Set up interactive verical and horizontal lines for the retrace DC output plot linecuts
+        self.vRetraceLine = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
+        self.hRetraceLine = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
+        self.vRetraceLine.sigPositionChangeFinished.connect(self.updateVLineBox)
+        self.hRetraceLine.sigPositionChangeFinished.connect(self.updateHLineBox)
         self.view2.addItem(self.vRetraceLine, ignoreBounds = True)
         self.view2.addItem(self.hRetraceLine, ignoreBounds =True)
 
+        #Set up the plot for the noise of the retrace data
         self.view3 = pg.PlotItem(name = "Field-Bias-Noise")
         self.view3.setLabel('left', text='Bias Voltage', units = 'V')
         self.view3.setLabel('bottom', text='Magnetic Field', units = 'T')
@@ -522,10 +261,17 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.view3.invertY(False)
         self.view3.setXRange(-1.25,1.25,0)
         self.view3.setYRange(-10,10, 0)
-        
-        self.view3.addItem(self.vRetraceNoiseLine, ignoreBounds = True)
-        self.view3.addItem(self.hRetraceNoiseLine, ignoreBounds =True)
 
+        #Set up interactive verical and horizontal lines for the retrace noise plot linecuts
+        self.vRetraceNoiseLine = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
+        self.hRetraceNoiseLine = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
+        self.vRetraceNoiseLine.sigPositionChangeFinished.connect(self.updateVLineBox)
+        self.hRetraceNoiseLine.sigPositionChangeFinished.connect(self.updateHLineBox)
+        self.view3.addItem(self.vRetraceNoiseLine, ignoreBounds = True)
+        self.view3.addItem(self.hRetraceNoiseLine, ignoreBounds = True)
+
+
+        #Initialize all the plots for the linecuts
         self.IVTracePlot = pg.PlotWidget(parent = self.curbiasTracePlot)
         self.IVTracePlot.setGeometry(QtCore.QRect(0, 0, 640, 175))
         self.IVTracePlot.setLabel('left', 'SSAA DC Output', units = 'V')
@@ -558,106 +304,750 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         self.retracePlotNow = "bias"
         self.traceNoiseNow = "bias"
         self.retraceNoiseNow = "bias"
-    
-    def toeCheck(self):
-        self.checkToe = toellnerReminder()
-        self.startSweep.setEnabled(False)
-        if self.settingsDict['Magnet device'] != 'Toellner 8851':
-            self.checkSweep()
-        else:
-            self.checkToe.show()
-            self.checkToe.accepted.connect(self.checkSweep)
-            self.checkToe.rejected.connect(self.decline)
 
-    def readSweepParameters(self):
-        #This module has all its sweep parameters stored in the text of the GUI elements.
-        #This function reads the parameters from the GUI elements storing them in the 
-        #module's sweep parameter dictionary 
-        
-        sweepMod = self.biasSweepMode.currentIndex()
-        blinkMod = self.blink.currentIndex()
-        
-        b_min = readNum(str(self.fieldMinSetValue.text()), self, False)
-        b_max = readNum(str(self.fieldMaxSetValue.text()), self, False)
+    def moveDefault(self):
+        self.move(550,10)
+
+    @inlineCallbacks
+    def connectLabRAD(self, dict):
+        try:
+            #Keep a copy of the dataVault server initialized by the LabRADConnect module
+            #to synchronize data save folders
+            self.gen_dv = dict['servers']['local']['dv']
+
+            '''
+            Create another connection to labrad in order to have a set of servers opened up in a context
+            specific to this module. This allows multiple datavault connections to be editted at the same
+            time, or communication with multiple DACs / other devices
+            '''
+            from labrad.wrappers import connectAsync
+            cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            self.dv = yield cxn.data_vault
+            #Set the directory of the local datavault connection to be the same as the one
+            #selected in the LabRAD Connect module
+            curr_folder = yield self.gen_dv.cd()
+            yield self.dv.cd(curr_folder)
+
+            #Connected to the appropriate DACADC
+            self.dac = yield cxn.dac_adc
+            self.dac.select_device(dict['devices']['nsot']['dac_adc'])
+
+            #Select the appropriate magnet power supply
+            if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
+                self.dac_toe = dict['servers']['local']['dac_adc']
+                self.settingsDict['Magnet device'] = 'Toellner 8851'
+                self.settingsDict['toellner volts'] = dict['channels']['system']['toellner dac voltage']
+                self.settingsDict['toellner current'] = dict['channels']['system']['toellner dac current']
+                self.comboBox_magnetPower.addItem('Toellner 8851')
+            elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
+                self.ips = dict['servers']['remote']['ips120']
+                self.settingsDict['Magnet device'] = 'IPS 120-10'
+                self.comboBox_magnetPower.addItem('IPS 120-10')
+
+            #select the appropriate blink device
+            if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
+                self.blink_server = yield cxn.ad5764_dcbox
+                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
+                print 'DC BOX Blink Device'
+            elif dict['devices']['system']['blink device'].startswith('DA'):
+                self.blink_server = yield cxn.dac_adc
+                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
+                print 'DAC ADC Blink Device'
+
+            #Set all the channels as specified by the DeviceSelect module
+            self.blinkDevice = dict['devices']['system']['blink device']
+            self.settingsDict['blink'] = dict['channels']['system']['blink channel']
+            self.settingsDict['nsot bias output'] = dict['channels']['nsot']['nSOT Bias']
+            self.settingsDict['nsot bias input'] = dict['channels']['nsot']['Bias Reference']
+            self.settingsDict['feedback DC input'] = dict['channels']['nsot']['DC Readout']
+            self.settingsDict['noise input'] = dict['channels']['nsot']['Noise Readout']
+
+            #Set the server pushbutton to green to show servers were connected
+            self.push_Servers.setStyleSheet("#push_Servers{" +
+            "background: rgb(0, 170, 0);border-radius: 4px;}")
+
+            #Unlock the interface
+            self.unlockInterface()
+        except Exception as inst:
+            self.push_Servers.setStyleSheet("#push_Servers{" +
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+            print 'nsot char labrad connect', inst
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            print 'line num ', exc_tb.tb_lineno
+
+    def disconnectLabRAD(self):
+        self.comboBox_magnetPower.removeItem(0)
+        self.gen_dv = False
+        self.dv = False
+        self.dac = False
+        self.dac_toe = False
+        self.ips = False
+        self.blink_server = False
+        self.push_Servers.setStyleSheet("#push_Servers{" +
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+
+#----------------------------------------------------------------------------------------------#
+    """ The following section connects actions related to updating parameters from
+         line edits. The first is thoroughly commented as an example, but since the
+         structure of these functions are all very similar they aren't all commented
+         with the same thoroughness."""
+
+    def updateFieldMin(self, val = None):
+        #If no value is specified get the value from the lineEdit
+        if val is None:
+            val = readNum(str(self.lineEdit_fieldMin.text()), self, False)
+        #If the val retrieved from the lineedit is a float
+        if isinstance(val,float):
+            #Update the parameters dictionary with the new value
+            self.sweepParamDict['B_min'] = self.checkFieldRange(val)
+        #Set the text in the lineEdit to the value in the dictionary. If an
+        #improperly formatted number was read that didn't result in the
+        #dictionary being updated, this will set the text to the previous
+        #number.
+        self.lineEdit_fieldMin.setText(formatNum(self.sweepParamDict['B_min']))
+
+    def updateFieldMax(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_fieldMax.text()), self, False)
+        if isinstance(val,float):
+            self.sweepParamDict['B_max'] = self.checkFieldRange(val)
+        self.lineEdit_fieldMax.setText(formatNum(self.sweepParamDict['B_max']))
+
+    def checkFieldRange(self, val):
+        #Keeps the field value within 1.25T for the dipper magnet
+        if self.settingsDict['Magnet device'] == 'Toellner 8851':
+            if val < -1.25:
+                val = -1.25
+            elif val > 1.25:
+                val = 1.25
+        #Keeps the field value within 5T for the 1K system magnet
+        elif self.settingsDict['Magnet device'] == 'IPS 120-10':
+            if val < -5:
+                val = -5
+            elif val > 5:
+                val = 5
+        return val
+
+    def updateFieldSpeed(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_fieldSpeed.text()), self, False)
+        if isinstance(val,float):
+            self.sweepParamDict['B_rate'] = val
+        self.lineEdit_fieldSpeed.setText(formatNum(self.sweepParamDict['B_rate']))
+
+    def updateFieldPoints(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_fieldPoints.text()), self, False)
+        if isinstance(val,float) and val > 2:
+            #Updates both the number of field points and the field step size.
+            #If the GUI is toggled such that it enters the step size instead of
+            #the number of points (which happens when fieldSIStat is not 'num pnts')
+            #Then the value is taken to be the step size instad of the number of
+            #points
+            if self.fieldSIStat == 'num pnts':
+                self.sweepParamDict['B_pnts'] = val
+                self.sweepParamDict['B_step'] = (self.sweepParamDict['B_max']-self.sweepParamDict['B_min'])/(val-1)
+            else:
+                self.sweepParamDict['B_pnts'] = round(1+(self.sweepParamDict['B_max']-self.sweepParamDict['B_min'])/val)
+                self.sweepParamDict['B_step'] = (self.sweepParamDict['B_max']-self.sweepParamDict['B_min'])/(self.sweepParamDict['B_pnts']-1)
+
         if self.fieldSIStat == 'num pnts':
-            b_pnts = int(self.fieldPointsSetValue.text())
-        elif self.fieldSIStat == 'field step':
-            b_pnts = int(1000 * np.absolute(b_max - b_min) / (float(self.fieldPointsSetValue.text())))
-        b_speed = readNum(str(self.fieldSpeedSetValue.text()), self, False)
-        v_min = readNum(str(self.biasMinSetValue.text()), self, False)
-        v_max = readNum(str(self.biasMaxSetValue.text()), self, False)
-        if self.biasSIStat == 'bias steps':
-            v_pnts = int(1000 * np.absolute(v_max - v_min) / (float(self.biasPointsSetValue.text())))
-        elif self.biasSIStat == 'num pnts':
-            v_pnts = int(self.biasPointsSetValue.text())
-        v_speed = readNum(str(self.biasSpeedSetValue.text()), self, False)
-        # if b_min > b_max:
-            # b_max_str, b_min_str = self.fieldMaxSetValue.text(), self.fieldMinSetValue.text()
-            # self.fieldMinSetValue.setText(b_max_str)
-            # self.fieldMaxSetValue.setText(b_min_str)
-            # b_min = readNum(str(self.fieldMinSetValue.text()), self, False)
-            # b_max = readNum(str(self.fieldMaxSetValue.text()), self, False)
-        # if v_min > v_max:
-            # v_max_str, v_min_str = self.biasMaxSetValue.text(), self.biasMinSetValue.text()
-            # self.biasMinSetValue.setText(v_max_str)
-            # self.biasMaxSetValue.setText(v_min_str)
-            # v_min = readNum(str(self.biasMinSetValue.text()), self, False)
-            # v_max = readNum(str(self.biasMaxSetValue.text()), self, False)
-        if sweepMod == 1:
+            self.lineEdit_fieldPoints.setText(formatNum(self.sweepParamDict['B_pnts']))
+        else:
+            self.lineEdit_fieldPoints.setText(formatNum(self.sweepParamDict['B_step']))
+
+    def updateBiasMin(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_biasMin.text()), self, False)
+        if isinstance(val,float):
+            self.sweepParamDict['V_min'] = self.checkBiasRange(val)
+            self.checkSweepVoltageParameters()
+        self.lineEdit_biasMin.setText(formatNum(self.sweepParamDict['V_min']))
+
+    def updateBiasMax(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_biasMax.text()), self, False)
+        if isinstance(val,float):
+            self.sweepParamDict['V_max'] = self.checkBiasRange(val)
+            self.checkSweepVoltageParameters()
+        self.lineEdit_biasMax.setText(formatNum(self.sweepParamDict['V_max']))
+
+    def checkBiasRange(self, val):
+        #Keeps the voltage value within 10V
+        if val < -10:
+            val = -10
+        elif val > 10:
+            val = 10
+        return val
+
+    def checkSweepVoltageParameters(self):
+        #Makes sure the min and max voltages are compatible with the selected
+        #sweep mode. If the mode is 0 (min to max), then any voltage work.
+        #if sweep mode is 1 (zero to min/max), then the minimum voltage needs
+        #to be negative and the maximum positive.
+        if self.sweepParamDict['sweep mode'] == 1:
+            v_min = self.sweepParamDict['V_min']
+            v_max = self.sweepParamDict['V_max']
             if v_min < 0 and v_max > 0:
                 pass
             else:
                 vDefault = max(abs(float(v_min)), abs(float(v_max)))
                 v_max = vDefault
                 v_min = -vDefault
+            self.sweepParamDict['V_max'] = v_max
+            self.sweepParamDict['V_min'] = v_min
 
-        if v_speed <0.001:
-            vSpeed = '1'
+    def updateBiasPoints(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_biasPoints.text()), self, False)
+        if isinstance(val,float) and val > 2:
+            #Updates both the number of bias points and the bias step size.
+            #If the GUI is toggled such that it enters the step size instead of
+            #the number of points (which happens when biasSIStat is not 'num pnts')
+            #Then the value is taken to be the step size instad of the number of
+            #points
+            if self.biasSIStat == 'num pnts':
+                self.sweepParamDict['V_pnts'] = val
+                self.sweepParamDict['V_step'] = (self.sweepParamDict['V_max']-self.sweepParamDict['V_min'])/(val-1)
+            else:
+                self.sweepParamDict['V_pnts'] = round(1+(self.sweepParamDict['V_max']-self.sweepParamDict['V_min'])/val)
+                self.sweepParamDict['V_step'] =  (self.sweepParamDict['V_max']-self.sweepParamDict['V_min'])/(self.sweepParamDict['V_pnts']-1)
+
+        if self.biasSIStat == 'num pnts':
+            self.lineEdit_biasPoints.setText(formatNum(self.sweepParamDict['V_pnts']))
         else:
-            pass
-        
-        self.bMin = float(b_min)
-        self.bMax = float(b_max)
-        self.bPoints = int(b_pnts)
-        self.bSpeed = float(b_speed)
-        self.vMin = float(v_min)
-        self.vMax = float(v_max)
-        self.vPoints = int(v_pnts)
-        self.vSpeed = float(v_speed)
-        self.sweepMod = int(sweepMod)
-        self.blinkMod = int(blinkMod)
-        
-        if b_pnts != 0:
-            tLatent = 5
-            T = (np.absolute(self.bMin) + np.absolute(self.bMax)) / (self.bSpeed) + (self.bPoints/self.bSpeed)* (np.absolute(self.bMax - self.bMin) / (self.bPoints)) + (self.bPoints/60) * ( (self.vPoints - 1) * (self.vSpeed/1000000) + float(tLatent))
-            T = 2*T
-            hours = int(T / 60) 
-            minutes = int(T)%60
-            TotalTime = str(hours) + ' hours ' + str(minutes) + ' minutes' 
+            self.lineEdit_biasPoints.setText(formatNum(self.sweepParamDict['V_step']))
+
+    def updateBiasDelay(self, val = None):
+        if val is None:
+            val = readNum(str(self.lineEdit_biasDelay.text()), self, False)
+        if isinstance(val,float) and val > 0:
+            self.sweepParamDict['delay'] = val
+        self.lineEdit_biasDelay.setText(formatNum(self.sweepParamDict['delay']))
+
+    def toggleFieldSteps(self):
+        #Toggles between number of steps and Tesla/step in the sweep parameter line edits
+        if self.fieldSIStat == 'num pnts':
+            self.FieldInc.setText("Tesla per Step")
+            self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
+            self.lineEdit_fieldPoints.setText(formatNum(self.sweepParamDict['B_step']))
+            self.fieldSIStat = 'field step'
         else:
-            TotalTime = "infinite"
-        
-        self.sweepParamDict = {'B_min' : b_min, 'B_max' : b_max, 'B_pnts' : b_pnts, 'B_rate' : b_speed, 'V_min' : v_min, 'V_max' : v_max, 'V_pnts' : v_pnts, 'delay' : v_speed, 'sweep mode' : sweepMod, 'blink mode' : blinkMod, 'Magnet device' : self.settingsDict['Magnet device'], 'sweep time' : TotalTime} 
-        
+            self.FieldInc.setText("Number of Steps")
+            self.FieldInc.setStyleSheet("QLabel#FieldInc {color: rgb(168,168,168); font: 10pt;}")
+            self.lineEdit_fieldPoints.setText(formatNum(self.sweepParamDict['B_pnts']))
+            self.fieldSIStat = 'num pnts'
 
-    def checkSweep(self):
-        self.readSweepParameters()
-        
-        print '------------------------------------------------------------------------------------'
-        print 'Sweep Parameters'
-        print self.sweepParamDict
-        print 'General Input Settings'
-        print self.settingsDict
-        print '------------------------------------------------------------------------------------'
-        
-        self.dialog = DialogBox(self.sweepParamDict, self)
-        self.dialog.show()    
-        self.dialog.accepted.connect(self.initSweep)
-        self.dialog.rejected.connect(self.decline)        
+    def toggleBiasSteps(self):
+        #Toggles between number of steps and Volts/step in the sweep parameter line edits
+        if self.biasSIStat == 'num pnts':
+            self.BiasInc.setText("Volts per Step")
+            self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
+            self.lineEdit_biasPoints.setText(formatNum(self.sweepParamDict['V_step']))
+            self.biasSIStat = 'bias step'
+        else:
+            self.BiasInc.setText("Number of Steps")
+            self.BiasInc.setStyleSheet("QLabel#BiasInc {color: rgb(168,168,168); font: 10pt;}")
+            self.lineEdit_biasPoints.setText(formatNum(self.sweepParamDict['V_pnts']))
+            self.biasSIStat = 'num pnts'
 
-    def decline(self):
-        self.startSweep.setEnabled(True)
-        self.abortSweep.setEnabled(False)
+    def updateBiasSweepMode(self):
+        self.sweepParamDict['sweep mode'] = self.comboBox_biasSweepMode.currentIndex()
+        self.checkSweepVoltageParameters()
+        self.lineEdit_biasMin.setText(formatNum(self.sweepParamDict['V_min']))
+        self.lineEdit_biasMax.setText(formatNum(self.sweepParamDict['V_max']))
+
+    def updateBlinkMode(self):
+        self.sweepParamDict['blink mode'] = self.comboBox_blinkMode.currentIndex()
+
+    def updateSweepTime(self):
+        #Define local variables just to make equation not ridiculously long
+        bpoints = self.sweepParamDict['B_pnts']
+        bspeed = self.sweepParamDict['B_rate']
+        bmin = self.sweepParamDict['B_min']
+        bmax = self.sweepParamDict['B_max']
+        vpoints = self.sweepParamDict['V_pnts']
+        delay = self.sweepParamDict['delay']
+
+        #Estimate time of sweep in minutes
+
+        #Fudge factor included by the original writer who didn't comment their code.
+        #Presumably a blanket 5 seconds added per voltage sweep for latency slow
+        tLatent = 5
+        #Time contributions from
+        #1. Sweeping field from zero to start field, then end field to zero
+        #2. Time from sweeping the field between bmin and bmax.
+        #3. Time from doing the voltage sweeps
+        T = (np.absolute(bmin) + np.absolute(bmax)) / (bspeed) + (np.absolute(bmax - bmin) / (bspeed)) + (bpoints/60) * ((vpoints - 1) * (delay) + float(tLatent))
+        #Multiply by 2 to include trace and retrace time
+        T = 2*T
+        #Get number of hours and minutes
+        hours = int(T / 60)
+        minutes = int(T)%60
+        TotalTime = str(hours) + ' hours ' + str(minutes) + ' minutes'
+
+        self.sweepParamDict['sweep time'] = TotalTime
+
+#----------------------------------------------------------------------------------------------#
+    """ The following section connects actions related to SQUID diameter analysis"""
+
+    def UpdateFieldPeriod(self):
+        #Get the position of the analysis markers in tesla
+        pos1 = self.MeasureLine1.value()
+        pos2 = self.MeasureLine2.value()
+        #The period is the difference between the two
+        period = abs(pos1 - pos2)
+        #Set the text of the lineEdIt to be the field in mT
+        self.lineEdit_FieldPeriod.setText(str(round(period * 1000, 1)))
+        fluxquanta = 2.0678338 / (10.0 ** 15)
+        area = fluxquanta / period
+        diameter = 2 * math.sqrt(area / math.pi)
+        #Set the text of the lineEDit to be the diameter in nm
+        self.lineEdit_Diameter.setText(str(round(diameter * 10.0 ** 9, 1)))
+
+    def ToggleMeasurementLine(self):
+        #Toggle adding / removing the measurement lines for analysis
+        if self.Flag_MeasurementLineShowing:
+            self.view0.removeItem(self.MeasureLine1)
+            self.view0.removeItem(self.MeasureLine2)
+        else:
+            self.view0.addItem(self.MeasureLine1)
+            self.view0.addItem(self.MeasureLine2)
+        self.Flag_MeasurementLineShowing = not self.Flag_MeasurementLineShowing
+
+#----------------------------------------------------------------------------------------------#
+    """ The following functions hide or show the histogram on the colorplots"""
+
+    def hideTraceHistogram(self):
+        #Hide the histogram for the trace image view
+        self.tracePlot.ui.histogram.hide()
+        self.noiseTracePlot.ui.histogram.hide()
+        self.push_hideTraceGrad.hide()
+        self.push_showTraceGrad.show()
+        self.push_showTraceGrad.raise_()
+
+    def showTraceHistogram(self):
+        #Show the histogram for the trace image view
+        self.tracePlot.ui.histogram.show()
+        self.noiseTracePlot.ui.histogram.show()
+        self.push_hideTraceGrad.show()
+        self.push_showTraceGrad.hide()
+        self.push_showTraceGrad.raise_()
+
+    def hideRetraceHistogram(self):
+        #Hide the histogram for the retrace image view
+        self.retracePlot.ui.histogram.hide()
+        self.noiseRetracePlot.ui.histogram.hide()
+        self.push_hideRetraceGrad.hide()
+        self.push_showRetraceGrad.show()
+        self.push_showRetraceGrad.raise_()
+
+    def showRetraceHistogram(self):
+        #Show the histogram for the retrace image view
+        self.retracePlot.ui.histogram.show()
+        self.noiseRetracePlot.ui.histogram.show()
+        self.push_hideRetraceGrad.show()
+        self.push_showRetraceGrad.hide()
+        self.push_showRetraceGrad.raise_()
+
+#----------------------------------------------------------------------------------------------#
+    """ The following section connects actions related to sweeping buttons"""
+
+    def runPrelimSweep(self):
+        #Opens the preliminary sweep window
+        self.push_prelim.setEnabled(False)
+        self.prelimSweep = preliminarySweep(self.reactor, self.dv, self.dac, self.settingsDict, self)
+        self.prelimSweep.show()
+
+    def abortSweep(self):
+        #Aborts sweep by changing the self.abortFlag to True
+        self.abortFlag = True
+
+    @inlineCallbacks
+    def startSweep(self):
+        #Prevent user from starting multiple sweeps at the same time by disabling the button while sweeping
+        self.push_startSweep.setEnabled(False)
+        #By default, do not abort the sweep.
+        self.abortFlag = False
+
+        #Throw a reminder to check that the output of the Toellner is on if it's being used
+        if self.settingsDict['Magnet device'] == 'Toellner 8851':
+            checkToe = toellnerReminder()
+            if not checkToe.exec_():
+                #If not, abort the sweep
+                self.abortFlag = True
+
+        #Have user review the sweep parameters before starting
+        if not self.abortFlag:
+            checkSweepParams = DialogBox(self.sweepParamDict, self)
+            #If the user does not like the sweep parameters, abort the sweep
+            if not checkSweepParams.exec_():
+                self.abortFlag = True
+
+        if not self.abortFlag:
+            #Have the sweep happen in a separate function so that when scripting
+            #the GUI checks are not run
+            yield self.initSweep()
+
+        #once the sweep is done, re-enable the startSweep button
+        self.push_startSweep.setEnabled(True)
+
+    def lockSweepParameters(self):
+        self.push_startSweep.setEnabled(False)
+        self.comboBox_magnetPower.setEnabled(False)
+        self.comboBox_blinkMode.setEnabled(False)
+        self.comboBox_biasSweepMode.setEnabled(False)
+        self.push_prelim.setEnabled(False)
+        self.lineEdit_fieldMin.setReadOnly(True)
+        self.lineEdit_fieldMax.setReadOnly(True)
+        self.lineEdit_fieldPoints.setReadOnly(True)
+        self.lineEdit_fieldSpeed.setReadOnly(True)
+        self.lineEdit_biasMin.setReadOnly(True)
+        self.lineEdit_biasMax.setReadOnly(True)
+        self.lineEdit_biasPoints.setReadOnly(True)
+        self.lineEdit_biasDelay.setReadOnly(True)
+
+    def unlockSweepParameters(self):
+        self.push_startSweep.setEnabled(True)
+        self.comboBox_magnetPower.setEnabled(True)
+        self.comboBox_blinkMode.setEnabled(True)
+        self.comboBox_biasSweepMode.setEnabled(True)
+        self.push_prelim.setEnabled(True)
+        self.lineEdit_fieldMin.setReadOnly(False)
+        self.lineEdit_fieldMax.setReadOnly(False)
+        self.lineEdit_fieldPoints.setReadOnly(False)
+        self.lineEdit_fieldSpeed.setReadOnly(False)
+        self.lineEdit_biasMin.setReadOnly(False)
+        self.lineEdit_biasMax.setReadOnly(False)
+        self.lineEdit_biasPoints.setReadOnly(False)
+        self.lineEdit_biasDelay.setReadOnly(False)
+
+    @inlineCallbacks
+    def initSweep(self):
+        #Lock GUI elements that should not be changed mid scan
+        self.lockSweepParameters()
+
+        #First create shorter local variables of all the important sweep parameters
+        b_min, b_max, b_rate = self.sweepParamDict['B_min'], self.sweepParamDict['B_max'], self.sweepParamDict['B_rate']
+        v_min, v_max = self.sweepParamDict['V_min'], self.sweepParamDict['V_max']
+        b_pnts, v_pnts = self.sweepParamDict['B_pnts'], self.sweepParamDict['V_pnts']
+        delay = int(1e6 * self.sweepParamDict['delay']) #Get the delay in units of microseconds
+
+        #Create a data vault file for this sweep
+        file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
+        self.dvFileName = file_info[1] #Get the name of the file
+        self.lineEdit_ImageNum.setText(file_info[1][0:5]) #Update the GUI element showing the dataset number
+        session = ''
+        for folder in file_info[0][1:]:
+            session = session + '\\' + folder
+        self.lineEdit_ImageDir.setText(r'\.datavault' + session) #Update the GUI element showing the dataset directory
+        print 'DataVault setup complete'
+
+        #For the data of the speed, determine the position of the plot and the scale factors
+        self.plt_pos = [b_min, v_min] #Position of the bottom left corner of the plot
+        self.plt_scale = [(b_max-b_min) / b_pnts, (v_max-v_min) / v_pnts] #Scale factor for the size of each pixel
+
+        #Initialize empty arrays for the data for plotting
+        self.curTraceData = np.zeros([b_pnts, v_pnts])
+        self.noiseTraceData =np.zeros([b_pnts, v_pnts])
+        self.curRetraceData = np.zeros([b_pnts, v_pnts])
+        self.noiseRetraceData = np.zeros([b_pnts, v_pnts])
+
+        #Update the plots with the empty datasets
+        self.updatePlots()
+
+        #Generate arrays with values of magnetic fields that need to be sampled
+        b_vals = np.linspace(float(b_min),float(b_max), num = int(b_pnts))
+
+        #Start by making sure the voltage output on the nSOT is zero.
+        #This should be improved at some point to coordinate with the setpoint
+        #module to not jump the bias voltage on the SQUID.
+        #That being said, it isn't a problem that damages SQUIDs usually
+        yield self.dac.set_voltage(self.settingsDict['nsot bias output'] - 1, 0)
+
+        #If starting (minimum) bias voltage is not zero, sweep bias to minimum value, 1mV per step with a 1ms delay
+        if v_min != 0:
+            yield self.dac.buffer_ramp([self.settingsDict['nsot bias output'] - 1], [0], [0], [v_min], np.absolute(int(v_min * 1000)), 1000)
+
+        #Loop through the magnetic field points
+        for i in range(0, b_pnts):
+            #Check if user selected to abort the sweep
+            if self.abortFlag:
+                yield self.abortSweepFunc(0, v_min)
+                break
+
+            #Ramp the magnetic field from the current field to
+            print 'Ramping field to ' + str(b_vals[i])+'.'
+            if i == 0:
+                #For the first field point, assume we were at zero field to begin with
+                yield self.setMagneticField(0, b_vals[0], b_rate)
+            else:
+                yield self.setMagneticField(b_vals[i-1], b_vals[i], b_rate)
+
+            #Check if user selected to abort the sweep while the field was changing
+            if self.abortFlag:
+                yield self.abortSweepFunc(b_vals[i], v_min)
+                break
+
+            print 'Starting sweep with magnetic field set to: ' + str(b_vals[i])
+
+            #Do the voltage sweep. The function takes into account the sweep mode
+            trace, retrace = yield self.rampVoltage(v_min, v_max, v_pnts, delay, self.sweepParamDict['sweep mode'])
+
+            #Reform data and add to data vault
+            formated_trace = []
+            for j in range(0, v_pnts):
+                formated_trace.append((0, i, j, b_vals[i], trace[0][j], trace[1][j], trace[2][j]))
+
+            formated_retrace = []
+            for j in range(0, v_pnts):
+                formated_trace.append((1, i, v_pnts - 1 - j, b_vals[i], retrace[0][j], retrace[1][j], retrace[2][j]))
+
+            yield self.dv.add(formated_trace)
+            yield self.dv.add(formated_retrace)
+
+            #update the plots
+            yield self.updatePlots(formated_trace)
+            yield self.updatePlots(formated_retrace)
+
+            #Check if user selected to abort the sweep while voltages were sweeping
+            if self.abortFlag:
+                yield self.abortSweepFunc(b_vals[i], v_min)
+                break
+
+        #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
+        if v_min != 0 and not self.abortFlag:
+            yield self.dac.buffer_ramp([self.settingsDict['nsot bias output'] - 1], [0], [v_min], [0], np.absolute(int(v_min * 1000)), 1000)
+
+        #Zero the magnetic field if the checkBox is checked
+        if self.checkBox_ZeroField.isChecked() and not self.abortFlag:
+            #Go to zero field and set power supply voltage setpoint to zero.
+            yield self.setMagneticField(b_vals[-1], 0, b_rate)
+
+        print 'Sweep complete'
+        #unlock the GUI elements now that the sweep is complete
+        self.unlockSweepParameters()
+        #Wait until all plots are appropriately updated before saving screenshot
+        yield self.sleep(0.25)
+        self.saveDataToSessionFolder()
+
+    @inlineCallbacks
+    def setMagneticField(self, B_i, B_f, B_rate):
+        #Set the magnetic field with either the Toellner or the IPS
+        if self.settingsDict['Magnet device'] == 'Toellner 8851':
+            yield self.toeSetField(B_i, B_f, B_rate)
+        elif self.settingsDict['Magnet device'] == 'IPS 120-10':
+            yield self.ipsSetField(B_f, B_rate)
+
+    @inlineCallbacks
+    def toeSetField(self, B_i, B_f, B_rate):
+        try:
+            #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
+            VV_conv = 3.20
+            #Toellner current set point / DAC voltage out conversion [I_Toellner / V_DAC]
+            IV_conv = 1.0
+            #Field / Current ratio on the dipper magnet (0.132 [Tesla / Amp])
+            IB_conv = 0.132
+
+            #Starting and ending field values in Tesla, use positive field values for now
+            B_range = np.absolute(B_f - B_i)
+
+            #Delay between DAC steps in microseconds
+            magnet_delay = 1000
+            #Converts between microseconds and minutes [us / minute]
+            t_conv = 6e07
+
+            #Sets the appropriate DAC buffer ramp parameters
+            sweep_steps = int((t_conv * B_range) / (B_rate * magnet_delay))  + 1
+            v_start = B_i / (IB_conv * IV_conv)
+            v_end = B_f / (IB_conv * IV_conv)
+
+            #Sets an appropraite voltage set point to ensure that the Toellner power supply stays in constant current mode
+            # assuming a parasitic resistance of R_p between the power supply and magnet
+            R_p = 1
+            V_setpoint =  (R_p * B_f) / (VV_conv * IB_conv)
+            V_initial = (R_p * B_i) / (VV_conv * IB_conv)
+            if V_setpoint*VV_conv > 5.0:
+                V_setpoint = 5.0/VV_conv
+            else:
+                pass
+            if V_initial*VV_conv > 5.0:
+                V_initial = 5.0/VV_conv
+            else:
+                pass
+
+            #Sweeps field from B_i to B_f
+            print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
+            yield self.dac_toe.buffer_ramp([self.settingsDict['toellner current']-1, self.settingsDict['toellner current']-1],[0],[v_start, V_initial],[v_end, V_setpoint], sweep_steps, magnet_delay)
+
+            self.newToeField.emit(B_f, B_f/IB_conv, V_setpoint)
+        except Exception as inst:
+            print 'SF, ', str(inst )
+
+    @inlineCallbacks
+    def ipsSetField(self, B_f, B_rate):
+        yield self.ips.set_control(3) #Set the IPS120 to remote communication
+        yield self.ips.set_comm_protocol(6) #Set the IPS120 to the proper communication protocol
+        yield self.ips.set_fieldsweep_rate(B_rate) #Set the sweep rate
+        yield self.ips.set_targetfield(B_f) #Set the target field
+        yield self.ips.set_activity(1) #Set the IPS to sweep field if it is not yet at the target field
+        yield self.ips.set_control(2) #Set the IPS120 to local communication so that it can be used IRL
+
+        print 'Setting field to ' + str(B_f)
+
+        #Keep track of time since the field started changing
+        t0 = time.time()
+
+        #wait for field to be reached
+        while True:
+            #Read the current field
+            yield self.ips.set_control(3)
+            curr_field = yield self.ips.read_parameter(7)
+            yield self.ips.set_control(2)
+
+            #Break out of loop if the field is at the desired field
+            if float(curr_field[1:]) <= B_f+0.00001 and float(curr_field[1:]) >= B_f-0.00001:
+                break
+
+            #Break out of loop if the user aborts the sweep
+            if self.abortFlag == True:
+                break
+
+            #If it's taking a long time to get to the next point, sometimes reseting them
+            #setpoint and activity helps
+            if time.time() - t0 > 1:
+                yield self.ips.set_control(3)
+                yield self.ips.set_targetfield(B_f)
+                yield self.ips.set_activity(1)
+                yield self.ips.set_control(2)
+                t0 = time.time()
+                print 'restarting loop'
+
+            yield self.sleep(0.25)
+
+        #Once the field is reached, set the IPS to no longer change field
+        yield self.ips.set_control(3)
+        yield self.ips.set_activity(0)
+        yield self.ips.set_control(2)
+
+    @inlineCallbacks
+    def rampVoltage(self, v_min, v_max, pnts, delay, mode):
+        #DAC OUTPUTS
+        DAC_out = self.settingsDict['nsot bias output'] - 1 #DAC out channel that outputs DC bias (1 through 4)
+
+        #DAC INPUTS
+        DAC_in_ref = self.settingsDict['nsot bias input'] - 1 #DAC in channel that reads DC bias (1 through 4)
+        V_out = self.settingsDict['feedback DC input'] - 1 #DAC in channel that read DC signal (1 through 4)
+        noise = self.settingsDict['noise input'] - 1 #DAC in channel to read noise measurement
+
+        #Here differentiate between sweep modes
+        if self.settingsDict['sweep mode'] == 0: #This corresponds to min to max sweeps
+            #If blink mode is enabled, blink before the voltage sweep step
+            if self.sweepParamDict['blink mode'] == 0:
+                print 'Blinking prior to sweep'
+                yield self.blink()
+
+            #Sweep from minimum to maximum bias voltage
+            print 'Ramping up nSOT bias voltage from ' + str(v_min) + ' to ' + str(v_max) + '.'
+            trace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [v_min], [v_max], pnts, delay)
+
+            #Sweep from maximum to minimum bias voltage
+            print 'Ramping nSOT bias voltage back down from ' + str(v_max) + ' to ' + str(v_min) + '.'
+            retrace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [v_max], [v_min], pnts, delay)
+
+            #Flip the retrace data so that the ith point corresponds to the same voltage as the ith point of the trace data
+            retrace = retrace[::-1]
+
+        elif self.settingsDict['sweep mode'] == 1: #This corresponds to zero to mix max
+            #If sweeping from zero to min/max, find the appropriate number of points
+            #for positive and negative voltages
+            v_range = v_max - v_min
+            positive_points = int((pnts * v_max)/v_range) #Think about the +1 in rest of script
+            negative_points = pnts - positive_points
+
+            #If blink mode is enabled, blink before the voltage sweep step
+            if self.sweepParamDict['blink mode'] == 0:
+                print 'Blinking prior to sweep'
+                yield self.blink()
+
+            #Sweep from zero volts to maximum bias voltage
+            print 'Ramping up nSOT bias voltage from zero to ' + str(v_max) + '.'
+            up_trace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [0], [v_max], positive_points, delay)
+
+            #Sweep from maximum bias voltage to zero volts and blink
+            print 'Ramping nSOT bias voltage back down from ' + str(v_max) + ' to zero.'
+            up_retrace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [v_max], [0], positive_points, delay)
+
+            #If blink mode is enabled, blink before the voltage sweep step
+            if self.sweepParamDict['blink mode'] == 0:
+                print 'Blinking prior to sweep'
+                yield self.blink()
+
+            #Sweep from zero volts to minimum bias voltage
+            print 'Ramping down nSOT bias voltage from zero to ' + str(v_min) + '.'
+            down_trace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [0], [v_min], negative_points, delay)
+
+            #Sweep from minimum bias voltage to zero volts
+            print 'Ramping nSOT bias voltage up down from ' + str(v_min) + ' to zero.'
+            down_retrace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [v_min], [0], negative_points, delay)
+
+            trace = down_trace[::-1] + up_trace
+            retrace = down_retrace + up_retrace[::-1]
+
+        returnValue([trace, retrace])
+
+    @inlineCallbacks
+    def abortSweepFunc(self, bVal, vVal):
+        print 'Aborting sweep from applied field of ', bVal,'T and nSOT bias of ', vVal, 'V'
+        print 'Ramping nSOT bias to zero'
+        #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
+        if vVal != 0:
+            yield self.dac.buffer_ramp([self.settingsDict['nsot bias output'] - 1], [0], [vVal], [0], np.absolute(int(vVal * 1000)), 1000)
+
+        #if the zero field checkbox is checked zero the field
+        if self.checkBox_ZeroField.isChecked():
+            print 'Sweeping magnetic field back to zero'
+            yield self.setMagneticField(bVal, 0, self.sweepParamDict['B_rate'])
+
+        self.unlockSweepParameters()
+
+    @inlineCallbacks
+    def blink(self):
+        #Blink, resetting the analog feedback control loop for the nSOT
+        yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 5)
+        yield self.sleep(0.25)
+        yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 0)
+        yield self.sleep(0.25)
+
+#----------------------------------------------------------------------------------------------#
+    """ The following section connects actions related to plotting"""
+
+    def updatePlots(self, new_line = None):
+        if new_line is None: #If no line is provided, just update all the image views with the current data
+            self.tracePlot.setImage(self.curTraceData, autoRange = True , autoLevels = True, pos = self.plt_pos, scale = self.plt_scale)
+            self.noiseTracePlot.setImage(self.noiseTraceData, autoRange = True , autoLevels = True, pos = self.plt_pos, scale = self.plt_scale)
+            self.retracePlot.setImage(self.curRetraceData, autoRange = True , autoLevels = True, pos = self.plt_pos, scale = self.plt_scale)
+            self.noiseRetracePlot.setImage(self.noiseRetraceData, autoRange = True , autoLevels = True, pos = self.plt_pos, scale = self.plt_scale)
+        elif new_line[0][0] == 1: #If first index of the new line is retrace, update retrace plots
+            i = new_line[0][1]
+            new_curData = [x[5] for x in new_line]
+            new_noiseData = [x[6] for x in new_line]
+            self.curRetraceData[i] = new_curData
+            self.noiseRetraceData[i] = new_noiseData
+            self.retracePlot.setImage(self.curRetraceData, autoRange = False, autoLevels = True, pos = self.plt_pos,scale = self.plt_scale)
+            self.noiseRetracePlot.setImage(self.noiseRetraceData, autoRange = False, autoLevels = True, pos = self.plt_pos, scale = self.plt_scale)
+            if self.liveTracePlotStatus is True:
+                self.plotRetraceLinecut(i)
+        elif new_line[0][0] == 0: #If first index of the new line is trace, update trace plots
+            i = new_line[0][1]
+            new_curData = [x[5] for x in new_line]
+            new_noiseData = [x[6] for x in new_line]
+            self.curTraceData[i] = new_curData
+            self.noiseTraceData[i] = new_noiseData
+            self.tracePlot.setImage(self.curTraceData, autoRange = False, autoLevels = True, pos = self.plt_pos, scale = self.plt_scale)
+            self.noiseTracePlot.setImage(self.noiseTraceData, autoRange = False, autoLevels = True, pos = self.plt_pos, scale = self.plt_scale)
+            if self.liveRetracePlotStatus is True:
+                self.plotTraceLinecut(i)
 
     def toggleTraceLineCut(self):
         if self.liveTracePlotStatus is True:
@@ -676,7 +1066,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.view1.removeItem(self.vTraceNoiseLine)
             self.view1.removeItem(self.hTraceNoiseLine)
             self.liveTracePlotStatus = True
-            
+
     def toggleRetraceLineCut(self):
         if self.liveRetracePlotStatus is True:
             self.view2.addItem(self.vRetraceLine, ignoreBounds = True)
@@ -696,93 +1086,63 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             self.liveRetracePlotStatus = True
 
     def updateVLineBox(self):
-        if self.liveTracePlotStatus is True:
-            pass
-        elif self.liveTracePlotStatus is False:
-            if self.tabsTrace.currentIndex() == 0:
+        if self.liveTracePlotStatus is False:
+            if self.tab_trace.currentIndex() == 0:
                 posTrace = self.vTraceLine.value()
                 self.vCutTracePos.setValue(posTrace)
-                if self.isData == True:
-                    self.updateBottomTracePlot()
-                else:
-                    pass
-            elif self.tabsTrace.currentIndex() == 1:
+                self.updateBottomTracePlot()
+            elif self.tab_trace.currentIndex() == 1:
                 posTrace = self.vTraceNoiseLine.value()
                 self.vCutTracePos.setValue(posTrace)
-                if self.isData == True:
-                    self.updateBottomTracePlot()
-                else:
-                    pass            
-        if self.liveRetracePlotStatus is True:
-            pass
-        elif self.liveRetracePlotStatus is False:
-            if self.tabsRetrace.currentIndex() == 0:
+                self.updateBottomTracePlot()
+
+        if self.liveRetracePlotStatus is False:
+            if self.tab_retrace.currentIndex() == 0:
                 posRetrace = self.vRetraceLine.value()
                 print posRetrace
                 self.vCutRetracePos.setValue(posRetrace)
-                if self.isData == True:
-                    self.updateBottomRetracePlot()
-                else:
-                    pass
-            elif self.tabsRetrace.currentIndex() == 1:
+                self.updateBottomRetracePlot()
+
+            elif self.tab_retrace.currentIndex() == 1:
                 posRetrace = self.vRetraceNoiseLine.value()
                 print posRetrace
                 self.vCutRetracePos.setValue(posRetrace)
-                if self.isData == True:
-                    self.updateBottomRetracePlot()
-                else:
-                    pass
-                    
+                self.updateBottomRetracePlot()
+
     def updateHLineBox(self):
-        if self.liveTracePlotStatus is True:
-            pass
-        elif self.liveTracePlotStatus is False:
-            if self.tabsTrace.currentIndex() == 0:
+        if self.liveTracePlotStatus is False:
+            if self.tab_trace.currentIndex() == 0:
                 posTrace = self.hTraceLine.value()
                 self.hCutTracePos.setValue(posTrace)
-                if self.isData == True:
-                    self.updateBottomTracePlot()
-                else:
-                    pass
-            elif self.tabsTrace.currentIndex() == 1:
+                self.updateBottomTracePlot()
+
+            elif self.tab_trace.currentIndex() == 1:
                 posTrace = self.hTraceNoiseLine.value()
                 self.hCutTracePos.setValue(posTrace)
-                if self.isData == True:
-                    self.updateBottomTracePlot()
-                else:
-                    pass
-        if self.liveRetracePlotStatus is True:
-            pass
-        elif self.liveRetracePlotStatus is False:
-            if self.tabsRetrace.currentIndex() == 0:
+                self.updateBottomTracePlot()
+
+        if self.liveRetracePlotStatus is False:
+            if self.tab_retrace.currentIndex() == 0:
                 posRetrace = self.hRetraceLine.value()
-                print posRetrace
                 self.hCutRetracePos.setValue(posRetrace)
-                if self.isData == True:
-                    self.updateBottomRetracePlot()
-                else:
-                    pass
-            elif self.tabsRetrace.currentIndex() == 1:
+                self.updateBottomRetracePlot()
+            elif self.tab_retrace.currentIndex() == 1:
                 posRetrace = self.hRetraceNoiseLine.value()
-                print posRetrace
                 self.hCutRetracePos.setValue(posRetrace)
-                if self.isData == True:
-                    self.updateBottomRetracePlot()
-                else:
-                    pass
-            
+                self.updateBottomRetracePlot()
+
     def changeVLine(self):
         if self.liveTracePlotStatus is True:
             pass
         elif self.liveTracePlotStatus is False:
-            if self.tabsTrace.currentIndex() == 0:
+            if self.tab_trace.currentIndex() == 0:
                 posTrace = self.vCutTracePos.value()
                 self.vTraceLine.setValue(posTrace)
                 if self.isData == True:
                     self.updateBottomTracePlot()
                 else:
                     pass
-            elif self.tabsTrace.currentIndex() == 1:
+            elif self.tab_trace.currentIndex() == 1:
                 posTrace = self.vCutTracePos.value()
                 self.vTraceNoiseLine.setValue(posTrace)
                 if self.isData == True:
@@ -792,136 +1152,121 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         if self.liveRetracePlotStatus is True:
             pass
         elif self.liveRetracePlotStatus is False:
-            if self.tabsRetrace.currentIndex() == 0:
+            if self.tab_retrace.currentIndex() == 0:
                 posRetrace = self.vCutRetracePos.value()
                 self.vRetraceLine.setValue(posRetrace)
                 if self.isData == True:
                     self.updateBottomRetracePlot()
                 else:
                     pass
-            elif self.tabsRetrace.currentIndex() == 1:
+            elif self.tab_retrace.currentIndex() == 1:
                 posRetrace = self.vCutRetracePos.value()
                 self.vRetraceNoiseLine.setValue(posRetrace)
                 if self.isData == True:
                     self.updateBottomRetracePlot()
                 else:
                     pass
-                    
+
     def changeHLine(self):
-        if self.liveTracePlotStatus is True:
-            pass
-        elif self.liveTracePlotStatus is False:
-            if self.tabsTrace.currentIndex() == 0:
+        if self.liveTracePlotStatus is False:
+            if self.tab_trace.currentIndex() == 0:
                 posTrace = self.hCutTracePos.value()
                 self.hTraceLine.setValue(posTrace)
-                if self.isData == True:
-                    self.updateBottomTracePlot()
-                else:
-                    pass
-            elif self.tabsTrace.currentIndex() == 1:
+                self.updateBottomTracePlot()
+            elif self.tab_trace.currentIndex() == 1:
                 posTrace = self.hCutTracePos.value()
                 self.hTraceNoiseLine.setValue(posTrace)
-                if self.isData == True:
-                    self.updateBottomTracePlot()
-                else:
-                    pass
-        if self.liveRetracePlotStatus is True:
-            pass
-        elif self.liveRetracePlotStatus is False:     
-            if self.tabsRetrace.currentIndex() == 0:
+                self.updateBottomTracePlot()
+
+        if self.liveRetracePlotStatus is False:
+            if self.tab_retrace.currentIndex() == 0:
                 posRetrace = self.hCutRetracePos.value()
                 self.hRetraceLine.setValue(posRetrace)
-                if self.isData == True:
-                    self.updateBottomRetracePlot()
-                else:
-                    pass
-            elif self.tabsRetrace.currentIndex() == 1:
+                self.updateBottomRetracePlot()
+            elif self.tab_retrace.currentIndex() == 1:
                 posRetrace = self.hCutRetracePos.value()
                 self.hRetraceNoiseLine.setValue(posRetrace)
-                if self.isData == True:
-                    self.updateBottomRetracePlot()
-                else:
-                    pass
-                    
+                self.updateBottomRetracePlot()
+
     def toggleTracePlots(self):
-        self.currentBiasTraceSelect.currentIndexChanged.disconnect(self.toggle_bottomTracePlot)
+        self.comboBox_traceLinecut.currentIndexChanged.disconnect(self.toggle_bottomTracePlot)
         self.updateHLineBox()
         self.updateVLineBox()
-        self.currentBiasTraceSelect.removeItem(0)
-        self.currentBiasTraceSelect.removeItem(0)
-        if self.tabsTrace.currentIndex() == 1:
-            self.currentBiasTraceSelect.addItem("RMS Noise vs Bias")
-            self.currentBiasTraceSelect.addItem("RMS Noise vs Field")
+        self.comboBox_traceLinecut.removeItem(0)
+        self.comboBox_traceLinecut.removeItem(0)
+        if self.tab_trace.currentIndex() == 1:
+            self.comboBox_traceLinecut.addItem("RMS Noise vs Bias")
+            self.comboBox_traceLinecut.addItem("RMS Noise vs Field")
             if self.traceNoiseNow == "bias":
-                self.currentBiasTraceSelect.setCurrentIndex(0)
+                self.comboBox_traceLinecut.setCurrentIndex(0)
                 self.curfieldTracePlot.lower()
                 self.curbiasTracePlot.raise_()
                 self.IVTracePlot.setLabel('bottom', 'Bias Voltage', units = 'V')
             elif self.traceNoiseNow == "field":
-                self.currentBiasTraceSelect.setCurrentIndex(1)
+                self.comboBox_traceLinecut.setCurrentIndex(1)
                 self.curbiasTracePlot.lower()
                 self.curfieldTracePlot.raise_()
                 self.IBTracePlot.setLabel('bottom', 'Magnetic Field', units = 'T')
             self.IVTracePlot.setLabel('left', 'RMS Noise', units = 'V')
             self.IBTracePlot.setLabel('left', 'RMS Noise', units = 'V')
 
-        elif self.tabsTrace.currentIndex() == 0:
-            self.currentBiasTraceSelect.addItem("DC Output vs Bias")
-            self.currentBiasTraceSelect.addItem("DC Output vs Field")
+        elif self.tab_trace.currentIndex() == 0:
+            self.comboBox_traceLinecut.addItem("DC Output vs Bias")
+            self.comboBox_traceLinecut.addItem("DC Output vs Field")
             if self.tracePlotNow == "bias":
-                self.currentBiasTraceSelect.setCurrentIndex(0)
+                self.comboBox_traceLinecut.setCurrentIndex(0)
                 self.curfieldTracePlot.lower()
                 self.curbiasTracePlot.raise_()
                 self.IVTracePlot.setLabel('bottom', 'Bias Voltage', units = 'V')
             elif self.tracePlotNow == "field":
-                self.currentBiasTraceSelect.setCurrentIndex(1)
+                self.comboBox_traceLinecut.setCurrentIndex(1)
                 self.curbiasTracePlot.lower()
                 self.curfieldTracePlot.raise_()
                 self.IBTracePlot.setLabel('bottom', 'Magnetic Field', units = 'T')
             self.IVTracePlot.setLabel('left', 'SSAA DC Output', units = 'V')
             self.IBTracePlot.setLabel('left', 'SSAA DC Output', units = 'V')
-        self.currentBiasTraceSelect.currentIndexChanged.connect(self.toggle_bottomTracePlot)
-    
+        self.comboBox_traceLinecut.currentIndexChanged.connect(self.toggle_bottomTracePlot)
+
     def toggleRetracePlots(self):
-        self.currentBiasRetraceSelect.currentIndexChanged.disconnect(self.toggle_bottomRetracePlot)
+        self.comboBox_retraceLinecut.currentIndexChanged.disconnect(self.toggle_bottomRetracePlot)
         self.updateHLineBox()
         self.updateVLineBox()
-        self.currentBiasRetraceSelect.removeItem(0)
-        self.currentBiasRetraceSelect.removeItem(0)
-        if self.tabsRetrace.currentIndex() == 1:
-            self.currentBiasRetraceSelect.addItem("RMS Noise vs Bias")
-            self.currentBiasRetraceSelect.addItem("RMS Noise vs Field")
+        self.comboBox_retraceLinecut.removeItem(0)
+        self.comboBox_retraceLinecut.removeItem(0)
+        if self.tab_retrace.currentIndex() == 1:
+            self.comboBox_retraceLinecut.addItem("RMS Noise vs Bias")
+            self.comboBox_retraceLinecut.addItem("RMS Noise vs Field")
             if self.retraceNoiseNow == "bias":
-                self.currentBiasRetraceSelect.setCurrentIndex(0)
+                self.comboBox_retraceLinecut.setCurrentIndex(0)
                 self.curfieldRetracePlot.lower()
                 self.curbiasRetracePlot.raise_()
                 self.IVRetracePlot.setLabel('bottom', 'Bias Voltage', units = 'V')
             elif self.retraceNoiseNow == "field":
-                self.currentBiasRetraceSelect.setCurrentIndex(1)
+                self.comboBox_retraceLinecut.setCurrentIndex(1)
                 self.curbiasRetracePlot.lower()
                 self.curfieldRetracePlot.raise_()
                 self.IBRetracePlot.setLabel('bottom', 'Magnetic Field', units = 'T')
             self.IVRetracePlot.setLabel('left', 'RMS Noise', units = 'V')
             self.IBRetracePlot.setLabel('left', 'RMS Noise', units = 'V')
-        elif self.tabsRetrace.currentIndex() == 0:
-            self.currentBiasRetraceSelect.addItem("DC Output vs Bias")
-            self.currentBiasRetraceSelect.addItem("DC Output vs Field")
+        elif self.tab_retrace.currentIndex() == 0:
+            self.comboBox_retraceLinecut.addItem("DC Output vs Bias")
+            self.comboBox_retraceLinecut.addItem("DC Output vs Field")
             if self.retracePlotNow == "bias":
-                self.currentBiasRetraceSelect.setCurrentIndex(0)
+                self.comboBox_retraceLinecut.setCurrentIndex(0)
                 self.curfieldRetracePlot.lower()
                 self.curbiasRetracePlot.raise_()
                 self.IVRetracePlot.setLabel('bottom', 'Bias Voltage', units = 'V')
             elif self.retracePlotNow == "field":
-                self.currentBiasRetraceSelect.setCurrentIndex(1)
+                self.comboBox_retraceLinecut.setCurrentIndex(1)
                 self.curbiasRetracePlot.lower()
                 self.curfieldRetracePlot.raise_()
                 self.IBRetracePlot.setLabel('bottom', 'Magnetic Field', units = 'T')
             self.IVRetracePlot.setLabel('left', 'SSAA DC Output', units = 'V')
-            self.IBRetracePlot.setLabel('left', 'SSAA DC Output', units = 'V')              
-        self.currentBiasRetraceSelect.currentIndexChanged.connect(self.toggle_bottomRetracePlot)
-        
+            self.IBRetracePlot.setLabel('left', 'SSAA DC Output', units = 'V')
+        self.comboBox_retraceLinecut.currentIndexChanged.connect(self.toggle_bottomRetracePlot)
+
     def toggle_bottomTracePlot(self):
-        if self.tabsTrace.currentIndex() == 0 and self.tracePlotNow == "field":
+        if self.tab_trace.currentIndex() == 0 and self.tracePlotNow == "field":
             self.tracePlotNow = "bias"
             self.curfieldTracePlot.lower()
             self.curbiasTracePlot.raise_()
@@ -930,7 +1275,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.updateBottomTracePlot()
             else:
                 pass
-        elif self.tabsTrace.currentIndex() == 0 and self.tracePlotNow == "bias":
+        elif self.tab_trace.currentIndex() == 0 and self.tracePlotNow == "bias":
             self.tracePlotNow = "field"
             self.curbiasTracePlot.lower()
             self.curfieldTracePlot.raise_()
@@ -939,7 +1284,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.updateBottomTracePlot()
             else:
                 pass
-        elif self.tabsTrace.currentIndex() == 1 and self.traceNoiseNow == "field":
+        elif self.tab_trace.currentIndex() == 1 and self.traceNoiseNow == "field":
             self.traceNoiseNow = "bias"
             self.curfieldTracePlot.lower()
             self.curbiasTracePlot.raise_()
@@ -948,7 +1293,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.updateBottomTracePlot()
             else:
                 pass
-        elif self.tabsTrace.currentIndex() == 1 and self.traceNoiseNow == "bias":
+        elif self.tab_trace.currentIndex() == 1 and self.traceNoiseNow == "bias":
             self.traceNoiseNow = "field"
             self.curbiasTracePlot.lower()
             self.curfieldTracePlot.raise_()
@@ -957,9 +1302,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.updateBottomTracePlot()
             else:
                 pass
-                
+
     def toggle_bottomRetracePlot(self):
-        if self.tabsRetrace.currentIndex() == 0 and self.retracePlotNow == "field":
+        if self.tab_retrace.currentIndex() == 0 and self.retracePlotNow == "field":
             self.retracePlotNow = "bias"
             self.curfieldRetracePlot.lower()
             self.curbiasRetracePlot.raise_()
@@ -968,7 +1313,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.updateBottomRetracePlot()
             else:
                 pass
-        elif self.tabsRetrace.currentIndex() == 0 and self.retracePlotNow == "bias":
+        elif self.tab_retrace.currentIndex() == 0 and self.retracePlotNow == "bias":
             self.retracePlotNow = "field"
             self.curbiasRetracePlot.lower()
             self.curfieldRetracePlot.raise_()
@@ -977,7 +1322,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.updateBottomRetracePlot()
             else:
                 pass
-        elif self.tabsRetrace.currentIndex() == 1 and self.retraceNoiseNow == "field":
+        elif self.tab_retrace.currentIndex() == 1 and self.retraceNoiseNow == "field":
             self.retraceNoiseNow = "bias"
             self.curfieldRetracePlot.lower()
             self.curbiasRetracePlot.raise_()
@@ -986,7 +1331,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 self.updateBottomRetracePlot()
             else:
                 pass
-        elif self.tabsRetrace.currentIndex() == 1 and self.retraceNoiseNow == "bias":
+        elif self.tab_retrace.currentIndex() == 1 and self.retraceNoiseNow == "bias":
             self.retraceNoiseNow = "field"
             self.IBRetracePlot.setLabel('bottom', 'Magnetic Field', units = 'T')
             self.curbiasRetracePlot.lower()
@@ -996,12 +1341,10 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             else:
                 pass
 
-
     def updateBottomTracePlot(self):
-        index = self.currentBiasTraceSelect.currentIndex()
-        x0, x1 = (self.x0, self.x1)
-        y0, y1 = (self.y0, self.y1)
-        xscale, yscale = (x1-x0) / (self.curTraceData.shape[0] - 1), (y1-y0) / (self.curTraceData.shape[1] - 1)
+        index = self.comboBox_traceLinecut.currentIndex()
+        x0, y0 = self.plt_pos
+        xscale, yscale =  self.plt_scale
         if index == 1:
             pos = self.hCutTracePos.value()
             self.IBTracePlot.clear()
@@ -1010,9 +1353,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             else:
                 p = int(abs(pos - self.sweepParamDict['V_min']) / yscale)
                 xVals = np.linspace(self.sweepParamDict['B_min'], self.sweepParamDict['B_max'], num = self.sweepParamDict['B_pnts'])
-                if self.tabsTrace.currentIndex() == 0:
+                if self.tab_trace.currentIndex() == 0:
                     yVals = self.curTraceData[:,p]
-                elif self.tabsTrace.currentIndex() == 1:
+                elif self.tab_trace.currentIndex() == 1:
                     yVals = self.noiseTraceData[:,p]
                 self.IBTracePlot.plot(x = xVals, y = yVals, pen = 0.5)
         elif index == 0:
@@ -1023,17 +1366,16 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             else:
                 p = int(abs(pos - self.sweepParamDict['B_min']) / xscale)
                 xVals = np.linspace(self.sweepParamDict['V_min'], self.sweepParamDict['V_max'], num = self.sweepParamDict['V_pnts'])
-                if self.tabsTrace.currentIndex() == 0:
+                if self.tab_trace.currentIndex() == 0:
                     yVals = self.curTraceData[p]
-                elif self.tabsTrace.currentIndex() == 1:
+                elif self.tab_trace.currentIndex() == 1:
                     yVals = self.noiseTraceData[p]
                 self.IVTracePlot.plot(x = xVals, y = yVals, pen = 0.5)
-                
+
     def updateBottomRetracePlot(self):
-        index = self.currentBiasRetraceSelect.currentIndex()
-        x0, x1 = (self.x0, self.x1)
-        y0, y1 = (self.y0, self.y1)
-        xscale, yscale = (x1-x0) / (self.curRetraceData.shape[0] - 1), (y1-y0) / (self.curTraceData.shape[1] - 1)
+        index = self.comboBox_retraceLinecut.currentIndex()
+        x0, y0 = self.plt_pos
+        xscale, yscale =  self.plt_scale
         if index == 1:
             pos = self.hCutRetracePos.value()
             self.IBRetracePlot.clear()
@@ -1042,9 +1384,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             else:
                 p = int(abs(pos - self.sweepParamDict['V_min']) / yscale)
                 xVals = np.linspace(self.sweepParamDict['B_min'], self.sweepParamDict['B_max'], num = self.sweepParamDict['B_pnts'])
-                if self.tabsRetrace.currentIndex() == 0:
+                if self.tab_retrace.currentIndex() == 0:
                     yVals = self.curRetraceData[:,p]
-                elif self.tabsRetrace.currentIndex() == 1:
+                elif self.tab_retrace.currentIndex() == 1:
                     yVals = self.noiseRetraceData[:,p]
                 self.IBRetracePlot.plot(x = xVals, y = yVals, pen = 0.5)
         elif index == 0:
@@ -1055,917 +1397,75 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             else:
                 p = int(abs(pos - self.sweepParamDict['B_min']) / xscale)
                 xVals = np.linspace(self.sweepParamDict['V_min'], self.sweepParamDict['V_max'], num = self.sweepParamDict['V_pnts'])
-                if self.tabsRetrace.currentIndex() == 0:
+                if self.tab_retrace.currentIndex() == 0:
                     yVals = self.curRetraceData[p]
-                elif self.tabsRetrace.currentIndex() == 1:
+                elif self.tab_retrace.currentIndex() == 1:
                     yVals = self.noiseRetraceData[p]
                 self.IVRetracePlot.plot(x = xVals, y = yVals, pen = 0.5)
 
-    def update_bottomTracePlot(self, i):
-        if self.liveTracePlotStatus is False:
-            pass
-        elif self.liveTracePlotStatus is True:
-            index = self.currentBiasTraceSelect.currentIndex()
-            if index == 0:
-                
-                self.IVTracePlot.clear()
-                xVals = np.linspace(self.vMin, self.vMax, num = self.vPoints)
-                yVals = self.curTraceData[i]
-                self.IVTracePlot.plot(x = xVals, y = yVals, pen = 0.5)
-            else:
-                pass
+    def plotTraceLinecut(self, i):
+        index = self.comboBox_traceLinecut.currentIndex()
+        if index == 0:
+            self.IVTracePlot.clear()
+            xVals = np.linspace(self.vMin, self.vMax, num = self.vPoints)
+            yVals = self.curTraceData[i]
+            self.IVTracePlot.plot(x = xVals, y = yVals, pen = 0.5)
 
-    def update_bottomRetracePlot(self, i):
-        if self.liveRetracePlotStatus is False:
-            pass
-        elif self.liveRetracePlotStatus is True:
-            index = self.currentBiasRetraceSelect.currentIndex()
-            if index == 0:
-                self.IVRetracePlot.clear()
-                xVals = np.linspace(self.vMin, self.vMax, num = self.vPoints)
-                yVals = self.curRetraceData[i]
-                self.IVRetracePlot.plot(x = xVals, y = yVals, pen = 0.5)
-            else:
-                pass
+    def plotRetraceLinecut(self, i):
+        index = self.comboBox_retraceLinecut.currentIndex()
+        if index == 0:
+            self.IVRetracePlot.clear()
+            xVals = np.linspace(self.vMin, self.vMax, num = self.vPoints)
+            yVals = self.curRetraceData[i]
+            self.IVRetracePlot.plot(x = xVals, y = yVals, pen = 0.5)
 
-    def updatePlots(self, new_line):
-        if new_line[0][0] == 1:
-            i = new_line[0][1]
-            new_curData = [x[5] for x in new_line]
-            new_noiseData = [x[6] for x in new_line]
-            self.curRetraceData[i] = new_curData
-            self.noiseRetraceData[i] = new_noiseData
-            self.retracePlot.setImage(self.curRetraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-            self.noiseRetracePlot.setImage(self.noiseRetraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-            self.update_bottomRetracePlot(i)
-            self.plotNoPlot += 1
-
-        elif new_line[0][0] == 0:
-            i = new_line[0][1]
-            new_curData = [x[5] for x in new_line]
-            new_noiseData = [x[6] for x in new_line]
-            self.curTraceData[i] = new_curData
-            self.noiseTraceData[i] = new_noiseData
-            self.tracePlot.setImage(self.curTraceData, autoRange = False, autoLevels = True, pos=[self.x0,self.y0],scale=[self.xscale, self.yscale])
-            self.noiseTracePlot.setImage(self.noiseTraceData, autoRange = False, autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-            self.update_bottomTracePlot(i)
-            self.plotNoPlot += 1
-                
-    def sleep(self,secs):
-        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
-        other operations to be done elsewhere while paused."""
-        d = Deferred()
-        self.reactor.callLater(secs,d.callback,'Sleeping')
-        return d
-
-    def initSweep(self):
-        b_min, b_max = self.sweepParamDict['B_min'], self.sweepParamDict['B_max']
-        v_min, v_max = self.sweepParamDict['V_min'], self.sweepParamDict['V_max']
-        b_pnts, v_pnts = self.sweepParamDict['B_pnts'], self.sweepParamDict['V_pnts']
-        b_range, v_range = np.absolute(b_max - b_min), np.absolute(v_max - v_min)
-        if self.sweepParamDict['sweep mode'] == 1:
-            self.positive_points = int((v_pnts * v_max)/v_range) + 1 #int((self.vPoints * self.vMax) / abs(self.vMax - self.vMin)) + 1
-            self.negative_points = v_pnts - self.positive_points #self.vPoints - self.positive_points
-        else:
-            pass
-
-        self.extent = [b_min, b_max, v_min, v_max]    #[self.bMin,self.bMax,self.vMin,self.vMax]
-        self.curTraceData = np.zeros([b_pnts, v_pnts]) #np.zeros([self.bPoints,self.vPoints])
-        self.noiseTraceData =np.zeros([b_pnts, v_pnts])     #np.zeros([self.bPoints,self.vPoints])
-        self.curRetraceData = np.zeros([b_pnts, v_pnts]) #np.zeros([self.bPoints,self.vPoints])
-        self.noiseRetraceData = np.zeros([b_pnts, v_pnts]) #np.zeros([self.bPoints,self.vPoints])
-        self.biasVals = np.linspace(float(v_min),float(v_max), num = int(v_pnts))
-        self.fieldVals = np.linspace(float(b_min),float(b_max), num = int(b_pnts))
-        self.x0, self.x1 = (self.extent[0], self.extent[1])
-        self.y0, self.y1 = (self.extent[2], self.extent[3])
-        self.xscale, self.yscale = (self.x1-self.x0) / self.curTraceData.shape[0], (self.y1-self.y0) / self.curTraceData.shape[1]
-        self.startSweep.setEnabled(False)
-        self.abortSweep.setEnabled(True)
-        self.magnetPower.setEnabled(False)
-        self.blink.setEnabled(False)
-        self.biasSweepMode.setEnabled(False)
-        self.prelim.setEnabled(False)
-        self.fieldMinSetValue.setReadOnly(True)
-        self.fieldMaxSetValue.setReadOnly(True)
-        self.fieldPointsSetValue.setReadOnly(True)
-        self.fieldSpeedSetValue.setReadOnly(True)
-        self.biasMinSetValue.setReadOnly(True)
-        self.biasMaxSetValue.setReadOnly(True)
-        self.biasPointsSetValue.setReadOnly(True)
-        self.biasSpeedSetValue.setReadOnly(True)
-        self.tracePlot.setImage(self.curTraceData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.noiseTracePlot.setImage(self.noiseTraceData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.retracePlot.setImage(self.curRetraceData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.noiseRetracePlot.setImage(self.noiseRetraceData, autoRange = True , autoLevels = True, pos=[self.x0, self.y0],scale=[self.xscale, self.yscale])
-        self.liveTracePlotStatus = False
-        self.liveRetracePlotStatus = False
-        self.toggleRetraceLineCut()
-        self.toggleTraceLineCut()
-        #self.plotNoPlot = 0
-        self.abortFlag = False
-        if self.sweepParamDict['sweep mode'] == 0:
-            self.isData = True
-            self.sweepMinMax(self.settingsDict['Magnet device'])
-            
-        elif  self.sweepParamDict['sweep mode'] == 1:
-            self.isData = True
-            self.sweepFromZero(self.settingsDict['Magnet device'])
-
-
-    @inlineCallbacks
-    def abortSweepFunc(self, magpower, bVal, vVal, c = None):
-        print 'aborting sweep'
-        #DAC OUTPUTS
-        
-        #DAC out channel that outputs DC bias (1 through 4)
-        DAC_out = self.settingsDict['nsot bias output'] - 1
-        #DAC out channel that switches between 0 and 5 volts to toggle feedback off then on (aka blink)
-        DAC_blink = self.settingsDict['blink'] - 1
-        #DAC channel that sets the voltage setpoint for the Toellner power supply
-        DAC_set_volt = self.settingsDict['toellner volts'] - 1
-        #DAC channel that sets the current setpoint for the Toellner power supply
-        DAC_set_current = self.settingsDict['toellner current'] - 1
-        
-        #DAC INPUTS
-        
-        #DAC in channel that reads DC bias (1 through 4)
-        DAC_in_ref = self.settingsDict['nsot bias input'] - 1
-
-        print 'Aborting sweep from applied field of ', bVal,'T and nSOT bias of ', vVal, 'V' 
-        print 'Ramping nSOT bias to zero'
-        if vVal != 0:
-            yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [vVal], [0], abs(int(vVal * 1000)), 10000)
-        else:
-            pass
-        yield self.sleep(1)
-        if self.checkBox_ZeroField.isChecked():
-            print 'Sweeping magnetic field back to zero'
-            if magpower == 'IPS 120-10':
-                if bVal != 0:
-                    yield self.ips.set_control(3)
-                    #Go to 0 field
-                    yield self.ips.set_targetfield(0)
-                    yield self.ips.set_activity(2)
-                    #Set control method back to local control 
-                    yield self.ips.set_control(2)
-                else:
-                    pass
-
-            elif magpower == 'Toellner 8851':
-                if bVal != 0:
-                    yield self.toeSweepField(bVal, 0, 0.1)
-                else:
-                    pass
-                
-        self.refreshInterface()
-            
-    def refreshInterface(self):
-        self.startSweep.setEnabled(True)
-        self.abortSweep.setEnabled(False)
-        self.magnetPower.setEnabled(True)
-        self.blink.setEnabled(True)
-        self.biasSweepMode.setEnabled(True)
-
-        self.prelim.setEnabled(True)
-
-        self.fieldMinSetValue.setReadOnly(False)
-        self.fieldMaxSetValue.setReadOnly(False)
-
-        self.fieldPointsSetValue.setReadOnly(False)
-        self.fieldSpeedSetValue.setReadOnly(False)
-        self.biasMinSetValue.setReadOnly(False)
-        self.biasMaxSetValue.setReadOnly(False)
-        self.biasPointsSetValue.setReadOnly(False)
-        self.biasSpeedSetValue.setReadOnly(False)
-            
-    @inlineCallbacks
-    def sweepMinMax(self, magpower, c = None):
-        B_min, B_max = self.sweepParamDict['B_min'], self.sweepParamDict['B_max']
-        V_min, V_max = self.sweepParamDict['V_min'], self.sweepParamDict['V_max']
-        B_pnts, V_pnts = int(self.sweepParamDict['B_pnts']), int(self.sweepParamDict['V_pnts'])
-        V_range = np.absolute(V_max - V_min)
-        B_rate = self.sweepParamDict['B_rate']
-        delay = int(1000 * self.sweepParamDict['delay'])
-        
-        B_space = np.linspace(B_min, B_max, B_pnts)
-        
-        #DAC OUTPUTS
-        
-        #DAC out channel that outputs DC bias (1 through 4)
-        DAC_out = self.settingsDict['nsot bias output'] - 1
-        #DAC out channel that switches between 0 and 5 volts to toggle feedback off then on (aka blink)
-        DAC_blink = self.settingsDict['blink'] - 1
-        #DAC channel that sets the voltage setpoint for the Toellner power supply
-        DAC_set_volt = self.settingsDict['toellner volts'] - 1
-        #DAC channel that sets the current setpoint for the Toellner power supply
-        DAC_set_current = self.settingsDict['toellner current'] - 1
-        
-        
-        #DAC INPUTS
-        
-        #DAC in channel that reads DC bias (1 through 4)
-        DAC_in_ref = self.settingsDict['nsot bias input'] - 1
-        #DAC in channel that read DC signal (1 through 4)
-        V_out = self.settingsDict['feedback DC input'] - 1
-        #DAC in channel that read DC signal proportional to AC signal (1 through 4)
-        dIdV_out = self.settingsDict['feedback AC input'] - 1
-        #DAC in channel to read noise measurement
-        noise = self.settingsDict['noise input'] - 1
-        
-        file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
-        self.dvFileName = file_info[1]
-        self.lineEdit_ImageNum.setText(file_info[1][0:5])
-        session     = ''
-        for folder in file_info[0][1:]:
-            session = session + '\\' + folder
-        self.lineEdit_ImageDir.setText(r'\.datavault' + session)
-        print 'DataVault setup complete'
-
-        if magpower == 'Toellner 8851':
-            yield self.dac.set_voltage(DAC_out, 0)
-            #If minimum bias voltage is not zero, sweep bias to minimum value, 1mV per step with a 1ms delay
-            if V_min != 0:
-                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_min], np.absolute(int(V_min * 1000)), 1000)
-            else:
-                pass
-        
-            for i in range(0, B_pnts):
-                
-                if i == 0:
-
-                    if self.abortFlag == False:
-                        pass
-                    else:
-                        yield self.abortSweepFunc(magpower, 0, V_min)
-                        break
-                    
-                    if B_space[0] != 0:
-                        print 'Ramping field to ' + str(B_space[0])+'.'
-                        yield self.toeSweepField(0, B_space[0], B_rate)
-                    else:
-                        pass
-                else:
-                    if self.abortFlag == False:
-                        pass
-                    else:
-                        yield self.abortSweepFunc(magpower, B_space[i-1], V_min)
-                        break
-                    yield self.toeSweepField(B_space[i-1], B_space[i], B_rate)
-                    
-                print 'Starting sweep with magnetic field set to: ' + str(B_space[i])
-                
-                print 'Blinking prior to sweep'
-                yield self.blinkFunc()
-                
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], V_min)
-                    break
-                        
-                #Sweep from minimum to maximum bias voltage
-                print 'Ramping up nSOT bias voltage from ' + str(V_min) + ' to ' + str(V_max) + '.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_min], [V_max], V_pnts, delay)
-                
-                #Reform data and add to data vault
-                formated_data = []
-                for j in range(0, V_pnts):
-                    formated_data.append((0, i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-                
-                yield self.dv.add(formated_data)
-                yield self.updatePlots(formated_data)
-
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], V_max)
-                    break
-                
-                #Sweep from maximum to minimum bias voltage
-                print 'Ramping nSOT bias voltage back down from ' + str(V_max) + ' to ' + str(V_min) + '.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_max], [V_min], V_pnts, delay)
-                
-                #Reform data and add to data vault
-                formated_data = []
-                for j in range(0, V_pnts):
-                    formated_data.append((1, i, V_pnts - 1 - j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-                
-                yield self.dv.add(formated_data)
-                yield self.updatePlots(formated_data[::-1])
-                
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], V_min)
-                    break
-                
-            #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
-            if V_min != 0:
-                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_min], [0], np.absolute(int(V_min * 1000)), 1000)
-            else:
-                pass
-    
-            yield self.dac.set_voltage(DAC_out, 0)
-            
-            if self.checkBox_ZeroField.isChecked() and not self.abortFlag:
-                #Go to zero field and set power supply voltage setpoint to zero.
-                yield self.toeSweepField(B_space[-1], 0, B_rate)
-        
-        elif magpower == 'IPS 120-10':
-            yield self.ips.set_control(3)
-            yield self.ips.set_comm_protocol(6)
-            yield self.ips.set_control(2)
-            
-            yield self.sleep(0.25)
-            
-            yield self.ips.set_control(3)
-            yield self.ips.set_fieldsweep_rate(B_rate)
-            yield self.ips.set_control(2)
-            
-            #ramp voltage to zero if still at setpoint
-            if np.absolute(self.setpntDict['bias']) > 0.01:
-                step = int(np.absolute(self.setpntDict['bias'])) * 1000
-                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [self.setpntDict['bias']], [0], step, 2000)
-                
-            yield self.dac.set_voltage(DAC_out, 0)
-        
-            #If minimum bias voltage is not zero, sweep bias to minimum value, 1mV per step with a reasonably short delay
-            if V_min != 0:
-                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_min], np.absolute(int(V_min * 1000)), 1000)
-            else:
-                pass
-        
-            for i in range(0, B_pnts):
-                t0 = time.time()
-                yield self.ips.set_control(3)
-                yield self.ips.set_targetfield(B_space[i])
-                yield self.ips.set_control(2)
-                
-                yield self.ips.set_control(3)
-                yield self.ips.set_activity(1)
-                yield self.ips.set_control(2)
-
-                print 'Setting field to ' + str(B_space[i])
-                #wait for field to be reached
-                while True:
-                    yield self.ips.set_control(3)
-                    curr_field = yield self.ips.read_parameter(7)
-                    yield self.ips.set_control(2)
-                    if float(curr_field[1:]) <= B_space[i]+0.00001 and float(curr_field[1:]) >= B_space[i]-0.00001:
-                        break
-                    if time.time() - t0 > 1:
-                        yield self.ips.set_control(3)
-                        yield self.ips.set_targetfield(B_space[i])
-                        yield self.ips.set_control(2)
-                        
-                        yield self.ips.set_control(3)
-                        yield self.ips.set_activity(1)
-                        yield self.ips.set_control(2)
-                        t0 = time.time()
-                        
-                        if self.abortFlag == True:
-                            break
-                        print 'restarting loop'
-                    yield self.sleep(0.25)
-                    
-                print 'Starting sweep with magnetic field set to: ' + str(B_space[i])
-                
-                print 'Blinking prior to sweep'
-                yield self.blinkFunc()
-                
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], V_min)
-                    break
-
-                #Sweep from minimum to maximum bias voltage
-                print 'Ramping up nSOT bias voltage from ' + str(V_min) + ' to ' + str(V_max) + '.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_min], [V_max], V_pnts, delay)
-                
-                #Reform data and add to data vault
-                formated_data = []
-                for j in range(0, V_pnts):
-                    formated_data.append((0, i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-                
-                yield self.dv.add(formated_data)
-                yield self.updatePlots(formated_data)
-                
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], V_max)
-                    break
-
-                #Sweep from maximum to minimum bias voltage
-                print 'Ramping nSOT bias voltage back down from ' + str(V_max) + ' to ' + str(V_min) + '.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_max], [V_min], V_pnts, delay)
-                
-                #Reform data and add to data vault
-                formated_data = []
-                for j in range(0, V_pnts):
-                    formated_data.append((1, i, V_pnts - 1 - j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-                
-                yield self.dv.add(formated_data)
-                yield self.updatePlots(formated_data[::-1])
-                
-                    
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i],V_min)
-                    break
-            
-            #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
-            if V_min != 0:
-                tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_min], [0], np.absolute(int(V_min * 1000)), 1000)
-            else:
-                pass
-
-            yield self.dac.set_voltage(DAC_out, 0)
-            yield self.sleep(0.25)
-            
-            if self.checkBox_ZeroField.isChecked():
-    
-                print 'Set nSOT bias to zero, sweeping field to 0T.'
-                
-                #Go to 0 field
-                yield self.ips.set_control(3)
-                yield self.ips.set_targetfield(0)
-                yield self.ips.set_control(2)
-                
-                    
-                yield self.ips.set_control(3)
-                yield self.ips.set_activity(1)
-                yield self.ips.set_control(2)
-                #wait for field to be reached
-                t0 = time.time()
-                while True:
-                    yield self.ips.set_control(3)
-                    curr_field = yield self.ips.read_parameter(7)
-                    yield self.ips.set_control(2)
-                    if float(curr_field[1:]) <= 0.00001 and float(curr_field[1:]) >= -0.00001:
-                        break
-                    if time.time() - t0 > 1:
-                        yield self.ips.set_control(3)
-                        yield self.ips.set_targetfield(0)
-                        yield self.ips.set_control(2)
-                        
-                        yield self.ips.set_control(3)
-                        yield self.ips.set_activity(1)
-                        yield self.ips.set_control(2)
-                        t0 = time.time()
-                        print 'restarting loop'
-                        if self.abortFlag == True:
-                            break
-                    yield self.sleep(0.25)
-
-            #Set control method back to local control 
-            yield self.ips.set_control(2)
-        print 'Sweep complete'
-        self.refreshInterface()
-        #Wait until all plots are appropriately updated before saving screenshot
-        yield self.sleep(0.25)
-        self.saveDataToSessionFolder()
-        
-    @inlineCallbacks
-    def sweepFromZero(self, magpower, c = None):
-        B_min, B_max = self.sweepParamDict['B_min'], self.sweepParamDict['B_max']
-        V_min, V_max = self.sweepParamDict['V_min'], self.sweepParamDict['V_max']
-        B_pnts, V_pnts = int(self.sweepParamDict['B_pnts']), int(self.sweepParamDict['V_pnts'])
-        V_range = np.absolute(V_max - V_min)
-        positive_points = int(np.absolute(V_pnts * V_max) / V_range)
-        negative_points = V_pnts - positive_points
-
-        B_rate = self.sweepParamDict['B_rate']
-        delay = int(1000 * self.sweepParamDict['delay'])
-        B_space = np.linspace(B_min, B_max, B_pnts)
-        
-        #DAC OUTPUTS
-        
-        #DAC out channel that outputs DC bias (1 through 4)
-        DAC_out = self.settingsDict['nsot bias output'] - 1
-        #DAC out channel that switches between 0 and 5 volts to toggle feedback off then on (aka blink)
-        DAC_blink = self.settingsDict['blink'] - 1
-        #DAC channel that sets the voltage setpoint for the Toellner power supply
-        DAC_set_volt = self.settingsDict['toellner volts'] - 1
-        #DAC channel that sets the current setpoint for the Toellner power supply
-        DAC_set_current = self.settingsDict['toellner current'] - 1
-        
-        
-        #DAC INPUTS
-        
-        #DAC in channel that reads DC bias (1 through 4)
-        DAC_in_ref = self.settingsDict['nsot bias input'] - 1
-        #DAC in channel that read DC signal (1 through 4)
-        V_out = self.settingsDict['feedback DC input'] - 1
-        #DAC in channel that read DC signal proportional to AC signal (1 through 4)
-        dIdV_out = self.settingsDict['feedback AC input'] - 1
-        #DAC in channel to read noise measurement
-        noise = self.settingsDict['noise input'] - 1
-        
-        #ramp voltage to zero if still at setpoint
-        if np.absolute(self.setpntDict['bias']) > 0.01:
-            step = int(np.absolute(self.setpntDict['bias'])) * 1000
-            tmp = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref], [self.setpntDict['bias']], [0], step, 2000)
-            
-        file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
-        self.dvFileName = file_info[1]
-        self.lineEdit_ImageNum.setText(file_info[1][0:5])
-        session     = ''
-        for folder in file_info[0][1:]:
-            session = session + '\\' + folder
-        self.lineEdit_ImageDir.setText(r'\.datavault' + session)
-        print 'DataVault setup complete'
-        
-        if magpower == 'Toellner 8851':
-            for i in range (0, B_pnts):
-            
-                if i == 0:
-                    if B_space[0] != 0:
-                        print 'Ramping field to ' + str(B_space[0])+'.'
-                        yield self.toeSweepField(0, B_space[0], B_rate)
-                    else:
-                        pass
-                else:
-                    yield self.toeSweepField(B_space[i-1], B_space[i], B_rate)
-
-                print 'Starting sweep with magnetic field set to: ' + str(B_space[i])
-
-                #Set bias voltage to zero and blink
-                yield self.dac.set_voltage(DAC_out,0)
-                yield self.blinkFunc()
-                
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], 0)
-                    break
-                
-                #Sweep from zero volts to maximum bias voltage
-                print 'Ramping up nSOT bias voltage from zero to ' + str(V_max) + '.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_max], positive_points, delay)
-    
-                #Reform data and add to data vault
-                #formated_data = []
-                data_uptrace = []
-                for j in range(0, positive_points):
-                    data_uptrace.append((0, i, negative_points + j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-
-                #yield dv.add(formated_data)
-                #yield self.updatePlots(formated_data)
-                
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], V_max)
-                    break
-
-                
-                #Sweep from maximum bias voltage to zero volts and blink
-                print 'Ramping nSOT bias voltage back down from ' + str(V_max) + ' to zero.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_max], [0], positive_points, delay)
-
-                #formated_data = []
-                data_upretrace = []
-                for j in range(0, positive_points):
-                    data_upretrace.append((1, i, V_pnts - j - 1, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-
-                #yield dv.add(formated_data)
-                #yield self.updatePlots(formated_data)
-                yield self.blinkFunc()
-                
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], 0)
-                    break
-                
-                #Sweep from zero volts to minimum bias voltage
-                print 'Ramping down nSOT bias voltage from zero to ' + str(V_min) + '.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_min], negative_points, delay)
-    
-                #Reform data and add to data vault
-                #formated_data = []
-                data_downtrace = []
-                for j in range(0, negative_points):
-                    data_downtrace.append((0, i, negative_points  - 1 - j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-
-                
-                #yield dv.add(formated_data)
-                #yield self.updatePlots(formated_data)
-                
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], V_min)
-                    break
-                
-                #Sweep from minimum bias voltage to zero volts
-                print 'Ramping nSOT bias voltage up down from ' + str(V_min) + ' to zero.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_min], [0], negative_points, delay)
-                
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], 0)
-                    break
-
-                #Reform data and add to data vault
-                #formated_data = []
-                data_downretrace = []
-                for j in range(0, negative_points):
-                    data_downretrace.append((1, i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-                
-                trace_data = []
-                retrace_data = []
-                trace_data = data_downtrace[::-1] + data_uptrace
-                retrace_data = data_downretrace + data_upretrace[::-1]
-                
-                yield self.dv.add(trace_data)
-                yield self.updatePlots(trace_data)
-                yield self.dv.add(retrace_data)
-                yield self.updatePlots(retrace_data)
-
-            yield self.dac.set_voltage(DAC_out, 0)
-            
-            if self.checkBox_ZeroField.isChecked() and not self.abortFlag:
-                #Go to zero field and set power supply voltage setpoint to zero.
-                yield self.toeSweepField(B_space[-1], 0, B_rate)
-        
-        elif magpower == 'IPS 120-10': 
-            yield self.ips.set_control(3)
-            yield self.ips.set_comm_protocol(6)
-            yield self.ips.set_control(2)
-            yield self.sleep(0.25)
-            
-            yield self.ips.set_control(3)
-            yield self.ips.set_fieldsweep_rate(B_rate)
-            yield self.ips.set_control(2)
-            
-            for i in range (0, B_pnts):
-                t0 = time.time()
-                yield self.ips.set_control(3)
-                yield self.ips.set_targetfield(B_space[i])
-                yield self.ips.set_control(2)
-                
-                yield self.ips.set_control(3)
-                yield self.ips.set_activity(1)
-                yield self.ips.set_control(2)
-                #wait for field to be reached
-                while True:
-                    yield self.ips.set_control(3)
-                    curr_field = yield self.ips.read_parameter(7)
-                    yield self.ips.set_control(2)
-                    if float(curr_field[1:]) <= B_space[i]+0.00001 and float(curr_field[1:]) >= B_space[i]-0.00001:
-                        break
-                    if time.time() - t0 > 1:
-                        yield self.ips.set_control(3)
-                        yield self.ips.set_targetfield(B_space[i])
-                        yield self.ips.set_control(2)
-                        
-                        yield self.ips.set_control(3)
-                        yield self.ips.set_activity(1)
-                        yield self.ips.set_control(2)
-                        yield self.sleep(0.5)
-                        t0 = time.time()
-                        if self.abortFlag == True:
-                            break
-                    yield self.sleep(0.25)
-                    
-                    
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], 0)
-                    break
-
-
-                #Set bias voltage to zero and blink
-                yield self.dac.set_voltage(DAC_out,0)
-                yield self.blinkFunc()
-                
-                #Sweep from zero volts to maximum bias voltage
-                print 'Ramping up nSOT bias voltage from zero to ' + str(V_max) + '.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_max], positive_points, delay)
-    
-                #Reform data and add to data vault
-                data_uptrace = []
-                for j in range(0, positive_points):
-                    data_uptrace.append((0, i, negative_points + j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-              
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], V_max)
-                    break
-       
-                #Sweep from maximum bias voltage to zero volts and blink
-                print 'Ramping nSOT bias voltage back down from ' + str(V_max) + ' to zero.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_max], [0], positive_points, delay)
-
-                #formated_data = []
-                data_upretrace = []
-                for j in range(0, positive_points):
-                    data_upretrace.append((1, i, V_pnts - j - 1, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], 0)
-                    break
-
-                yield self.blinkFunc()
-
-                
-                #Sweep from zero volts to minimum bias voltage
-                print 'Ramping down nSOT bias voltage from zero to ' + str(V_min) + '.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [0], [V_min], negative_points, delay)
-    
-                #Reform data and add to data vault
-
-                data_downtrace = []
-                for j in range(0, negative_points):
-                    data_downtrace.append((0, i,negative_points     - 1 - j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-
-                
-                    
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i],V_min)
-                    break
-                
-                #Sweep from minimum bias voltage to zero volts
-                print 'Ramping nSOT bias voltage up from ' + str(V_min) + ' to zero.'
-                dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise, dIdV_out], [V_min], [0], negative_points, delay)
-
-                #Reform data and add to data vault
-
-                data_downretrace = []
-                for j in range(0, negative_points):
-                    data_downretrace.append((1, i, j, B_space[i], dac_read[0][j], dac_read[1][j], dac_read[2][j], dac_read[3][j]))
-                
-                trace_data = []
-                retrace_data = []
-                trace_data = data_downtrace[::-1] + data_uptrace
-                retrace_data = data_downretrace + data_upretrace[::-1]
-                yield self.dv.add(trace_data)
-                yield self.updatePlots(trace_data)
-                yield self.dv.add(retrace_data)
-                yield self.updatePlots(retrace_data)                
-                    
-                if self.abortFlag == False:
-                    pass
-                else:
-                    yield self.abortSweepFunc(magpower, B_space[i], 0)
-                    break
-
-            yield self.dac.set_voltage(DAC_out, 0)
-            
-            if self.checkBox_ZeroField.isChecked():
-                #Go to 0 field
-                yield self.ips.set_control(3)
-                yield self.ips.set_targetfield(0)
-                yield self.ips.set_activity(2)
-                
-                yield self.ips.set_control(3)
-                yield self.ips.set_activity(1)
-                yield self.ips.set_control(2)
-                
-                while True:
-                    yield self.ips.set_control(3)
-                    curr_field = yield self.ips.read_parameter(7)
-                    yield self.ips.set_control(2)
-                    if float(curr_field[1:]) <= 0.00001 and float(curr_field[1:]) >= -0.00001:
-                        break
-                    if time.time() - t0 > 1:
-                        yield self.ips.set_control(3)
-                        yield self.ips.set_targetfield(0)
-                        yield self.ips.set_control(2)
-                        
-                        yield self.ips.set_control(3)
-                        yield self.ips.set_activity(1)
-                        yield self.ips.set_control(2)
-                        t0 = time.time()
-                        print 'restarting loop'
-                        if self.abortFlag == True:
-                            break
-                    yield self.sleep(0.25)
-
-            #Set control method back to local control 
-            yield self.ips.set_control(2)    
-        print 'Sweep Complete'
-        self.refreshInterface()
-        #Wait until all plots are appropriately updated before saving screenshot
-        yield self.sleep(0.25)
-        self.saveDataToSessionFolder()
-    
-    @inlineCallbacks
-    def blinkFunc(self, c = None):
-        yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 5)
-        yield self.sleep(0.25)
-        yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 0)
-        yield self.sleep(0.25)
-    
-    @inlineCallbacks
-    def toeSweepField(self, B_i, B_f, B_speed, c = None):
-        try:
-            #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
-            VV_conv = 3.20
-            #Toellner current set point / DAC voltage out conversion [I_Toellner / V_DAC]
-            IV_conv = 1.0 
-
-            #Field / Current ratio on the dipper magnet (0.132 [Tesla / Amp])
-            IB_conv = 0.132
-
-            #Starting and ending field values in Tesla, use positive field values for now
-            B_range = np.absolute(B_f - B_i)
-
-            #Delay between DAC steps in microseconds
-            magnet_delay = 1000
-            #Converts between microseconds and minutes [us / minute]
-            t_conv = 6e07
-
-            #Sets the appropriate DAC buffer ramp parameters
-            sweep_steps = int((t_conv * B_range) / (B_speed * magnet_delay))  + 1
-            v_start = B_i / (IB_conv * IV_conv)
-            v_end = B_f / (IB_conv * IV_conv)
-
-            #Sets an appropraite voltage set point to ensure that the Toellner power supply stays in constant current mode
-            # assuming a parasitic resistance of R_p between the power supply and magnet
-            R_p = 1
-            V_setpoint =  (R_p * B_f) / (VV_conv * IB_conv)
-            V_initial = (R_p * B_i) / (VV_conv * IB_conv)
-            if V_setpoint*VV_conv > 5.0:
-                V_setpoint = 5.0/VV_conv
-            else:
-                pass
-            if V_initial*VV_conv > 5.0:
-                V_initial = 5.0/VV_conv
-            else:
-                pass
-            
-            #Sweeps field from B_i to B_f
-            print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
-            yield self.dac_toe.buffer_ramp([self.toeCurChan, self.toeVoltsChan],[0],[v_start, V_initial],[v_end, V_setpoint], sweep_steps, magnet_delay)
-            
-            self.newToeField.emit(B_f, B_f/IB_conv, V_setpoint)
-        except Exception as inst:
-            print 'SF, ', str(inst )
-        
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions intended for use when running scripts from the scripting module."""
-    
+
     def setMinVoltage(self, vmin):
-        self.biasMinSetValue.setText(formatNum(vmin, 3))
-        self.UpdateVVals(self.biasMinSetValue)
-    
+        self.updateBiasMin(vmin)
+
     def setMaxVoltage(self, vmax):
-        self.biasMaxSetValue.setText(formatNum(vmax, 3))
-        self.UpdateVVals(self.biasMaxSetValue)
-    
+        self.updateBiasMax(vmax)
+
     def setVoltagePoints(self, pnts):
-        self.biasPointsSetValue.setText(formatNum(pnts,10))
-        self.pntsFormat(self.biasPointsSetValue, 'bias')
-        
+        if not self.biasSIStat == 'num pnts':
+            self.toggleBiasSteps()
+        self.updateBiasPoints(pnts)
+
     def setBiasDelay(self, delay):
-        self.biasSpeedSetValue.setText(formatNum(pnts,3))
-        self.pntsFormat(self.biasSpeedSetValue, 'delay')
-        
+        self.updateBiasDelay(delay)
+
     def setMinField(self, bmin):
-        self.biasMinSetValue.setText(formatNum(bmin, 3))
-        self.UpdateVVals(self.biasMinSetValue)
-        
+        self.updateFieldMin(bmin)
+
     def setMaxField(self, bmax):
-        self.fieldMaxSetValue.setText(formatNum(bmax, 3))
-        self.UpdateBVals(self.fieldMaxSetValue)
-    
+        self.updateFieldMax(bmax)
+
     def setFieldPoints(self, pnts):
-        self.fieldPointsSetValue.setText(formatNum(pnts, 10))
-        self.pntsFormat(self.fieldPointsSetValue, 'field')
-        
+        if not self.fieldSIStat == 'num pnts':
+            self.toggleFieldSteps()
+        self.updateFieldPoints(pnts)
+
     def setSweepMode(self, mode):
-        self.biasSweepMode.setCurrentIndex(mode)
-    
+        self.comboBox_biasSweepMode.setCurrentIndex(mode)
+
     @inlineCallbacks
     def readFeedbackVoltage(self):
         fdbk_input = self.settingsDict['feedback DC input'] - 1
         val = yield self.dac.read_voltage(fdbk_input)
         returnValue(val)
-    
+
     @inlineCallbacks
-    def startSweep():
-        self.startSweep.setEnabled(False) #Disable the start sweep button to prevent user from starting two sweeps at the same time
-        self.readSweepParameters() #Read the sweep parameters from the GUI elements
-        yield self.initSweep() #Starts the sweep. This re-enables the start sweep button once finished
-        
+    def runSweep(self):
+        yield self.initSweep() #Starts the sweep.
+
 #----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""
-        
+
     def setSessionFolder(self, folder):
         self.sessionFolder = folder
-            
+
     def saveDataToSessionFolder(self):
         try:
             p = QtGui.QPixmap.grabWindow(self.winId())
@@ -1975,43 +1475,58 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         except Exception as inst:
             print 'nSOTChar error: ', inst
             print 'on line: ', sys.exc_traceback.tb_lineno
-            
+
+    def updateDataVaultDirectory(self):
+        curr_folder = yield self.gen_dv.cd()
+        yield self.dv.cd(curr_folder)
+
+    def showServersList(self):
+        serList = serversList(self.reactor, self)
+        serList.exec_()
+
     def lockInterface(self):
-        self.biasSweepMode.setEnabled(False)
-        self.blink.setEnabled(False)
-        self.magnetPower.setEnabled(False)
-        self.fieldMinSetValue.setEnabled(False)
-        self.fieldMaxSetValue.setEnabled(False)
-        self.fieldPointsSetValue.setEnabled(False)
-        self.fieldStepsInc.setEnabled(False)
-        self.fieldSpeedSetValue.setEnabled(False)
-        self.biasMinSetValue.setEnabled(False)
-        self.biasMaxSetValue.setEnabled(False)
-        self.biasPointsSetValue.setEnabled(False)
-        self.biasStepsInc.setEnabled(False)
-        self.biasSpeedSetValue.setEnabled(False)
-        self.startSweep.setEnabled(False)
-        self.prelim.setEnabled(False)
-        self.abortSweep.setEnabled(False)
-        
+        self.comboBox_biasSweepMode.setEnabled(False)
+        self.comboBox_blinkMode.setEnabled(False)
+        self.comboBox_magnetPower.setEnabled(False)
+        self.lineEdit_fieldMin.setEnabled(False)
+        self.lineEdit_fieldMax.setEnabled(False)
+        self.lineEdit_fieldPoints.setEnabled(False)
+        self.push_fieldStepsInc.setEnabled(False)
+        self.lineEdit_fieldSpeed.setEnabled(False)
+        self.lineEdit_biasMin.setEnabled(False)
+        self.lineEdit_biasMax.setEnabled(False)
+        self.lineEdit_biasPoints.setEnabled(False)
+        self.push_biasStepsInc.setEnabled(False)
+        self.lineEdit_biasDelay.setEnabled(False)
+        self.push_startSweep.setEnabled(False)
+        self.push_prelim.setEnabled(False)
+        self.push_abortSweep.setEnabled(False)
+
     def unlockInterface(self):
-        self.biasSweepMode.setEnabled(True)
-        self.blink.setEnabled(True)
-        self.magnetPower.setEnabled(True)
-        self.fieldMinSetValue.setEnabled(True)
-        self.fieldMaxSetValue.setEnabled(True)
-        self.fieldPointsSetValue.setEnabled(True)
-        self.fieldStepsInc.setEnabled(True)
-        self.fieldSpeedSetValue.setEnabled(True)
-        self.biasMinSetValue.setEnabled(True)
-        self.biasMaxSetValue.setEnabled(True)
-        self.biasPointsSetValue.setEnabled(True)
-        self.biasStepsInc.setEnabled(True)
-        self.biasSpeedSetValue.setEnabled(True)
-        self.startSweep.setEnabled(True)
-        self.prelim.setEnabled(True)
-        self.abortSweep.setEnabled(True)
-            
+        self.comboBox_biasSweepMode.setEnabled(True)
+        self.comboBox_blinkMode.setEnabled(True)
+        self.comboBox_magnetPower.setEnabled(True)
+        self.lineEdit_fieldMin.setEnabled(True)
+        self.lineEdit_fieldMax.setEnabled(True)
+        self.lineEdit_fieldPoints.setEnabled(True)
+        self.push_fieldStepsInc.setEnabled(True)
+        self.lineEdit_fieldSpeed.setEnabled(True)
+        self.lineEdit_biasMin.setEnabled(True)
+        self.lineEdit_biasMax.setEnabled(True)
+        self.lineEdit_biasPoints.setEnabled(True)
+        self.push_biasStepsInc.setEnabled(True)
+        self.lineEdit_biasDelay.setEnabled(True)
+        self.push_startSweep.setEnabled(True)
+        self.push_prelim.setEnabled(True)
+        self.push_abortSweep.setEnabled(True)
+
+    def sleep(self,secs):
+        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
+        other operations to be done elsewhere while paused."""
+        d = Deferred()
+        self.reactor.callLater(secs,d.callback,'Sleeping')
+        return d
+
     def closeEvent(self, e):
         pass
 
@@ -2021,16 +1536,16 @@ class toellnerReminder(QtGui.QDialog, Ui_toeReminder):
         super(toellnerReminder, self).__init__(parent)
         self.window = parent
         self.setupUi(self)
-        
+
         self.yes.clicked.connect(self.continueSweep)
         self.no.clicked.connect(self.backUp)
-        
+
     def continueSweep(self):
         self.accept()
-        
+
     def backUp(self):
         self.reject()
-        
+
     def closeEvent(self, e):
         self.reject()
 
@@ -2038,12 +1553,12 @@ class toellnerReminder(QtGui.QDialog, Ui_toeReminder):
 class DialogBox(QtGui.QDialog, Ui_DialogBox):
     def __init__(self, sweepParams, parent = None):
         super(DialogBox, self).__init__(parent)
-        
+
         self.sweepParamDict = sweepParams
-        
+
         self.window = parent
         self.setupUi(self)
-        
+
         self.fieldMinValue.setText(str(self.sweepParamDict['B_min']))
         self.fieldMinValue.setStyleSheet("QLabel#fieldMinValue {color: rgb(168,168,168); font-size: 10pt}")
         self.fieldMaxValue.setText(str(self.sweepParamDict['B_max']))
@@ -2061,7 +1576,7 @@ class DialogBox(QtGui.QDialog, Ui_DialogBox):
         self.biasIncValue.setStyleSheet("QLabel#biasIncValue {color: rgb(168,168,168); font-size: 10pt}")
         self.biasSpeedValue.setText(str(self.sweepParamDict['delay']))
         self.biasSpeedValue.setStyleSheet("QLabel#biasSpeedValue {color: rgb(168,168,168); font-size: 10pt}")
-        
+
         if self.sweepParamDict['Magnet device'] == 'IPS 120-10':
             self.magnetPowerSupply.setText('Oxford IPS 120-10 Magnet Power Supply')
             self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168); font-size: 10pt}")
@@ -2094,12 +1609,9 @@ class DialogBox(QtGui.QDialog, Ui_DialogBox):
     #If accepted, runs the sweep
     def testSweep(self):
         self.accept()
+
     def exitDialog(self):
-        #self.window.startSweep.setEnabled(True)
         self.reject()
-    def closeEvent(self, e):
-        self.window.startSweep.setEnabled(True)
-        self.window.abortSweep.setEnabled(False)
 
 #Window for doing preliminary sweeps of the nSOT
 class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
@@ -2107,29 +1619,28 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         super(preliminarySweep, self).__init__(parent)
         self.window = parent
         self.reactor = reactor
+
         self.setupUi(self)
-        
         self.setupPlot()
+
         self.dv = dv
         self.dac = dac
-        
+
         self.settingsDict = settings
-        
+
         self.data = None
         self.fitPoints = 1
         self.fitPlotItem = pg.PlotCurveItem()
         self.dataPlotItem = pg.PlotCurveItem()
-        self.critCurrLine.setReadOnly(True)
-        self.parRes.setReadOnly(True)
 
-        self.startSweep.clicked.connect(lambda: self.sweep(self.reactor))
-        self.showFitBtn.clicked.connect(self.showFitFunc)
+        self.push_startSweep.clicked.connect(self.sweep)
+        self.push_showFitBtn.clicked.connect(self.showFitFunc)
         self.btnAction = 'sweep'
 
         self.flag_IcLineShowing = False
         self.pushButton_Show.clicked.connect(self.toggleIcMeasurementLine)
 
-        self.closeWin.clicked.connect(self._close)
+        self.push_closeWin.clicked.connect(self._close)
 
     def toggleIcMeasurementLine(self):
         if self.flag_IcLineShowing:
@@ -2138,10 +1649,6 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
             self.sweepPlot.addItem(self.IcLine)
         self.flag_IcLineShowing = not self.flag_IcLineShowing
 
-    def refreshSweep(self):
-        self.startSweep.setEnabled(True)
-        self.newSweep.setEnabled(False)
-        
     def showFitFunc(self):
         if not self.fitPoints is None:
             if self.showFitBtn.text() == 'Show Fit':
@@ -2151,7 +1658,7 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
             elif self.showFitBtn.text() == 'Hide Fit':
                 self.sweepPlot.removeItem(self.fitPlotItem)
                 self.showFitBtn.setText('Show Fit')
-                
+
     def setupPlot(self):
         self.win = pg.GraphicsWindow(parent = self.plotSweepFrame)
         self.sweepPlot = self.win.addPlot()
@@ -2163,8 +1670,6 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         self.sweepPlot.setXRange(0,1)
         self.sweepPlot.setYRange(0,2)
         self.sweepPlot.enableAutoRange(enable = True)
-        proxy = pg.SignalProxy(self.sweepPlot.scene().sigMouseClicked ,slot=self.updateIC)
-        # self.sweepPlot.scene().sigMouseClicked.connect(self.updateIC)
         self.IcLine = pg.InfiniteLine(pos = 0.0 , angle = 90, movable = True, pen = 'b', hoverPen = (50, 50, 200))
         self.IcLine.sigPositionChangeFinished.connect(self.updateIC)
 
@@ -2180,8 +1685,8 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
             winding = float(self.ssaaWinding.value())
             yValue = yVals[index] - yVals[xzeroindex]
             I_c =  np.round(np.absolute((yValue) / (ssaaRes * winding)) * 1e6, decimals = 4)
-            self.critCurrLine.setText(str(I_c))
-                
+            self.lineEdit_critCurrLine.setText(str(I_c))
+
     @inlineCallbacks
     def plotSweepData(self, data):
         self.data = data
@@ -2191,9 +1696,8 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         yield self.sleep(0.1)
 
         self.sweepPlot.plot(x = xVals, y = yVals, pen = 0.5)
-        
+
         absX = np.absolute(xVals)
-        zeroVolts = np.amin(absX)
         zeroIndex = np.argmin(absX)
         bigHalf = np.amax([len(xVals) - zeroIndex -1, zeroIndex])
 
@@ -2224,78 +1728,57 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         deltaV_DAC = np.absolute(xVals[j] - xVals[zeroIndex])
 
         deltaV_F = np.absolute(yVals[j] - yVals[zeroIndex])
-        
+
         self.fitPoints = [xVals[zeroIndex], xVals[j], yVals[zeroIndex], yVals[j]]
 
         if deltaV_F == 0:
-            self.parRes.setText('Nan')
+            self.lineEdit_parRes.setText('Nan')
         else:
             ratio = np.absolute(deltaV_DAC / deltaV_F)
             r = np.round(alpha * (winding * ssaaRes * ratio - biasRes), decimals = 1)
-            self.parRes.setText(str(r))
-            
-    def sleep(self, secs):
-        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
-        other operations to be done elsewhere while paused."""
-        d = Deferred()
-        self.reactor.callLater(secs,d.callback,'Sleeping')
-        return d
-        
-    def _close(self):
-        self.window.prelim.setEnabled(True)
-        self.close()
-        
-    def closeEvent(self, e):
-        self.window.prelim.setEnabled(True)
-        self.close()
-        
+            self.lineEdit_parRes.setText(str(r))
+
     def toggleStartBtn(self, state):
-        reg = "QPushButton#" + 'startSweep'
-        press = "QPushButton:pressed#" + 'startSweep'
+        reg = "QPushButton#" + 'push_startSweep'
+        press = "QPushButton:pressed#" + 'push_startSweep'
         if state == 'sweep':
             regStr = reg + "{color: rgb(0,250,0);background-color:rgb(0,0,0);border: 2px solid rgb(0,250,0);border-radius: 5px}"
-            pressStr = press + "{color: rgb(0,0,0); background-color:rgb(0,250,0);border: 2px solid rgb(0,250,0);border-radius: 5px}" 
+            pressStr = press + "{color: rgb(0,0,0); background-color:rgb(0,250,0);border: 2px solid rgb(0,250,0);border-radius: 5px}"
             style = regStr + " " + pressStr
-            self.startSweep.setText('Start Sweep')
-            self.startSweep.setStyleSheet(style)
+            self.push_startSweep.setText('Start Sweep')
+            self.push_startSweep.setStyleSheet(style)
             self.btnAction = 'sweep'
         elif state == 'reset':
             regStr = reg + "{color: rgb(95,107,166);background-color:rgb(0,0,0);border: 2px solid rgb(95,107,166);border-radius: 5px}"
-            pressStr = press + "{color: rgb(0,0,0); background-color:rgb(95,107,166);border: 2px solid rgb(95,107,166);border-radius: 5px}" 
+            pressStr = press + "{color: rgb(0,0,0); background-color:rgb(95,107,166);border: 2px solid rgb(95,107,166);border-radius: 5px}"
             style = regStr + " " + pressStr
-            self.startSweep.setText('Reset')
-            self.startSweep.setStyleSheet(style)
+            self.push_startSweep.setText('Reset')
+            self.push_startSweep.setStyleSheet(style)
             self.btnAction = 'reset'
-            
+
     @inlineCallbacks
-    def sweep(self, c):
+    def sweep(self):
         yield self.sleep(0.1)
         if self.btnAction == 'sweep':
             try:
                 self.toggleStartBtn('reset')
-                self.startSweep.setEnabled(False)
-                
+                self.push_startSweep.setEnabled(False)
+
                 self.sweepPlot.clear()
-                #x = np.linspace(0,1, 100)+np.random.random()*10
-                #y = np.linspace(2,3, 100)
-                #self.plotSweepData(np.transpose([x,y]))
-                
                 #Sets sweep parameters
                 biasMin = float(self.biasStart.value())
                 biasMax = float(self.biasEnd.value())
-                biasRange = abs(biasMax - biasMin)
-                
+
                 biasPoints = int(self.sweepPoints.value())
                 delay = int(self.delay.value() * 1000)
-                
+
                 #Sets DAC Channels
                 DAC_out = self.settingsDict['nsot bias output'] - 1
-                DAC_blink = self.settingsDict['blink'] - 1
-                
+
                 DAC_in_ref = self.settingsDict['nsot bias input'] - 1
                 DAC_in_sig = self.settingsDict['feedback DC input'] - 1
                 DAC_in_noise = self.settingsDict['noise input'] - 1
-                
+
                 file_info = yield self.dv.new("nSOT Preliminary Sweep", ['Bias Voltage Index','Bias Voltage'],['DC SSAA Output','Noise'])
                 self.dvFileName = file_info[1]
                 self.lineEdit_ImageNum.setText(file_info[1][0:5])
@@ -2303,12 +1786,12 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                 for folder in file_info[0][1:]:
                     session = session + '\\' + folder
                 self.lineEdit_ImageDir.setText(r'\.datavault' + session)
-                        
+
                 print 'DataVault setup complete'
-                
+
                 yield self.dac.set_voltage(DAC_out, 0)
                 try:
-                    yield self.window.blinkFunc()
+                    yield self.window.blink()
                 except Exception as inst:
                     print inst
                     print 'Blinks the problem yo'
@@ -2328,21 +1811,21 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                 yield self.dv.add(formatted_data)
 
                 yield self.plotSweepData(formatted_data)
-                
+
                 yield self.sleep(0.25)
                 self.saveDataToSessionFolder()
-                
+
                 #Return to zero voltage gently
                 yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMax], [0], abs(int(biasMax * 1000)), 1000)
                 yield self.sleep(0.25)
                 yield self.dac.set_voltage(DAC_out, 0)
-                self.startSweep.setEnabled(True)
-                
+                self.push_startSweep.setEnabled(True)
+
             except Exception as inst:
                 print inst
         elif self.btnAction == 'reset':
             self.toggleStartBtn('sweep')
-            
+
     def saveDataToSessionFolder(self):
         try:
             p = QtGui.QPixmap.grabWindow(self.winId())
@@ -2353,8 +1836,18 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         except Exception as inst:
             print 'nSOTChar Prelim error: ', inst
             print 'on line: ', sys.exc_traceback.tb_lineno
-            
-            
+
+    def sleep(self, secs):
+        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
+        other operations to be done elsewhere while paused."""
+        d = Deferred()
+        self.reactor.callLater(secs,d.callback,'Sleeping')
+        return d
+
+    def closeEvent(self, e):
+        self.window.push_prelim.setEnabled(True)
+        self.close()
+
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)

@@ -1,13 +1,13 @@
-#---------------------------------------------------------------------------------------------------------#         
+#---------------------------------------------------------------------------------------------------------#
 """ The following section describes how to read and write values to various lineEdits on the GUI."""
 
 import numpy as np
-from itertools import product
+# from itertools import product
 
-siDict = {'T': 12, 'G' : 9, 'M' : 6, 'k' : 3, 'm' : -3, 'u' : -6, 'n' : -9, 'p' : -12}
+siDict = {'T': 12, 'G' : 9, 'M' : 6, 'k' : 3, '' : 0, 'm' : -3, 'u' : -6, 'n' : -9, 'p' : -12}
 
 def get_key(val):
-    for key, value in siDict.viewItems(): #in python 3, switch to items.
+    for key, value in siDict.iteritems(): #in python 3, switch to items.
          if val == value:
              return key
     return "key doesn't exist"
@@ -15,12 +15,12 @@ def get_key(val):
 def formatNum(val, decimal_values = 2):
     if val != val:
         return 'nan'
-        
+
     string = '%e'%val
     ind = string.index('e')
     num  = float(string[0:ind])
     exp = int(string[ind+1:])
-    
+
     #Get power of 3 index
     si = exp-exp%3
     if si < -12:
@@ -29,23 +29,23 @@ def formatNum(val, decimal_values = 2):
         si = 12
 
     num = num * 10**(exp - si)
-    
+
     if num - int(num) == 0:
         num = int(num)
-    else: 
+    else:
         num = round(num,decimal_values)
-    
+
     string = str(num)+get_key(si)
-    
+
     return string
-    
-#By default, accepts no parent and will warn you for inputting a number without units. 
-#Adding a parent is needed to have error thrown in a reasonable place and avoid recursion errors. 
-#For entries that are expected to be of order unity the warningFlag can be set to False. 
+
+#By default, accepts no parent and will warn you for inputting a number without units.
+#Adding a parent is needed to have error thrown in a reasonable place and avoid recursion errors.
+#For entries that are expected to be of order unity the warningFlag can be set to False.
 def readNum(string, parent, warningFlag = True):
     try:
         val = float(string)
-        
+
         if warningFlag and val != 0:
             warning = UnitWarning(parent, val)
             parent.setFocus()
@@ -58,48 +58,48 @@ def readNum(string, parent, warningFlag = True):
             exp = siDict[string[-1]]
             try:
                 val = float(string[0:-1])*10**exp
-            except: 
+            except:
                 return 'Incorrect Format'
         except:
             return 'Empty Input'
     return val
-        
-#---------------------------------------------------------------------------------------------------------#         
+
+#---------------------------------------------------------------------------------------------------------#
 """ The following section creates a generic warning if a number is input without a unit."""
-        
-from PyQt4 import QtGui, QtCore, uic
+
+from PyQt4 import QtGui, uic
 import sys
 
 path = sys.path[0] + r"\Resources"
 Ui_UnitWarning, QtBaseClass = uic.loadUiType(path + r"\UnitWarningWindow.ui")
-        
+
 class UnitWarning(QtGui.QDialog, Ui_UnitWarning):
     def __init__(self, parent, val):
         super(UnitWarning, self).__init__(parent)
         self.window = parent
         self.setupUi(self)
-        
+
         self.label.setText(self.label.text() + formatNum(val) + '.')
-        
+
         self.push_yes.clicked.connect(self.acceptEntry)
         self.push_no.clicked.connect(self.rejectEntry)
-        
+
     def acceptEntry(self):
         self.accept()
-        
+
     def rejectEntry(self):
         self.reject()
-        
+
     def closeEvent(self, e):
         self.reject()
-        
-#---------------------------------------------------------------------------------------------------------#         
+
+#---------------------------------------------------------------------------------------------------------#
 """ The following section has basic data processing methods."""
-            
+
 def processLineData(lineData, process):
     pixels = np.size(lineData)
     if process == 'Raw':
-        return lineData 
+        return lineData
     elif process == 'Subtract Average':
         x = np.linspace(0,pixels-1,pixels)
         fit = np.polyfit(x, lineData, 0)
@@ -115,27 +115,27 @@ def processLineData(lineData, process):
         fit = np.polyfit(x, lineData, 2)
         residuals  = lineData - fit[0]*x**2 - fit[1]*x - fit[2]
         return residuals
-        
+
 def processImageData(image, process):
     shape = np.shape(image)
-    
+
     width = int(shape[0])
     length = int(shape[1])
-    
+
     x = np.linspace(0, 1, width)
     y = np.linspace(0, 1, length)
     X, Y = np.meshgrid(x, y, copy=False)
-    
+
     X = X.flatten()
     Y = Y.flatten()
-    
+
     if process == 'Raw':
         return image
-        
+
     elif process == 'Subtract Image Average':
         avg = np.average(image)
         return image - avg
-        
+
     elif process == 'Subtract Line Average':
         for i in range(0,length):
             image[:,i] = processLineData(image[:,i],'Subtract Average')
@@ -144,18 +144,18 @@ def processImageData(image, process):
     elif process == 'Subtract Image Plane':
         A = np.array([X*0+1, X, Y]).T
         B = image.flatten('F')
-        
+
         print "Print A: ", A
         print "Print B: ", B
 
         coeff, r, rank, s = np.linalg.lstsq(A, B)
         print "Print coeff: ", coeff
-        
+
         for i in xrange(length):
             for j in xrange(width):
                 image[j][i] = image[j][i] - np.dot(coeff, [1, x[j], y[i]])
         return image
-   
+
     elif process == 'Subtract Line Linear':
         for i in range(0,length):
             image[:,i] = processLineData(image[:,i],'Subtract Linear Fit')
@@ -169,24 +169,24 @@ def processImageData(image, process):
 
         for i in xrange(length):
             for j in xrange(width):
-                image[j][i] = image[j][i] - np.dot(coeff, [1, x[j], y[i], x[j]**2, y[i]**2, x[j]*y[i]])    
-        
+                image[j][i] = image[j][i] - np.dot(coeff, [1, x[j], y[i], x[j]**2, y[i]**2, x[j]*y[i]])
+
         return image
 
     elif process == 'Subtract Line Quadratic':
         for i in range(0,length):
             image[:,i] = processLineData(image[:,i],'Subtract Parabolic Fit')
         return image
-        
-#---------------------------------------------------------------------------------------------------------#         
+
+#---------------------------------------------------------------------------------------------------------#
 """ The following section creates a better image plotter, based off of pyqt's ImageView, to allow plotting of partial images."""
-    
+
 import pyqtgraph as pg
 
 class ScanImageView(pg.ImageView):
     '''
-    Extension of pyqtgraph's ImageView. This allows you to plot only part of a dataset. This works by specifying a "random filling" number which, 
-    if found during plotting, is ignored from both the plotting and the histogram. 
+    Extension of pyqtgraph's ImageView. This allows you to plot only part of a dataset. This works by specifying a "random filling" number which,
+    if found during plotting, is ignored from both the plotting and the histogram.
     '''
     def __init__(self, parent=None, name="ImageView", view=None, imageItem=None, randFill = 0.0, *args):
         pg.ImageView.__init__(self, parent, name, view, imageItem, *args)
@@ -204,21 +204,21 @@ class ScanImageView(pg.ImageView):
             #Clear plot if nothing is being plotted
             pg.ImageView.clear(self)
             self.ui.histogram.plot.clear()
-            
+
         #Autoscales histogram x axis, making sure we can always see the peaks of the histogram
         self.ui.histogram.vb.enableAutoRange(axis = pg.ViewBox.XAxis, enable = True)
-        
+
         if autoHistogramRange:
             self.ui.histogram.vb.autoRange()
-        
+
     def setRandFill(self, val):
         self.randFill = val
-        
+
     def autoRange(self):
         #Redefine this function because in the pyqtgraph version, for some unknown reason, it also calls getProcessedImage, which causes bugs when nothing
-        #is being plotted. 
+        #is being plotted.
         self.view.enableAutoRange()
-        
+
     #Eventually also add the following from Avi's code so that if we're plotting point by point (instead of line by line) the histogram doesn't get populated
     '''
     def updateHist(self, autoLevel=False, autoRange=False):
@@ -239,4 +239,3 @@ class ScanImageView(pg.ImageView):
             mx = h[0][-1]
             self.mainPlot.ui.histogram.region.setRegion([mn, mx])
     '''
-        

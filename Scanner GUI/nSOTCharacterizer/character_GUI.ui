@@ -85,7 +85,7 @@ background-color: rgb(0, 0, 0);
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QLineEdit" name="fieldPointsSetValue">
+   <widget class="QLineEdit" name="lineEdit_fieldPoints">
     <property name="geometry">
      <rect>
       <x>581</x>
@@ -98,7 +98,7 @@ background-color: rgb(0, 0, 0);
      <enum>Qt::StrongFocus</enum>
     </property>
     <property name="text">
-     <string>100</string>
+     <string>101</string>
     </property>
     <property name="frame">
      <bool>true</bool>
@@ -154,7 +154,7 @@ background-color: rgb(0, 0, 0);
      <enum>QFrame::Raised</enum>
     </property>
    </widget>
-   <widget class="QLineEdit" name="fieldSpeedSetValue">
+   <widget class="QLineEdit" name="lineEdit_fieldSpeed">
     <property name="geometry">
      <rect>
       <x>581</x>
@@ -212,7 +212,7 @@ background-color: rgb(0, 0, 0);
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Blinking:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="biasSpeedSetValue">
+   <widget class="QLineEdit" name="lineEdit_biasDelay">
     <property name="geometry">
      <rect>
       <x>845</x>
@@ -222,7 +222,7 @@ background-color: rgb(0, 0, 0);
      </rect>
     </property>
     <property name="text">
-     <string>1</string>
+     <string>1m</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -247,7 +247,7 @@ background-color: rgb(0, 0, 0);
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QPushButton" name="abortSweep">
+   <widget class="QPushButton" name="push_abortSweep">
     <property name="geometry">
      <rect>
       <x>995</x>
@@ -263,14 +263,14 @@ background-color: rgb(0, 0, 0);
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">QPushButton:pressed#abortSweep{
+     <string notr="true">QPushButton:pressed#push_abortSweep{
 color: rgb(95,107,166);
 background-color:rgb(168,168,168);
 border: 1px solid rgb(95,107,166);
 border-radius: 5px
 }
 
-QPushButton#abortSweep{
+QPushButton#push_abortSweep{
 color: rgb(255,0, 0);
 background-color:rgb(0,0,0);
 border: 2px solid  rgb(255,0, 0);
@@ -281,7 +281,7 @@ border-radius: 5px
      <string>Abort Sweep</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="startSweep">
+   <widget class="QPushButton" name="push_startSweep">
     <property name="geometry">
      <rect>
       <x>950</x>
@@ -297,14 +297,14 @@ border-radius: 5px
      <string>Begin sweep</string>
     </property>
     <property name="styleSheet">
-     <string notr="true">QPushButton:pressed#startSweep{
+     <string notr="true">QPushButton:pressed#push_startSweep{
 color: rgb(95,107,166);
 background-color:rgb(168,168,168);
 border: 1px solid rgb(95,107,166);
 border-radius: 5px
 }
 
-QPushButton#startSweep{
+QPushButton#push_startSweep{
 color: rgb(0,255,0);
 background-color:rgb(0,0,0);
 border: 2px solid rgb(0,255,0);
@@ -315,7 +315,7 @@ border-radius: 5px
      <string>Start Sweep</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="biasSweepMode">
+   <widget class="QComboBox" name="comboBox_biasSweepMode">
     <property name="geometry">
      <rect>
       <x>316</x>
@@ -380,7 +380,7 @@ border-radius: 5px
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QComboBox" name="blink">
+   <widget class="QComboBox" name="comboBox_blinkMode">
     <property name="geometry">
      <rect>
       <x>316</x>
@@ -403,7 +403,7 @@ border-radius: 5px
      </property>
     </item>
    </widget>
-   <widget class="QTabWidget" name="tabsTrace">
+   <widget class="QTabWidget" name="tab_trace">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -474,7 +474,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
      </widget>
     </widget>
    </widget>
-   <widget class="QComboBox" name="currentBiasTraceSelect">
+   <widget class="QComboBox" name="comboBox_traceLinecut">
     <property name="geometry">
      <rect>
       <x>400</x>
@@ -555,7 +555,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QLineEdit" name="biasMaxSetValue">
+   <widget class="QLineEdit" name="lineEdit_biasMax">
     <property name="geometry">
      <rect>
       <x>845</x>
@@ -574,7 +574,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
      <string>0.0</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="fieldMaxSetValue">
+   <widget class="QLineEdit" name="lineEdit_fieldMax">
     <property name="geometry">
      <rect>
       <x>581</x>
@@ -641,7 +641,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QLineEdit" name="biasMinSetValue">
+   <widget class="QLineEdit" name="lineEdit_biasMin">
     <property name="geometry">
      <rect>
       <x>845</x>
@@ -705,7 +705,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Voltage Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="fieldMinSetValue">
+   <widget class="QLineEdit" name="lineEdit_fieldMin">
     <property name="geometry">
      <rect>
       <x>581</x>
@@ -776,7 +776,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(ms)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(s)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="vCutTracePos">
@@ -804,7 +804,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
      <double>-99.000000000000000</double>
     </property>
    </widget>
-   <widget class="QLineEdit" name="biasPointsSetValue">
+   <widget class="QLineEdit" name="lineEdit_biasPoints">
     <property name="geometry">
      <rect>
       <x>845</x>
@@ -814,7 +814,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
      </rect>
     </property>
     <property name="text">
-     <string>500</string>
+     <string>501</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -823,7 +823,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
      <string>0.0</string>
     </property>
    </widget>
-   <widget class="QTabWidget" name="tabsRetrace">
+   <widget class="QTabWidget" name="tab_retrace">
     <property name="geometry">
      <rect>
       <x>660</x>
@@ -907,7 +907,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Voltage Line-Cut:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="currentBiasRetraceSelect">
+   <widget class="QComboBox" name="comboBox_retraceLinecut">
     <property name="geometry">
      <rect>
       <x>1050</x>
@@ -1054,7 +1054,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
      <enum>QFrame::Raised</enum>
     </property>
    </widget>
-   <widget class="QPushButton" name="liveTracePlot">
+   <widget class="QPushButton" name="push_liveTracePlot">
     <property name="geometry">
      <rect>
       <x>530</x>
@@ -1085,7 +1085,7 @@ border-radius: 5px
      <string>Toggle Line Cut</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="liveRetracePlot">
+   <widget class="QPushButton" name="push_liveRetracePlot">
     <property name="geometry">
      <rect>
       <x>1180</x>
@@ -1116,7 +1116,7 @@ border-radius: 5px
      <string>Toggle Line Cut</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="hideTraceGrad">
+   <widget class="QPushButton" name="push_hideTraceGrad">
     <property name="geometry">
      <rect>
       <x>630</x>
@@ -1135,7 +1135,7 @@ border-radius: 5px
      <string>-</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="showTraceGrad">
+   <widget class="QPushButton" name="push_showTraceGrad">
     <property name="geometry">
      <rect>
       <x>630</x>
@@ -1154,7 +1154,7 @@ border-radius: 5px
      <string>+</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="hideRetraceGrad">
+   <widget class="QPushButton" name="push_hideRetraceGrad">
     <property name="geometry">
      <rect>
       <x>1280</x>
@@ -1173,7 +1173,7 @@ border-radius: 5px
      <string>-</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="showRetraceGrad">
+   <widget class="QPushButton" name="push_showRetraceGrad">
     <property name="geometry">
      <rect>
       <x>1280</x>
@@ -1192,7 +1192,7 @@ border-radius: 5px
      <string>+</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="fieldStepsInc">
+   <widget class="QPushButton" name="push_fieldStepsInc">
     <property name="geometry">
      <rect>
       <x>636</x>
@@ -1211,7 +1211,7 @@ border-radius: 5px
      <string>↺</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="biasStepsInc">
+   <widget class="QPushButton" name="push_biasStepsInc">
     <property name="geometry">
      <rect>
       <x>900</x>
@@ -1249,7 +1249,7 @@ background: rgb(144, 140, 9);
      <string/>
     </property>
    </widget>
-   <widget class="QPushButton" name="prelim">
+   <widget class="QPushButton" name="push_prelim">
     <property name="geometry">
      <rect>
       <x>1040</x>
@@ -1262,14 +1262,14 @@ background: rgb(144, 140, 9);
      <string>Run preliminary sweep</string>
     </property>
     <property name="styleSheet">
-     <string notr="true">QPushButton:pressed#prelim{
+     <string notr="true">QPushButton:pressed#push_prelim{
 color: rgb(95,107,166);
 background-color:rgb(168,168,168);
 border: 1px solid rgb(95,107,166);
 border-radius: 5px
 }
 
-QPushButton#prelim{
+QPushButton#push_prelim{
 color: rgb(10,190,250);
 background-color:rgb(0,0,0);
 border: 2px solid  rgb(10,190,250);
@@ -1293,7 +1293,7 @@ border-radius: 5px
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;Magnet Power Supply:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="magnetPower">
+   <widget class="QComboBox" name="comboBox_magnetPower">
     <property name="geometry">
      <rect>
       <x>316</x>
@@ -1884,6 +1884,9 @@ background-color: rgb(3, 3, 3);</string>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
     <property name="placeholderText">
      <string>0.0</string>
     </property>
@@ -1918,6 +1921,9 @@ background-color: rgb(3, 3, 3);</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
     </property>
     <property name="placeholderText">
      <string>0.0</string>
@@ -2008,67 +2014,67 @@ border-radius: 5px
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <zorder>showRetraceGrad</zorder>
-   <zorder>showTraceGrad</zorder>
-   <zorder>hideTraceGrad</zorder>
+   <zorder>push_showRetraceGrad</zorder>
+   <zorder>push_showTraceGrad</zorder>
+   <zorder>push_hideTraceGrad</zorder>
    <zorder>curfieldTracePlot</zorder>
    <zorder>curfieldRetracePlot</zorder>
    <zorder>curbiasRetracePlot</zorder>
    <zorder>curbiasTracePlot</zorder>
    <zorder>MaxField</zorder>
-   <zorder>fieldPointsSetValue</zorder>
+   <zorder>lineEdit_fieldPoints</zorder>
    <zorder>hCutTracePos</zorder>
-   <zorder>fieldSpeedSetValue</zorder>
+   <zorder>lineEdit_fieldSpeed</zorder>
    <zorder>FieldSet</zorder>
    <zorder>label_15</zorder>
    <zorder>label</zorder>
-   <zorder>biasSpeedSetValue</zorder>
+   <zorder>lineEdit_biasDelay</zorder>
    <zorder>BiasInc</zorder>
-   <zorder>abortSweep</zorder>
-   <zorder>startSweep</zorder>
-   <zorder>biasSweepMode</zorder>
+   <zorder>push_abortSweep</zorder>
+   <zorder>push_startSweep</zorder>
+   <zorder>comboBox_biasSweepMode</zorder>
    <zorder>SweepParam</zorder>
    <zorder>label_14</zorder>
-   <zorder>blink</zorder>
-   <zorder>tabsTrace</zorder>
-   <zorder>currentBiasTraceSelect</zorder>
+   <zorder>comboBox_blinkMode</zorder>
+   <zorder>tab_trace</zorder>
+   <zorder>comboBox_traceLinecut</zorder>
    <zorder>label_27</zorder>
    <zorder>VoltMin</zorder>
    <zorder>VoltSet</zorder>
    <zorder>label_12</zorder>
-   <zorder>biasMaxSetValue</zorder>
-   <zorder>fieldMaxSetValue</zorder>
+   <zorder>lineEdit_biasMax</zorder>
+   <zorder>lineEdit_fieldMax</zorder>
    <zorder>VoltMax</zorder>
    <zorder>FieldInc</zorder>
    <zorder>label_11</zorder>
-   <zorder>biasMinSetValue</zorder>
+   <zorder>lineEdit_biasMin</zorder>
    <zorder>label_37</zorder>
    <zorder>label_38</zorder>
    <zorder>label_29</zorder>
-   <zorder>fieldMinSetValue</zorder>
+   <zorder>lineEdit_fieldMin</zorder>
    <zorder>MinField</zorder>
    <zorder>label_4</zorder>
    <zorder>label_6</zorder>
    <zorder>label_9</zorder>
    <zorder>vCutTracePos</zorder>
-   <zorder>biasPointsSetValue</zorder>
-   <zorder>tabsRetrace</zorder>
+   <zorder>lineEdit_biasPoints</zorder>
+   <zorder>tab_retrace</zorder>
    <zorder>label_30</zorder>
-   <zorder>currentBiasRetraceSelect</zorder>
+   <zorder>comboBox_retraceLinecut</zorder>
    <zorder>label_28</zorder>
    <zorder>vCutRetracePos</zorder>
    <zorder>hCutRetracePos</zorder>
    <zorder>label_2</zorder>
    <zorder>label_3</zorder>
-   <zorder>liveTracePlot</zorder>
-   <zorder>liveRetracePlot</zorder>
-   <zorder>hideRetraceGrad</zorder>
-   <zorder>fieldStepsInc</zorder>
-   <zorder>biasStepsInc</zorder>
+   <zorder>push_liveTracePlot</zorder>
+   <zorder>push_liveRetracePlot</zorder>
+   <zorder>push_hideRetraceGrad</zorder>
+   <zorder>push_fieldStepsInc</zorder>
+   <zorder>push_biasStepsInc</zorder>
    <zorder>push_Servers</zorder>
-   <zorder>prelim</zorder>
+   <zorder>push_prelim</zorder>
    <zorder>label_5</zorder>
-   <zorder>magnetPower</zorder>
+   <zorder>comboBox_magnetPower</zorder>
    <zorder>line</zorder>
    <zorder>line_2</zorder>
    <zorder>line_3</zorder>
@@ -2108,15 +2114,15 @@ border-radius: 5px
   </widget>
  </widget>
  <tabstops>
-  <tabstop>fieldMinSetValue</tabstop>
-  <tabstop>fieldMaxSetValue</tabstop>
-  <tabstop>fieldPointsSetValue</tabstop>
-  <tabstop>fieldSpeedSetValue</tabstop>
-  <tabstop>biasMinSetValue</tabstop>
-  <tabstop>biasMaxSetValue</tabstop>
-  <tabstop>biasPointsSetValue</tabstop>
-  <tabstop>biasSpeedSetValue</tabstop>
-  <tabstop>startSweep</tabstop>
+  <tabstop>lineEdit_fieldMin</tabstop>
+  <tabstop>lineEdit_fieldMax</tabstop>
+  <tabstop>lineEdit_fieldPoints</tabstop>
+  <tabstop>lineEdit_fieldSpeed</tabstop>
+  <tabstop>lineEdit_biasMin</tabstop>
+  <tabstop>lineEdit_biasMax</tabstop>
+  <tabstop>lineEdit_biasPoints</tabstop>
+  <tabstop>lineEdit_biasDelay</tabstop>
+  <tabstop>push_startSweep</tabstop>
  </tabstops>
  <resources>
   <include location="../Resources/nSOTScannerResources.qrc"/>
