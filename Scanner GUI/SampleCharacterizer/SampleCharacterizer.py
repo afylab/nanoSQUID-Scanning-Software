@@ -1,17 +1,17 @@
 from __future__ import division
 import sys
-import twisted
-from PyQt4 import QtCore, QtGui, QtTest, uic
+#import twisted
+from PyQt4 import QtCore, QtGui, uic #, QtTest
 from twisted.internet.defer import inlineCallbacks, Deferred , returnValue
 import numpy as np
 import pyqtgraph as pg
-import exceptions
+#import exceptions
 import time
-import threading
-import copy
-import time
+#import threading
+#import copy
+#import time
 import math #useless if not testing
-from scipy.signal import detrend
+#from scipy.signal import detrend
 #importing a bunch of stuff
 
 
@@ -25,14 +25,14 @@ Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 
 #Not required, but strongly recommended functions used to format numbers in a particular way.
 sys.path.append(sys.path[0]+'\Resources')
-from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData, ScanImageView
+from nSOTScannerFormat import readNum, formatNum#, processLineData, processImageData, ScanImageView
 
 
 class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
-        
+
         self.reactor = reactor
         self.setupUi(self)
 
@@ -46,7 +46,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
          'pA':10**-12,
          'fA':10**-15,
          }
-        
+
         self.Dict_Variable = {
             'FourTerminal_MinVoltage': -0.1,
             'FourTerminal_MaxVoltage': 0.1,
@@ -73,10 +73,10 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         # for i in range(4):                                              Can be implemented when labradconnect is done
             # self.dac.set_voltage(i,0,0)
-                    
+
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
-            
+
 ##################Top Right Block########################
         self.label_CentralDAC_DACOUTPUT1_Current.setText(formatNum(self.currentDAC_Output[0],6))
         self.label_CentralDAC_DACOUTPUT2_Current.setText(formatNum(self.currentDAC_Output[1],6))
@@ -125,11 +125,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_FourTerminal_Numberofstep.editingFinished.connect(self.UpdateFourTerminal_Numberofstep)
         self.lineEdit_FourTerminal_Delay.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminal_Delay, 'FourTerminal_Delay'))
         self.pushButton_FourTerminal_NoSmTpTSwitch.clicked.connect(self.ToggleFourTerminalFourTerminal_Numberofstep)
-        
+
         self.comboBox_FourTerminal_Output1.currentIndexChanged.connect(self.ChangeFourTerminal_Output1_Channel)
         self.comboBox_FourTerminal_Input1.currentIndexChanged.connect(self.ChangeFourTerminal_Input1_Channel)
         self.comboBox_FourTerminal_Input2.currentIndexChanged.connect(self.ChangeFourTerminal_Input2_Channel)
-        
+
 #######################################Few Push Button
         self.pushButton_StartFourTerminalSweep.clicked.connect(self.FourTerminalSweep)
         self.pushButton_StartFourTerminalMagneticFieldSweep.clicked.connect(self.FourTerminalMagneticFieldSweep)
@@ -154,14 +154,14 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_FourTerminalMagneticFieldSetting_MaximumField.setText(formatNum(self.Dict_Variable['FourTerminalMagneticFieldSetting_MaximumField'],6))
         self.lineEdit_FourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla.setText(formatNum(self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],6))
         self.lineEdit_FourTerminalMagneticFieldSetting_FieldSweepSpeed.setText(formatNum(self.Dict_Variable['FourTerminalMagneticFieldSetting_FieldSweepSpeed'],6))
-        
+
         self.comboBox_FourTerminal_Output1.setCurrentIndex(0)
         self.comboBox_FourTerminal_Input1.setCurrentIndex(1)
         self.comboBox_FourTerminal_Input2.setCurrentIndex(0)
         self.FourTerminal_Output1=self.comboBox_FourTerminal_Output1.currentIndex()
         self.FourTerminal_Input1=self.comboBox_FourTerminal_Input1.currentIndex()
         self.FourTerminal_Input2=self.comboBox_FourTerminal_Input2.currentIndex()
-        
+
 #################Four Terminal Magnetic field sweep Line Edit
         self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.editingFinished.connect(lambda: self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField, 'FourTerminalMagneticFieldSetting_MinimumField'))
         self.lineEdit_FourTerminalMagneticFieldSetting_MinimumField.editingFinished.connect(self.UpdateFourTerminalMagneticFieldSetting_NumberofstepsandMilifieldperTesla)
@@ -190,7 +190,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.UpdateVoltage_LI_Timeconstant()
         self.UpdateCurrent_LI_Timeconstant()
         self.UpdateLineEdit_General(self.lineEdit_Lockin_Info_Frequency, 'Frequency')
-        
+
 #######################################Check Box magnetic Field Sweep
         self.checkBox_FourTerminalMagneticFieldSetting_MoveLineCut.stateChanged.connect(self.updateCheckBox)
         self.checkBox_FourTerminalMagneticFieldSetting_AutoLevel.stateChanged.connect(self.updateCheckBox)
@@ -245,8 +245,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         try:
             self.cxn = dict['servers']['local']['cxn']
             self.gen_dv = dict['servers']['local']['dv']
-            
-            #Create another connection for the connection to data vault to prevent 
+
+            #Create another connection for the connection to data vault to prevent
             #problems of multiple windows trying to write the data vault at the same
             #time
             from labrad.wrappers import connectAsync
@@ -254,10 +254,10 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.dv = yield self.cxn_sample.data_vault
             curr_folder = yield self.gen_dv.cd()
             yield self.dv.cd(curr_folder)
-            
+
             self.dac = yield self.cxn_sample.dac_adc
             self.dac.select_device(dict['devices']['sample']['dac_adc'])
-                
+
             #Eventually make this module compatible with Toellner, for now it is not
             if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
                 self.dac_toe = dict['servers']['local']['dac_adc']
@@ -273,24 +273,24 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 self.dac_toe = None
                 self.ips = None
                 self.ami = dict['servers']['local']['ami_430']
-                
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
+
+            self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
-            
+
             self.current_field = yield self.ips.read_parameter(7)#Read the field
 
             self.unlockInterface()
         except Exception as inst:
-            self.push_Servers.setStyleSheet("#push_Servers{" + 
-            "background: rgb(161, 0, 0);border-radius: 4px;}")  
+            self.push_Servers.setStyleSheet("#push_Servers{" +
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
             #print 'nsot labrad connect', inst
             #exc_type, exc_obj, exc_tb = sys.exc_info()
             #print 'line num ', exc_tb.tb_lineno
-        
+
     def disconnectLabRAD(self):
         self.cxn = False
         self.gen_dv = False
-        
+
         self.cxn_sample = False
         self.dv = False
         self.dac = False
@@ -313,7 +313,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
     def updateHistogramLevels(self, hist):
         mn, mx = hist.getLevels()
         self.Plot2D.ui.histogram.setLevels(mn, mx)
-        
+
     @inlineCallbacks
     def StartFieldSweep1D(self, c=None): #1D sweep as a function of magnetic field #This function is unique
         self.lockInterface()
@@ -327,7 +327,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 self.plotData1D(self.Plot_Data[1],self.Plot_Data[3],self.FieldSweep1D_Plot2, 'r') #xaxis, yaxis, plot
                 self.plotData1D(self.Plot_Data[1],self.Plot_Data[4],self.FieldSweep1D_Plot3, 'r') #xaxis, yaxis, plot
                 self.plotData1D(self.Plot_Data[1],self.Plot_Data[5],self.FieldSweep1D_Plot4, 'r') #xaxis, yaxis, plot
-            
+
             if self.FieldSweep1D_LoopFlag and self.AbortMagneticFieldSweep_Flag == False:# Abort Flag needed for preventing bugs
                 yield self.sleep(1)
                 yield self.FieldSweep1D(self.Dict_Variable['FieldSweep1D_MaxField'], self.Dict_Variable['FieldSweep1D_MinField'], 'Down')
@@ -337,7 +337,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                     self.plotData1D(self.Plot_Data[1],self.Plot_Data[3],self.FieldSweep1D_Plot2, 'b') #xaxis, yaxis, plot
                     self.plotData1D(self.Plot_Data[1],self.Plot_Data[4],self.FieldSweep1D_Plot3, 'b') #xaxis, yaxis, plot
                     self.plotData1D(self.Plot_Data[1],self.Plot_Data[5],self.FieldSweep1D_Plot4, 'b') #xaxis, yaxis, plot
-                
+
             if self.checkBox_FieldSweep1D_BacktoZero.isChecked() and self.AbortMagneticFieldSweep_Flag == False:
                 print 'Set magnetic field  to: ' + str(0)
                 yield self.rampMagneticField(self.current_field, 0, self.Dict_Variable['FieldSweep1D_SweepSpeed'])
@@ -356,12 +356,12 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         try:
             self.AbortMagneticFieldSweep_Flag = False
             self.SetupFourTerminalSweepSetting('MagneticField1D') #Assign the DAC settings and DataVault parameters
-            
+
             #Creates a new datavault file and updates the image# labels
             yield self.newDataVaultFile("MagneticField1D")
-            
+
             self.FieldSweep1DXaxis = np.linspace(start, end, self.Dict_Variable['FieldSweep1D_Numberofstep'])
-            
+
             self.SetupPlot_Data("MagneticField1D")#self.Plot_Data: a new set of data particularly for ploting
 
             # print 'Ramp to initial field ' + str(start) + 'T'
@@ -387,7 +387,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 DummyVoltage= self.Convert_Real_Voltage(reading[0])
                 self.formatted_data.append((self.i, self.FieldSweep1DXaxis[self.i], DummyVoltage))
                 self.Plot_Data[2][self.i] = DummyVoltage
-                if self.FourTerminal_Input2!=4: 
+                if self.FourTerminal_Input2!=4:
                     DummyCurrent = self.Convert_Real_Current(reading[1])
                     self.formatted_data[self.i]+=(DummyCurrent,)
                     self.Plot_Data[3][self.i] = DummyCurrent
@@ -400,7 +400,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                     self.formatted_data[self.i]+=(Conductance,)  #proccessing to Conductance
                     self.Plot_Data[4][self.i] = resistance
                     self.Plot_Data[5][self.i] = Conductance
-            
+
             if not self.AbortMagneticFieldSweep_Flag:
                 yield self.dv.add(self.formatted_data)
         except Exception as inst:
@@ -413,12 +413,12 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.ClearPlots([self.sweepFourTerminal_Plot1, self.sweepFourTerminal_Plot2, self.sweepFourTerminal_Plot3, self.sweepFourTerminal_Plot4])
 
             self.SetupFourTerminalSweepSetting("No Magnetic Field") #Assign the DAC settings and DataVault parameters
-            
+
             #Creates a new datavault file and updates the image# labels
             yield self.newDataVaultFile("No Magnetic Field")
 
             yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.currentDAC_Output[self.FourTerminal_ChannelOutput[0]],self.Dict_Variable['FourTerminal_MinVoltage'],10000,100)    #ramp to initial value
-            
+
             #Give a second after the ramp to allow transients to settle before starting the sweep
             yield self.sleep(1)
 
@@ -427,26 +427,26 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             # self.dac_read = self.FakeDATA(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.Dict_Variable['FourTerminal_MinVoltage']],[self.Dict_Variable['FourTerminal_MaxVoltage']],self.Dict_Variable['FourTerminal_Numberofstep'],self.Dict_Variable['FourTerminal_Delay'])
 
             self.SetupPlot_Data("No Magnetic Field")#self.Plot_Data: a new set of data particularly for ploting
-            
+
             self.Format_Data("No Magnetic Field")#Take the Buffer_Ramp Data and save it into self.formatted_data
-            
+
             yield self.dv.add(self.formatted_data)
-            
+
             yield self.plotData1D(self.Plot_Data[1], self.Plot_Data[2], self.sweepFourTerminal_Plot1)
             if self.FourTerminal_Input2!=4:
                  yield self.plotData1D(self.Plot_Data[1],self.Plot_Data[3],self.sweepFourTerminal_Plot2) #xaxis, yaxis, plot
                  yield self.plotData1D(self.Plot_Data[1],self.Plot_Data[4],self.sweepFourTerminal_Plot3) #xaxis, yaxis, plot
                  yield self.plotData1D(self.Plot_Data[1],self.Plot_Data[5],self.sweepFourTerminal_Plot4) #xaxis, yaxis, plot
-                 
+
             yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.Dict_Variable['FourTerminal_MaxVoltage'],0.0,10000,100)
-            
+
         except Exception as inst:
             print inst
 
         self.unlockInterface()
         yield self.sleep(0.25)
         self.saveDataToSessionFolder() #save the screenshot
-        
+
         returnValue(self.formatted_data)
 
     @inlineCallbacks
@@ -454,22 +454,22 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lockInterface()
 
         self.ConnectLineCut()
-        
+
         self.MagneticFieldSweepPoints=np.linspace(self.Dict_Variable['FourTerminalMagneticFieldSetting_MinimumField'],self.Dict_Variable['FourTerminalMagneticFieldSetting_MaximumField'],self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'])#Generate Magnetic Field Sweep Point
-        
+
         self.SetupPlotParameter()
-        
+
         try:
             self.ClearFourTerminalMagneticFieldPlot()#Clear the plotted content
-            
+
             self.SetupFourTerminalSweepSetting("Magnetic Field")#Assign the DAC settings and DataVault parameters
-            
+
             self.AutoRangeFourTerminal2DPlot()
-            
+
             self.InitializeLineCutPlot()#Set the LineCut to Bottom Left.
-            
+
             yield self.newDataVaultFile("Magnetic Field")
-            
+
             for self.i in range(0,self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps']):
                 if self.AbortMagneticFieldSweep_Flag:
                     print "Abort the Sweep."
@@ -489,15 +489,15 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
                 self.FourTerminalXaxis=np.linspace(self.Dict_Variable['FourTerminal_MinVoltage'],self.Dict_Variable['FourTerminal_MaxVoltage'],self.Dict_Variable['FourTerminal_Numberofstep'])  #generating list of voltage at which sweeped
                 # self.dac_read = self.FakeDATA(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.Dict_Variable['FourTerminal_MinVoltage']],[self.Dict_Variable['FourTerminal_MaxVoltage']],self.Dict_Variable['FourTerminal_Numberofstep'],self.Dict_Variable['FourTerminal_Delay'])
-                
+
                 self.dac_read= yield self.Buffer_Ramp_Display(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.Dict_Variable['FourTerminal_MinVoltage']],[self.Dict_Variable['FourTerminal_MaxVoltage']],self.Dict_Variable['FourTerminal_Numberofstep'],self.Dict_Variable['FourTerminal_Delay']*1000000) #dac_read[0] is voltage,dac_read[1] is current potentially
-                
+
                 self.SetupPlot_Data("Magnetic Field")#self.Plot_Data: a new set of data particularly for ploting
 
                 self.Format_Data("Magnetic Field")
-                
+
                 yield self.dv.add(self.formatted_data)
-                
+
                 yield self.UpdateFourTerminal2DPlot(self.Plot_Data[4],self.Plot_Data[2],self.Plot_Data[3] ,self.Plot_Data[5]) #4 is resistance, 5 the Conductance
 
                 if self.MoveLineCutFourTerminalMagneticFieldSweep_Flag:  #update Line Cut
@@ -511,7 +511,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
                 if self.AutoLevelFourTerminalMagneticFieldSweep_Flag: #Autolevel
                     self.AutoLevelFourTerminal2DPlot()
-                
+
                 yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.Dict_Variable['FourTerminal_MaxVoltage'],0.0,10000,100)
 
             if self.BacktoZeroFourTerminalMagneticFieldSweep_Flag:
@@ -527,7 +527,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
     def AbortMagneticFieldSweep(self):
         self.AbortMagneticFieldSweep_Flag =True
-        
+
     @inlineCallbacks
     def rampMagneticField(self, start, end, rate):
         try:
@@ -538,26 +538,26 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             yield self.ips.set_control(3)
             yield self.ips.set_comm_protocol(6)
             yield self.ips.set_control(2)
-            
+
             yield self.sleep(0.25)
             '''
             if self.dac_toe != None:
                 pass
-    
+
             elif self.ips != None:
                 yield self.ips.set_control(3)
                 yield self.ips.set_fieldsweep_rate(rate)
                 yield self.ips.set_control(2)
-                
+
                 t0 = time.time() #Keep track of starting time for setting the field
                 yield self.ips.set_control(3)
                 yield self.ips.set_targetfield(end) #Set the setpoin
                 yield self.ips.set_control(2)
-                
+
                 yield self.ips.set_control(3)
                 yield self.ips.set_activity(1) #Put ips in go to setpoint mode
                 yield self.ips.set_control(2)
-                
+
                 print 'Setting field to ' + str(end)
                 while True:
                     yield self.ips.set_control(3)#
@@ -573,13 +573,13 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                         yield self.ips.set_control(3)
                         yield self.ips.set_targetfield(end)
                         yield self.ips.set_control(2)
-                        
+
                         yield self.ips.set_control(3)
                         yield self.ips.set_activity(1)
                         yield self.ips.set_control(2)
                         t0 = time.time()
                         print 'restarting loop'
-            
+
             elif self.ami != None:
                 print 'Setting field to ' + str(end)
                 self.ami.conf_field_targ(end)
@@ -590,12 +590,12 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                     time.sleep(2)
                     actual_field = float(self.ami.get_field_mag())
                 print 'Field set to ' + str(end)
-    
+
             self.current_field = end
         except Exception as inst:
             print 'Field error: ', inst, self.current_field
             print 'on line: ', sys.exc_traceback.tb_lineno
-        
+
     def saveDataToSessionFolder(self):
         try:
             p = QtGui.QPixmap.grabWindow(self.winId())
@@ -765,7 +765,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.label_FieldSweep1D_NumberofStep.setText('Number of Steps')
             self.Dict_Variable['FieldSweep1DSetting_Numberofsteps_Status'] = "Numberofsteps"
             self.RefreshFieldSweep1D_NumberofstepsandMilifieldperTesla() #Change the text first
-            self.UpdateFieldSweep1D_NumberofstepsandMilifieldperTesla()    
+            self.UpdateFieldSweep1D_NumberofstepsandMilifieldperTesla()
 
     def NumberofstepstoStepSize_Convert(self,Max,Min,NoS):
         StepSize=float(abs(Max-Min)/float(NoS-1.0))
@@ -794,16 +794,16 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         Current_LI_Multiplier3=float(self.Dict_LockIn[str(self.comboBox_Current_LI_Sensitivity_Unit.currentText())])
         Current_LI_Multiplier4=float(self.comboBox_Current_LI_Expand.currentText())
         #Update Multiplier for Voltage and Current
-        self.MultiplierVoltage=Voltage_LI_Multiplier1*Voltage_LI_Multiplier2*Voltage_LI_Multiplier3*Voltage_LI_Multiplier4  
+        self.MultiplierVoltage=Voltage_LI_Multiplier1*Voltage_LI_Multiplier2*Voltage_LI_Multiplier3*Voltage_LI_Multiplier4
         self.MultiplierCurrent=Current_LI_Multiplier1*Current_LI_Multiplier2*Current_LI_Multiplier3*Current_LI_Multiplier4
-		
+
     def UpdateVoltage_LI_Timeconstant(self):
         dummystr=str(self.lineEdit_Voltage_LI_Timeconstant.text())
         dummyval=readNum(dummystr, self , False)
         if isinstance(dummyval,float):
             self.Voltage_LI_Timeconstant=dummyval
         self.lineEdit_Voltage_LI_Timeconstant.setText(formatNum(self.Voltage_LI_Timeconstant,6))
-        
+
     def UpdateCurrent_LI_Timeconstant(self):
         dummystr=str(self.lineEdit_Current_LI_Timeconstant.text())
         dummyval=readNum(dummystr, self , False)
@@ -811,8 +811,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.Current_LI_Timeconstant=dummyval
         self.lineEdit_Current_LI_Timeconstant.setText(formatNum(self.Current_LI_Timeconstant,6))
 
-        
-        
+
+
     def updateCheckBox(self):
         self.MoveLineCutFourTerminalMagneticFieldSweep_Flag =self.checkBox_FourTerminalMagneticFieldSetting_MoveLineCut.isChecked()
         self.AutoLevelFourTerminalMagneticFieldSweep_Flag =self.checkBox_FourTerminalMagneticFieldSetting_AutoLevel.isChecked()
@@ -840,7 +840,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.UpdateDAC_Current_Label(ChannelOutput[0],'Sweeping')
             data= yield self.dac.buffer_ramp(ChannelOutput,ChannelInput,Min,Max,Numberofsteps,Delay)
             self.UpdateDAC_Current_Label(ChannelOutput[0],Max)
-            
+
             returnValue(data)
         except Exception as inst:
             print inst
@@ -850,7 +850,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         a = yield self.dac.read()
         while a != '':
             print a
-            a = yield self.dac.read() 
+            a = yield self.dac.read()
 
     def UpdatecurrentDAC_Output(self, Port, voltage): #This is a function that update the current Port Output within the software
         self.currentDAC_Output[Port]=voltage
@@ -884,7 +884,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
     def SetupFourTerminalSweepSetting(self,Status):
         #Sets up the lists of inputs and outputs for the dac buffer ramp as well as sets up the names for the columns on datavault
-    
+
         if Status == 'MagneticField1D':
             self.FourTerminal_ChannelOutput = ['Magnetic Field']
         else:
@@ -903,12 +903,12 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         if Status == "Magnetic Field":
             self.datavaultXaxis=['Magnetic Field index', self.FourTerminal_NameOutput1+' index', 'Magnetic Field', self.FourTerminal_NameOutput1]
-            
+
         #datavaultYaxis is the list of dependent variables on the sweep
         self.datavaultYaxis=[self.FourTerminal_NameInput1]
         if self.FourTerminal_Input2!=4:  #add additional data if Input2 is not None
             self.datavaultYaxis=[self.FourTerminal_NameInput1, self.FourTerminal_NameInput2, "Resistance" , "Conductance"]
-            
+
     def Format_Data(self, Status):
         """
         Format_Data structure:
@@ -921,7 +921,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             DummyVoltage=self.Convert_Real_Voltage(self.dac_read[0][j])
             if Status == "Magnetic Field":
                 self.formatted_data.append((self.i,j,self.MagneticFieldSweepPoints[self.i],self.FourTerminalXaxis[j],DummyVoltage))
-            else: 
+            else:
                 self.formatted_data.append((j, self.FourTerminalXaxis[j],DummyVoltage))
             self.Plot_Data[2].append(DummyVoltage)
             if self.FourTerminal_Input2!=4:  #add additional data if Input2 is not None
@@ -937,7 +937,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 self.Plot_Data[4].append(resistance)
                 self.formatted_data[j]+=(Conductance,)  #proccessing to Conductance
                 self.Plot_Data[5].append(Conductance)
-                
+
     @inlineCallbacks
     def newDataVaultFile(self, Status):
         if Status== "Magnetic Field":
@@ -946,7 +946,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             file = yield self.dv.new('1D Magnetic Field ' + self.Device_Name, self.datavaultXaxis,self.datavaultYaxis)
         else:
             file = yield self.dv.new('FourTerminal ' + self.Device_Name, self.datavaultXaxis,self.datavaultYaxis)
-            
+
         self.dvFileName = file[1] # read the name
         self.lineEdit_ImageNumber.setText(file[1][0:5])
         session  = ''
@@ -1000,11 +1000,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
     def Convert_Real_Voltage(self,reading): #Take the DAC reading and convert it to real unit (V)
         Real_Voltage=float(reading)/10.0*self.MultiplierVoltage
         return Real_Voltage
-            
+
     def Convert_Real_Current(self,reading): #Take the DAC reading and convert it to real unit (A)
         Real_Current=float(reading)/10.0*self.MultiplierCurrent
         return Real_Current
-            
+
     def Calculate_Resistance(self,voltage,current): #Take the DAC reading and convert it to real unit (A)
         if current != 0.0:
             resistance=float(voltage/current) #generating resisitance
@@ -1013,12 +1013,12 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         return resistance
 
 ##########################Peculiar Function only defined in SampleCharacterizer#############
-        
-        
+
+
 ##########################              Plot Related functions                 #############
     def plotData1D(self,xaxis,yaxis,plot, color = 0.5):
         plot.plot(x = xaxis, y = yaxis, pen = color)
-        
+
     def setupAdditionalUi(self):
         self.setupFourTerminalPlot()
         self.setupFieldSweep1DPlot()
@@ -1038,7 +1038,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         self.sweepFourTerminal_Plot3 = pg.PlotWidget(parent = self.frame_FourTerminalPlot3)
         self.Setup1DPlot(self.sweepFourTerminal_Plot3, self.Layout_FourTerminalPlot3, 'Resistance', 'Resistance', "Ohm", self.FourTerminal_NameOutput1,"V" )#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
-        
+
         self.sweepFourTerminal_Plot4 = pg.PlotWidget(parent = self.frame_FourTerminalPlot4)
         self.Setup1DPlot(self.sweepFourTerminal_Plot4, self.Layout_FourTerminalPlot4, 'Conductance', 'Conductance', "S", self.FourTerminal_NameOutput1,"V" )#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
 
@@ -1051,7 +1051,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         self.FieldSweep1D_Plot3 = pg.PlotWidget(parent = None)
         self.Setup1DPlot(self.FieldSweep1D_Plot3, self.verticalLayout_1DFieldSweepPlot3, 'Resistance', 'Resistance', "Ohm", 'MagneticField',"T" )#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
-        
+
         self.FieldSweep1D_Plot4 = pg.PlotWidget(parent = None)
         self.Setup1DPlot(self.FieldSweep1D_Plot4, self.verticalLayout_1DFieldSweepPlot4, 'Conductance', 'Conductance', "S", 'MagneticField',"T" )#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
 
@@ -1067,7 +1067,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         Plot.setYRange(0,2)
         Plot.enableAutoRange(enable = True)
         Layout.addWidget(Plot)
-        
+
     def Setup2DPlot(self, Plot, yaxis, yunit, xaxis, xunit , Frame , Layout , PlotView ):
         Plot.setLabel('left', yaxis, units = yunit)
         Plot.setLabel('bottom', xaxis, units = xunit)
@@ -1085,7 +1085,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         Frame.close() #necessary for streching the window
         Layout.addWidget(PlotView)
-        
+
     def SetupLineCutMagneticFieldPlot(self,Plot,Layout,yaxisName,Unit):
         Plot.setGeometry(QtCore.QRect(0, 0, 9999, 999))
         Plot.setLabel('left', self.FourTerminal_NameOutput1, units = 'V' )
@@ -1093,7 +1093,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         Plot.showAxis('right', show = True)
         Plot.showAxis('top', show = True)
         Layout.addWidget(Plot)
-        
+
     def SetupLineCutGateVoltagePlot(self,Plot,Layout,yaxisName,Unit):
         Plot.setGeometry(QtCore.QRect(0, 0, 9999, 999))
         Plot.setLabel('left', yaxisName, units = Unit)
@@ -1101,12 +1101,12 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         Plot.showAxis('right', show = True)
         Plot.showAxis('top', show = True)
         Layout.addWidget(Plot)
-        
-    def setupFourTerminalMagneticFieldResistancePlot(self): 
+
+    def setupFourTerminalMagneticFieldResistancePlot(self):
         #Setup 2D first
         self.view_sweepFourTerminalMagneticField_Resistance_Plot = pg.PlotItem(name = "Four Terminal Resistance versus Magnetic Field Resistance Plot",title = "Resistance")
         self.sweepFourTerminalMagneticField_Resistance_Plot = pg.ImageView(parent = self.Frame_FourTerminalMagneticField_Resistance_2DPlot, view = self.view_sweepFourTerminalMagneticField_Resistance_Plot)
-        
+
         self.Setup2DPlot(self.view_sweepFourTerminalMagneticField_Resistance_Plot, "Magnetic Field", 'T', self.FourTerminal_NameOutput1, 'V', self.Frame_FourTerminalMagneticField_Resistance_2DPlot, self.Layout_FourTerminalMagneticField_Resistance_2DPlot, self.sweepFourTerminalMagneticField_Resistance_Plot ) #Plot, yaxis, yunit, xaxis, xunit , Frame , Layout , PlotView
 
         #Setup Linecut
@@ -1116,7 +1116,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         self.FourTerminalMagneticField_Resistance_VersusGateVoltage_Plot = pg.PlotWidget(parent = None)
         self.Setup1DPlot(self.FourTerminalMagneticField_Resistance_VersusGateVoltage_Plot, self.Layout_FourTerminalMagneticField_Resistance_VersusGateVoltage, None,'Resistance','Ohm', self.FourTerminal_NameOutput1, 'V')#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
-    
+
     def setupFourTerminalMagneticFieldVoltagePlot(self):
         self.view_sweepFourTerminalMagneticField_Voltage_Plot = pg.PlotItem(name = "Four Terminal Voltage versus Magnetic Field Voltage Plot",title = self.FourTerminal_NameInput1)
         self.sweepFourTerminalMagneticField_Voltage_Plot = pg.ImageView(parent = self.Frame_FourTerminalMagneticField_Voltage_2DPlot, view = self.view_sweepFourTerminalMagneticField_Voltage_Plot)
@@ -1125,7 +1125,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         self.FourTerminalMagneticField_Voltage_VersusField_Plot = pg.PlotWidget(parent = self.Frame_FourTerminalMagneticField_Voltage_VersusField)
         self.Setup1DPlot(self.FourTerminalMagneticField_Voltage_VersusField_Plot, self.Layout_FourTerminalMagneticField_Voltage_VersusField, None, "Magnetic Field", 'T', self.FourTerminal_NameInput1,'V')#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
-        
+
         self.FourTerminalMagneticField_Voltage_VersusGateVoltage_Plot = pg.PlotWidget(parent = self.Frame_FourTerminalMagneticField_Voltage_VersusGateVoltage)
         self.Setup1DPlot(self.FourTerminalMagneticField_Voltage_VersusGateVoltage_Plot, self.Layout_FourTerminalMagneticField_Voltage_VersusGateVoltage, None, self.FourTerminal_NameInput1,'V', self.FourTerminal_NameOutput1, 'V')#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
 
@@ -1139,14 +1139,14 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.Setup1DPlot(self.FourTerminalMagneticField_Current_VersusField_Plot, self.Layout_FourTerminalMagneticField_Current_VersusField, None, "Magnetic Field", 'T', self.FourTerminal_NameInput2,'A')#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
 
         self.FourTerminalMagneticField_Current_VersusGateVoltage_Plot = pg.PlotWidget(parent = self.Frame_FourTerminalMagneticField_Current_VersusGateVoltage)
-        
+
         self.Setup1DPlot(self.FourTerminalMagneticField_Current_VersusGateVoltage_Plot, self.Layout_FourTerminalMagneticField_Current_VersusGateVoltage, None, self.FourTerminal_NameInput2,'A', self.FourTerminal_NameOutput1, 'V')  #Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
-        
+
     def setupFourTerminalMagneticFieldConductancePlot(self):
         #Setup 2D first
         self.view_sweepFourTerminalMagneticField_Conductance_Plot = pg.PlotItem(name = "Four Terminal Conductance versus Magnetic Field Voltage Plot",title = "Conductance")
         self.sweepFourTerminalMagneticField_Conductance_Plot = pg.ImageView(parent = self.Frame_FourTerminalMagneticField_Conductance_2DPlot, view = self.view_sweepFourTerminalMagneticField_Conductance_Plot)
-        
+
         self.Setup2DPlot(self.view_sweepFourTerminalMagneticField_Conductance_Plot, "Magnetic Field", 'T', self.FourTerminal_NameOutput1, 'V', self.Frame_FourTerminalMagneticField_Conductance_2DPlot, self.Layout_FourTerminalMagneticField_Conductance_2DPlot, self.sweepFourTerminalMagneticField_Conductance_Plot ) #Plot, yaxis, yunit, xaxis, xunit , Frame , Layout , PlotView
 
         #Setup Linecut
@@ -1156,7 +1156,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         self.FourTerminalMagneticField_Conductance_VersusGateVoltage_Plot = pg.PlotWidget(parent = None)
         self.Setup1DPlot(self.FourTerminalMagneticField_Conductance_VersusGateVoltage_Plot, self.Layout_FourTerminalMagneticField_Conductance_VersusGateVoltage, None,'Conductance','S', self.FourTerminal_NameOutput1, 'V')#Plot, Layout , Title , yaxis , yunit, xaxis ,xunit
-        
+
     def updateFourTerminalPlotLabel(self):
         self.sweepFourTerminal_Plot1.setLabel('left', self.FourTerminal_NameInput1, units = 'V')
         self.sweepFourTerminal_Plot1.setLabel('bottom', self.FourTerminal_NameOutput1, units = 'V')
@@ -1180,19 +1180,19 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.FourTerminalMagneticField_Current_VersusField_Plot.setLabel('bottom', self.FourTerminal_NameInput2, units = 'A')
         self.FourTerminalMagneticField_Current_VersusGateVoltage_Plot.setLabel('left', self.FourTerminal_NameInput2, units = 'A')
         self.FourTerminalMagneticField_Current_VersusGateVoltage_Plot.setLabel('bottom', self.FourTerminal_NameOutput1, units = 'V')
-        
+
     def AutoRangeFourTerminal2DPlot(self):
         self.sweepFourTerminalMagneticField_Resistance_Plot.setImage(self.PlotDataFourTerminalResistance2D.T, autoRange = True , autoLevels = False, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
         self.sweepFourTerminalMagneticField_Conductance_Plot.setImage(self.PlotDataFourTerminalConductance2D.T, autoRange = True , autoLevels = False, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
         self.sweepFourTerminalMagneticField_Voltage_Plot.setImage(self.PlotDataFourTerminalVoltage2D.T, autoRange = True , autoLevels = False, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
         self.sweepFourTerminalMagneticField_Current_Plot.setImage(self.PlotDataFourTerminalCurrent2D.T, autoRange = True , autoLevels = False, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
-        
+
     def AutoLevelFourTerminal2DPlot(self):
         self.sweepFourTerminalMagneticField_Resistance_Plot.setImage(self.PlotDataFourTerminalResistance2D.T, autoRange = False , autoLevels = True, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
         self.sweepFourTerminalMagneticField_Conductance_Plot.setImage(self.PlotDataFourTerminalConductance2D.T, autoRange = False , autoLevels = True, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
         self.sweepFourTerminalMagneticField_Voltage_Plot.setImage(self.PlotDataFourTerminalVoltage2D.T, autoRange = False , autoLevels = True, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
         self.sweepFourTerminalMagneticField_Current_Plot.setImage(self.PlotDataFourTerminalCurrent2D.T, autoRange = False , autoLevels = True, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
-        
+
     def ClearPlots(self, list):
         for plot in list:
             plot.clear()
@@ -1212,11 +1212,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.PlotDataFourTerminalVoltage2D=np.zeros([self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],self.Dict_Variable['FourTerminal_Numberofstep']])
         self.PlotDataFourTerminalCurrent2D=np.zeros([self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],self.Dict_Variable['FourTerminal_Numberofstep']])
         self.PlotDataFourTerminalConductance2D=np.zeros([self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'],self.Dict_Variable['FourTerminal_Numberofstep']])
-        
+
     def ClearFourTerminalMagneticFieldPlot(self):
         self.ClearFourTerminal2DPlot()
         self.ClearLineCutPlot()
-                
+
     def ClearFieldSweep1DPlot(self):
         self.FieldSweep1D_Plot1.clear()
         self.FieldSweep1D_Plot2.clear()
@@ -1245,7 +1245,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.FourTerminalHorizontalLinePlotCurrent = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
         self.FourTerminalVerticalLinePlotConductance = pg.InfiniteLine(pos = 0, angle = 90, movable = True)
         self.FourTerminalHorizontalLinePlotConductance = pg.InfiniteLine(pos = 0, angle = 0, movable = True)
-        
+
 ##########################              Plot Related functions                 #############
 
 ##########################              LineCut Related functions                 #############
@@ -1260,11 +1260,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         if isinstance(dummyval,float):
             self.FourTerminalVerticalLinePlotResistance.setValue(dummyval)
             self.FourTerminalVerticalLinePlotVoltage.setValue(dummyval)
-            self.FourTerminalVerticalLinePlotCurrent.setValue(dummyval)            
+            self.FourTerminalVerticalLinePlotCurrent.setValue(dummyval)
         self.FourTerminalverticalLineCutPosition=dummyval
         time.sleep(1)
         self.ChangeFourTerminalLineCutValue("")
-         
+
     def SetupLineCutGateVoltageValue(self): #Corresponding to change in lineEdit
         dummystr=str(self.lineEdit_FourTerminalMagneticFieldSetting_GateVoltageValue.text())
         dummyval=readNum(dummystr, self , False)
@@ -1278,7 +1278,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
     def UpdateFourTerminalMagneticField_LineCutPlot(self): #Update the Plot based on position of LineCut
         xindex = int((self.FourTerminalverticalLineCutPosition - self.Dict_Variable['FourTerminal_MinVoltage'])/self.scalex)
         yindex = int((self.FourTerminalhorizontalLineCutPosition - self.Dict_Variable['FourTerminalMagneticFieldSetting_MinimumField'])/self.scaley)
-        
+
         self.ClearLineCutPlot()
         self.FourTerminalMagneticField_Resistance_VersusField_Plot.plot(x=self.MagneticFieldSweepPoints,y=self.PlotDataFourTerminalResistance2D[:,xindex],pen = 0.5)
         self.FourTerminalMagneticField_Resistance_VersusGateVoltage_Plot.plot(x=self.Plot_Data[1], y=self.PlotDataFourTerminalResistance2D[yindex], pen = 0.5)
@@ -1288,20 +1288,20 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.FourTerminalMagneticField_Voltage_VersusGateVoltage_Plot.plot(x=self.Plot_Data[1], y=self.PlotDataFourTerminalVoltage2D[yindex], pen = 0.5)
         self.FourTerminalMagneticField_Current_VersusField_Plot.plot(x=self.MagneticFieldSweepPoints,y=self.PlotDataFourTerminalCurrent2D[:,xindex],pen = 0.5)
         self.FourTerminalMagneticField_Current_VersusGateVoltage_Plot.plot(x=self.Plot_Data[1], y=self.PlotDataFourTerminalCurrent2D[yindex], pen = 0.5)
-        
+
     def UpdateFourTerminal2DPlot(self,newResistancedata,newVoltagedata,newCurrentdata,newConductancedata):
         #Add data to the Plotted 2D Data
         self.PlotDataFourTerminalResistance2D[self.i] = newResistancedata
         self.PlotDataFourTerminalVoltage2D[self.i] = newVoltagedata
         self.PlotDataFourTerminalCurrent2D[self.i] = newCurrentdata
         self.PlotDataFourTerminalConductance2D[self.i] = newConductancedata
-                
+
         #Update the Plot with new Data
         self.sweepFourTerminalMagneticField_Resistance_Plot.setImage(self.PlotDataFourTerminalResistance2D.T, autoRange = False , autoLevels = False, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
         self.sweepFourTerminalMagneticField_Voltage_Plot.setImage(self.PlotDataFourTerminalVoltage2D.T, autoRange = False , autoLevels = False, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
-        self.sweepFourTerminalMagneticField_Current_Plot.setImage(self.PlotDataFourTerminalCurrent2D.T, autoRange = False , autoLevels = False, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])        
-        self.sweepFourTerminalMagneticField_Conductance_Plot.setImage(self.PlotDataFourTerminalConductance2D.T, autoRange = False , autoLevels = False, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])        
-        
+        self.sweepFourTerminalMagneticField_Current_Plot.setImage(self.PlotDataFourTerminalCurrent2D.T, autoRange = False , autoLevels = False, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
+        self.sweepFourTerminalMagneticField_Conductance_Plot.setImage(self.PlotDataFourTerminalConductance2D.T, autoRange = False , autoLevels = False, pos=[self.posx, self.posy],scale=[self.scalex, self.scaley])
+
     def ChangeFourTerminalLineCutValue(self,LineCut): #Take a input to determine if it is change from editing lineEdit or changing the linecut in the graph
         #Update the value if change from moving
         if LineCut == self.FourTerminalVerticalLinePlotResistance or LineCut == self.FourTerminalVerticalLinePlotVoltage or  LineCut == self.FourTerminalVerticalLinePlotCurrent or LineCut == self.FourTerminalVerticalLinePlotConductance:
@@ -1312,23 +1312,23 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         #Update the text
         self.lineEdit_FourTerminalMagneticFieldSetting_MagneticFieldValue.setText(formatNum(self.FourTerminalverticalLineCutPosition))
         self.lineEdit_FourTerminalMagneticFieldSetting_GateVoltageValue.setText(formatNum(self.FourTerminalhorizontalLineCutPosition))
-        
+
         #Update the position according to the value
         self.MoveFourTerminalLineCut()
-        
+
         #Update the Linecut Plot with newly edited value of position
         self.UpdateFourTerminalMagneticField_LineCutPlot()
-        
+
     def MoveFourTerminalLineCut(self):
         self.FourTerminalVerticalLinePlotResistance.setValue(float(self.FourTerminalverticalLineCutPosition))
         self.FourTerminalVerticalLinePlotConductance.setValue(float(self.FourTerminalverticalLineCutPosition))
         self.FourTerminalVerticalLinePlotVoltage.setValue(float(self.FourTerminalverticalLineCutPosition))
-        self.FourTerminalVerticalLinePlotCurrent.setValue(float(self.FourTerminalverticalLineCutPosition))  
+        self.FourTerminalVerticalLinePlotCurrent.setValue(float(self.FourTerminalverticalLineCutPosition))
         self.FourTerminalHorizontalLinePlotResistance.setValue(float(self.FourTerminalhorizontalLineCutPosition))
         self.FourTerminalHorizontalLinePlotConductance.setValue(float(self.FourTerminalhorizontalLineCutPosition))
         self.FourTerminalHorizontalLinePlotVoltage.setValue(float(self.FourTerminalhorizontalLineCutPosition))
         self.FourTerminalHorizontalLinePlotCurrent.setValue(float(self.FourTerminalhorizontalLineCutPosition))
-            
+
     def SetupLineCut(self):
         """
         self.FourTerminalverticalLineCutPosition
@@ -1342,7 +1342,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.sweepFourTerminalMagneticField_Voltage_Plot.addItem(self.FourTerminalHorizontalLinePlotVoltage, ignoreBounds = True)
         self.sweepFourTerminalMagneticField_Current_Plot.addItem(self.FourTerminalVerticalLinePlotCurrent, ignoreBounds = True)
         self.sweepFourTerminalMagneticField_Current_Plot.addItem(self.FourTerminalHorizontalLinePlotCurrent, ignoreBounds = True)
-    
+
     def ConnectLineCut(self):
         self.FourTerminalVerticalLinePlotResistance.sigPositionChangeFinished.connect(lambda:self.ChangeFourTerminalLineCutValue(self.FourTerminalVerticalLinePlotResistance))
         self.FourTerminalHorizontalLinePlotResistance.sigPositionChangeFinished.connect(lambda:self.ChangeFourTerminalLineCutValue(self.FourTerminalHorizontalLinePlotResistance))
@@ -1353,7 +1353,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.FourTerminalVerticalLinePlotCurrent.sigPositionChangeFinished.connect(lambda:self.ChangeFourTerminalLineCutValue(self.FourTerminalVerticalLinePlotCurrent))
         self.FourTerminalHorizontalLinePlotCurrent.sigPositionChangeFinished.connect(lambda:self.ChangeFourTerminalLineCutValue(self.FourTerminalHorizontalLinePlotCurrent))
         #This is not used for now self.FourTerminalLineCut = True
-        
+
     def ClearLineCutPlot(self):
         self.FourTerminalMagneticField_Resistance_VersusField_Plot.clear()
         self.FourTerminalMagneticField_Resistance_VersusGateVoltage_Plot.clear()
@@ -1363,7 +1363,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.FourTerminalMagneticField_Voltage_VersusGateVoltage_Plot.clear()
         self.FourTerminalMagneticField_Current_VersusField_Plot.clear()
         self.FourTerminalMagneticField_Current_VersusGateVoltage_Plot.clear()
-        
+
 ##########################              LineCut Related functions                 #############
 
     def updateHistogramLevels(self, hist):
@@ -1376,52 +1376,52 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions intended for use when running scripts from the scripting module."""
-    
+
     def setFourTermMinVoltage(self, vmin):
         self.lineEdit_FourTerminal_MinVoltage.setText(formatNum(vmin))
         self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminal_MinVoltage, 'FourTerminal_MinVoltage', [-10.0, 10.0])
-    
+
     def setFourTermMaxVoltage(self, vmax):
         self.lineEdit_FourTerminal_MaxVoltage.setText(formatNum(vmin))
         self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminal_MaxVoltage, 'FourTerminal_MaxVoltage', [-10.0, 10.0])
-    
+
     def setFourTermVoltagePoints(self, points):
         if self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] == "StepSize":
             self.ToggleFourTerminalFourTerminal_Numberofstep()
         self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(points))
         self.UpdateFourTerminal_Numberofstep()
-        
+
     def setFourTermVoltageStepSize(self, vstep):
         if self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] == "Numberofsteps":
             self.ToggleFourTerminalFourTerminal_Numberofstep()
         self.lineEdit_FourTerminal_Numberofstep.setText(formatNum(vstep))
         self.UpdateFourTerminal_Numberofstep()
-    
+
     def setFourTermDelay(self, delay):
         self.lineEdit_FourTerminal_Delay.setText(formatNum(delay))
         self.UpdateLineEdit_Parameters(self.lineEdit_FourTerminal_Delay, 'FourTerminal_Delay')
-        
+
     def setFourTermOutput(self, output):
         self.comboBox_FourTerminal_Output1.setCurrentIndex(output-1)
         self.FourTerminal_Output1 = output-1
-        
+
     def setFourTermVoltageInput(self, inp):
         self.comboBox_FourTerminal_Input1.setCurrentIndex(inp-1)
         self.FourTerminal_Input1 = inp-1
-    
+
     def setFourTermCurrentInput(self, inp):
         self.comboBox_FourTerminal_Input2.setCurrentIndex(inp-1)
         self.FourTerminal_Input2 = inp-1
-    
+
     @inlineCallbacks
     def rampOutputVoltage(self, channel, vfinal, points, delay):
-        #Convert delay from seconds to microseconds. 
+        #Convert delay from seconds to microseconds.
         delay = int(delay*1e6)
         yield self.Ramp1_Display(channel,self.currentDAC_Output[channel],vfinal,points,delay)
-        
+
 #----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""
-    
+
     # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous
     # delay that allows other labrad / pyqt methods to run
     def sleep(self,secs):
@@ -1430,7 +1430,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         d = Deferred()
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
-        
+
     def lockInterface(self):
         self.lineEdit_FourTerminal_NameOutput1.setEnabled(False)
         self.lineEdit_FourTerminal_NameInput1.setEnabled(False)
@@ -1469,7 +1469,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_1DFieldSweepSetting_Numberofsteps.setEnabled(False)
         self.lineEdit_1DFieldSweepSetting_FieldSweepSpeed.setEnabled(False)
         self.lineEdit_1DFieldSweepSetting_Delay.setEnabled(False)
-        
+
 
         self.pushButton_StartFourTerminalSweep.setEnabled(False)
 
@@ -1513,7 +1513,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_Voltage_LI_Timeconstant.setEnabled(True)
         self.lineEdit_Current_LI_Timeconstant.setEnabled(True)
         self.lineEdit_Lockin_Info_Frequency.setEnabled(True)
-        
+
         self.pushButton_Start1DFieldSweep.setEnabled(True)
         self.lineEdit_1DFieldSweepSetting_MinimumField.setEnabled(True)
         self.lineEdit_1DFieldSweepSetting_MaximumField.setEnabled(True)
@@ -1533,7 +1533,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         self.pushButton_CentralDAC_DACOUTPUT4.setEnabled(True)
 
 #####################################This is fake data generation code, replacing buffer_ramp
-    def FakeDATA(self,Output,Input,Min,Max,NoS,Delay): 
+    def FakeDATA(self,Output,Input,Min,Max,NoS,Delay):
         fake=[]
         xpoints= np.linspace( Min, Max, NoS)
         for i in range(0,len(Input)):
@@ -1541,7 +1541,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             for j in range (0,NoS):
                 fake[i].append((1/(abs(xpoints[j])+.5))+(math.cos(0.25/(self.i+0.01)*(0.01+xpoints[j]))+1))
         return fake
-               
+
 class serversList(QtGui.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)

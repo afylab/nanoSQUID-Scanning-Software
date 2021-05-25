@@ -22,16 +22,18 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.TempControl = args[4]
         self.SampleChar = args[5]
         self.nSOTBias = args[6]
+        self.simulate = args[7]
 
         self.setupUi(self)
         self.setupAdditionalUi()
 
         self.moveDefault()
 
-        self.push_run.clicked.connect(self.runScript)
+        self.push_run.clicked.connect(lambda *args : self.runScript(False, *args))
         self.push_abort.clicked.connect(self.abortScript)
         self.push_load.clicked.connect(self.loadFile)
         self.push_save.clicked.connect(self.saveFile)
+        self.push_simulate.clicked.connect(lambda *args : self.runScript(True, *args))
 
         #Have Ctrl+S
         QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self.codeEditor, self.saveFile, context=QtCore.Qt.WidgetShortcut)
@@ -68,7 +70,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.verticalLayout.addItem(self.horizontalLayout)
 
     @inlineCallbacks
-    def runScript(self):
+    def runScript(self, sim, *args):
+        '''
+        Runs a script in the Scripting module, if sim is True it will simulate the
+        outputs without changing the hardware.
+        '''
         #Define variables that can be used in the script.
         self.lockInterface()
         self.runningScript = True
@@ -82,7 +88,13 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.current_line = 0
             exec code_to_run # Generates function f
             self.current_line = 1
-            yield f(self, self.sleep, self.cxn, self.cxnr, self.ScanControl, self.Approach, self.nSOTChar, self.FieldControl, self.TempControl, self.SampleChar, self.nSOTBias)
+            if sim:
+                ScanControl, Approach, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias = self.simulate.get_virtual_modules()
+                yield f(self.simulate, self.simulate.sleep, self.cxn, self.cxnr, ScanControl, Approach, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias)
+                self.simulate.compile()
+                self.simulate.showSim()
+            else:
+                yield f(self, self.sleep, self.cxn, self.cxnr, self.ScanControl, self.Approach, self.nSOTChar, self.FieldControl, self.TempControl, self.SampleChar, self.nSOTBias)
             self.runningScript = False
             self.label_status.setText('Script is in editing mode')
             self.unlockInterface()
@@ -138,6 +150,37 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             i = i + 1
         code_to_run = code_to_run + "\n"
         return code_to_run
+
+    # def formatSimulatedCode(self):
+    #     '''Process and format the code for simulated output, inputting statements to be able to interrupt the script
+    #     and updating which line of code is currently running. Note that whitespace
+    #     in this section is critical to it running correctly.
+    #     '''
+    #     code_lines = str(self.codeEditor.toPlainText()).splitlines()
+    #     code_to_run = "@inlineCallbacks\ndef f(self, simulation, cxn, cxnr, ScanControl, Approach, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias):\n "
+    #     code_to_run = code_to_run + "yield sleep(0.1)\n "
+    #     i = 1
+    #     prev_line = 'None'
+    #     for line in code_lines:
+    #         # Omit lines that contain certain modules, such as sleep
+    #         if any(line.__contains__, ["sleep"]):
+    #             pass
+    #         else:
+    #             #detect number of space on next line
+    #             spaces = self.detectSpaces(line)
+    #             #inlineCallbacks header is special and needs to be right before the next line in the code,
+    #             if '@inlineCallbacks' not in prev_line:
+    #                 #Add code that updates which line of code is being run
+    #                 code_to_run = code_to_run + spaces + "self.current_line = " + str(i) + "\n "
+    #                 #Eventually add line of code that throws signal to update status
+    #                 code_to_run = code_to_run + spaces + "self.label_status.setText(\'Script is running line " + str(i) + "\')\n "
+    #                 #Add code that throws error if not running the script
+    #                 code_to_run = code_to_run + spaces + "if not self.runningScript:\n" + spaces + "  raise ScriptAborted(" + str(i) + ")\n "
+    #             code_to_run = code_to_run + line + "\n "
+    #             prev_line = line
+    #         i = i + 1
+    #     code_to_run = code_to_run + "\n"
+    #     return code_to_run
 
     def detectSpaces(self,line):
         '''Returns a string with all the whitespace at the beginning of the input line of code'''

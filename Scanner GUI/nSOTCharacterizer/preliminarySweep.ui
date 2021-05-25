@@ -293,7 +293,7 @@ border-radius: 5px
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;(kΩ)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="critCurrLine">
+  <widget class="QLineEdit" name="lineEdit_critCurrLine">
    <property name="geometry">
     <rect>
      <x>370</x>
@@ -305,8 +305,11 @@ border-radius: 5px
    <property name="inputMethodHints">
     <set>Qt::ImhFormattedNumbersOnly</set>
    </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
   </widget>
-  <widget class="QLineEdit" name="parRes">
+  <widget class="QLineEdit" name="lineEdit_parRes">
    <property name="geometry">
     <rect>
      <x>370</x>
@@ -317,6 +320,9 @@ border-radius: 5px
    </property>
    <property name="inputMethodHints">
     <set>Qt::ImhFormattedNumbersOnly</set>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QLabel" name="label_20">

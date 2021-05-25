@@ -38,6 +38,7 @@ import ApproachMonitor
 import PositionCalibration
 import FieldControl
 import Scripting
+from Simulation import ScriptSimulator
 import TemperatureControl
 import QRreader
 import gotoSetpoint
@@ -79,8 +80,9 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
 
         #This module should always be initialized last, and have the modules
         #That are desired to be scriptable be input
+        self.simulate = ScriptSimulator(self.reactor, None)
         self.Scripting = Scripting.Window(self.reactor, None, self.ScanControl, self.Approach, self.nSOTChar, self.FieldControl, self.TempControl,
-                                          self.SampleCharacterizer, self.GoToSetpoint)
+                                          self.SampleCharacterizer, self.GoToSetpoint, self.simulate)
 
         #Connects all drop down menu button
         self.actionScan_Control.triggered.connect(self.openScanControlWindow)

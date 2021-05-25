@@ -1,13 +1,7 @@
 import sys
 import twisted
 from PyQt4 import QtCore, QtGui, QtTest, uic
-from twisted.internet.defer import inlineCallbacks, Deferred
-import numpy as np
-import pyqtgraph as pg
-import exceptions
-import time
-import threading
-import copy
+from twisted.internet.defer import inlineCallbacks
 
 path = sys.path[0] + r"\DataVaultBrowser"
 Ui_dvExplorer, QtBaseClass = uic.loadUiType(path + r"\dvExplorer.ui")
@@ -21,7 +15,7 @@ class dataVaultExplorer(QtGui.QMainWindow, Ui_dvExplorer):
         self.setupUi(self)
 
         self.reactor = reactor
-        self.dv = dv 
+        self.dv = dv
 
         self.curDir = ''
 
@@ -107,7 +101,7 @@ class dataVaultExplorer(QtGui.QMainWindow, Ui_dvExplorer):
     @inlineCallbacks
     def selectDirFile(self, c):
         self.directory = yield self.dv.cd()
-        
+
         self.accepted.emit()
 
         #Reset all selected files and close
@@ -127,5 +121,3 @@ if __name__ == "__main__":
 	window = dataVaultExplorer(reactor)
 	window.show()
 	reactor.run()
-
-

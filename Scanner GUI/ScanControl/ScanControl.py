@@ -1,6 +1,6 @@
 import sys
 from PyQt4 import QtGui, QtCore, uic
-from twisted.internet.defer import inlineCallbacks, Deferred
+from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 import pyqtgraph as pg
 import time
@@ -300,7 +300,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.loadCurrentState()
 
             self.unlockInterface()
-        except Exception as inst:
+        except Exception: # as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
             #print 'nsot labrad connect', inst
@@ -1726,6 +1726,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         yield self.sleep(0.25)
         self.saveDataToSessionFolder()
 
+        #yield [trace_data, retrace_data]
         returnValue([trace_data, retrace_data])
 
     def update_gph(self):
