@@ -5,55 +5,36 @@ myappid = 'YoungLab.nSOTScannerSoftware'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 path = sys.path[0]
-sys.path.append(path + r'\Resources')
-sys.path.append(path + r'\ScanControl')
-sys.path.append(path + r'\LabRADConnect')
-sys.path.append(path + r'\nSOTCharacterizer')
-sys.path.append(path + r'\DataVaultBrowser')
-sys.path.append(path + r'\Plotters Control')
-sys.path.append(path + r'\TFCharacterizer')
-sys.path.append(path + r'\ApproachModule')
-sys.path.append(path + r'\ApproachMonitor')
-sys.path.append(path + r'\PositionCalibration')
-sys.path.append(path + r'\Field Control')
-sys.path.append(path + r'\ScriptingModule')
-sys.path.append(path + r'\TemperatureControl')
-sys.path.append(path + r'\QRreader')
-sys.path.append(path + r'\SampleCharacterizer')
-sys.path.append(path + r'\GoToSetpoint')
-sys.path.append(path + r'\DeviceSelect')
-sys.path.append(path + r'\CoarseAttocubeControl')
-
-UI_path = path + r"\MainWindow.ui"
-MainWindowUI, QtBaseClass = uic.loadUiType(UI_path)
+sys.path.append(path + r'\Resources') # To makesure loadUiType can access it's resource files
+MainWindowUI, QtBaseClass = uic.loadUiType(r"MainWindow.ui")
 
 #import all windows for gui
-import ScanControl
-import LabRADConnect
-import nSOTCharacterizer
-import PlottersControl
-import TFCharacterizer
-import Approach
-import ApproachMonitor
-import PositionCalibration
-import FieldControl
-import Scripting
-from Simulation import ScriptSimulator
-import TemperatureControl
-import QRreader
-import gotoSetpoint
-import DeviceSelect
-import SampleCharacterizer
-import CoarseAttocubeControl
+from ScanControl import ScanControl
+from LabRADConnect import LabRADConnect
+from nSOTCharacterizer import nSOTCharacterizer
+from PlottersControl import PlottersControl
+from TFCharacterizer import TFCharacterizer
+from Approach import Approach, ApproachMonitor
+from CoarseAttocubeControl import CoarseAttocubeControl
+from PositionCalibration import PositionCalibration
+from FieldControl import FieldControl
+from ScriptingModule import Scripting, Simulation
+from TemperatureControl import TemperatureControl
+from QRreader import QRreader
+from GoToSetpoint import gotoSetpoint
+from DeviceSelect import DeviceSelect
+from SampleCharacterizer import SampleCharacterizer
 
-class MainWindow(QtGui.QMainWindow, MainWindowUI):
+
+
+class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
     test = 0
     """ The following section initializes, or defines the initialization of the GUI and
     connecting to servers."""
     def __init__(self, reactor, parent=None):
         """ nSOT Scanner GUI """
 
-        super(MainWindow, self).__init__(parent)
+        super(nanoSQUIDSystem, self).__init__(parent)
         self.reactor = reactor
         self.setupUi(self)
         self.setupAdditionalUi()
@@ -80,7 +61,7 @@ class MainWindow(QtGui.QMainWindow, MainWindowUI):
 
         #This module should always be initialized last, and have the modules
         #That are desired to be scriptable be input
-        self.simulate = ScriptSimulator(self.reactor, None)
+        self.simulate = Simulation.ScriptSimulator(self.reactor, None)
         self.Scripting = Scripting.Window(self.reactor, None, self.ScanControl, self.Approach, self.nSOTChar, self.FieldControl, self.TempControl,
                                           self.SampleCharacterizer, self.GoToSetpoint, self.simulate)
 
@@ -355,7 +336,7 @@ if __name__=="__main__":
     app = QtGui.QApplication(sys.argv)
     qt4reactor.install()
     from twisted.internet import reactor
-    window = MainWindow(reactor)
+    window = nanoSQUIDSystem(reactor)
     window.show()
     reactor.runReturn()
     sys.exit(app.exec_())

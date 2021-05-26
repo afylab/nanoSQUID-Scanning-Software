@@ -1,7 +1,7 @@
 from PyQt4 import QtGui, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import sys
-import dirExplorer
+from DataVaultBrowser import dirExplorer
 import platform
 import datetime
 import os
