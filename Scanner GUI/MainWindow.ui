@@ -28,7 +28,7 @@
   <property name="maximumSize">
    <size>
     <width>500</width>
-    <height>110</height>
+    <height>610</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -45,13 +45,25 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QLabel{
+color:rgb(168,168,168);
+qproperty-alignment: 'AlignVCenter | AlignRight';
+}
+
+#centralwidget{
+background: black;
+}
+
+</string>
+   </property>
    <widget class="QFrame" name="MainWindowBackground">
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>0</y>
-      <width>500</width>
-      <height>150</height>
+      <y>-1</y>
+      <width>501</width>
+      <height>91</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -214,11 +226,6 @@ background: black;
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>File</string>
-    </property>
-   </widget>
    <widget class="QMenu" name="menuSystem">
     <property name="title">
      <string>System</string>
@@ -266,7 +273,6 @@ background: black;
     </property>
     <addaction name="actionYou_re_on_your_own_hahaha"/>
    </widget>
-   <addaction name="menuFile"/>
    <addaction name="menuSystem"/>
    <addaction name="menuGraphs"/>
    <addaction name="menuModules"/>

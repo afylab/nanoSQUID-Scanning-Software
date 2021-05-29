@@ -25,6 +25,7 @@ from GoToSetpoint import gotoSetpoint
 from DeviceSelect import DeviceSelect
 from SampleCharacterizer import SampleCharacterizer
 
+from Equipment.Equipment import EquipmentHandler
 
 
 class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
@@ -36,13 +37,76 @@ class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
 
         super(nanoSQUIDSystem, self).__init__(parent)
         self.reactor = reactor
+
+        ''' Setup the GUI '''
         self.setupUi(self)
+        self.setupWindows() # Setup the various Windows
         self.setupAdditionalUi()
+        self.moveDefault() #Move to default position
 
-        #Move to default position
-        self.moveDefault()
+        self.equip = EquipmentHandler()
+        self.configureEquipment()
 
-        #Intialize all widgets.
+        #Make sure default calibration is emitted
+        self.PosCalibration.emitCalibration()
+
+        #Make sure default session flder is emitted
+        self.LabRAD.newSessionFolder.emit(self.LabRAD.session_2)
+
+        #Open by default the LabRAD Connect Module and Device Select
+        self.openWindow(self.LabRAD)
+        #self.openWindow(self.DeviceSelect)
+        self.openWindow(self.Simulate)
+    #
+
+    def setupAdditionalUi(self):
+        """Some UI elements would not set properly from Qt Designer. These initializations are done here."""
+        #Connects all drop down menu button
+        self.actionScan_Control.triggered.connect(lambda : self.openWindow(self.ScanControl))
+        self.actionLabRAD_Connect.triggered.connect(lambda : self.openWindow(self.LabRAD))
+        self.actionnSOT_Characterizer.triggered.connect(lambda : self.openWindow(self.nSOTChar))
+        self.actionData_Plotter.triggered.connect(lambda : self.openWindow(self.PlottersControl))
+        self.actionTF_Characterizer.triggered.connect(lambda : self.openWindow(self.TFChar))
+        self.actionApproach_Control.triggered.connect(lambda : self.openWindow(self.Approach))
+        self.actionApproach_Monitor.triggered.connect(lambda : self.openWindow(self.ApproachMonitor))
+        self.actionAttocube_Position_Calibration.triggered.connect(lambda : self.openWindow(self.PosCalibration))
+        self.actionMagnetic_Field_Control.triggered.connect(lambda : self.openWindow(self.FieldControl))
+        self.actionRun_Scripts.triggered.connect(lambda : self.openWindow(self.Scripting))
+        self.actionTemperature_Control.triggered.connect(lambda : self.openWindow(self.TempControl))
+        self.actionQR_Reader.triggered.connect(lambda : self.openWindow(self.QRreader))
+        self.actionNSOT_Setpoint.triggered.connect(lambda : self.openWindow(self.GoToSetpoint))
+        self.actionDevice_Select.triggered.connect(lambda : self.openWindow(self.DeviceSelect))
+        self.actionSample_Characterizer.triggered.connect(lambda : self.openWindow(self.SampleCharacterizer))
+        self.actionAttocube_Coarse_Position_Control.triggered.connect(lambda : self.openWindow(self.AttocubeCoarseControl))
+
+        #Connectors all layout buttons
+        self.push_Layout1.clicked.connect(self.setLayout1)
+
+        self.push_Logo.clicked.connect(self.toggleLogo)
+        self.isRedEyes = False
+
+    #----------------------------------------------------------------------------------------------#
+
+    """ The following section connects actions related to default opening windows."""
+
+    def moveDefault(self):
+        self.move(10,10)
+
+    def openWindow(self, window):
+        window.showNormal()
+        try:
+            window.moveDefault()
+        except:
+            pass
+        window.raise_()
+
+#----------------------------------------------------------------------------------------------#
+    """ Setup the specifics of the system. Overload these functions for specific systems. """
+
+    def setupWindows(self):
+        '''
+        Setup all the Windows and put them in self.windows
+        '''
         self.ScanControl = ScanControl.Window(self.reactor, None)
         self.LabRAD = LabRADConnect.Window(self.reactor, None)
         self.DeviceSelect = DeviceSelect.Window(self.reactor, None)
@@ -59,35 +123,17 @@ class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
         self.SampleCharacterizer = SampleCharacterizer.Window(self.reactor,None)
         self.AttocubeCoarseControl = CoarseAttocubeControl.Window(self.reactor,None)
 
+        self.windows = [self.ScanControl, self.LabRAD, self.DeviceSelect, self.nSOTChar, self.PlottersControl, self.TFChar, self.Approach, self.ApproachMonitor,
+            self.PosCalibration, self.FieldControl, self.TempControl, self.QRreader, self.GoToSetpoint, self.SampleCharacterizer, self.AttocubeCoarseControl]
+
         #This module should always be initialized last, and have the modules
         #That are desired to be scriptable be input
-        self.simulate = Simulation.ScriptSimulator(self.reactor, None)
+        self.Simulate = Simulation.ScriptSimulator(self.reactor, self, None)
         self.Scripting = Scripting.Window(self.reactor, None, self.ScanControl, self.Approach, self.nSOTChar, self.FieldControl, self.TempControl,
-                                          self.SampleCharacterizer, self.GoToSetpoint, self.simulate)
+            self.SampleCharacterizer, self.GoToSetpoint, self.Simulate)
 
-        #Connects all drop down menu button
-        self.actionScan_Control.triggered.connect(self.openScanControlWindow)
-        self.actionLabRAD_Connect.triggered.connect(self.openLabRADConnectWindow)
-        self.actionnSOT_Characterizer.triggered.connect(self.opennSOTCharWindow)
-        self.actionData_Plotter.triggered.connect(self.openDataPlotter)
-        self.actionTF_Characterizer.triggered.connect(self.openTFCharWindow)
-        self.actionApproach_Control.triggered.connect(self.openApproachWindow)
-        self.actionApproach_Monitor.triggered.connect(self.openApproachMonitorWindow)
-        self.actionAttocube_Position_Calibration.triggered.connect(self.openPosCalibrationWindow)
-        self.actionMagnetic_Field_Control.triggered.connect(self.openFieldControlWindow)
-        self.actionRun_Scripts.triggered.connect(self.openScriptingModule)
-        self.actionTemperature_Control.triggered.connect(self.openTempControlWindow)
-        self.actionQR_Reader.triggered.connect(self.openQRreaderWindow)
-        self.actionNSOT_Setpoint.triggered.connect(self.openSetpointWindow)
-        self.actionDevice_Select.triggered.connect(self.openDeviceSelectWindow)
-        self.actionSample_Characterizer.triggered.connect(self.openSampleCharacterizerWindow)
-        self.actionAttocube_Coarse_Position_Control.triggered.connect(self.openAttocubeCoarseControlWindow)
-
-        #Connectors all layout buttons
-        self.push_Layout1.clicked.connect(self.setLayout1)
-
-        self.push_Logo.clicked.connect(self.toggleLogo)
-        self.isRedEyes = False
+        self.windows.append(self.Scripting)
+        self.windows.append(self.Simulate)
 
         #Connect signals between modules
         #When LabRAD Connect module emits all the local and remote labRAD connections, it goes to the device
@@ -96,156 +142,39 @@ class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
         self.LabRAD.cxnLocal.connect(self.DeviceSelect.connectLabRAD)
         self.LabRAD.cxnRemote.connect(self.DeviceSelect.connectRemoteLabRAD)
         self.DeviceSelect.newDeviceInfo.connect(self.distributeDeviceInfo)
-
         self.LabRAD.cxnDisconnected.connect(self.disconnectLabRADConnections)
         self.LabRAD.newSessionFolder.connect(self.distributeSessionFolder)
-
         self.TFChar.workingPointSelected.connect(self.distributeWorkingPoint)
-
         self.nSOTChar.newToeField.connect(self.FieldControl.updateToeField)
-
         self.Approach.newPLLData.connect(self.ApproachMonitor.updatePLLPlots)
         self.Approach.newAux2Data.connect(self.ApproachMonitor.updateAux2Plot)
         self.Approach.newZData.connect(self.ApproachMonitor.updateZPlot)
-
         self.Approach.updateFeedbackStatus.connect(self.ScanControl.updateFeedbackStatus)
         self.Approach.updateConstantHeightStatus.connect(self.ScanControl.updateConstantHeightStatus)
-
         self.PosCalibration.newTemperatureCalibration.connect(self.setVoltageCalibration)
-
         self.ScanControl.updateScanningStatus.connect(self.Approach.updateScanningStatus)
 
-        #Make sure default calibration is emitted
-        self.PosCalibration.emitCalibration()
-
-        #Make sure default session flder is emitted
-        self.LabRAD.newSessionFolder.emit(self.LabRAD.session_2)
-
-        #Open by default the LabRAD Connect Module and Device Select
-        self.openLabRADConnectWindow()
-        self.openDeviceSelectWindow()
-
-
-    def setupAdditionalUi(self):
-        """Some UI elements would not set properly from Qt Designer. These initializations are done here."""
+    def configureEquipment(self):
+        '''
+        Configure the specific equipment for the system by connecting things to the
+        EquipmentHandler object, self.equip.
+        '''
         pass
-
-    #----------------------------------------------------------------------------------------------#
-
-    """ The following section connects actions related to default opening windows."""
-
-    def moveDefault(self):
-        self.move(10,10)
-
-    def openScanControlWindow(self):
-        self.ScanControl.showNormal()
-        self.ScanControl.moveDefault()
-        self.ScanControl.raise_()
-
-    def openLabRADConnectWindow(self):
-        self.LabRAD.showNormal()
-        self.LabRAD.moveDefault()
-        self.LabRAD.raise_()
-
-    def opennSOTCharWindow(self):
-        self.nSOTChar.showNormal()
-        self.nSOTChar.moveDefault()
-        self.nSOTChar.raise_()
-
-    def openDataPlotter(self):
-        self.PlottersControl.showNormal()
-        self.PlottersControl.moveDefault()
-        self.PlottersControl.raise_()
-
-    def openTFCharWindow(self):
-        self.TFChar.showNormal()
-        self.TFChar.moveDefault()
-        self.TFChar.raise_()
-
-    def openApproachWindow(self):
-        self.Approach.showNormal()
-        self.Approach.moveDefault()
-        self.Approach.raise_()
-
-    def openApproachMonitorWindow(self):
-        self.ApproachMonitor.showNormal()
-        self.ApproachMonitor.moveDefault()
-        self.ApproachMonitor.raise_()
-
-    def openPosCalibrationWindow(self):
-        self.PosCalibration.showNormal()
-        self.PosCalibration.moveDefault()
-        self.PosCalibration.raise_()
-
-    def openFieldControlWindow(self):
-        self.FieldControl.showNormal()
-        self.FieldControl.moveDefault()
-        self.FieldControl.raise_()
-
-    def openTempControlWindow(self):
-        self.TempControl.showNormal()
-        self.TempControl.moveDefault()
-        self.TempControl.raise_()
-
-    def openScriptingModule(self):
-        self.Scripting.showNormal()
-        self.Scripting.moveDefault()
-        self.Scripting.raise_()
-
-    def openQRreaderWindow(self):
-        self.QRreader.showNormal()
-        self.QRreader.moveDefault()
-        self.QRreader.raise_()
-
-    def openSetpointWindow(self):
-        self.GoToSetpoint.showNormal()
-        self.GoToSetpoint.moveDefault()
-        self.GoToSetpoint.raise_()
-
-    def openDeviceSelectWindow(self):
-        self.DeviceSelect.showNormal()
-        self.DeviceSelect.moveDefault()
-        self.DeviceSelect.raise_()
-
-    def openSampleCharacterizerWindow(self):
-        self.SampleCharacterizer.showNormal()
-        self.SampleCharacterizer.moveDefault()
-        self.SampleCharacterizer.raise_()
-
-    def openAttocubeCoarseControlWindow(self):
-        self.AttocubeCoarseControl.showNormal()
-        self.AttocubeCoarseControl.moveDefault()
-        self.AttocubeCoarseControl.raise_()
+    #
 
 #----------------------------------------------------------------------------------------------#
     """ The following section connects actions related to passing LabRAD connections."""
 
     def distributeDeviceInfo(self,dic):
         #Call connectLabRAD functions for relevant modules
-        self.PlottersControl.connectLabRAD(dic)
-        self.nSOTChar.connectLabRAD(dic)
-        self.ScanControl.connectLabRAD(dic)
-        self.TFChar.connectLabRAD(dic)
-        self.Approach.connectLabRAD(dic)
-        self.Scripting.connectLabRAD(dic)
-        self.GoToSetpoint.connectLabRAD(dic)
-        self.FieldControl.connectLabRAD(dic)
-        self.TempControl.connectLabRAD(dic)
-        self.SampleCharacterizer.connectLabRAD(dic)
-        self.AttocubeCoarseControl.connectLabRAD(dic)
+        for window in self.windows:
+            if hasattr(window, "connectLabRAD"):
+                window.connectLabRAD(dic)
 
     def disconnectLabRADConnections(self):
-        self.DeviceSelect.disconnectLabRAD()
-        self.PlottersControl.disconnectLabRAD()
-        self.nSOTChar.disconnectLabRAD()
-        self.ScanControl.disconnectLabRAD()
-        self.TFChar.disconnectLabRAD()
-        self.Approach.disconnectLabRAD()
-        self.FieldControl.disconnectLabRAD()
-        self.Scripting.disconnectLabRAD()
-        self.TempControl.disconnectLabRAD()
-        self.SampleCharacterizer.disconnectLabRAD()
-        self.AttocubeCoarseControl.disconnectLabRAD()
+        for window in self.windows:
+            if hasattr(window, "disconnectLabRAD"):
+                window.disconnectLabRAD()
 
     def distributeSessionFolder(self, folder):
         self.TFChar.setSessionFolder(folder)
@@ -276,8 +205,8 @@ class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
     def setLayout1(self):
         self.moveDefault()
         self.hideAllWindows()
-        self.openScanControlWindow()
-        self.openApproachWindow()
+        self.openWindow(self.ScanControl)
+        self.openWindow(self.Approach)
 
     def toggleLogo(self):
         if self.isRedEyes == False:
@@ -292,39 +221,16 @@ class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
             self.isRedEyes = False
 
     def hideAllWindows(self):
-        self.ScanControl.hide()
-        self.LabRAD.hide()
-        self.nSOTChar.hide()
-        self.PlottersControl.hide()
-        self.TFChar.hide()
-        self.Approach.hide()
-        self.ApproachMonitor.hide()
-        self.PosCalibration.hide()
-        self.GoToSetpoint.hide()
-        self.QRreader.hide()
-        self.TempControl.hide()
-        self.SampleCharacterizer.hide()
-        self.AttocubeCoarseControl.hide()
+        for window in self.windows:
+            if hasattr(window, "hide"):
+                window.hide()
 
     def closeEvent(self, e):
         try:
             self.disconnectLabRADConnections()
-            self.ScanControl.close()
-            self.nSOTChar.close()
-            self.PlottersControl.close()
-            self.TFChar.close()
-            self.Approach.close()
-            self.ApproachMonitor.close()
-            self.PosCalibration.close()
-            self.Scripting.close()
-            self.FieldControl.close()
-            self.LabRAD.close()
-            self.SampleCharacterizer.close()
-            self.AttocubeCoarseControl.close()
-            self.DeviceSelect.close()
-            self.TempControl.close()
-            self.QRreader.close()
-            self.GoToSetpoint.close()
+            for window in self.windows:
+                if hasattr(window, "close"):
+                    window.close()
         except Exception as inst:
             print inst
 

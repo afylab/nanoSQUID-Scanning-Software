@@ -1,6 +1,7 @@
 import sys
 from PyQt4 import QtGui, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred #, returnValue
+from traceback import format_exc
 
 path = sys.path[0] + r"\ScriptingModule"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\Scripting.ui")
@@ -90,7 +91,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.current_line = 1
             if sim:
                 ScanControl, Approach, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias = self.simulate.get_virtual_modules()
-                yield f(self.simulate, self.simulate.sleep, self.cxn, self.cxnr, ScanControl, Approach, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias)
+                yield f(self, self.simulate.sleep, self.cxn, self.cxnr, ScanControl, Approach, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias)
                 self.simulate.compile()
                 self.simulate.showSim()
             else:
@@ -119,6 +120,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.label_status.setText(str(inst) + ' error thrown while compiling')
             else:
                 self.label_status.setText(str(inst) + ' thrown on line ' + str(self.current_line))
+            print format_exc()
             self.unlockInterface()
 
     def abortScript(self):
@@ -150,37 +152,6 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             i = i + 1
         code_to_run = code_to_run + "\n"
         return code_to_run
-
-    # def formatSimulatedCode(self):
-    #     '''Process and format the code for simulated output, inputting statements to be able to interrupt the script
-    #     and updating which line of code is currently running. Note that whitespace
-    #     in this section is critical to it running correctly.
-    #     '''
-    #     code_lines = str(self.codeEditor.toPlainText()).splitlines()
-    #     code_to_run = "@inlineCallbacks\ndef f(self, simulation, cxn, cxnr, ScanControl, Approach, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias):\n "
-    #     code_to_run = code_to_run + "yield sleep(0.1)\n "
-    #     i = 1
-    #     prev_line = 'None'
-    #     for line in code_lines:
-    #         # Omit lines that contain certain modules, such as sleep
-    #         if any(line.__contains__, ["sleep"]):
-    #             pass
-    #         else:
-    #             #detect number of space on next line
-    #             spaces = self.detectSpaces(line)
-    #             #inlineCallbacks header is special and needs to be right before the next line in the code,
-    #             if '@inlineCallbacks' not in prev_line:
-    #                 #Add code that updates which line of code is being run
-    #                 code_to_run = code_to_run + spaces + "self.current_line = " + str(i) + "\n "
-    #                 #Eventually add line of code that throws signal to update status
-    #                 code_to_run = code_to_run + spaces + "self.label_status.setText(\'Script is running line " + str(i) + "\')\n "
-    #                 #Add code that throws error if not running the script
-    #                 code_to_run = code_to_run + spaces + "if not self.runningScript:\n" + spaces + "  raise ScriptAborted(" + str(i) + ")\n "
-    #             code_to_run = code_to_run + line + "\n "
-    #             prev_line = line
-    #         i = i + 1
-    #     code_to_run = code_to_run + "\n"
-    #     return code_to_run
 
     def detectSpaces(self,line):
         '''Returns a string with all the whitespace at the beginning of the input line of code'''

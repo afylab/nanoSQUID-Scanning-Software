@@ -280,7 +280,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.current_field = yield self.ips.read_parameter(7)#Read the field
 
             self.unlockInterface()
-        except Exception as inst:
+        except Exception:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
             #print 'nsot labrad connect', inst

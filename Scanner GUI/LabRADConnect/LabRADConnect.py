@@ -21,7 +21,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.reactor = reactor
         self.setupUi(self)
         self.setupAdditionalUi()
-        self.moveDefault()
+        #self.moveDefault()
 
         #Initialize variables for all possible server connections in a dictionary
         #Makes multiple connections for browsing data vault in every desired context
@@ -294,7 +294,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.label_AMI430_status.setText('Not connected')
 
-        self.cxnDisconnected.emit()
+        #self.cxnDisconnected.emit()
 
 #--------------------------------------------------------------------------------------------------------------------------#
 
