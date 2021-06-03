@@ -106,6 +106,100 @@ class Virtual_SampleChar(VirtualModule):
         self.setFourTermCurrentInput = lambda *args, **kwargs : self.addEvent('setFourTermCurrentInput', *args, **kwargs)
         self.FourTerminalSweep = lambda *args, **kwargs : self.addEvent('FourTerminalSweep', *args, **kwargs)
         self.rampOutputVoltage = lambda *args, **kwargs : self.addEvent('rampOutputVoltage', *args, **kwargs)
+
+    def get_initial_state(self):
+        self.Dict_Variable = self.real.Dict_Variable.copy()
+        self.FourTerminal_ChannelInput = self.real.FourTerminal_ChannelInput
+        self.FourTerminal_ChannelOutput = self.real.FourTerminal_ChannelOutput
+        self.FourTerminal_Output1 = self.real.FourTerminal_Output1
+        self.FourTerminal_Input1 = self.real.FourTerminal_Input1
+        self.FourTerminal_Input2 = self.real.FourTerminal_Input2
+        self.currentDAC_Output = self.real.currentDAC_Output
+        self.setpointDAC_Output = self.real.setpointDAC_Output
+    #
+
+    def get_starting_outputs(self):
+        '''
+        Return a dictionary containing the starting values of the outputs if they exist. If they do
+        not exist return None
+        '''
+        ret = dict()
+        for i in range(4):
+            ret['DAC'+str(i+1)] = self.real.currentDAC_Output[i]
+        return ret
+    #
+
+    def _Update_Parameters(self, value, key, range=None):
+        if isinstance(value,float) or isinstance(value,int):
+            if range == None:
+                self.Dict_Variable[key] = value
+            elif value >= range[0] and value <= range[1]:
+                self.Dict_Variable[key] = value
+    #
+
+    def _setFourTermMinVoltage(self, vmin):
+        self._Update_Parameters(vmin, 'FourTerminal_MinVoltage', [-10.0, 10.0])
+    #
+
+    def _setFourTermMaxVoltage(self, vmax):
+        self._Update_Parameters(vmax, 'FourTerminal_MaxVoltage', [-10.0, 10.0])
+    #
+
+    def _setFourTermVoltagePoints(self, points):
+        self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] = "Numberofsteps"
+        self.Dict_Variable['FourTerminal_Numberofstep'] = int(round(points))
+    #
+
+    def _setFourTermVoltageStepSize(self, vstep):
+        self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] = "StepSize"
+        Max, Min, SS = self.Dict_Variable['FourTerminal_MaxVoltage'], self.Dict_Variable['FourTerminal_MinVoltage'], float(vstep)
+        self.Dict_Variable['FourTerminal_Numberofstep']=int((Max-Min)/float(SS)+1)
+
+    def _setFourTermDelay(self, delay):
+        self._Update_Parameters(delay, 'FourTerminal_Delay')
+    #
+
+    def _setFourTermOutput(self, output):
+        self.FourTerminal_Output1 = output-1
+    #
+
+    def _setFourTermVoltageInput(self, inp):
+        self.FourTerminal_Input1 = inp-1
+    #
+
+    def _setFourTermCurrentInput(self, inp):
+        self.FourTerminal_Input2 = inp-1
+    #
+
+    def _FourTerminalSweep(self):
+        self.FourTerminal_ChannelOutput=[self.FourTerminal_Output1]
+        self.FourTerminal_ChannelInput=[self.FourTerminal_Input1]
+
+        dt, points = self._Ramp1(self.FourTerminal_ChannelOutput[0],self.currentDAC_Output[self.FourTerminal_ChannelOutput[0]],self.Dict_Variable['FourTerminal_MinVoltage'],10000,100)    #ramp to initial value
+
+        ix = "DAC"+str(self.FourTerminal_ChannelOutput[0]+1)
+        points[ix].append(self.Dict_Variable['FourTerminal_MaxVoltage'])
+        dt.append(self.Dict_Variable['FourTerminal_Numberofstep']*self.Dict_Variable['FourTerminal_Delay'])
+
+        dt_2, points_2 = self._Ramp1(self.FourTerminal_ChannelOutput[0],self.Dict_Variable['FourTerminal_MaxVoltage'],0.0,10000,100)
+        dt.append(dt_2[0])
+        points[ix].append(points_2[ix][0])
+
+        return dt, points
+    #
+
+    def _rampOutputVoltage(self, channel, vfinal, points, delay):
+        #Convert delay from seconds to microseconds.
+        channel = channel-1
+        return self._Ramp1(channel,self.currentDAC_Output[channel],vfinal,points,int(delay*1e6))
+    #
+
+    def _Ramp1(self, SweepPort, Startingpoint, Endpoint, Numberofsteps, Delay):
+        time = Numberofsteps*Delay*1e-6
+        ret = dict()
+        ret["DAC"+str(SweepPort+1)] = [Endpoint]
+        return [time], ret
+    #
 #
 
 '''
@@ -123,15 +217,15 @@ class Virtual_FieldControl(VirtualModule):
         self.clamp = lambda *args, **kwargs : self.addEvent('clamp', *args, **kwargs)
         self.setPersist = lambda *args, **kwargs : self.addEvent('setPersist', *args, **kwargs)
 
-    def get_initial_state(self):
-        self.currField = self.real.currField
-        self.ramprate = self.real.ramprate
-        self.setpoint = self.real.setpoint
+    # def get_initial_state(self):
+    #     self.currField = self.real.currField
+    #     self.ramprate = self.real.ramprate
+    #     self.setpoint = self.real.setpoint
+    # #
     #
-
-    def get_stating_outputs(self):
-        return {'B':[self.currField]}
-    #
+    # def get_stating_outputs(self):
+    #     return {'B':[self.currField]}
+    # #
 
     def _setField(self, B):
         points = {'B':[B]}
@@ -551,6 +645,7 @@ class ScriptSimulator(QtGui.QMainWindow, SimulatorWindowUI):
         for plot in self.plots:
             plot.setGeometry(QtCore.QRect(0,0,600,260))
             self.change_labels(plot, "Output", "unit")
+    #
 
     def moveDefault(self):
         self.move(10,170)
@@ -610,6 +705,7 @@ class ScriptSimulator(QtGui.QMainWindow, SimulatorWindowUI):
             plot.clear()
 
         options = list(self.outputs.keys())
+        options.sort()
         for i in range(3):
             cbox = getattr(self, "var_select_" + str(i+1))
             cbox.clear()
@@ -686,6 +782,10 @@ class ScriptSimulator(QtGui.QMainWindow, SimulatorWindowUI):
         self.outputs_units['Z'] = "m"
 
         # Sample DAC Outputs
+        start = self.SampleChar.get_starting_outputs()
+        for k in list(start.keys()):
+            self.outputs[k] = [start[k]]
+            self.outputs_units[k] = "V"
 
         # Magnetic Field
         # self.outputs['Magnetic Field'] = []
@@ -712,15 +812,15 @@ class ScriptSimulator(QtGui.QMainWindow, SimulatorWindowUI):
                 getattr(self.Approach, "_"+event[0])(*event[1], **event[2])
             elif event[0] in ["FourTerminalSweep", "rampOutputVoltage"]:
                 # Things that affect the sample voltage outputs
-                points = getattr(self.SampleChar, "_"+event[0])(*event[1], **event[2])
-                self.addPoints(points) # Update outputs, all other outputs are assumed to be constant
-            elif event[0] in ["setFourTermMinVoltage", "setFourTermMaxVoltage", "setFourTermOutput", "setFourTermVoltageInput", "setFourTermCurrentInput"]:
+                dt, points = getattr(self.SampleChar, "_"+event[0])(*event[1], **event[2])
+                self.addPoints(dt, points) # Update outputs, all other outputs are assumed to be constant
+            elif event[0] in ["setFourTermMinVoltage", "setFourTermMaxVoltage", "setFourTermOutput", "setFourTermVoltageInput", "setFourTermCurrentInput", "setFourTermDelay", "setFourTermVoltageStepSize", "setFourTermVoltagePoints"]:
                 # Things that affect the state of the SampleChar virtual module but do not change the outputs
                 getattr(self.SampleChar, "_"+event[0])(*event[1], **event[2])
             # elif event[0] in ["setField"]:
             #     # Things that affect the magnetic field
-            #     points = getattr(self.FieldControl, "_"+event[0])(*event[1], **event[2])
-            #     self.addPoints(points) # Update outputs, all other outputs are assumed to be constant
+            #     dt, points = getattr(self.FieldControl, "_"+event[0])(*event[1], **event[2])
+            #     self.addPoints(dt, points) # Update outputs, all other outputs are assumed to be constant
             # elif event[0] in ["setSetpoint", "hold", "setPersist", "setRamprate"]:
             #     # Things that affect the state of the FieldControl virtual but do not change the outputs
             #     getattr(self.FieldControl, "_"+event[0])(*event[1], **event[2])

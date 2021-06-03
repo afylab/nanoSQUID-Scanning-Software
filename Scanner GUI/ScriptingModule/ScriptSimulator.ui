@@ -121,6 +121,9 @@ color:rgb(168,168,168)
            <height>30</height>
           </size>
          </property>
+         <property name="insertPolicy">
+          <enum>QComboBox::InsertAtTop</enum>
+         </property>
         </widget>
        </item>
        <item row="2" column="0">
@@ -268,6 +271,9 @@ color:rgb(168,168,168)
            <height>30</height>
           </size>
          </property>
+         <property name="insertPolicy">
+          <enum>QComboBox::InsertAtTop</enum>
+         </property>
         </widget>
        </item>
        <item row="2" column="0">
@@ -414,6 +420,9 @@ color:rgb(168,168,168)
            <width>0</width>
            <height>30</height>
           </size>
+         </property>
+         <property name="insertPolicy">
+          <enum>QComboBox::InsertAtTop</enum>
          </property>
         </widget>
        </item>

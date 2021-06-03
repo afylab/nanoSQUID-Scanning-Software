@@ -1417,6 +1417,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
     def rampOutputVoltage(self, channel, vfinal, points, delay):
         #Convert delay from seconds to microseconds.
         delay = int(delay*1e6)
+        channel = channel - 1
         yield self.Ramp1_Display(channel,self.currentDAC_Output[channel],vfinal,points,delay)
 
 #----------------------------------------------------------------------------------------------#
