@@ -255,9 +255,9 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def gotoZeroIPS(self, c = None):
         self.setting_value = True
-        yield self.ips.set_control(3)
+        yield self.ips.set_control(3) #Set IPS to remote communication (prevents user from using the front panel)
         yield self.ips.set_activity(2)
-        yield self.ips.set_control(2)
+        yield self.ips.set_control(2) #Set IPS to local control (allows user to edit IPS from the front panel)
         self.setting_value = False
 
     #Only can be called when in the IPS configuration
@@ -380,11 +380,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         elif self.magDevice == 'IPS 120-10':
             #Got to the desired field on the IPS power supply.
-            yield self.gotoSetIPS(B) #Set the setpoint and update the IPS mode to sweep to field
+            yield self.goToSetpointIPS(B) #Set the setpoint and update the IPS mode to sweep to field
 
             #Only finish running the gotoField function when the field is reached
             while True:
-                curr_field = yield ips.read_parameter(7)
+                curr_field = yield self.ips.read_parameter(7)
                 if float(curr_field[1:]) <= B+0.00001 and float(curr_field[1:]) >= B-0.00001:
                     break
                 yield self.sleep(0.25)

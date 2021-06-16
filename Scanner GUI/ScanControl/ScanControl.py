@@ -247,15 +247,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
 
-        #Initialize all the labrad connections as false
-        self.cxn = False
-        self.cxn_dv = False
-        self.dac = False
-        self.gen_dv = False
-        self.dv = False
-        self.blink_server = False
-
-        self.lockInterface()
+        #Initialize all the labrad connections as false and lock the interface
+        self.disconnectLabRAD()
 
     def moveDefault(self):
         self.move(10,170)
@@ -1590,14 +1583,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Reformat data and add to data vault
                 x_voltage = np.linspace(startx, stopx, self.pixels)
                 y_voltage = np.linspace(starty, stopy, self.pixels)
-                formated_data = []
+                formatted_data = []
                 for j in range(0, self.pixels):
                     data_point = (0, j, i, x_voltage[j], y_voltage[j])
                     for k in range(0,num_datasets):
                         data_point += (self.data[k][j,i],)
-                    formated_data.append(data_point)
+                    formatted_data.append(data_point)
                     trace_data.append(data_point)
-                yield self.dv.add(formated_data)
+                yield self.dv.add(formatted_data)
                 print 'Time taken to add data to data vault: ' + str(time.clock()-tzero)
 
                 #------------------------------------#
@@ -1652,14 +1645,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 #Reformat data and add to data vault
                 x_voltage = np.linspace(startx, stopx, self.pixels)
                 y_voltage = np.linspace(starty, stopy, self.pixels)
-                formated_data = []
+                formatted_data = []
                 for j in range(0, self.pixels):
                     data_point = (1, j, i, x_voltage[::-1][j], y_voltage[::-1][j])
                     for k in range(0,num_datasets):
                         data_point += (self.data_retrace[k][j,i],)
-                    formated_data.append(data_point)
+                    formatted_data.append(data_point)
                     retrace_data.append(data_point)
-                yield self.dv.add(formated_data)
+                yield self.dv.add(formatted_data)
 
                 #------------------------------------#
 

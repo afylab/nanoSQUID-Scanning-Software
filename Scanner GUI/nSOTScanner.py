@@ -6,7 +6,7 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 path = sys.path[0]
 sys.path.append(path + r'\Resources') # To makesure loadUiType can access it's resource files
-MainWindowUI, QtBaseClass = uic.loadUiType(r"MainWindow.ui")
+MainWindowUI, QtBaseClass = uic.loadUiType(path + r"\MainWindow.ui")
 
 #import all windows for gui
 from ScanControl import ScanControl

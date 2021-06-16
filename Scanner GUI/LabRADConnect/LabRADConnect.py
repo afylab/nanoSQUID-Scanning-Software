@@ -741,7 +741,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             print inst
 
     @inlineCallbacks
-    def connectRemoteIPS120(self, c = None):
+    def connectRemoteIPS120(self):
         try:
             if self.connectionRemoteDictionary['gpib_server'] is False or self.connectionRemoteDictionary['gpib_manager'] is False:
                 self.push_IPS120.setStyleSheet("#push_IPS120{" +
@@ -757,6 +757,11 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                     self.label_IPS120_status.setText('Connection Failed')
                 try:
                     yield ips.select_device()
+
+                    yield ips.set_control(3) #Set IPS to remote communication (prevents user from using the front panel)
+                    yield ips.set_comm_protocol(6) #Set IPS communication protocol appropriately
+                    yield ips.set_control(2) #Set IPS to local control (allows user to edit IPS from the front panel)
+
                     self.push_IPS120.setStyleSheet("#push_IPS120{" +
                     "background: rgb(0,170,0);border-radius: 4px;}")
                     self.label_IPS120_status.setText('Connected')
