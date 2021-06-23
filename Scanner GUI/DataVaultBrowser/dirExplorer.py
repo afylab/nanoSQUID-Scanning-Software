@@ -1,6 +1,5 @@
 import sys
-import twisted
-from PyQt4 import QtCore, QtGui, QtTest, uic
+from PyQt4 import QtCore, QtGui, uic
 from twisted.internet.defer import inlineCallbacks
 
 path = sys.path[0] + r"\DataVaultBrowser"
@@ -19,20 +18,21 @@ class dataVaultExplorer(QtGui.QMainWindow, Ui_dvExplorer):
 
         self.curDir = ''
 
-        self.dirList.itemDoubleClicked.connect(self.updateDirs)
+        self.dirList.itemDoubleClicked.connect(lambda file: self.updateDirs(file))
         self.fileList.itemSelectionChanged.connect(self.fileSelect)
         self.fileList.itemDoubleClicked.connect(self.fileSelect)
-        self.fileList.itemDoubleClicked.connect(self.selectDirFile)
-        self.back.clicked.connect(self.backUp)
-        self.home.clicked.connect(self.goHome)
-        self.pushButton_dvexplorer_refresh.clicked.connect(self.popDirs)
-        self.addDir.clicked.connect(self.makeDir)
-        self.select.clicked.connect(self.selectDirFile)
+        self.fileList.itemDoubleClicked.connect(lambda: self.selectDirFile())
+        self.back.clicked.connect(lambda: self.backUp())
+        self.home.clicked.connect(lambda: self.goHome())
+        self.pushButton_dvexplorer_refresh.clicked.connect(lambda: self.popDirs())
+        self.addDir.clicked.connect(lambda: self.makeDir())
+        self.select.clicked.connect(lambda: self.selectDirFile())
         self.cancelSelect.clicked.connect(self.closeWindow)
 
+        self.popDirs()
 
     @inlineCallbacks
-    def popDirs(self, c = None):
+    def popDirs(self):
         try:
             self.dirList.clear()
             self.fileList.clear()
@@ -60,10 +60,10 @@ class dataVaultExplorer(QtGui.QMainWindow, Ui_dvExplorer):
         subdir = str(subdir.text())
         self.curDir = subdir
         yield self.dv.cd(subdir, False)
-        self.popDirs(self.reactor)
+        yield self.popDirs()
 
     @inlineCallbacks
-    def backUp(self, c):
+    def backUp(self):
         if self.curDir == '':
             pass
         else:
@@ -72,21 +72,21 @@ class dataVaultExplorer(QtGui.QMainWindow, Ui_dvExplorer):
             back = direct[0:-1]
             self.curDir = back[-1]
             yield self.dv.cd(back)
-            self.popDirs(self.reactor)
+            yield self.popDirs()
 
     @inlineCallbacks
-    def goHome(self, c):
+    def goHome(self):
         self.currentFile.clear()
         yield self.dv.cd('')
         self.curDir = ''
-        self.popDirs(self.reactor)
+        self.popDirs()
 
     @inlineCallbacks
-    def makeDir(self, c):
+    def makeDir(self):
         direct, ok = QtGui.QInputDialog.getText(self, "Make directory", "Directory Name: " )
         if ok:
             yield self.dv.mkdir(str(direct))
-            self.popDirs(self.reactor)
+            yield self.popDirs()
 
     def fileSelect(self):
         selectedItem = self.fileList.selectedItems()
@@ -99,7 +99,7 @@ class dataVaultExplorer(QtGui.QMainWindow, Ui_dvExplorer):
             self.currentFile.setText('Selected ' + str(len(self.file)) +' files')
 
     @inlineCallbacks
-    def selectDirFile(self, c):
+    def selectDirFile(self):
         self.directory = yield self.dv.cd()
 
         self.accepted.emit()

@@ -129,7 +129,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         #Unlock buttons once connection is done
 
     @inlineCallbacks
-    def connectLocalServers(self, c = None):
+    def connectLocalServers(self):
         try:
             self.cxnAttemptLocalDictionary = self.emptyLocalDictionary.copy()
 
@@ -153,7 +153,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             print inst
 
     @inlineCallbacks
-    def connectRemoteServers(self, c = None):
+    def connectRemoteServers(self):
         try:
             self.cxnAttemptRemoteDictionary = self.emptyRemoteDictionary.copy()
 
@@ -217,7 +217,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.cxnRemote.emit(self.connectionRemoteDictionary)
 
     @inlineCallbacks
-    def disconnectLabRAD(self, c = None):
+    def disconnectLabRAD(self):
         try:
             yield self.connectionLocalDictionary['cxn'].anc350_server.disconnect()
             print 'Disconnected ANC350'
@@ -301,7 +301,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
     """ The following section has the methods for connecting independent local devices."""
 
     @inlineCallbacks
-    def connectLabRAD(self, c = None):
+    def connectLabRAD(self):
         from labrad.wrappers import connectAsync
         try:
             #Connects to the manager on the local computer.
@@ -318,7 +318,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.emitLocalConnectionDictionary()
 
     @inlineCallbacks
-    def connectDataVault(self, c = None):
+    def connectDataVault(self):
         if self.connectionLocalDictionary['cxn'] is False:
             self.push_DataVault.setStyleSheet("#push_DataVault{" +
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -341,7 +341,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.emitLocalConnectionDictionary()
 
     @inlineCallbacks
-    def connectHF2LI(self, c = None):
+    def connectHF2LI(self):
         if self.connectionLocalDictionary['cxn'] is False:
             self.push_HF2LI.setStyleSheet("#push_HF2LI{" +
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -369,7 +369,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.emitLocalConnectionDictionary()
 
     @inlineCallbacks
-    def connectANC350(self, c = None):
+    def connectANC350(self):
         if self.connectionLocalDictionary['cxn'] is False:
             self.push_ANC350.setStyleSheet("#push_ANC350{" +
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -418,7 +418,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
         self.emitRemoteConnectionDictionary()
 
     @inlineCallbacks
-    def connectRemoteDataVault(self, c = None):
+    def connectRemoteDataVault(self):
         if self.connectionRemoteDictionary['cxn'] is False:
             self.push_remoteDataVault.setStyleSheet("#push_remoteDataVault{" +
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -563,12 +563,12 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
     """ The following section has the methods for connecting remote Serial devices."""
 
     @inlineCallbacks
-    def connectRemoteSerialDevices(self, c = None):
+    def connectRemoteSerialDevices(self):
         yield self.connectRemoteSerialServer()
         self.connectRemoteLM510()
 
     @inlineCallbacks
-    def connectRemoteSerialServer(self, c = None):
+    def connectRemoteSerialServer(self):
         try:
             if self.connectionRemoteDictionary['cxn'] is False:
                 self.push_remoteSerialServer.setStyleSheet("#push_remoteSerialServer{" +
@@ -592,7 +592,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             print inst
 
     @inlineCallbacks
-    def connectRemoteLM510(self, c = None):
+    def connectRemoteLM510(self):
         try:
             if self.connectionRemoteDictionary['ser_server'] is False:
                 self.push_LM510.setStyleSheet("#push_LM510{" +

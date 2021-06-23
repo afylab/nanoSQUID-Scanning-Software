@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="nSOTScanner">
+    <file>Pictures/Crop.png</file>
     <file>Pictures/21232342.bmp</file>
     <file>Pictures/21232342inverted.bmp</file>
     <file>Pictures/add.png</file>
@@ -14,7 +15,6 @@
     <file>Pictures/Bipolar.png</file>
     <file>Pictures/Capacitancor.png</file>
     <file>Pictures/Connected.png</file>
-    <file>Pictures/Crop.jpg</file>
     <file>Pictures/debug.png</file>
     <file>Pictures/diameter.png</file>
     <file>Pictures/Disconnected.png</file>
@@ -113,7 +113,6 @@
     <file>Pictures/Show.png</file>
     <file>Pictures/jj_schema.png</file>
     <file>Pictures/OverlapDivision.png</file>
-    <file>Pictures/Crop.jpg</file>
     <file>Pictures/OverlapSubtract.png</file>
     <file>Pictures/SelectArea.png</file>
     <file>Pictures/AddPlotter.png</file>

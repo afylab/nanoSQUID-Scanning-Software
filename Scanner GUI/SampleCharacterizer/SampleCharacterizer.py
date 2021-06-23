@@ -194,7 +194,6 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         self.disconnectLabRAD() #Initialize all the labrad connections as false and lock the interface
 
-
 #----------------------------------------------------------------------------------------------#
     """ The following section has standard server connection and GUI functions"""
 

@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>424</width>
+    <height>478</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Command Center</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../Resources/nSOTScannerResources.qrc">
+    <normaloff>:/nSOTScanner/Pictures/jj_schema.svg</normaloff>:/nSOTScanner/Pictures/jj_schema.svg</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true">#centralwidget
+{
+background-color: rgb(0, 0, 0);
+}</string>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,6">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>9</number>
+    </property>
+    <property name="rightMargin">
+     <number>9</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="frame_PlotRelatedFunctions">
+      <property name="styleSheet">
+       <string notr="true">
+QFrame#frame_PlotRelatedFunctions{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,2,9">
+       <property name="spacing">
+        <number>50</number>
+       </property>
+       <property name="leftMargin">
+        <number>30</number>
+       </property>
+       <item>
+        <widget class="QPushButton" name="pushButton_newPlotter">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add a new plotter&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:disabled#pushButton_newPlotter {image:url(:/nSOTScanner/Pictures/lock.png)}
+
+QPushButton#pushButton_newPlotter{
+image:url(:/nSOTScanner/Pictures/AddPlotter.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_newPlotter{
+image:url(:/nSOTScanner/Pictures/AddPlotter.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_settings">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Settings</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:disabled#pushButton_settings {image:url(:/nSOTScanner/Pictures/lock.png)}
+
+#pushButton_settings{
+image:url(:/nSOTScanner/Pictures/Setting.png);
+background: black;
+}
+
+QPushButton:pressed#pushButton_settings{
+image:url(:/nSOTScanner/Pictures/Setting.png);
+background: black;
+border: 2px rgb(131,131,131);
+border-radius: 5px
+}</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QFrame" name="frame_2">
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout" stretch="0">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QListWidget" name="listWidget_Plots">
+         <property name="styleSheet">
+          <string notr="true">QListWidget#listWidget_Plots{
+color: rgb(131,131,131);
+background-color:rgb(0,0,0);
+border: 2px solid  rgb(131, 131, 131);
+border-radius: 5px
+}
+
+QScrollBar:horizontal {
+   border: 0px;
+   background: black;
+   height: 15px;
+}
+QScrollBar:vertical {
+   border: 0px;
+   background: black;
+   width: 15px;
+}</string>
+         </property>
+         <property name="dragDropMode">
+          <enum>QAbstractItemView::DragOnly</enum>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::ExtendedSelection</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources>
+  <include location="../../Resources/nSOTScannerResources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

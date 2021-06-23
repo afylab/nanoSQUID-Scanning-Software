@@ -1,8 +1,8 @@
+import numpy as np
+import itertools
+
 #---------------------------------------------------------------------------------------------------------#
 """ The following section describes how to read and write values to various lineEdits on the GUI."""
-
-import numpy as np
-# from itertools import product
 
 siDict = {'T': 12, 'G' : 9, 'M' : 6, 'k' : 3, '' : 0, 'm' : -3, 'u' : -6, 'n' : -9, 'p' : -12}
 
@@ -42,11 +42,11 @@ def formatNum(val, decimal_values = 2):
 #By default, accepts no parent and will warn you for inputting a number without units.
 #Adding a parent is needed to have error thrown in a reasonable place and avoid recursion errors.
 #For entries that are expected to be of order unity the warningFlag can be set to False.
-def readNum(string, parent, warningFlag = True):
+def readNum(string, parent = None, warningFlag = False):
     try:
         val = float(string)
 
-        if warningFlag and val != 0:
+        if not parent is None and warningFlag and val != 0:
             warning = UnitWarning(parent, val)
             parent.setFocus()
             if warning.exec_():
@@ -177,6 +177,37 @@ def processImageData(image, process):
         for i in range(0,length):
             image[:,i] = processLineData(image[:,i],'Subtract Parabolic Fit')
         return image
+
+#---------------------------------------------------------------------------------------------------------#
+""" The following section has the function for performing a numerical derivative of a 1D dataset using a
+    lanczos algorithm"""
+
+def deriv(Data, x, NumberOfSide, delta, order = 1, EdgeNumber = 10):
+	NumberOfSide = int(NumberOfSide)
+	EdgeNumber = int(EdgeNumber)
+	order = int(order)
+	denom = NumberOfSide * (NumberOfSide + 1) * (2*NumberOfSide + 1)#denominator for the weight
+	k = np.arange(1, 2*(NumberOfSide + 1))
+	lanc = (3  * k) / (denom * delta)#weight
+	df0 = []
+	df1 = []
+	df = [sum(lanc[j-1]*(Data[i+j] - Data[i-j]) for j in range(1, NumberOfSide + 1)) for i in range(NumberOfSide, len(Data) - NumberOfSide)]
+	first_dats = Data[0: EdgeNumber]
+	last_dats = Data[len(Data) - EdgeNumber: len(Data)]
+	first_fit = np.polyfit(x[0: EdgeNumber], first_dats, order)
+	last_fit = np.polyfit(x[len(Data) - EdgeNumber: len(Data)], last_dats, order)
+	for i in range(0, NumberOfSide):
+		deriv = 0
+		for j in range(order):
+			deriv += first_fit[j] * x[i] ** (order - j - 1 ) * (order - j)
+		df0.append(deriv)
+	for i in range(len(Data) - NumberOfSide, len(Data)):
+		deriv = 0
+		for j in range(order):
+			deriv += last_fit[j] * x[i] ** (order - j - 1 ) * (order - j)
+		df1.append(deriv)
+
+	return list(itertools.chain(df0, df, df1))
 
 #---------------------------------------------------------------------------------------------------------#
 """ The following section creates a better image plotter, based off of pyqt's ImageView, to allow plotting of partial images."""

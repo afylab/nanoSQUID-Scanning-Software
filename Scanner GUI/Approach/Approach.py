@@ -1894,7 +1894,7 @@ class serversList(QtGui.QDialog, Ui_ServerList):
         self.move(pos)
 
 class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
-    def __init__(self,reactor, settings, parent = None):
+    def __init__(self, reactor, settings, parent = None):
         super(generalApproachSettings, self).__init__(parent)
         self.setupUi(self)
 

@@ -12,7 +12,7 @@ MainWindowUI, QtBaseClass = uic.loadUiType(path + r"\MainWindow.ui")
 from ScanControl import ScanControl
 from LabRADConnect import LabRADConnect
 from nSOTCharacterizer import nSOTCharacterizer
-from PlottersControl import PlottersControl
+from PlottingModule import PlottingModule
 from TFCharacterizer import TFCharacterizer
 from Approach import Approach, ApproachMonitor
 from CoarseAttocubeControl import CoarseAttocubeControl
@@ -56,8 +56,7 @@ class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
         #Open by default the LabRAD Connect Module and Device Select
         self.openWindow(self.LabRAD)
         #self.openWindow(self.DeviceSelect)
-        self.openWindow(self.Simulate)
-    #
+        #self.openWindow(self.Simulate)
 
     def setupAdditionalUi(self):
         """Some UI elements would not set properly from Qt Designer. These initializations are done here."""
@@ -65,7 +64,7 @@ class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
         self.actionScan_Control.triggered.connect(lambda : self.openWindow(self.ScanControl))
         self.actionLabRAD_Connect.triggered.connect(lambda : self.openWindow(self.LabRAD))
         self.actionnSOT_Characterizer.triggered.connect(lambda : self.openWindow(self.nSOTChar))
-        self.actionData_Plotter.triggered.connect(lambda : self.openWindow(self.PlottersControl))
+        self.actionData_Plotter.triggered.connect(lambda : self.openWindow(self.PlottingModule))
         self.actionTF_Characterizer.triggered.connect(lambda : self.openWindow(self.TFChar))
         self.actionApproach_Control.triggered.connect(lambda : self.openWindow(self.Approach))
         self.actionApproach_Monitor.triggered.connect(lambda : self.openWindow(self.ApproachMonitor))
@@ -111,7 +110,7 @@ class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
         self.LabRAD = LabRADConnect.Window(self.reactor, None)
         self.DeviceSelect = DeviceSelect.Window(self.reactor, None)
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor, None)
-        self.PlottersControl = PlottersControl.CommandingCenter(self.reactor, None)
+        self.PlottingModule = PlottingModule.CommandCenter(self.reactor, None)
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
         self.Approach = Approach.Window(self.reactor, None)
         self.ApproachMonitor = ApproachMonitor.Window(self.reactor, None)
@@ -123,7 +122,7 @@ class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
         self.SampleCharacterizer = SampleCharacterizer.Window(self.reactor,None)
         self.AttocubeCoarseControl = CoarseAttocubeControl.Window(self.reactor,None)
 
-        self.windows = [self.ScanControl, self.LabRAD, self.DeviceSelect, self.nSOTChar, self.PlottersControl, self.TFChar, self.Approach, self.ApproachMonitor,
+        self.windows = [self.LabRAD, self.DeviceSelect, self.ScanControl, self.nSOTChar, self.PlottingModule, self.TFChar, self.Approach, self.ApproachMonitor,
             self.PosCalibration, self.FieldControl, self.TempControl, self.QRreader, self.GoToSetpoint, self.SampleCharacterizer, self.AttocubeCoarseControl]
 
         #This module should always be initialized last, and have the modules
@@ -165,9 +164,11 @@ class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
 #----------------------------------------------------------------------------------------------#
     """ The following section connects actions related to passing LabRAD connections."""
 
-    def distributeDeviceInfo(self,dic):
-        #Call connectLabRAD functions for relevant modules
-        for window in self.windows:
+    def distributeDeviceInfo(self, dic):
+        #Call connectLabRAD functions for relevant modules.
+        #Note that self.windows[0] corresponds to the LabRADConnect and DeviceSelect module
+        #LabRAD connections are not sent to them module to prevent recursion errors
+        for window in self.windows[2:]:
             if hasattr(window, "connectLabRAD"):
                 window.connectLabRAD(dic)
 

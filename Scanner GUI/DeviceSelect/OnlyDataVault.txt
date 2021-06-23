@@ -1,0 +1,10 @@
+approach and TF;hf2li,False;dc_box,False
+sample;dac_adc,False;dc_box,False
+nsot;dac_adc,False
+system;blink device,False;magnet supply,False;coarse positioner,False;specific supply,False
+scan;dac_adc,False
+
+approach and TF;z monitor,1;sum board toggle,1;pid z out,1;pll input,1;pll output,1
+nsot;DC Readout,3;nSOT Bias,4;Noise Readout,2;nSOT Gate,1;Gate Reference,1;Bias Reference,4
+system;toellner dac voltage,4;blink channel,2;toellner dac current,3
+scan;x out,2;y out,3;z out,1
