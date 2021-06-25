@@ -8,7 +8,7 @@ path = sys.path[0]
 sys.path.append(path + r'\Resources') # To makesure loadUiType can access it's resource files
 MainWindowUI, QtBaseClass = uic.loadUiType(path + r"\MainWindow.ui")
 
-#import all windows for gui
+#import all windows for GUI
 from ScanControl import ScanControl
 from LabRADConnect import LabRADConnect
 from nSOTCharacterizer import nSOTCharacterizer
@@ -27,9 +27,7 @@ from SampleCharacterizer import SampleCharacterizer
 
 from Equipment.Equipment import EquipmentHandler
 
-
 class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
-    test = 0
     """ The following section initializes, or defines the initialization of the GUI and
     connecting to servers."""
     def __init__(self, reactor, parent=None):
