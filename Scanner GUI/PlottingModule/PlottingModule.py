@@ -11,7 +11,7 @@ ui_path = sys.path[0] + r"\PlottingModule\UI Files"
 Ui_CommandCenter, QtBaseClass = uic.loadUiType(ui_path + r"\PlottingModule.ui")
 Ui_SettingsWindow, QtBaseClass = uic.loadUiType(ui_path + r"\PlottingModuleSettings.ui")
 
-import plotter
+from . import plotter
 import dirExplorer
 
 '''
@@ -65,8 +65,8 @@ class CommandCenter(QtGui.QMainWindow, Ui_CommandCenter):
 
             self.unlockInterface()
         except Exception as e:
-            print "Plotting module labrad connection failed"
-            print e
+            print("Plotting module labrad connection failed")
+            print(e)
 
     def disconnectLabRAD(self):
         self.gen_cxn = False
@@ -99,8 +99,8 @@ class CommandCenter(QtGui.QMainWindow, Ui_CommandCenter):
                 self.listWidget_Plots.addItem(item)
 
         except Exception as inst:
-            print "Error: ", inst
-            print "Occured at line: ", sys.exc_traceback.tb_lineno
+            print("Error: ", inst)
+            print("Occured at line: ", sys.exc_traceback.tb_lineno)
 
     def formatListWidgetItem(self, ListWidgetItem, plotter):
         try:
@@ -121,8 +121,8 @@ class CommandCenter(QtGui.QMainWindow, Ui_CommandCenter):
                 ListWidgetItem.setBackgroundColor(Color_NoData[1])
                 ListWidgetItem.setToolTip('No Data Loaded')
         except Exception as inst:
-            print "Error: ",inst
-            print "Occured at line: ", sys.exc_traceback.tb_lineno
+            print("Error: ",inst)
+            print("Occured at line: ", sys.exc_traceback.tb_lineno)
 
     def removePlot(self, plotter):
         self.plotterList.remove(plotter) #Remove the plotter from the plotterlist
@@ -152,8 +152,8 @@ class CommandCenter(QtGui.QMainWindow, Ui_CommandCenter):
             #If the file selection is selected, have them be opened in Plotter objects
 
         except Exception as inst:
-            print "Error: ", inst
-            print "Occured at line: ", sys.exc_traceback.tb_lineno
+            print("Error: ", inst)
+            print("Occured at line: ", sys.exc_traceback.tb_lineno)
 
     def openFilesInPlotter(self, filelist, directory):
         for file in filelist:
@@ -177,8 +177,8 @@ class CommandCenter(QtGui.QMainWindow, Ui_CommandCenter):
                 self.refreshPlotList() #Refresh the plot list UI
 
             except Exception as inst:
-                print "Error: ",inst
-                print "Occured at line: ", sys.exc_traceback.tb_lineno
+                print("Error: ",inst)
+                print("Occured at line: ", sys.exc_traceback.tb_lineno)
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has the functions for opening the settings window"""

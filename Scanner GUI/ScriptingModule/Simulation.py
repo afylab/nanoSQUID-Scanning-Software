@@ -749,7 +749,7 @@ class ScriptSimulator(QtGui.QMainWindow, SimulatorWindowUI):
             self.outputs[k].extend(points[k])
 
         # Loop through all the other variables
-        for k in self.outputs.keys():
+        for k in list(self.outputs.keys()):
             if k not in keys:
                 const = self.outputs[k][-1] # get the last value, which is held constant
                 self.outputs[k].extend([const]*N) # Populate that output with constant values
@@ -827,7 +827,7 @@ class ScriptSimulator(QtGui.QMainWindow, SimulatorWindowUI):
 
         # Put everything in numpy format
         N = -1
-        for k in self.outputs.keys():
+        for k in list(self.outputs.keys()):
             self.outputs[k] = np.array(self.outputs[k]) # convert to numpy
             if N < 0:
                 N = len(self.outputs[k])

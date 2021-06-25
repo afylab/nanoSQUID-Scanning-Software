@@ -1,4 +1,4 @@
-import ConfigParser as cp
+import configparser as cp
 
 import numpy as np
 
@@ -16,12 +16,12 @@ class DVSafeConfigParser(cp.SafeConfigParser):
         """Write an .ini-format representation of the configuration state."""
         if self._defaults:
             fp.write("[%s]" % cp.DEFAULTSECT + newline)
-            for (key, value) in self._defaults.items():
+            for (key, value) in list(self._defaults.items()):
                 fp.write(("%s = %s" + newline) % (key, str(value).replace('\n', '\n\t')))
             fp.write(newline)
         for section in self._sections:
             fp.write("[%s]" % section + newline)
-            for (key, value) in self._sections[section].items():
+            for (key, value) in list(self._sections[section].items()):
                 if key != "__name__":
                     fp.write(("%s = %s" + newline) %
                              (key, str(value).replace('\n', '\n\t')))

@@ -7,7 +7,7 @@ import itertools
 siDict = {'T': 12, 'G' : 9, 'M' : 6, 'k' : 3, '' : 0, 'm' : -3, 'u' : -6, 'n' : -9, 'p' : -12}
 
 def get_key(val):
-    for key, value in siDict.iteritems(): #in python 3, switch to items.
+    for key, value in siDict.items(): #in python 3, switch to items.
          if val == value:
              return key
     return "key doesn't exist"
@@ -145,14 +145,14 @@ def processImageData(image, process):
         A = np.array([X*0+1, X, Y]).T
         B = image.flatten('F')
 
-        print "Print A: ", A
-        print "Print B: ", B
+        print("Print A: ", A)
+        print("Print B: ", B)
 
         coeff, r, rank, s = np.linalg.lstsq(A, B)
-        print "Print coeff: ", coeff
+        print("Print coeff: ", coeff)
 
-        for i in xrange(length):
-            for j in xrange(width):
+        for i in range(length):
+            for j in range(width):
                 image[j][i] = image[j][i] - np.dot(coeff, [1, x[j], y[i]])
         return image
 
@@ -167,8 +167,8 @@ def processImageData(image, process):
 
         coeff, r, rank, s = np.linalg.lstsq(A, B)
 
-        for i in xrange(length):
-            for j in xrange(width):
+        for i in range(length):
+            for j in range(width):
                 image[j][i] = image[j][i] - np.dot(coeff, [1, x[j], y[i], x[j]**2, y[i]**2, x[j]*y[i]])
 
         return image

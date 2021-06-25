@@ -150,7 +150,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.connectGPIBDevices()
 
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def connectRemoteServers(self):
@@ -172,7 +172,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.connectRemoteGPIBDevices()
 
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def displayAllConnectingGraphics(self, c = None):
@@ -194,14 +194,14 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
 
     def localConnectionsAttempted(self):
         localCxnAttempted = True
-        cxnAttempts = self.cxnAttemptLocalDictionary.values()
+        cxnAttempts = list(self.cxnAttemptLocalDictionary.values())
         for attempt in cxnAttempts:
             localCxnAttempted = localCxnAttempted * attempt
         return localCxnAttempted
 
     def remoteConnectionsAttempted(self):
         remoteCxnAttempted = True
-        cxnAttempts = self.cxnAttemptRemoteDictionary.values()
+        cxnAttempts = list(self.cxnAttemptRemoteDictionary.values())
         for attempt in cxnAttempts:
             remoteCxnAttempted = remoteCxnAttempted * attempt
         return remoteCxnAttempted
@@ -220,18 +220,18 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
     def disconnectLabRAD(self):
         try:
             yield self.connectionLocalDictionary['cxn'].anc350_server.disconnect()
-            print 'Disconnected ANC350'
+            print('Disconnected ANC350')
         except Exception as inst:
-            print inst
-            print 'Error disconnecting the ANC350 server.'
+            print(inst)
+            print('Error disconnecting the ANC350 server.')
 
         try:
             yield self.connectionLocalDictionary['cxn'].disconnect()
-            print 'Disconnected local'
+            print('Disconnected local')
             yield self.connectionRemoteDictionary['cxn'].disconnect()
-            print 'Disconnected remote'
+            print('Disconnected remote')
         except:
-            print 'Error disconnecting the Labrad connection server.'
+            print('Error disconnecting the Labrad connection server.')
 
         self.connectionLocalDictionary = self.emptyLocalDictionary.copy()
         self.connectionRemoteDictionary = self.emptyRemoteDictionary.copy()
@@ -589,7 +589,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['ser_server'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def connectRemoteLM510(self):
@@ -619,7 +619,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['lm510'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print inst
+            print(inst)
 
 #--------------------------------------------------------------------------------------------------------------------------#
 
@@ -655,7 +655,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.cxnAttemptLocalDictionary['gpib_server'] = True
             self.emitLocalConnectionDictionary()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def connectGPIBManager(self, c = None):
@@ -679,7 +679,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.cxnAttemptLocalDictionary['gpib_manager'] = True
             self.emitLocalConnectionDictionary()
         except Exception as inst:
-            print inst
+            print(inst)
 
 #--------------------------------------------------------------------------------------------------------------------------#
 
@@ -714,7 +714,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['gpib_server'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def connectRemoteGPIBManager(self, c = None):
@@ -738,7 +738,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['gpib_manager'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def connectRemoteIPS120(self):
@@ -773,7 +773,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['ips120'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def connectRemoteLS350(self, c = None):
@@ -803,7 +803,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['ls350'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print inst
+            print(inst)
 #--------------------------------------------------------------------------------------------------------------------------#
 
     """ The following section has the methods for choosing the datavault location."""
@@ -828,7 +828,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
                 dvExplorer.accepted.connect(lambda: self.OpenDataVaultFolder(self.reactor, dv, dvExplorer.directory))
 
         except Exception as inst:
-            print 'Error:', inst, ' on line: ', sys.exc_traceback.tb_lineno
+            print('Error:', inst, ' on line: ', sys.exc_traceback.tb_lineno)
 
     @inlineCallbacks
     def OpenDataVaultFolder(self, c, datavault, directory):
@@ -842,7 +842,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             self.lineEdit_Session.setText(self.session)
             self.newDVFolder.emit()
         except Exception as inst:
-            print 'Error:', inst, ' on line: ', sys.exc_traceback.tb_lineno
+            print('Error:', inst, ' on line: ', sys.exc_traceback.tb_lineno)
 
     def chooseSession_2(self):
         folder = str(QtGui.QFileDialog.getExistingDirectory(self, directory = 'C:\\Users\\cltschirhart\\Data Sets\\ScanData'))

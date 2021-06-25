@@ -70,7 +70,7 @@ class serialDeviceManager(object):
         serialPorts = self.ser.list_serial_ports()                                      # all serial ports found
         activePorts = [port for port in serialPorts if (port not in blacklistedPorts)]  # filter out ports present in blacklistedPorts
         print('\n')                                                                     #
-        print("Found %i active serial port(s): %s"%(len(activePorts),str(activePorts))) # Print out number, names of ports found
+        print(("Found %i active serial port(s): %s"%(len(activePorts),str(activePorts)))) # Print out number, names of ports found
         print('\n')                                                                     #
 
         for port in activePorts:
@@ -119,7 +119,7 @@ class serialDeviceManager(object):
         self.reg.cd(['','Servers'])
         if not (serverType in self.reg.dir()[0]):
             self.reg.mkdir(serverType)
-            print('Folder "%s" does not exist in "Servers." Creating it.'%serverType)
+            print(('Folder "%s" does not exist in "Servers." Creating it.'%serverType))
 
         # In the server specific folder, make sure there is a folder named "Links"
         self.reg.cd(['','Servers',serverType])
@@ -132,16 +132,16 @@ class serialDeviceManager(object):
 
         if not (deviceName in keys):                              # If this device (deviceName) doesn't have a key already, make it.
             self.reg.set(deviceName,(self.serialServerName,port)) # Write the port info.
-            print("Device %s of type %s not in registry. Adding it (port %s)..."%(deviceName,serverType,port))
+            print(("Device %s of type %s not in registry. Adding it (port %s)..."%(deviceName,serverType,port)))
 
         else:                                          # If this device already has an entry
             existingPort = self.reg.get(deviceName)[1] # Get the port that supposedly corresponds to this device
 
             if port == existingPort: # Device already in registry, port number agree.
-                print("Device %s of type %s is already in the registry with port %s"%(deviceName,serverType,port))
+                print(("Device %s of type %s is already in the registry with port %s"%(deviceName,serverType,port)))
 
             else: # Device already in registry, port numbers disagree.
-                print("Device %s of type %s is already in registry. Ports disagree. (OLD:%s, NEW:%s). Overwriting..."%(deviceName,serverType,existingPort,port))
+                print(("Device %s of type %s is already in registry. Ports disagree. (OLD:%s, NEW:%s). Overwriting..."%(deviceName,serverType,existingPort,port)))
                 self.reg.set(deviceName,(self.serialServerName,port)) # Write the port info.
 
         # [!!!!] ADD THIS FUNCTIONALITY
@@ -154,7 +154,7 @@ class serialDeviceManager(object):
         """Attempts to idenfiy any given port"""
 
         print("")                              # 
-        print("Connecting to port %s..."%port) # 
+        print(("Connecting to port %s..."%port)) # 
         self.ser.open(port)                    # connect to the given port
         time.sleep(PORT_DELAY)
         
@@ -177,30 +177,30 @@ class serialDeviceManager(object):
             time.sleep(IO_DELAY)                   # delay for processing
             response = self.ser.read_line()        # get response from device
             if response:
-                print("\tGot response: <%s>"%response)
+                print(("\tGot response: <%s>"%response))
                 break # if we got a non-empty response, don't try any more baudrates.
 
         if response.startswith('DCBOX_DUAL_AD5764'):                         # For a DCBOX, the response to *IDN? will be "DCBOX_DUAL_AD5764(NAME)"
-            print("\tPort %s identified as a DCBOX_DUAL_AD5764 device."%port)  # Print info that port has been identified
+            print(("\tPort %s identified as a DCBOX_DUAL_AD5764 device."%port))  # Print info that port has been identified
             self.regWrite(serverNameAD5764_DCBOX,response,port)              # Write a registry entry identifying this port as corresponding to a DCBOX_DUAL_AD5764 device
             self.ser.close() # close the port
             return True                                                      # Returning True tells the run() function that the port has been identified.
 
         elif response.startswith('ACBOX_DUAL_AD5764'):                       # For an ACBOX, the response to *IDN? will be "ACBOX_DUAL_AD5764(NAME)"
-            print("\tPort %s identified as an ACBOX_DUAL_AD5764 device."%port) # Print info that port has been identified
+            print(("\tPort %s identified as an ACBOX_DUAL_AD5764 device."%port)) # Print info that port has been identified
             self.regWrite(serverNameAD5764_ACBOX,response,port)              # Write a registry entry identifying this port as corresponding to an ACBOX_DUAL_AD5764 device.
             self.ser.close() # close the port
             return True                                                      #
 
         elif response.startswith('DCBOX_QUAD_AD5780'):
-            print('\tPort %s identified as a DCBOX_QUAD_AD5780 device.'%port)
+            print(('\tPort %s identified as a DCBOX_QUAD_AD5780 device.'%port))
             self.regWrite(serverNameAD5780_DCBOX,response,port)
             self.ser.close() # close the port
             return True
 
         else:                                                                # no response
-            print("\tPort %s cannot be identified as an AC/DC box."%port)      # or unrecognized response
-            print("\tResponded with <%s>"%response)
+            print(("\tPort %s cannot be identified as an AC/DC box."%port))      # or unrecognized response
+            print(("\tResponded with <%s>"%response))
 
         time.sleep(1) # sleep 1 second between attempts to identify. This prevents flooding the port with signals too quickly.
         
@@ -215,4 +215,4 @@ class serialDeviceManager(object):
 if __name__ == '__main__':
     sdm = serialDeviceManager()
     sdm.run()
-    raw_input("Finished. Press enter to exit.")
+    input("Finished. Press enter to exit.")

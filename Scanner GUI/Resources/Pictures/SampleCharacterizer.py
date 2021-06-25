@@ -1,4 +1,4 @@
-from __future__ import division
+
 import sys
 import twisted
 from PyQt4 import QtCore, QtGui, QtTest, uic
@@ -325,7 +325,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             
             self.SetupPlot_Data("MagneticField1D")#self.Plot_Data: a new set of data particularly for ploting
 
-            print 'Ramp to initial field ' + str(self.Dict_Variable['FieldSweep1D_MinField']) + 'T'
+            print('Ramp to initial field ' + str(self.Dict_Variable['FieldSweep1D_MinField']) + 'T')
             # yield self.rampMagneticField(self.current_field, self.Dict_Variable['FieldSweep1D_MinField'], self.Dict_Variable['FieldSweep1D_SweepSpeed'])
 
             self.formatted_data = []
@@ -334,11 +334,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
             # self.dac_read = self.FakeDATA(self.FourTerminal_ChannelOutput,self.FourTerminal_ChannelInput,[self.Dict_Variable['FourTerminal_MinVoltage']],[self.Dict_Variable['FourTerminal_MaxVoltage']],self.Dict_Variable['FourTerminal_Numberofstep'],self.Dict_Variable['FourTerminal_Delay'])
                 if self.AbortMagneticFieldSweep_Flag:
-                    print "Abort the Sweep."
+                    print("Abort the Sweep.")
                     self.AbortMagneticFieldSweep_Flag = False
                     break
 
-                print 'Set magnetic field  to: ' + str(self.FieldSweep1DXaxis[self.i])
+                print('Set magnetic field  to: ' + str(self.FieldSweep1DXaxis[self.i]))
                 # yield self.rampMagneticField(self.current_field, self.FieldSweep1DXaxis[self.i], self.Dict_Variable['FieldSweep1D_SweepSpeed'])
 
                 reading = []
@@ -372,7 +372,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             yield self.dv.add(self.formatted_data)
             
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
 
         self.unlockInterface()
         yield self.sleep(0.25)
@@ -413,7 +413,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                  
             yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.Dict_Variable['FourTerminal_MaxVoltage'],0.0,10000,100)
         except Exception as inst:
-            print inst
+            print(inst)
 
         self.unlockInterface()
         yield self.sleep(0.25)
@@ -442,11 +442,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             
             for self.i in range(0,self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps']):
                 if self.AbortMagneticFieldSweep_Flag:
-                    print "Abort the Sweep."
+                    print("Abort the Sweep.")
                     self.AbortMagneticFieldSweep_Flag = False
                     break
 
-                print 'Starting sweep with magnetic field set to: ' + str(self.MagneticFieldSweepPoints[self.i])
+                print('Starting sweep with magnetic field set to: ' + str(self.MagneticFieldSweepPoints[self.i]))
 
                 #Do this properly considering the edge cases
                 yield self.rampMagneticField(self.current_field, self.MagneticFieldSweepPoints[self.i], self.Dict_Variable['FourTerminalMagneticFieldSetting_FieldSweepSpeed'])
@@ -485,11 +485,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 yield self.Ramp1_Display(self.FourTerminal_ChannelOutput[0],self.Dict_Variable['FourTerminal_MaxVoltage'],0.0,10000,100)
 
             if self.BacktoZeroFourTerminalMagneticFieldSweep_Flag:
-                print "Ramp Field Back to Zero"
+                print("Ramp Field Back to Zero")
                 yield self.rampMagneticField(self.current_field, 0.0, self.Dict_Variable['FourTerminalMagneticFieldSetting_FieldSweepSpeed'])
 
         except Exception as inst:
-            print inst
+            print(inst)
 
         self.unlockInterface()
         yield self.sleep(0.25)
@@ -527,7 +527,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             yield self.ips.set_activity(1) #Put ips in go to setpoint mode
             yield self.ips.set_control(2)
             
-            print 'Setting field to ' + str(end)
+            print('Setting field to ' + str(end))
             while True:
                 yield self.ips.set_control(3)#
                 self.current_field = yield self.ips.read_parameter(7)#Read the field
@@ -545,10 +545,10 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                     yield self.ips.set_activity(1)
                     yield self.ips.set_control(2)
                     t0 = time.time()
-                    print 'restarting loop'
+                    print('restarting loop')
         
         elif self.ami != None:
-            print 'Setting field to ' + str(end)
+            print('Setting field to ' + str(end))
             self.ami.conf_field_targ(end)
             self.ami.ramp()
             target_field = float(self.ami.get_field_targ())
@@ -556,7 +556,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             while abs(target_field - actual_field) > 1e-3:
                 time.sleep(2)
                 actual_field = float(self.ami.get_field_mag())
-            print 'Field set to ' + str(end)
+            print('Field set to ' + str(end))
 
         self.current_field = end
         
@@ -565,10 +565,10 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             p = QtGui.QPixmap.grabWindow(self.winId())
             a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
             if not a:
-                print "Error saving Scan data picture"
+                print("Error saving Scan data picture")
         except Exception as inst:
-            print 'Scan error: ', inst
-            print 'on line: ', sys.exc_traceback.tb_lineno
+            print('Scan error: ', inst)
+            print('on line: ', sys.exc_traceback.tb_lineno)
 
     @inlineCallbacks
     def update_data(self):
@@ -599,7 +599,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 formatted_data.append((1, j, i, x_voltage[::-1][j], y_voltage[::-1][j], self.data_retrace[0][j,i], self.data_retrace[1][j,i], self.data_retrace[2][j,i]))
                 yield self.dv.add(formatted_data)
         except:
-            print "This is an error message!"
+            print("This is an error message!")
 
 ##########################Update All the parameters#################
 
@@ -632,7 +632,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
     def UpdateFourTerminal_Numberofstep(self):
         dummystr=str(self.lineEdit_FourTerminal_Numberofstep.text())   #read the text
         dummyval=readNum(dummystr, self , False)
-        print self.Dict_Variable['FourTerminal_MaxVoltage'], self.Dict_Variable['FourTerminal_MinVoltage']
+        print(self.Dict_Variable['FourTerminal_MaxVoltage'], self.Dict_Variable['FourTerminal_MinVoltage'])
         if isinstance(dummyval,float):
             if self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] == "Numberofsteps":   #based on status, dummyval is deterimined and update the Numberof steps parameters
                 self.Dict_Variable['FourTerminal_Numberofstep']=int(round(dummyval)) #round here is necessary, without round it cannot do 1001 steps back and force
@@ -796,7 +796,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
             yield self.ClearBufferedData()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def Buffer_Ramp_Display(self,ChannelOutput,ChannelInput,Min,Max,Numberofsteps,Delay):  #this is a function that morph buffer_ramp and add codes for controlling the display
@@ -807,13 +807,13 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             
             returnValue(data)
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def ClearBufferedData(self): #Needs to be called after a long dac.ramp1 (as the ramp function does not read all the data)
         a = yield self.dac.read()
         while a != '':
-            print a
+            print(a)
             a = yield self.dac.read() 
 
     def UpdatecurrentDAC_Output(self, Port, voltage): #This is a function that update the current Port Output within the software
@@ -844,7 +844,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         try:
             yield self.Ramp1_Display(ChannelPort,self.currentDAC_Output[ChannelPort],self.setpointDAC_Output[ChannelPort],10000,100)
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
 
     def SetupFourTerminalSweepSetting(self,Status):
         #Sets up the lists of inputs and outputs for the dac buffer ramp as well as sets up the names for the columns on datavault
@@ -939,10 +939,10 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             (Magnetic Field Index), Magnetic Field
             """
             if Status != 'MagneticField1D':
-                self.Plot_Data=[range(0,self.Dict_Variable['FourTerminal_Numberofstep'])]
+                self.Plot_Data=[list(range(0,self.Dict_Variable['FourTerminal_Numberofstep']))]
                 self.Plot_Data.append(self.FourTerminalXaxis)
             else:
-                self.Plot_Data=[range(0,self.Dict_Variable['FieldSweep1D_Numberofstep'])]
+                self.Plot_Data=[list(range(0,self.Dict_Variable['FieldSweep1D_Numberofstep']))]
                 self.Plot_Data.append(self.FieldSweep1DXaxis)
 
             self.Plot_Data.append([])
@@ -951,7 +951,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 self.Plot_Data.append([])#Resistance
                 self.Plot_Data.append([])#Conductance
             if Status == "Magnetic Field":
-                self.Plot_Data.append([range(0,self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps'])])
+                self.Plot_Data.append([list(range(0,self.Dict_Variable['FourTerminalMagneticFieldSetting_Numberofsteps']))])
                 self.Plot_Data.append(self.MagneticFieldSweepPoints)
             if Status == 'MagneticField1D' and self.FourTerminal_Input2!=4:
                 self.Plot_Data[2] = np.zeros(self.Dict_Variable['FieldSweep1D_Numberofstep'])
@@ -959,7 +959,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 self.Plot_Data[4] = np.zeros(self.Dict_Variable['FieldSweep1D_Numberofstep'])
                 self.Plot_Data[5] = np.zeros(self.Dict_Variable['FieldSweep1D_Numberofstep'])
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
 
     def Convert_Real_Voltage(self,reading): #Take the DAC reading and convert it to real unit (V)
         Real_Voltage=float(reading)/10.0*self.MultiplierVoltage

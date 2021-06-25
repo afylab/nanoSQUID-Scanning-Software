@@ -1,4 +1,4 @@
-from __future__ import division
+
 import sys
 from PyQt4 import QtCore, QtGui, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
@@ -348,11 +348,11 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
                 self.blink_server = yield cxn.ad5764_dcbox
                 yield self.blink_server.select_device(dict['devices']['system']['blink device'])
-                print 'DC BOX Blink Device'
+                print('DC BOX Blink Device')
             elif dict['devices']['system']['blink device'].startswith('DA'):
                 self.blink_server = yield cxn.dac_adc
                 yield self.blink_server.select_device(dict['devices']['system']['blink device'])
-                print 'DAC ADC Blink Device'
+                print('DAC ADC Blink Device')
 
             #Set all the channels as specified by the DeviceSelect module
             self.blinkDevice = dict['devices']['system']['blink device']
@@ -371,9 +371,9 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         except Exception as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-            print 'nsot char labrad connect', inst
+            print('nsot char labrad connect', inst)
             exc_type, exc_obj, exc_tb = sys.exc_info()
-            print 'line num ', exc_tb.tb_lineno
+            print('line num ', exc_tb.tb_lineno)
 
     def disconnectLabRAD(self):
         self.comboBox_magnetPower.removeItem(0)
@@ -741,7 +741,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         for folder in file_info[0][1:]:
             session = session + '\\' + folder
         self.lineEdit_ImageDir.setText(r'\.datavault' + session) #Update the GUI element showing the dataset directory
-        print 'DataVault setup complete'
+        print('DataVault setup complete')
 
         #For the data of the speed, determine the position of the plot and the scale factors
         self.plt_pos = [b_min, v_min] #Position of the bottom left corner of the plot
@@ -777,7 +777,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 break
 
             #Ramp the magnetic field from the current field to
-            print 'Ramping field to ' + str(b_vals[i])+'.'
+            print('Ramping field to ' + str(b_vals[i])+'.')
             if i == 0:
                 #For the first field point, assume we were at zero field to begin with
                 yield self.setMagneticField(0, b_vals[0], b_rate)
@@ -789,7 +789,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 yield self.abortSweepFunc(b_vals[i], v_min)
                 break
 
-            print 'Starting sweep with magnetic field set to: ' + str(b_vals[i])
+            print('Starting sweep with magnetic field set to: ' + str(b_vals[i]))
 
             #Do the voltage sweep. The function takes into account the sweep mode
             trace, retrace = yield self.rampVoltage(v_min, v_max, v_pnts, delay, self.sweepParamDict['sweep mode'])
@@ -824,7 +824,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             #Go to zero field and set power supply voltage setpoint to zero.
             yield self.setMagneticField(b_vals[-1], 0, b_rate)
 
-        print 'Sweep complete'
+        print('Sweep complete')
         #unlock the GUI elements now that the sweep is complete
         self.unlockSweepParameters()
         #Wait until all plots are appropriately updated before saving screenshot
@@ -877,12 +877,12 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 pass
 
             #Sweeps field from B_i to B_f
-            print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
+            print('Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.')
             yield self.dac_toe.buffer_ramp([self.settingsDict['toellner current']-1, self.settingsDict['toellner current']-1],[0],[v_start, V_initial],[v_end, V_setpoint], sweep_steps, magnet_delay)
 
             self.newToeField.emit(B_f, B_f/IB_conv, V_setpoint)
         except Exception as inst:
-            print 'SF, ', str(inst )
+            print('SF, ', str(inst ))
 
     @inlineCallbacks
     def ipsSetField(self, B_f, B_rate):
@@ -893,7 +893,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         yield self.ips.set_activity(1) #Set the IPS to sweep field if it is not yet at the target field
         yield self.ips.set_control(2) #Set the IPS120 to local communication so that it can be used IRL
 
-        print 'Setting field to ' + str(B_f)
+        print('Setting field to ' + str(B_f))
 
         #Keep track of time since the field started changing
         t0 = time.time()
@@ -921,7 +921,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
                 yield self.ips.set_activity(1)
                 yield self.ips.set_control(2)
                 t0 = time.time()
-                print 'restarting loop'
+                print('restarting loop')
 
             yield self.sleep(0.25)
 
@@ -944,15 +944,15 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         if self.settingsDict['sweep mode'] == 0: #This corresponds to min to max sweeps
             #If blink mode is enabled, blink before the voltage sweep step
             if self.sweepParamDict['blink mode'] == 0:
-                print 'Blinking prior to sweep'
+                print('Blinking prior to sweep')
                 yield self.blink()
 
             #Sweep from minimum to maximum bias voltage
-            print 'Ramping up nSOT bias voltage from ' + str(v_min) + ' to ' + str(v_max) + '.'
+            print('Ramping up nSOT bias voltage from ' + str(v_min) + ' to ' + str(v_max) + '.')
             trace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [v_min], [v_max], pnts, delay)
 
             #Sweep from maximum to minimum bias voltage
-            print 'Ramping nSOT bias voltage back down from ' + str(v_max) + ' to ' + str(v_min) + '.'
+            print('Ramping nSOT bias voltage back down from ' + str(v_max) + ' to ' + str(v_min) + '.')
             retrace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [v_max], [v_min], pnts, delay)
 
             #Flip the retrace data so that the ith point corresponds to the same voltage as the ith point of the trace data
@@ -967,28 +967,28 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
             #If blink mode is enabled, blink before the voltage sweep step
             if self.sweepParamDict['blink mode'] == 0:
-                print 'Blinking prior to sweep'
+                print('Blinking prior to sweep')
                 yield self.blink()
 
             #Sweep from zero volts to maximum bias voltage
-            print 'Ramping up nSOT bias voltage from zero to ' + str(v_max) + '.'
+            print('Ramping up nSOT bias voltage from zero to ' + str(v_max) + '.')
             up_trace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [0], [v_max], positive_points, delay)
 
             #Sweep from maximum bias voltage to zero volts and blink
-            print 'Ramping nSOT bias voltage back down from ' + str(v_max) + ' to zero.'
+            print('Ramping nSOT bias voltage back down from ' + str(v_max) + ' to zero.')
             up_retrace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [v_max], [0], positive_points, delay)
 
             #If blink mode is enabled, blink before the voltage sweep step
             if self.sweepParamDict['blink mode'] == 0:
-                print 'Blinking prior to sweep'
+                print('Blinking prior to sweep')
                 yield self.blink()
 
             #Sweep from zero volts to minimum bias voltage
-            print 'Ramping down nSOT bias voltage from zero to ' + str(v_min) + '.'
+            print('Ramping down nSOT bias voltage from zero to ' + str(v_min) + '.')
             down_trace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [0], [v_min], negative_points, delay)
 
             #Sweep from minimum bias voltage to zero volts
-            print 'Ramping nSOT bias voltage up down from ' + str(v_min) + ' to zero.'
+            print('Ramping nSOT bias voltage up down from ' + str(v_min) + ' to zero.')
             down_retrace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [v_min], [0], negative_points, delay)
 
             trace = down_trace[::-1] + up_trace
@@ -998,15 +998,15 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
 
     @inlineCallbacks
     def abortSweepFunc(self, bVal, vVal):
-        print 'Aborting sweep from applied field of ', bVal,'T and nSOT bias of ', vVal, 'V'
-        print 'Ramping nSOT bias to zero'
+        print('Aborting sweep from applied field of ', bVal,'T and nSOT bias of ', vVal, 'V')
+        print('Ramping nSOT bias to zero')
         #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
         if vVal != 0:
             yield self.dac.buffer_ramp([self.settingsDict['nsot bias output'] - 1], [0], [vVal], [0], np.absolute(int(vVal * 1000)), 1000)
 
         #if the zero field checkbox is checked zero the field
         if self.checkBox_ZeroField.isChecked():
-            print 'Sweeping magnetic field back to zero'
+            print('Sweeping magnetic field back to zero')
             yield self.setMagneticField(bVal, 0, self.sweepParamDict['B_rate'])
 
         self.unlockSweepParameters()
@@ -1099,13 +1099,13 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         if self.liveRetracePlotStatus is False:
             if self.tab_retrace.currentIndex() == 0:
                 posRetrace = self.vRetraceLine.value()
-                print posRetrace
+                print(posRetrace)
                 self.vCutRetracePos.setValue(posRetrace)
                 self.updateBottomRetracePlot()
 
             elif self.tab_retrace.currentIndex() == 1:
                 posRetrace = self.vRetraceNoiseLine.value()
-                print posRetrace
+                print(posRetrace)
                 self.vCutRetracePos.setValue(posRetrace)
                 self.updateBottomRetracePlot()
 
@@ -1471,10 +1471,10 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
             p = QtGui.QPixmap.grabWindow(self.winId())
             a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
             if not a:
-                print "Error saving nSOT data picture"
+                print("Error saving nSOT data picture")
         except Exception as inst:
-            print 'nSOTChar error: ', inst
-            print 'on line: ', sys.exc_traceback.tb_lineno
+            print('nSOTChar error: ', inst)
+            print('on line: ', sys.exc_traceback.tb_lineno)
 
     def updateDataVaultDirectory(self):
         curr_folder = yield self.gen_dv.cd()
@@ -1677,7 +1677,7 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         if not self.data is None:
             xVals = [x[1] for x in self.data]
             yVals = [x[2] for x in self.data]
-            absxVals = map(abs, xVals)
+            absxVals = list(map(abs, xVals))
             xzeroindex = absxVals.index(np.amin(absxVals))
             xscale = float((np.amax(xVals)) - float(np.amin(xVals))) / float((len(xVals) - 1))
             index = int(round(self.IcLine.value() / xscale))
@@ -1787,21 +1787,21 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                     session = session + '\\' + folder
                 self.lineEdit_ImageDir.setText(r'\.datavault' + session)
 
-                print 'DataVault setup complete'
+                print('DataVault setup complete')
 
                 yield self.dac.set_voltage(DAC_out, 0)
                 try:
                     yield self.window.blink()
                 except Exception as inst:
-                    print inst
-                    print 'Blinks the problem yo'
+                    print(inst)
+                    print('Blinks the problem yo')
 
                 if biasMin != 0:
                     yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [0], [biasMin], abs(int(biasMin * 1000)), 1000)
                     yield self.sleep(1)
 
                 #Do sweep
-                print 'Ramping up nSOT bias voltage from ' + str(biasMin) + ' to ' + str(biasMax) + '.'
+                print('Ramping up nSOT bias voltage from ' + str(biasMin) + ' to ' + str(biasMax) + '.')
                 dac_read = yield self.dac.buffer_ramp([DAC_out], [DAC_in_sig, DAC_in_noise], [biasMin], [biasMax], biasPoints, delay)
 
                 biasvoltage = np.linspace(biasMin, biasMax, biasPoints)
@@ -1822,7 +1822,7 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
                 self.push_startSweep.setEnabled(True)
 
             except Exception as inst:
-                print inst
+                print(inst)
         elif self.btnAction == 'reset':
             self.toggleStartBtn('sweep')
 
@@ -1832,10 +1832,10 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
             #grab the sessionFolder name from the main window
             a = p.save(self.window.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
             if not a:
-                print "Error saving nSOT Prelim data picture"
+                print("Error saving nSOT Prelim data picture")
         except Exception as inst:
-            print 'nSOTChar Prelim error: ', inst
-            print 'on line: ', sys.exc_traceback.tb_lineno
+            print('nSOTChar Prelim error: ', inst)
+            print('on line: ', sys.exc_traceback.tb_lineno)
 
     def sleep(self, secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows

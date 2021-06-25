@@ -79,11 +79,11 @@ class CPSCServer(LabradServer):
         #no idea how or why this sometimes takes three inputs, but it does. None of them are important. 
         resp = yield subprocess.check_output("cacli modlist")
         if resp.startswith("STATUS : INQUIRY OF INSTALLED MODULES"):
-            print "CPSC detected. Communication active."
+            print("CPSC detected. Communication active.")
             self.device_detected = True
             returnValue(True)
         else:
-            print "CPSC not detected. Ensure controller is connected to computer and channel is set to EXT, then run detect device method." 
+            print("CPSC not detected. Ensure controller is connected to computer and channel is set to EXT, then run detect device method.") 
             self.device_detected = False
             self.device_list = ['ADDR','CHANNEL','DEVICE NAME','TAG', 'TYPE INFO']
             returnValue(False)
@@ -95,7 +95,7 @@ class CPSCServer(LabradServer):
             resp = yield subprocess.check_output("cacli modlist")
         else:
             resp = "Device not connected."
-            print "Device not connected. "
+            print("Device not connected. ")
             #Eventually make this actually throw an error instead of printing something
         returnValue(resp)
             
@@ -107,7 +107,7 @@ class CPSCServer(LabradServer):
             resp = yield subprocess.check_output("cacli DESC "+str(ADDR))
         else:
             resp = "Device not connected."
-            print "Device not connected. "
+            print("Device not connected. ")
             #Eventually make this actually throw an error instead of printing something
         returnValue(resp)
         
@@ -154,7 +154,7 @@ class CPSCServer(LabradServer):
                  str(REL) + " " + str(STEPS) + " " + str(TORQUE))
         else:
             resp = "Device not connected."
-            print "Device not connected. "
+            print("Device not connected. ")
             #Eventually make this actually throw an error instead of printing something
         returnValue(resp)
         
@@ -166,7 +166,7 @@ class CPSCServer(LabradServer):
             #print resp
         else:
             resp = "Device not connected."
-            print "Device not connected. "
+            print("Device not connected. ")
         returnValue(resp)
         
     @setting(106, ADDR = 'i', returns = '*s')
@@ -180,7 +180,7 @@ class CPSCServer(LabradServer):
             #print resp
         else:
             resp = "Device not connected."
-            print "Device not connected. "
+            print("Device not connected. ")
         returnValue(resp)
         
     @setting(107, returns = 'v[]')
@@ -214,7 +214,7 @@ class CPSCServer(LabradServer):
             VEC = np.dot(self.T1,XYZ)
             VEC = self.adjustForWeight(VEC)
             VEC = [round(x) for x in VEC]
-            print VEC
+            print(VEC)
             
             #have each cycle take ~1 second
             cycle_size = int(FREQ/2)
@@ -243,9 +243,9 @@ class CPSCServer(LabradServer):
             VEC_cycle = [int(x) for x in np.multiply(VEC, cycle_size / max)]
             remainder  = [int(x) for x in np.subtract(VEC, np.multiply(VEC_cycle, num_cycles))]
             
-            print "Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively."
-            print "This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps."
-            print "And a final cycle with the remainder of " + str(remainder) + " steps."
+            print("Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively.")
+            print("This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps.")
+            print("And a final cycle with the remainder of " + str(remainder) + " steps.")
 
             VEC_cycle = np.abs(VEC_cycle)
             remainder = np.abs(remainder)
@@ -278,7 +278,7 @@ class CPSCServer(LabradServer):
             
             returnValue('Success!')
         except Exception as inst:
-            print inst
+            print(inst)
             
     @setting(111, ADDR = 'i', TEMP = 'i', FREQ = 'i', REL = 'i', X = 'v[]', TORQUE = 'i', returns = 's')
     def move_x(self,c, ADDR, TEMP, FREQ, REL, X, TORQUE = None):
@@ -291,8 +291,8 @@ class CPSCServer(LabradServer):
         VEC = np.dot(self.T1,[X,0,0])
         VEC = self.adjustForWeight(VEC)
         VEC = [round(x) for x in VEC]
-        print VEC
-        print 'Knob 2 should always need to move 0 for this. If it is not showing 0, then something went werd'
+        print(VEC)
+        print('Knob 2 should always need to move 0 for this. If it is not showing 0, then something went werd')
         #have each cycle take ~1 second
         cycle_size = int(FREQ/2)
         
@@ -313,9 +313,9 @@ class CPSCServer(LabradServer):
         VEC_cycle = [int(x) for x in np.multiply(VEC, cycle_size / max)]
         remainder  = [int(x) for x in np.subtract(VEC, np.multiply(VEC_cycle, num_cycles))]
         
-        print "Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively."
-        print "This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps."
-        print "And a final cycle with the remainder of " + str(remainder) + " steps."
+        print("Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively.")
+        print("This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps.")
+        print("And a final cycle with the remainder of " + str(remainder) + " steps.")
         
         VEC_cycle = np.abs(VEC_cycle)
         remainder = np.abs(remainder)
@@ -353,7 +353,7 @@ class CPSCServer(LabradServer):
         VEC = np.dot(self.T1,[0,Y,0])
         VEC = self.adjustForWeight(VEC)
         VEC = [round(x) for x in VEC]
-        print VEC
+        print(VEC)
         
         #Have each cycle take ~1.5 seconds
         cycle_size = int(FREQ/2)
@@ -376,9 +376,9 @@ class CPSCServer(LabradServer):
         VEC_cycle = [int(x) for x in np.multiply(VEC, cycle_size / max)]
         remainder  = [int(x) for x in np.subtract(VEC, np.multiply(VEC_cycle, num_cycles))]
         
-        print "Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively."
-        print "This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps."
-        print "And a final cycle with the remainder of " + str(remainder) + " steps."
+        print("Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively.")
+        print("This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps.")
+        print("And a final cycle with the remainder of " + str(remainder) + " steps.")
 
         VEC_cycle = np.abs(VEC_cycle)
         remainder = np.abs(remainder)
@@ -423,7 +423,7 @@ class CPSCServer(LabradServer):
         VEC = np.dot(self.T1,[0.0,0.0,Z])
         VEC = self.adjustForWeight(VEC)
         VEC = [round(x) for x in VEC]
-        print VEC
+        print(VEC)
         
         #Have each cycle take ~1.5 seconds
         cycle_size = float(FREQ/2)
@@ -446,9 +446,9 @@ class CPSCServer(LabradServer):
         VEC_cycle = [int(x) for x in np.multiply(VEC, cycle_size / max)]
         remainder  = [int(x) for x in np.subtract(VEC, np.multiply(VEC_cycle, num_cycles))]
         
-        print "Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively."
-        print "This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps."
-        print "And a final cycle with the remainder of " + str(remainder) + " steps."
+        print("Taking " + str(VEC) +  " steps in channel 1, 2 and 3 respectively.")
+        print("This will be done over " + str(num_cycles) + " cycles of " + str(VEC_cycle) + " steps.")
+        print("And a final cycle with the remainder of " + str(remainder) + " steps.")
         
         VEC_cycle = np.abs(VEC_cycle)
         remainder = np.abs(remainder)

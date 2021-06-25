@@ -41,14 +41,14 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.internet.reactor import callLater
 from labrad.errors import DeviceNotSelectedError
 import labrad.units as units
-import visa
+import pyvisa as visa
 
 
 """
 ### BEGIN NODE INFO
 [info]
 name = GPIB Bus
-version = 1.3.2-no-refresh
+version = 1.5.0-no-refresh
 description = Gives access to GPIB devices via pyvisa.
 instancename = %LABRADNODE% GPIB Bus
 
@@ -61,6 +61,9 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+
+
+KNOWN_DEVICE_TYPES = ('GPIB', 'TCPIP', 'USB')
 
 
 class GPIBBusServer(LabradServer):
@@ -107,31 +110,25 @@ class GPIBBusServer(LabradServer):
             deletions = set(self.devices.keys()) - set(addresses)
             for addr in additions:
                 try:
-                    if addr.startswith('GPIB'):
-                        instName = addr
-                    elif addr.startswith('TCPIP'):
-                        instName = addr
-                    elif addr.startswith('USB'):
-                        instName = addr + '::INSTR'
-                    else:
+                    if not addr.startswith(KNOWN_DEVICE_TYPES):
                         continue
-                    instr = rm.get_instrument(instName)
+                    instr = rm.open_resource(addr) #rm.get_instrument(addr)
                     instr.write_termination = ''
                     instr.clear()
                     if addr.endswith('SOCKET'):
                         instr.write_termination = '\n'
                     self.devices[addr] = instr
                     self.sendDeviceMessage('GPIB Device Connect', addr)
-                except Exception, e:
-                    print 'Failed to add ' + addr + ':' + str(e)
+                except Exception as e:
+                    print('Failed to add ' + addr + ':' + str(e))
             for addr in deletions:
                 del self.devices[addr]
                 self.sendDeviceMessage('GPIB Device Disconnect', addr)
-        except Exception, e:
-            print 'Problem while refreshing devices:', str(e)
+        except Exception as e:
+            print('Problem while refreshing devices:', str(e))
 
     def sendDeviceMessage(self, msg, addr):
-        print msg + ': ' + addr
+        print(msg + ': ' + addr)
         self.client.manager.send_named_message(msg, (self.name, addr))
 
     def initContext(self, c):
@@ -168,12 +165,19 @@ class GPIBBusServer(LabradServer):
         """Write a string to the GPIB bus."""
         self.getDevice(c).write(data)
 
+    @setting(8, data='y', returns='')
+    def write_raw(self, c, data):
+        """Write a string to the GPIB bus."""
+        self.getDevice(c).write_raw(data)
+
     @setting(4, n_bytes='w', returns='s')
     def read(self, c, n_bytes=None):
         """Read from the GPIB bus.
 
-        If specified, reads only the given number of bytes.
-        Otherwise, reads until the device stops sending.
+        Termination characters, if any, will be stripped.
+        This includes any bytes corresponding to termination in
+        binary data. If specified, reads only the given number
+        of bytes. Otherwise, reads until the device stops sending.
         """
         instr = self.getDevice(c)
         if n_bytes is None:
@@ -192,7 +196,24 @@ class GPIBBusServer(LabradServer):
         instr = self.getDevice(c)
         instr.write(data)
         ans = instr.read_raw()
+        if isinstance(ans, bytes):
+            ans = ans.decode('utf-8') # convert from bytes without adding extra characters to string
         return str(ans).strip()
+
+    @setting(7, n_bytes='w', returns='y')
+    def read_raw(self, c, n_bytes=None):
+        """Read raw bytes from the GPIB bus.
+
+        Termination characters, if any, will not be stripped.
+        If n_bytes is specified, reads only that many bytes.
+        Otherwise, reads until the device stops sending.
+        """
+        instr = self.getDevice(c)
+        if n_bytes is None:
+            ans = instr.read_raw()
+        else:
+            ans = instr.read_raw(n_bytes)
+        return bytes(ans)
 
     @setting(20, returns='*s')
     def list_devices(self, c):
@@ -204,33 +225,6 @@ class GPIBBusServer(LabradServer):
         """ manually refresh devices """
         self.refreshDevices()
 
-    @setting(101, 'Read Termination', termchars='s', returns='')
-    def read_termination(self, c, termchars=''):
-        """Set the end characters for the read operation."""
-        instr = self.getDevice(c)
-        instr.read_termination = termchars
-
-    @setting(102, 'Write Termination', termchars='s', returns='')
-    def  write_termination(self, c, termchars=''):
-        """Set the end characters for the write operation."""
-        instr = self.getDevice(c)
-        instr.write_termination = termchars
-
-    @setting(103, 'Add GPIB Device', address='s', write_term='s', read_term='s', returns='')
-    def add_gpib_device(self, c, address=None, write_term='', read_term=''):
-        """Add a GPIB device with a given address, read and write terminations."""
-        try:
-            self.rm = visa.ResourceManager()
-            try:
-                instr = self.rm.open_resource(address, read_termination=read_term,
-                        write_termination=write_term, open_timeout=10.0)
-                instr.clear()
-                self.mydevices[address] = instr
-                self.sendDeviceMessage('GPIB Device Connect', address)
-            except Exception, e:
-                print('Failed to add %s: %s' %(address, str(e)))
-        except Exception, e:
-            print('Problem while adding device %s: %s' %(address, str(e)))
 
 __server__ = GPIBBusServer()
 

@@ -1,4 +1,4 @@
-from __future__ import division
+
 import os
 import sys
 from PyQt4 import QtCore, QtGui, uic
@@ -125,13 +125,13 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
             #Signal that the plot now has data, and the Command Center should refresh the plot list
             self.plotInfoChanged.emit()
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     @inlineCallbacks
     def loadDataInfo(self, file, directory):
         #Loads the specified data vault file from the specified directory
-        print "Loading file: ", file, " from directory:  ", directory
+        print("Loading file: ", file, " from directory:  ", directory)
         try:
             #Create a new dv connection so that multiple plotters can load data simultaneously
             from labrad.wrappers import connectAsync
@@ -161,8 +161,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
 
             returnValue(dv)
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def parseVariables(self, variables):
         #Reformat the variable information.
@@ -227,8 +227,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
                 rawData = self.removeNaN(rawData)
                 self.updatePlotterStatus('NaN detected in data. Check data integrity')
         except Exception as inst:
-            print 'Following error was thrown: ', inst
-            print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+            print('Following error was thrown: ', inst)
+            print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     @inlineCallbacks
     def getData(self, dv):
@@ -262,8 +262,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
 
             returnValue(rawData)
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def removeNaN(self, data):
         try:
@@ -277,8 +277,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
             return raw
 
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def splitTraceRetraceData(self, rawData):
         try:
@@ -296,8 +296,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
             return self.traceData
 
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def split(self, arr, cond):
         return [arr[cond], arr[~cond]]
@@ -321,8 +321,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
             self.connectUi()
             self.moveDefault()
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def setupAdditionalUi(self):
         self.setupPlots()
@@ -543,8 +543,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
                 self.comboBox_zAxis.setCurrentIndex(0)#Default
 
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def refreshInterface(self):
         self.label_FileName.setText(self.dataInfoDict['file'])
@@ -603,8 +603,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
             self.refreshInterface()
 
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def setPlotAxesNames(self):
         self.mainPlotView.setLabel('left', text=self.comboBox_yAxis.currentText())
@@ -645,8 +645,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
                 self.plotParamsDict['yPoints'] = np.amax(self.data[:, yIndex]) + 1
                 self.plotParamsDict['yscale'] = (self.plotParamsDict['yMax']-self.plotParamsDict['yMin']) / (self.plotParamsDict['yPoints'] - 1)
         except Exception as inst:
-            print 'Following error was thrown: ', inst
-            print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+            print('Following error was thrown: ', inst)
+            print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def formatPlotData(self):
         xIndex = self.comboBox_xAxis.currentIndex()
@@ -671,8 +671,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
 
                 self.plotParamsDict['xPoints'], self.plotParamsDict['yPoints'] = len(self.PlotData[0]), 0
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def determineSweepDirection(self):
         #In a 2D dataset, either x is held constant as y sweeps through a range of values or vice Average_SelectedArea
@@ -747,8 +747,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
                 self.verticalposition=val
             self.ChangeLineCutValue("")
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def SetupLineCuthorizontalposition(self):
         try:
@@ -757,8 +757,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
                 self.horizontalposition=val
             self.ChangeLineCutValue("")
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def ChangeLineCutValue(self, LineCut):
         try:
@@ -772,16 +772,16 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
             self.MoveLineCut()
             self.updateLineCutPlot()
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def MoveLineCut(self):
         try:
             self.vLine.setValue(float(self.verticalposition))
             self.hLine.setValue(float(self.horizontalposition))
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def clearLinecutPlots(self):
         self.XZPlot.clear()
@@ -809,8 +809,8 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
                 self.LineCutYZYVals = np.linspace(self.plotParamsDict['yMin'], self.plotParamsDict['yMax'], num = self.plotParamsDict['yPoints'])
                 self.YZPlot.plot(x = self.LineCutYZXVals, y = self.LineCutYZYVals, pen = 0.5)
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions for subtracting backgrounds from 2D data"""
@@ -866,7 +866,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
     def matPlot(self):
         if (not self.PlotData is None):
             fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
-            print fold
+            print(fold)
             if fold:
                 self.genMatFile(fold)
 
@@ -1244,8 +1244,8 @@ class Plot1D(QtGui.QMainWindow, Ui_Plotter1D):
 
         self.unitsDict = {
             'Optimal Bias': 'V',
-            'Optimal Sensitivity': u'\u221a' + 'Hz' + '/T',
-            'Optimal Noise': 'T/' + u'\u221a' + 'Hz'
+            'Optimal Sensitivity': '\u221a' + 'Hz' + '/T',
+            'Optimal Noise': 'T/' + '\u221a' + 'Hz'
         }
 
         self.lineVisible = False
@@ -1303,8 +1303,8 @@ class Plot1D(QtGui.QMainWindow, Ui_Plotter1D):
             self.lineObject.setValue(float(self.position))
             self.updateLinecutValue()
         except Exception as inst:
-                print 'Following error was thrown: ', inst
-                print 'Error thrown on line: ', sys.exc_traceback.tb_lineno
+                print('Following error was thrown: ', inst)
+                print('Error thrown on line: ', sys.exc_traceback.tb_lineno)
 
     def setupPlot(self):
         self.plot1D.setGeometry(QtCore.QRect(0, 0, 635, 200))

@@ -1,4 +1,4 @@
-from __future__ import division
+
 import sys
 import twisted
 from PyQt4 import QtCore, QtGui, QtTest, uic
@@ -98,7 +98,7 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
             yield self.readGate()
             yield self.readFeedback()
         except Exception as inst:
-            print "readInitVals Error: ", inst
+            print("readInitVals Error: ", inst)
 
     def feedbackButtonColors(self, on):
         if on: 
@@ -185,7 +185,7 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
             new_bias = yield self.dac.read_voltage(self.biasRefChan)
             self.currBiasLbl.setText('Current Bias: ' + str(new_bias) + 'V')
         except Exception as inst:
-            print inst
+            print(inst)
             
     @inlineCallbacks
     def gotoBiasFunc(self, c = None):
@@ -313,7 +313,7 @@ class Window(QtGui.QMainWindow, GoToSetpointUI):
                 feedback = False
             returnValue(feedback)
         except:
-            print 'Blink server does not have voltage reading capabilities.'
+            print('Blink server does not have voltage reading capabilities.')
         
 #----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""

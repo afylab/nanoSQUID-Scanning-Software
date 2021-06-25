@@ -96,11 +96,11 @@ class DataVaultTest(unittest.TestCase):
         msg_foot = '\nExpected:\n{}\nActual:\n{}'.format(expected, actual)
         self.assertEqual(len(expected), len(actual), msg=msg_foot)
 
-        comparables = zip(expected, actual)
+        comparables = list(zip(expected, actual))
         msg_head = 'Mismatch in entry {} of data.'
         for i, (expected_entry, actual_entry) in enumerate(comparables):
             msg = msg_head.format(i) + msg_foot
-            if isinstance(expected_entry, (int, long, float, complex)):
+            if isinstance(expected_entry, (int, float, complex)):
                 self.assertEqual(expected_entry, actual_entry, msg=msg)
             else:
                 self.assertArrayEqual(expected_entry, actual_entry, msg=msg)

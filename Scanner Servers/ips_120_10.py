@@ -147,7 +147,7 @@ class IPS120Server(GPIBManagedServer):
 
     @setting(9988, server='s', address='s')
     def identify_device(self, c, server, address):
-        print 'identifying:', server, address
+        print('identifying:', server, address)
         try:
             s = self.client[server]
             p = s.packet()
@@ -160,11 +160,11 @@ class IPS120Server(GPIBManagedServer):
             p.read()
             ans = yield p.send()
             resp = ans.read[1]
-            print 'got ident response:', resp
+            print('got ident response:', resp)
             if resp == 'IPS120-10  Version 3.07  (c) OXFORD 1996':
                 returnValue(self.deviceName)
-        except Exception, e:
-            print 'failed:', e
+        except Exception as e:
+            print('failed:', e)
             raise
 
     @setting(101, mode='i',returns='s')

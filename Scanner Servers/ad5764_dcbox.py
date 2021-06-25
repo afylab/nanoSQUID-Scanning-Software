@@ -47,14 +47,14 @@ class arduinoDCBoxWrapper(DeviceWrapper):
     @inlineCallbacks
     def connect(self, server, port):
         """Connect to a device"""
-        print("Connecting to '%s' on port '%s'"%(server.name,port))
+        print(("Connecting to '%s' on port '%s'"%(server.name,port)))
         self.server = server
         self.ctx    = server.context()
         self.port   = port
 
         p = self.packet()
         p.open(port)
-        print("opened on port '%s'"%port)
+        print(("opened on port '%s'"%port))
 
         self.BAUDRATE   = 115200
         self.TIMEOUT    = Value(5,'s')
@@ -111,10 +111,10 @@ class arduinoDCBoxServer(DeviceServer):
 
     @inlineCallbacks
     def initServer(self):
-        print("Server <%s> of type <%s>"%(self.name,self.deviceName))
+        print(("Server <%s> of type <%s>"%(self.name,self.deviceName)))
         self.reg = self.client.registry()
         yield self.loadConfigInfo()
-        print(self.serialLinks)
+        print((self.serialLinks))
         yield DeviceServer.initServer(self)
 
     @inlineCallbacks
@@ -122,7 +122,7 @@ class arduinoDCBoxServer(DeviceServer):
         """Loads port/device info from the registry"""
         yield self.reg.cd(['','Servers',self.name,'Links'],True)
         dirs,keys = yield self.reg.dir()
-        print("Found devices: %s"%(keys,))
+        print(("Found devices: %s"%(keys,)))
         p   = self.reg.packet()
         for k in keys:p.get(k,key=k)
         ans = yield p.send()
@@ -132,9 +132,9 @@ class arduinoDCBoxServer(DeviceServer):
     def findDevices(self):
         """Gets list of devices whose ports are active (available devices.)"""
         devs=[]
-        for name,(serialServer,port) in self.serialLinks.items():
+        for name,(serialServer,port) in list(self.serialLinks.items()):
             if serialServer not in self.client.servers:
-                print("Error: serial server (%s) not found. Device '%s' on port '%s' not active."%(serialServer,name,port))
+                print(("Error: serial server (%s) not found. Device '%s' on port '%s' not active."%(serialServer,name,port)))
                 continue
             ports = yield self.client[serialServer].list_serial_ports()
             if port not in ports:

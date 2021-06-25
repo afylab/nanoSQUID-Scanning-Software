@@ -61,7 +61,7 @@ class HF2LIServer(LabradServer):
         self.sweeper = None
         self.pidAdvisor = None
         self.poll_data = None
-        print "Server initialization complete"
+        print("Server initialization complete")
         
     @inlineCallbacks
     def initPIDAdvisor(self, c = None):
@@ -90,10 +90,10 @@ class HF2LIServer(LabradServer):
         """ Attempt to connect to the LabOne server (not a LadRAD server) and get a list of devices."""
         try:
             self.daq = yield zhinst.utils.autoConnect()
-            print 'LabOne DAQ Server detected.'
+            print('LabOne DAQ Server detected.')
             self.device_list = yield zhinst.utils.devices(self.daq)
-            print 'Devices connected to LabOne DAQ Server are the following:'
-            print self.device_list
+            print('Devices connected to LabOne DAQ Server are the following:')
+            print(self.device_list)
         except RuntimeError:
             print ('Failed to detected LabOne DAQ Server and an associated Zurich Instruments device.'
                 ' Check that everything is plugged into the computer.')
@@ -105,8 +105,8 @@ class HF2LIServer(LabradServer):
         which this server has not yet transitioned to."""
         names = self.device_list
         length = len(self.device_list)
-        IDs = range(0,length)
-        return zip(IDs, names)
+        IDs = list(range(0,length))
+        return list(zip(IDs, names))
             
     @setting(102, 'Select Device', key=[': Select first device', 's: Select device by name', 'w: Select device by ID'], returns=['s: Name of the selected device'])
     def select_device(self, c, key = None):
@@ -123,14 +123,14 @@ class HF2LIServer(LabradServer):
                 self.initPIDAdvisor()
                 self.initSweeper()
             else:
-                print "Provided device key is not in the list of possible devices."
+                print("Provided device key is not in the list of possible devices.")
         else: 
             try:
                 self.dev_ID = self.device_list[key]
                 self.initPIDAdvisor()
                 self.initSweeper()
             except:
-                print "Provided device key is not in the list of possible devices."
+                print("Provided device key is not in the list of possible devices.")
             
         return self.dev_ID
         
@@ -421,7 +421,7 @@ class HF2LIServer(LabradServer):
 
             returnValue(True)
         else: 
-            print 'Desired sweep parameter does not exist'
+            print('Desired sweep parameter does not exist')
             returnValue(False)
 
     @setting(122, returns = 'b')
@@ -775,7 +775,7 @@ class HF2LIServer(LabradServer):
                 yield self.pidAdvisor.finish()
                 raise Exception("PID advising failed due to timeout.")
 
-        print("Advice took {:0.1f} s.".format(time.time() - t_start))
+        print(("Advice took {:0.1f} s.".format(time.time() - t_start)))
     	
     	"""
         # Get all calculated parameters.
@@ -1295,7 +1295,7 @@ class HF2LIServer(LabradServer):
         """
 
         self.poll_data = yield self.daq.poll(rec_time, timeout, 1, True)
-        print self.poll_data
+        print(self.poll_data)
        
     @setting(502, PLL_index = 'i', returns = '')
     def subscribe_pll(self, c, PLL_index):

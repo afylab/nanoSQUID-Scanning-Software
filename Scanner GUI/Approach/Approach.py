@@ -233,7 +233,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             if dic['devices']['system']['coarse positioner'] == 'Attocube ANC350':
                 self.generalSettings['coarse_positioner'] = dic['devices']['system']['coarse positioner']
                 self.anc = yield cxn.anc350_server
-                print 'Using ANC350 for Coarse Position Control'
+                print('Using ANC350 for Coarse Position Control')
 
             #Connect to the Zurich HF2LI lock in
             self.hf = yield cxn.hf2li_server
@@ -271,7 +271,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             self.monitorZ = True
             self.monitorZVoltage()
         except Exception as inst:
-            print inst
+            print(inst)
             #Set the connected square to be red indicating that we failed to connect to LabRAD
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
@@ -322,8 +322,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
             amp_frac = yield self.hf.get_output_amplitude(self.measurementSettings['pll_output'])
             freq_range = yield self.hf.get_pll_freqrange(self.measurementSettings['pll_output'])
 
-            print 'Amp range:', amp_range
-            print 'Amp frac:', amp_frac
+            print('Amp range:', amp_range)
+            print('Amp frac:', amp_frac)
 
             self.measurementSettings['pll_centerfreq'] = freq
             self.measurementSettings['pll_phase_setpoint'] = phase
@@ -474,7 +474,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
         if self.hf != False:
             self.setPIDParameters()
 
-        print 'Approach Window Voltage Calibration Set'
+        print('Approach Window Voltage Calibration Set')
 
     def setWorkingPoint(self, freq, phase, out, amp):
         #Function called when the working point is set from a signal emitted by the tuning fork characterization module
@@ -563,7 +563,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             self.freqSlider.setPosition(self.freqThreshold)
             yield self.setFreqThreshholdSign()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def setFreqThreshholdSign(self):
@@ -722,7 +722,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
                 msgBox.exec_()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def setHF2LI_PLL_Settings(self):
@@ -753,7 +753,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             output_range = yield self.hf.get_output_range(self.measurementSettings['pll_output'])
             yield self.hf.set_output_amplitude(self.measurementSettings['pll_output'],self.measurementSettings['pll_output_amp']/output_range)
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def monitorPLL(self):
@@ -811,14 +811,14 @@ class Window(QtGui.QMainWindow, ApproachUI):
 
                     #If the number of points is large enough, auto retract to safeguard the tip
                     if points_above_freq_thresh >= self.generalSettings['auto_retract_points']:
-                        print 'auto withdrew'
+                        print('auto withdrew')
                         yield self.withdraw(self.generalSettings['auto_retract_dist']) #withdrawing takes the module out of constantHeight mode
 
             #When done measuring, turn off the PLL and the output
             yield self.hf.set_pll_off(self.measurementSettings['pll_output'])
             yield self.hf.set_output(self.measurementSettings['pll_output'], False)
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def monitorZVoltage(self):
@@ -854,7 +854,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 #Wait 100ms before going through the loop again
                 yield self.sleep(0.1)
             except Exception as inst:
-                print 'monitor error: ' + str(inst)
+                print('monitor error: ' + str(inst))
                 yield self.sleep(0.1)
 
 #--------------------------------------------------------------------------------------------------------------------------#
@@ -961,8 +961,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
                 msgBox.exec_()
         except Exception as inst:
-            print "Gen PID Approach Error:"
-            print inst
+            print("Gen PID Approach Error:")
+            print(inst)
 
     @inlineCallbacks
     def setHF2LI_PID_Settings(self):
@@ -988,11 +988,11 @@ class Window(QtGui.QMainWindow, ApproachUI):
             else:
                 yield self.hf.set_pid_setpoint(self.PID_Index, self.measurementSettings['pll_centerfreq'] - self.freqThreshold)
         except Exception as inst:
-            print "Set PID settings error" + str(inst)
+            print("Set PID settings error" + str(inst))
 
     @inlineCallbacks
     def setPIDParameters(self):
-        print 'PID Parameters Set'
+        print('PID Parameters Set')
         #Sets PID parameters, noting that i cannot ever be 0, because otherwise this will lead to
         #voltage jumps as it resets the integrator value.
 
@@ -1009,8 +1009,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 yield self.hf.set_pid_i(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['i']/self.voltageMultiplier)
                 yield self.hf.set_pid_d(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['d']/self.voltageMultiplier)
         except Exception as inst:
-            print "PID errror:"
-            print inst
+            print("PID errror:")
+            print(inst)
 
     @inlineCallbacks
     def setPIDOutputRange(self, max_voltage):
@@ -1021,7 +1021,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             returnValue(True)
         else:
             #If for some reason trying to go into the negative voltages, at least withdraw as far as possible with the Zurich
-            print 'Settings output range to be negative!'
+            print('Settings output range to be negative!')
             retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters / self.voltageMultiplier
             yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
             returnValue(False)
@@ -1045,14 +1045,14 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 points_above_freq_thresh = points_above_freq_thresh + (f > (-1.0*self.freqThreshold))
 
         if points_above_freq_thresh > 5:
-            print 'Surface contact made with points above frequency threshhold algorithm.'
+            print('Surface contact made with points above frequency threshhold algorithm.')
             return True
 
         #The second algorith fits a line to the past 20 z positions. If the slope of the line is less than 0
         #then presume we made contact.
         slope, offset = np.polyfit(self.zTime, self.zData, 1)
         if slope < -1e-10:
-            print 'Surface contact made with negative z slope algorithm with slope: ', slope
+            print('Surface contact made with negative z slope algorithm with slope: ', slope)
             return True
 
         return False
@@ -1137,8 +1137,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
             #Unlock the sensitive GUI elements
             self.unlockWithdrawSensitiveInputs()
         except Exception as inst:
-            print "Set integrator error: " + str(inst)
-            print 'Error occured on line: ', sys.exc_traceback.tb_lineno
+            print("Set integrator error: " + str(inst))
+            print('Error occured on line: ', sys.exc_traceback.tb_lineno)
 
     @inlineCallbacks
     def stepCoarsePositioners(self):
@@ -1188,7 +1188,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 break
             delta = pos_curr - pos_start
             num_steps += 1
-        print "Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps."
+        print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
 
         #Once done, set coarse positioners stepping to be false
         self.CPStepping = False
@@ -1200,7 +1200,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
         mean = np.mean(self.deltafData)
         std = np.std(self.deltafData)
 
-        print "Mean and standard deviation of past 100 points: ", mean, std
+        print("Mean and standard deviation of past 100 points: ", mean, std)
 
         new_thresh = mean + 4*std
 
@@ -1228,7 +1228,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             self.radioButton_minus.setChecked(True)
             new_thresh = 200
 
-        print "New threshold determined by 4 std above the mean: ", new_thresh
+        print("New threshold determined by 4 std above the mean: ", new_thresh)
 
         yield self.updateFreqThresh(value = new_thresh)
 
@@ -1319,8 +1319,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
                     self.approaching = False
 
         except Exception as inst:
-            print inst
-            print sys.exc_traceback.tb_lineno
+            print(inst)
+            print(sys.exc_traceback.tb_lineno)
 
     @inlineCallbacks
     def resetVoltageMultiplier(self):
@@ -1437,7 +1437,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
                         PID_output = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
                         #If we're midrange of the Zurich PID output, then we're in contact with good range
                         if PID_output < max_zurich_voltage/2:
-                            print 'In feedback biotch'
+                            print('In feedback biotch')
                             self.label_pidApproachStatus.setText('In Feedback')
                             self.updateFeedbackStatus.emit(True)
                             break
@@ -1474,11 +1474,11 @@ class Window(QtGui.QMainWindow, ApproachUI):
                     self.approaching = False
                     self.comboBox_ZMultiplier.setEnabled(True)
                 except Exception as inst:
-                    print "Feedback Sequence 2 error:"
-                    print inst
+                    print("Feedback Sequence 2 error:")
+                    print(inst)
         except Exception as inst:
-            print "Feedback Sequence error:"
-            print inst
+            print("Feedback Sequence error:")
+            print(inst)
 
     @inlineCallbacks
     def setDAC_Voltage(self, start, end, speed):
@@ -1504,7 +1504,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             if points * delay / 1e6 > 0.9:
                 a = yield self.dac.read()
                 while a != '':
-                    print a
+                    print(a)
                     a = yield self.dac.read()
 
     @inlineCallbacks
@@ -1549,10 +1549,10 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 if self.voltageMultiplied:
                     end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters/self.voltageMultiplier
 
-                print 'Zurich start voltage: '
-                print z_voltage
-                print 'Zurich end voltage: '
-                print end_voltage
+                print('Zurich start voltage: ')
+                print(z_voltage)
+                print('Zurich end voltage: ')
+                print(end_voltage)
 
                 #If we need to withdraw by more than just the voltage from the Zurich, keep track of how much
                 if end_voltage < 0:
@@ -1566,8 +1566,8 @@ class Window(QtGui.QMainWindow, ApproachUI):
                     #Remaining withdraw distance
                     withdrawDistance = 0
 
-                print 'Zurich distance remaning: '
-                print withdrawDistance
+                print('Zurich distance remaning: ')
+                print(withdrawDistance)
 
                 #Get the desired retract speed in volts per second
                 retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
@@ -1583,18 +1583,18 @@ class Window(QtGui.QMainWindow, ApproachUI):
                 start_voltage = self.Atto_Z_Voltage
                 end_voltage = self.Atto_Z_Voltage - withdrawDistance * self.z_volts_to_meters
 
-                print 'DACADC start voltage: '
-                print start_voltage
-                print 'DACADC end voltage: '
-                print end_voltage
+                print('DACADC start voltage: ')
+                print(start_voltage)
+                print('DACADC end voltage: ')
+                print(end_voltage)
 
                 if end_voltage < 0:
                     end_voltage = 0
                     #distance being withdrawn by DAC
                     withdrawDistance = start_voltage / self.z_volts_to_meters
 
-                print 'DACADC withdraw distance: '
-                print withdrawDistance
+                print('DACADC withdraw distance: ')
+                print(withdrawDistance)
 
                 #speed in volts / second
                 speed = self.generalSettings['step_retract_speed']*self.z_volts_to_meters
@@ -1616,7 +1616,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             self.label_stepApproachStatus.setText('Idle')
             self.label_pidApproachStatus.setText('Idle')
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def initializePID(self):
@@ -1685,7 +1685,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             #set output back to manual control
             yield self.hf.set_aux_output_signal(self.generalSettings['pid_z_output'], -1)
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def zeroHF2LI_Aux_Out(self):
@@ -1721,7 +1721,7 @@ class Window(QtGui.QMainWindow, ApproachUI):
             yield self.hf.set_aux_output_offset(4,0)
 
         except Exception as inst:
-            print inst
+            print(inst)
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions intended for use when running scripts from the scripting module."""
@@ -2208,7 +2208,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             #Check to see if new parameters are stable
             yield self.updateStability()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def updateStability(self):
@@ -2239,7 +2239,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.computePIDParameters()
             self.displayCalculatingGraphics()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def computePIDParameters(self):
@@ -2271,7 +2271,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
 
             self.updateStability()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def displayCalculatingGraphics(self):
@@ -2286,7 +2286,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
                 i = (i+1)%80
             self.push_AdvisePID.setStyleSheet(self.sheets[0])
         except Exception as inst:
-            print inst
+            print(inst)
 
 
     def createLoadingColors(self):

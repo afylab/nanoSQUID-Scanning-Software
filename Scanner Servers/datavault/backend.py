@@ -12,9 +12,9 @@ from twisted.internet import reactor
 try:
     import numpy as np
     use_numpy = True
-except ImportError, e:
-    print e
-    print "Numpy not imported.  The DataVault will operate, but will be slower."
+except ImportError as e:
+    print(e)
+    print("Numpy not imported.  The DataVault will operate, but will be slower.")
     use_numpy = False
 
 from labrad import types as T
@@ -527,7 +527,7 @@ class HDF5MetaData(object):
     def getIndependents(self):
         attrs = self.dataset.attrs
         rv = []
-        for idx in xrange(sys.maxint):
+        for idx in range(sys.maxsize):
             prefix = 'Independent{}.'.format(idx)
             key = prefix + 'label'
             if key in attrs:
@@ -542,7 +542,7 @@ class HDF5MetaData(object):
     def getDependents(self):
         attrs = self.dataset.attrs
         rv = []
-        for idx in xrange(sys.maxint):
+        for idx in range(sys.maxsize):
             prefix = 'Dependent{}.'.format(idx)
             key = prefix + 'label'
             if key in attrs:

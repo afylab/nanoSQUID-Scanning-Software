@@ -83,11 +83,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         try:
             code_to_run = self.formatCode()
         except Exception as inst:
-            print "Error when formatting code: ", inst
+            print("Error when formatting code: ", inst)
 
         try:
             self.current_line = 0
-            exec code_to_run # Generates function f
+            exec(code_to_run) # Generates function f
             self.current_line = 1
             if sim:
                 ScanControl, Approach, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias = self.simulate.get_virtual_modules()
@@ -108,19 +108,19 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             doesn't point to the offending line in the raw code. Try to rerun code without
             any modifications to get the true line where the syntax error is thrown'''
             try:
-                exec str(self.codeEditor.toPlainText())
+                exec(str(self.codeEditor.toPlainText()))
             except SyntaxError as inst:
                 self.runningScript = False
                 self.label_status.setText("Syntax error thrown on line " +  str(inst.lineno))
                 self.unlockInterface()
         except Exception as inst:
-            print inst
+            print(inst)
             self.runningScript = False
             if self.current_line == 0:
                 self.label_status.setText(str(inst) + ' error thrown while compiling')
             else:
                 self.label_status.setText(str(inst) + ' thrown on line ' + str(self.current_line))
-            print format_exc()
+            print(format_exc())
             self.unlockInterface()
 
     def abortScript(self):
@@ -274,7 +274,7 @@ class CodeEditor(QtGui.QPlainTextEdit):
                 mypainter.drawText(0, top, self.lineNumberArea.width(), height,
                  QtCore.Qt.AlignRight, number)
 
-            block = block.next()
+            block = next(block)
             top = bottom
             bottom = top + self.blockBoundingRect(block).height()
             blockNumber += 1

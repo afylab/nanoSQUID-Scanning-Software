@@ -10,11 +10,12 @@ class nanoSQUID1p5K(nanoSQUIDSystem):
     pass
 #
 
-""" The following runs the 1.5K GUI"""
+#----------------------------------------------------------------------------------------------#
+""" The following runs the GUI"""
 if __name__=="__main__":
-    import qt4reactor
+    import qt5reactor
     app = QtGui.QApplication(sys.argv)
-    qt4reactor.install()
+    qt5reactor.install()
     from twisted.internet import reactor
     window = nanoSQUIDSystem(reactor)
     window.show()

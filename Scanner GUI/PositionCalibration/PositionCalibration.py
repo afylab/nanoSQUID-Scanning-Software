@@ -92,10 +92,10 @@ class Window(QtGui.QMainWindow, CalibrationUI):
         calibrationData = [a.split(',') for a in entries]
         keys = [cal[0] for cal in calibrationData]
         data = [cal[1:] for cal in calibrationData]
-        self.calibrationDictionary = dict(zip(keys, data))
+        self.calibrationDictionary = dict(list(zip(keys, data)))
 
         insert_index = 0
-        for key, data in self.calibrationDictionary.iteritems():
+        for key, data in self.calibrationDictionary.items():
             if float(data[0]) == 1.0:
                 self.comboBox.insertItem(insert_index, key + ' (Default)')
                 insert_index = 1
@@ -183,7 +183,7 @@ class Window(QtGui.QMainWindow, CalibrationUI):
         elif name[-9:] == '(Default)':
             pass
         else:
-            for key, data in self.calibrationDictionary.iteritems():
+            for key, data in self.calibrationDictionary.items():
                 if float(data[0]) == 1.0:
                     data[0] = '0.0'
                     self.calibrationDictionary[key] = data
@@ -211,7 +211,7 @@ class Window(QtGui.QMainWindow, CalibrationUI):
     def writeCalibrationInfo(self):
         f = open(self.fileName,'w')
         message  = ''
-        for key, data in self.calibrationDictionary.iteritems():
+        for key, data in self.calibrationDictionary.items():
             message = message + key + ','
             for item in data:
                 message = message + str(item) + ','

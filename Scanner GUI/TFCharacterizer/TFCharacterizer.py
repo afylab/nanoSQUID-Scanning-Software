@@ -134,22 +134,22 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             try:
                 self.reinitSweep()
             except Exception as inst:
-                print inst
+                print(inst)
             try:
                 range = yield self.hf.get_output_range(self.output)
                 amp = yield self.hf.get_output_amplitude(self.output)
                 self.exAmp = amp*range
                 self.lineEdit_Amplitude.setText(formatNum(self.exAmp))
             except Exception as inst:
-                print inst
+                print(inst)
             try:
                 self.updateSensitivity()
             except Exception as inst:
-                print inst
+                print(inst)
             try:
                 self.updateTC()
             except Exception as inst:
-                print inst
+                print(inst)
             self.unlockInterface()
         except Exception as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" + 
@@ -360,7 +360,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.sensitvity = range
             self.lineEdit_sensitivity.setText(formatNum(self.sensitvity))
         except Exception as inst:
-            print inst
+            print(inst)
             
     @inlineCallbacks
     def updateOutputAmplitude(self, c = None):
@@ -374,7 +374,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 self.exAmp = val
             self.lineEdit_Amplitude.setText(formatNum(self.exAmp))
         except Exception as inst:
-            print inst
+            print(inst)
         
     @inlineCallbacks
     def updateTC(self, c = None):
@@ -503,8 +503,8 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             
         except Exception as inst:
             exc_type, exc_obj, exc_tb = sys.exc_info()
-            print 'line num ', exc_tb.tb_lineno
-            print inst
+            print('line num ', exc_tb.tb_lineno)
+            print(inst)
     
     @inlineCallbacks
     def updateRemainingTime(self,c = None):
@@ -512,7 +512,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             time  = yield self.hf.sweep_time_remaining()
             self.lineEdit_timeRemaining.setText(formatNum(time))
         except Exception as inst:
-            print inst
+            print(inst)
     
     @inlineCallbacks
     def stopSweep(self, c):
@@ -520,7 +520,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             yield self.hf.stop_sweep()
             yield self.hf.clear_sweep()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def reinitSweep(self,c = None):
@@ -528,7 +528,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         try:
             yield self.hf.create_sweep_object(self.startFreq, self.stopFreq, self.points, self.sweep_param, self.demod, self.log, self.bandcontrol, self.bandwidth, self.overlap, self.loopcount, self.settle_time, self.settle_acc, self.average_TC, self.average_sample)
         except Exception as inst:
-            print inst
+            print(inst)
             
     def plotData(self, data):
         self.freq = data[1]
@@ -616,7 +616,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.lineEdit_PhaseQFactor.setText(formatNum(self.phaseFitParams[1]))
             #Maybe iterate fits/starting parameters? 
         except Exception as inst:
-            print "Fitting threw the following error: ", inst
+            print("Fitting threw the following error: ", inst)
             
         #wait for plots to udpate before saving data screenshot
         yield self.sleep(0.25)
@@ -656,10 +656,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             p = QtGui.QPixmap.grabWindow(self.winId())
             a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
             if not a:
-                print "Error saving TF data picture"
+                print("Error saving TF data picture")
         except Exception as inst:
-            print 'TF error: ', inst
-            print 'on line: ', sys.exc_traceback.tb_lineno
+            print('TF error: ', inst)
+            print('on line: ', sys.exc_traceback.tb_lineno)
         
 #----------------------------------------------------------------------------------------------#         
     """ The following section has generally useful functions."""

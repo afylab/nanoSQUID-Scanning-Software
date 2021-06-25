@@ -53,7 +53,7 @@ class dataVaultExplorer(QtGui.QMainWindow, Ui_dvExplorer):
                 self.dirName.setText(self.curDir)
                 self.dirName.setStyleSheet("QLabel#dirName {color: rgb(131,131,131);}")
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def updateDirs(self, subdir):

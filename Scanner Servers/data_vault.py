@@ -30,8 +30,6 @@ timeout = 5
 ### END NODE INFO
 """
 
-from __future__ import absolute_import
-
 import os
 import sys
 
@@ -65,10 +63,10 @@ def load_settings(cxn, name):
         datadir = yield reg.get('__default__')
     else:
         default_datadir = os.path.expanduser('~/.labrad/vault')
-        print 'Could not load repository location from registry.'
-        print 'Please enter data storage directory or hit enter to use'
-        print 'the default directory ({}):'.format(default_datadir)
-        datadir = os.path.expanduser(raw_input('>>>'))
+        print('Could not load repository location from registry.')
+        print('Please enter data storage directory or hit enter to use')
+        print('the default directory ({}):'.format(default_datadir))
+        datadir = os.path.expanduser(input('>>>'))
         if datadir == '':
             datadir = default_datadir
         if not os.path.exists(datadir):
@@ -76,9 +74,9 @@ def load_settings(cxn, name):
         # set as default and for this node
         yield reg.set(nodename, datadir)
         yield reg.set('__default__', datadir)
-        print 'Data location configured in the registry at {}: {}'.format(
-            path + [nodename], datadir)
-        print 'To change this, edit the registry keys and restart the server.'
+        print('Data location configured in the registry at {}: {}'.format(
+            path + [nodename], datadir))
+        print('To change this, edit the registry keys and restart the server.')
     returnValue(datadir)
 
 def main(argv=sys.argv):

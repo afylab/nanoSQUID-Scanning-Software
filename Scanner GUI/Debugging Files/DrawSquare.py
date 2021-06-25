@@ -5,7 +5,7 @@ import numpy as np
 import pyqtgraph as pg
 import exceptions
 
-import DrawSquareWindowUI
+from . import DrawSquareWindowUI
 
 
 

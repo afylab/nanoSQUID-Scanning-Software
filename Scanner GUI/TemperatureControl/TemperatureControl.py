@@ -103,7 +103,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 yield self.readCurrentSettings()
                 yield self.startTempMonitoring()
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
             
             
     def disconnectLabRAD(self):
@@ -161,7 +161,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.measurementSettings['d'] = float(pid[2])
             self.measurementSettings['setpoint'] = float(setpoint)
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
 
     @inlineCallbacks
     def updateSettings(self, c = None):
@@ -169,7 +169,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             MeasSet = MeasurementSettings(self.reactor, self.measurementSettings, parent = self)
             if MeasSet.exec_():
                 self.measurementSettings = MeasSet.getValues()
-                print self.measurementSettings
+                print(self.measurementSettings)
                 
                 #Set pid settings
                 yield self.ls.pid_set(self.measurementSettings['heater output'],self.measurementSettings['p'],self.measurementSettings['i'],self.measurementSettings['d'])
@@ -190,7 +190,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     self.label_setpoint.setText('WTF?!?!')
                     
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
             
     @inlineCallbacks
     def setOutputSettings(self):
@@ -238,7 +238,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 
                 yield self.sleep(self.measurementSettings['sample delay'])
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
             
     def updatePlots(self):
         try:
@@ -260,7 +260,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     #self.potTempPlot.clear()
                     #self.potTempPlot.plot(self.timeData[a:], self.potTempData[a:])
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
             
     @inlineCallbacks
     def toggleHeater(self):
@@ -553,7 +553,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
             self.comboBox_heaterMode.setCurrentIndex(self.measurementSettings['heater mode'])
             
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
             
     def updateMagInput(self):
         if self.comboBox_MagInput.currentIndex() ==0:

@@ -89,7 +89,7 @@ class SessionStore(object):
         self.hub = hub
 
     def get_all(self):
-        return self._sessions.values()
+        return list(self._sessions.values())
 
     def exists(self, path):
         """Check whether a session exists on disk for a given path.
@@ -217,8 +217,8 @@ class Session(object):
                 tag = tag[1:]
             else:
                 filter = include
-            dirs = filter(dirs, tag, self.session_tags)
-            datasets = filter(datasets, tag, self.dataset_tags)
+            dirs = list(filter(dirs, tag, self.session_tags))
+            datasets = list(filter(datasets, tag, self.dataset_tags))
         return sorted(dirs), sorted(datasets)
 
     def listDatasets(self):
@@ -250,14 +250,14 @@ class Session(object):
 
     def openDataset(self, name):
         # first lookup by number if necessary
-        if isinstance(name, (int, long)):
+        if isinstance(name, int):
             for oldName in self.listDatasets():
                 num = int(oldName[:5])
                 if name == num:
                     name = oldName
                     break
         # if it's still a number, we didn't find the set
-        if isinstance(name, (int, long)):
+        if isinstance(name, int):
             raise errors.DatasetNotFoundError(name)
 
         filename = filename_encode(name)

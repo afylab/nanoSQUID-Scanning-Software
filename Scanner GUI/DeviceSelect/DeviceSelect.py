@@ -379,8 +379,8 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
             if self.localLabRADConnected and self.remoteLabRADConnected:
                 self.loadDefaultConfigurationInfo()
         except Exception as inst:
-            print 'connectLocal', inst
-            print 'on line: ', sys.exc_traceback.tb_lineno
+            print('connectLocal', inst)
+            print('on line: ', sys.exc_traceback.tb_lineno)
 
     @inlineCallbacks
     def connectRemoteLabRAD(self, dict):
@@ -400,8 +400,8 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
             if self.localLabRADConnected and self.remoteLabRADConnected:
                 self.loadDefaultConfigurationInfo()
         except Exception as inst:
-            print 'connectRemote', inst
-            print 'on line: ', sys.exc_traceback.tb_lineno
+            print('connectRemote', inst)
+            print('on line: ', sys.exc_traceback.tb_lineno)
 
     def disconnectLabRAD(self):
         #Reinitialize deviceDictionary to be empty
@@ -410,8 +410,8 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.remoteLabRADConnected = False
 
         #Remove all devices from the GUI
-        for section, dev_list in self.GUIDictionary['devices'].iteritems():
-            for dev, dev_name in dev_list.iteritems():
+        for section, dev_list in self.GUIDictionary['devices'].items():
+            for dev, dev_name in dev_list.items():
                 self.GUIDictionary['devices'][section][dev].clear()
                 self.GUIDictionary['devices'][section][dev].addItem('None')
 
@@ -464,8 +464,8 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
             configNotFound = ''
 
             #Check all the devices in all the sections
-            for section, dev_list in self.deviceDictionary['devices'].iteritems():
-                for dev, dev_name in dev_list.iteritems():
+            for section, dev_list in self.deviceDictionary['devices'].items():
+                for dev, dev_name in dev_list.items():
                     ComboBox = self.GUIDictionary['devices'][section][dev]
                     AllItems = [str(ComboBox.itemText(i)) for i in range(ComboBox.count())]
 
@@ -495,9 +495,9 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
             self.sendDeviceInfo()
 
         except Exception as inst:
-            print 'check Loaded', inst
+            print('check Loaded', inst)
             exc_type, exc_obj, exc_tb = sys.exc_info()
-            print 'line num ', exc_tb.tb_lineno
+            print('line num ', exc_tb.tb_lineno)
 
     @inlineCallbacks
     def sendDeviceInfo(self):
@@ -513,15 +513,15 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
             self.newDeviceInfo.emit(self.deviceDictionary)
             self.setConfigStatus(True)
         except Exception as inst:
-            print 'check Loaded: ', inst
-            print 'on line: ', sys.exc_traceback.tb_lineno
+            print('check Loaded: ', inst)
+            print('on line: ', sys.exc_traceback.tb_lineno)
 
     def setDefaultConfiguration(self):
         f = open(self.fileName,'w')
         f.write(self.configFileName)
         f.close()
-        print 'Devices: ', self.deviceDictionary['devices']
-        print 'Channels: ', self.deviceDictionary['channels']
+        print('Devices: ', self.deviceDictionary['devices'])
+        print('Channels: ', self.deviceDictionary['channels'])
 
     def saveConfigurationInfo(self):
         file = str(QtGui.QFileDialog.getSaveFileName(self, directory = path, filter = "Text files (*.txt)"))
@@ -529,17 +529,17 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
             f = open(file,'w')
             message  = ''
             #For now, only adding devices into the configuration file
-            for section, dev_list in self.deviceDictionary['devices'].iteritems():
+            for section, dev_list in self.deviceDictionary['devices'].items():
                 message = message + section + ';'
-                for dev, dev_name in dev_list.iteritems():
+                for dev, dev_name in dev_list.items():
                     message = message + str(dev) + ',' + str(dev_name) + ';'
                 message = message[:-1] + '\n'
 
             message = message + '\n'
 
-            for section, dev_list in self.deviceDictionary['channels'].iteritems():
+            for section, dev_list in self.deviceDictionary['channels'].items():
                 message = message + section + ';'
-                for dev, dev_name in dev_list.iteritems():
+                for dev, dev_name in dev_list.items():
                     message = message + str(dev) + ',' + str(dev_name) + ';'
                 message = message[:-1] + '\n'
 

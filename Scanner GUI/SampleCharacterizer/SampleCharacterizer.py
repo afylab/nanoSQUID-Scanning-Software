@@ -1,4 +1,4 @@
-from __future__ import division
+
 import sys
 from PyQt4 import QtCore, QtGui, uic #, QtTest
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
@@ -773,7 +773,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         try:
             yield self.ramp1_display(channel, self.DAC_output[channel], self.DAC_setpoint[channel], 10000, 100)
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
 
     def setDACSetpoint(self, channel, lineEdit):
         #Set the DAC setpoint
@@ -918,7 +918,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             #Ramp the output gate voltage back down to zero after the sweep is done
             yield self.ramp1_display(self.FourTerminal_ChannelOutput[0],self.sweepParameters['FourTerminal_MaxVoltage'],0.0,10000,100)
         except Exception as inst:
-            print inst
+            print(inst)
 
         self.unlockInterface()
         yield self.sleep(0.25)
@@ -948,11 +948,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
             #If the 'ZeroField' checkbox is checked and the sweep has not been aborted, zero the magnetic field
             if self.checkBox_FieldSweep1D_ZeroField.isChecked() and self.abortMagneticFieldSweep_Flag == False:
-                print 'Set magnetic field  to: ' + str(0)
+                print('Set magnetic field  to: ' + str(0))
                 yield self.rampMagneticField(0, self.sweepParameters['FieldSweep1D_SweepSpeed'])
 
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
 
         self.unlockInterface() #unlock the interface when done
         yield self.sleep(0.25)
@@ -979,7 +979,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
         self.abortMagneticFieldSweep_Flag = False #By default, the sweep is not aborted
 
-        print '1D Magnetic Field sweep from ', start, ' (T) to ', stop, ' (T) with ramp speed', speed, ' (T/min).'
+        print('1D Magnetic Field sweep from ', start, ' (T) to ', stop, ' (T) with ramp speed', speed, ' (T/min).')
 
         try:
             yield self.newDataVaultFile("MagneticField1D") #Creates a new datavault file and updates the image number and directory lineEdits
@@ -999,11 +999,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             for i in range(0, points):
                 #Abort loop if Abort flag has been raised
                 if self.abortMagneticFieldSweep_Flag:
-                    print "Abort the Sweep."
+                    print("Abort the Sweep.")
                     break
 
                 #Set the magnetic field to the next point
-                print 'Set magnetic field  to: ' + str(fieldPoints[i])
+                print('Set magnetic field  to: ' + str(fieldPoints[i]))
                 yield self.rampMagneticField(fieldPoints[i], speed)
 
                 #Wait the required delay before measuring
@@ -1041,7 +1041,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             returnValue(plot_data)
 
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
 
     @inlineCallbacks
     def startLandauFanSweep(self):
@@ -1085,17 +1085,17 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
                 #If abort sweep flag is raised, break out of the loop
                 if self.abortMagneticFieldSweep_Flag:
-                    print "Abort the Sweep."
+                    print("Abort the Sweep.")
                     break
 
-                print 'Starting sweep with magnetic field set to: ' + str(self.landauFanFieldPoints[self.i])
+                print('Starting sweep with magnetic field set to: ' + str(self.landauFanFieldPoints[self.i]))
 
                 #Go to the next field
                 yield self.rampMagneticField(self.landauFanFieldPoints[i], bspeed)
 
                 #If abort sweep flag is raised, break out of the loop
                 if self.abortMagneticFieldSweep_Flag:
-                    print "Abort the Sweep."
+                    print("Abort the Sweep.")
                     break
 
                 #ramp to initial output voltage value from current value
@@ -1106,7 +1106,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
                 #If abort sweep flag is raised, break out of the loop
                 if self.abortMagneticFieldSweep_Flag:
-                    print "Abort the Sweep."
+                    print("Abort the Sweep.")
                     break
 
                 #Perform a buffer ramp and format the data
@@ -1138,11 +1138,11 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
 
             #After the landau fan is done, if the zero field checkbox is checked ramp the field back to zero
             if self.checkBox_landauFan_ZeroField.isChecked():
-                print "Ramp Field Back to Zero"
+                print("Ramp Field Back to Zero")
                 yield self.rampMagneticField(0.0, self.sweepParameters['landauFan_SweepSeed'])
 
         except Exception as inst:
-            print inst
+            print(inst)
 
         self.unlockInterface() #Unlock the interface when done
         yield self.sleep(0.25) #Wait a quarter second before saving a screenshot
@@ -1161,7 +1161,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
         try:
             yield self.gotoSetIPS(end, rate) #Set the setpoint and update the IPS mode to sweep to field
 
-            print 'Setting field to ' + str(end)
+            print('Setting field to ' + str(end))
 
             #Only finish running the gotoField function when the field is reached
             t0 = time.time() #Keep track of starting time for setting the field
@@ -1169,7 +1169,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 #if after one second we still haven't reached the desired field, then reset the field setpoint
                 #Sometimes communication is buggy and repeated attempts helps
                 if time.time() - t0 > 1:
-                    print 'restarting loop'
+                    print('restarting loop')
                     yield self.gotoSetIPS(end, rate)
                     t0 = time.time()
                 yield self.sleep(0.25)
@@ -1181,8 +1181,8 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                     break
 
         except Exception as inst:
-            print 'Field error: ', inst
-            print 'on line: ', sys.exc_traceback.tb_lineno
+            print('Field error: ', inst)
+            print('on line: ', sys.exc_traceback.tb_lineno)
 
     @inlineCallbacks
     def goToSetpointIPS(self, B, rate):
@@ -1197,10 +1197,10 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             p = QtGui.QPixmap.grabWindow(self.winId())
             a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
             if not a:
-                print "Error saving Scan data picture"
+                print("Error saving Scan data picture")
         except Exception as inst:
-            print 'Scan error: ', inst
-            print 'on line: ', sys.exc_traceback.tb_lineno
+            print('Scan error: ', inst)
+            print('on line: ', sys.exc_traceback.tb_lineno)
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions for setting the DAC-ADC voltage at the same time as the UI"""
@@ -1220,14 +1220,14 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             if steps*delay/1e6  > 0.7:
                 yield self.clearBufferedData()
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def clearBufferedData(self):
         #Needs to be called after a long dac.ramp1 (as the ramp function does not read all the data)
         a = yield self.dac.read()
         while a != '':
-            print a
+            print(a)
             a = yield self.dac.read()
 
     @inlineCallbacks
@@ -1239,7 +1239,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
             self.label_DACOout_list[DAC_Out_Channels[0]].setText(formatNum(stop, 6))
             returnValue(data)
         except Exception as inst:
-            print inst
+            print(inst)
 
     def calculateRealVoltage(self,reading):
         #Take the DAC reading and convert it to real unit (V)

@@ -49,13 +49,13 @@ class LakeShore350Wrapper(DeviceWrapper):
     @inlineCallbacks
     def connect(self, server, port):
         """Connect to a device."""
-        print 'connecting to "%s" on port "%s"...' % (server.name, port),
+        print('connecting to "%s" on port "%s"...' % (server.name, port), end=' ')
         self.server = server
         self.ctx = server.context()
         self.port = port
         p = self.packet()
         p.open(port)
-        print 'opened on port "%s"' %self.port
+        print('opened on port "%s"' %self.port)
         p.baudrate(BAUD)
         p.parity(PARITY)
         p.stopbits(STOP_BITS)
@@ -102,11 +102,11 @@ class LakeShore350Server(DeviceServer):
 
     @inlineCallbacks
     def initServer(self):
-        print 'loading config info...',
+        print('loading config info...', end=' ')
         self.reg = self.client.registry()
         yield self.loadConfigInfo()
-        print 'done.'
-        print self.serialLinks
+        print('done.')
+        print(self.serialLinks)
         yield DeviceServer.initServer(self)
 
     @inlineCallbacks
@@ -122,14 +122,14 @@ class LakeShore350Server(DeviceServer):
         yield reg.cd(['', 'Servers', 'LakeShore350', 'Links'], True)
         dirs, keys = yield reg.dir()
         p = reg.packet()
-        print " created packet"
-        print "printing all the keys",keys
+        print(" created packet")
+        print("printing all the keys",keys)
         for k in keys:
-            print "k=",k
+            print("k=",k)
             p.get(k, key=k)
             
         ans = yield p.send()
-        print "ans=",ans
+        print("ans=",ans)
         self.serialLinks = dict((k, ans[k]) for k in keys)
 
 
@@ -147,14 +147,14 @@ class LakeShore350Server(DeviceServer):
         # devName = '%s - %s' % (name, port)
         # devs += [(devName, (server, port))]
         # returnValue(devs)
-        for name, (serServer, port) in self.serialLinks.items():
+        for name, (serServer, port) in list(self.serialLinks.items()):
             if serServer not in self.client.servers:
                 continue
             server = self.client[serServer]
-            print server
-            print port
+            print(server)
+            print(port)
             ports = yield server.list_serial_ports()
-            print ports
+            print(ports)
             if port not in ports:
                 continue
             devName = '%s - %s' % (serServer, port)

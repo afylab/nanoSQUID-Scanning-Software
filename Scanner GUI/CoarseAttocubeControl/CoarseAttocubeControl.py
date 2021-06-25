@@ -10,7 +10,7 @@ sys.path.append(path + r'\Debug Panel')
 CoarseAttocubeControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\CoarseAttocubeControl.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 
-import Status
+from . import Status
 import DebugPy
 
 sys.path.append(sys.path[0]+'\Resources')
@@ -128,7 +128,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 yield self.loadParameters()
                 self.MonitorStatus()
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno            
+            print(inst, sys.exc_traceback.tb_lineno)            
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" + 
             "background: rgb(161, 0, 0);border-radius: 4px;}")  
 
@@ -173,7 +173,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 yield self.RefreshAttocubeStatus()
                 yield self.sleep(0.1)
             except Exception as inst:
-                print 'Monitor error: ', inst, sys.exc_traceback.tb_lineno
+                print('Monitor error: ', inst, sys.exc_traceback.tb_lineno)
                 yield self.sleep(0.1)
 
     @inlineCallbacks
@@ -212,7 +212,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 else:
                     self.Status[i] = 'Still'
                     self.SetIndicatorStill(i)
-                    print 'Status unclear'
+                    print('Status unclear')
                     
                 if statusarray[3] == 1 :#and self.Status[i] != 'TargetReached'
                     self.Status[i] = 'TargetReached'
@@ -221,7 +221,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
                 stylesheet = '#pushButton_Status_Axis' + str(i+1) + '{\nimage:url(' + self.IconPath[self.Status[i]] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
                 self.pushButton_Status[i].setStyleSheet(stylesheet)
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
 
     def SetIndicatorMoving(self, AxisNo):
         self.pushButton_Relative[AxisNo].setText('Moving')
@@ -239,7 +239,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             Capacitance = yield self.anc350.measure_capacitance(AxisNo)
             label.setText(formatNum(Capacitance))
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
 
     @inlineCallbacks
     def MovingRelative(self, AxisNo):
@@ -254,7 +254,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             elif self.pushButton_Relative[AxisNo].text() == 'Moving':
                 yield self.anc350.start_auto_move(AxisNo, False, True) #Only stop auto move but not disble the aixs
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
             
     @inlineCallbacks
     def MovingAbsolute(self, AxisNo):
@@ -278,7 +278,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             yield self.anc350.start_single_step(AxisNo, flag)
             yield self.sleep(0.1)
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
 
     def UpdateAutomaticPositioningRelativePosition(self, AxisNo):
         dummystr=str(self.lineEdit_Relative[AxisNo].text())
@@ -320,7 +320,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_amplitude(AxisNo, self.manual_Amplitude[AxisNo])
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
             
     @inlineCallbacks
     def UpdateFrequency(self, AxisNo):
@@ -338,7 +338,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_frequency(AxisNo, self.manual_Frequency[AxisNo])
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
             
     @inlineCallbacks
     def UpdateTargetRange(self, AxisNo):
@@ -356,7 +356,7 @@ class Window(QtGui.QMainWindow, CoarseAttocubeControlWindowUI):
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_target_range(AxisNo, self.TargetRange[AxisNo])
         except Exception as inst:
-            print inst, sys.exc_traceback.tb_lineno
+            print(inst, sys.exc_traceback.tb_lineno)
             
     @inlineCallbacks
     def toggleTargetGround(self, AxisNo):

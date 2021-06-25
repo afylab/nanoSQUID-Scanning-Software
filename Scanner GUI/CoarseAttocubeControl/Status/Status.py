@@ -1,4 +1,4 @@
-from __future__ import division
+
 import sys
 from PyQt4 import QtCore, QtGui, QtTest, uic
 import numpy as np

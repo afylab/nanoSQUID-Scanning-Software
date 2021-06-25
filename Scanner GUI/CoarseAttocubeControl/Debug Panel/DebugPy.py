@@ -1,4 +1,4 @@
-from __future__ import division
+
 import sys
 from PyQt4 import QtCore, QtGui, QtTest, uic
 import numpy as np
@@ -19,7 +19,7 @@ class DebugWindow(QtGui.QMainWindow, Ui_DebugWindow):
         
     @inlineCallbacks
     def SetAxisOutput(self, AxisNo, Enable, AutoDisable):
-        print AxisNo, Enable, AutoDisable
+        print(AxisNo, Enable, AutoDisable)
         yield self.parent.anc350.set_axis_output(AxisNo, Enable, AutoDisable)
             
     def moveDefault(self):

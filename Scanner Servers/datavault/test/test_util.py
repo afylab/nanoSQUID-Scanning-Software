@@ -1,4 +1,4 @@
-import StringIO
+import io
 import pytest
 import unittest
 
@@ -19,7 +19,7 @@ class Testutil(unittest.TestCase):
         parser.add_section('foo')
         parser.set('foo', 'alpha', '1')
         parser.set('foo', 'beta', '2')
-        string_file = StringIO.StringIO()
+        string_file = io.StringIO()
         parser.write(string_file, '$$$')
         actual = string_file.getvalue()
         expected = '[foo]$$$alpha = 1$$$beta = 2$$$$$$'

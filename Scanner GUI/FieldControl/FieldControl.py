@@ -130,11 +130,11 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                     elif self.monitor_param == 'Volts':
                         self.label_fieldval.setText(formatNum(self.currVoltage,3))
                 except Exception as inst:
-                    print inst
+                    print(inst)
                 yield self.sleep(0.5)
         except Exception as inst:
-            print 'This is it'
-            print inst
+            print('This is it')
+            print(inst)
 
     @inlineCallbacks
     def loadInitialValues(self):
@@ -155,7 +155,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             self.lineEdit_setpoint.setText(formatNum(self.setpoint))
             self.lineEdit_ramprate.setText(formatNum(self.ramprate))
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def updateSwitchStatus(self):
@@ -229,7 +229,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             else:
                 yield self.toeSweepField(self.currField, self.setpoint, self.ramprate)
         except Exception as inst:
-            print 'GTS, ', str(inst)
+            print('GTS, ', str(inst))
 
     @inlineCallbacks
     def goToSetpointIPS(self, B = None):
@@ -250,7 +250,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             else:
                 yield self.toeSweepField(self.currField, 0, self.ramprate)
         except Exception as inst:
-            print 'GTZ, ', str(inst)
+            print('GTZ, ', str(inst))
 
     @inlineCallbacks
     def gotoZeroIPS(self, c = None):
@@ -303,7 +303,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 yield self.ips.set_control(2)
             self.setting_value = False
         except Exception as inst:
-            print inst
+            print(inst)
 
     @inlineCallbacks
     def toeSweepField(self, B_i, B_f, B_speed, c = None):
@@ -344,14 +344,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
                 pass
 
             #Sweeps field from B_i to B_f
-            print 'Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.'
+            print('Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.')
             yield self.dac_toe.buffer_ramp([self.toeCurChan, self.toeVoltsChan],[0],[v_start, V_initial],[v_end, V_setpoint], sweep_steps, magnet_delay)
 
             self.currVoltage = V_setpoint
             self.currCurrent = B_f/IB_conv
             self.currField = B_f
         except Exception as inst:
-            print 'SF, ', str(inst )
+            print('SF, ', str(inst ))
 
     def updateToeField(self, field, curr, volt):
         self.currField = field

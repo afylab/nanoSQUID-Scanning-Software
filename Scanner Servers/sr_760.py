@@ -151,11 +151,11 @@ class SR760Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def grounding(self, grounding):
         if grounding is not None:
-            if isinstance(grounding,int) and grounding not in GROUNDINGS.keys():
+            if isinstance(grounding,int) and grounding not in list(GROUNDINGS.keys()):
                 raise Exception('Groundings specified as integer must be 0 or 1')
             elif isinstance(grounding,str):
-                if grounding.upper() not in GROUNDINGS.values():
-                    raise Exception('Grounding specified as string must be %s or %s' %tuple([u for u in GROUNDINGS.values()]))
+                if grounding.upper() not in list(GROUNDINGS.values()):
+                    raise Exception('Grounding specified as string must be %s or %s' %tuple([u for u in list(GROUNDINGS.values())]))
                 grounding = inverseDict(GROUNDINGS)[grounding.upper()]
             yield self.write('IGND%d\n' %grounding)
         resp = yield self.query('IGND?\n')
@@ -186,9 +186,9 @@ class SR760Wrapper(GPIBDeviceWrapper):
                 returnValue(None) #Return None because returnValue needs an argument
             else:
                 waited+=1
-                print 'Device waiting for averaging to complete.'
-                print 'Will check again in %d seconds' %self.AVERAGING_TIME['s']
-                print 'This is wait number: %d' %waited
+                print('Device waiting for averaging to complete.')
+                print('Will check again in %d seconds' %self.AVERAGING_TIME['s'])
+                print('This is wait number: %d' %waited)
                 yield util.wakeupCall(self.AVERAGING_TIME['s'])
     
     @inlineCallbacks
@@ -208,7 +208,7 @@ class SR760Wrapper(GPIBDeviceWrapper):
                 yield util.wakeupCall(max(0.0, minSettle['s'] - (time.time() - t)))
                 returnValue(None) #Return None because returnValue needs an argument
             else:
-                print 'Device waiting for settling. Will check again in %d seconds' %self.SETTLING_TIME['s']
+                print('Device waiting for settling. Will check again in %d seconds' %self.SETTLING_TIME['s'])
                 yield util.wakeupCall(self.SETTLING_TIME['s'])
     
     @inlineCallbacks
@@ -225,7 +225,7 @@ class SR760Wrapper(GPIBDeviceWrapper):
         i=0
         while 1:
             i+=1
-            print i
+            print(i)
             try:
                 resp = yield self.read()
                 'Cleared: ', resp
@@ -243,7 +243,7 @@ class SR760Server(GPIBManagedServer):
 
     @setting(1000, server='s', address='s')
     def identify_device(self, c, server, address):
-        print 'identifying:', server, address
+        print('identifying:', server, address)
         try:
             s = self.client[server]
             p = s.packet()
@@ -252,11 +252,11 @@ class SR760Server(GPIBManagedServer):
             p.read()
             ans = yield p.send()
             resp = ans.read
-            print 'got ident response:', resp
+            print('got ident response:', resp)
             if resp == 'Stanford_Research_Systems,SR760,s/n24489,ver091':
                 returnValue(self.deviceName)
-        except Exception, e:
-            print 'failed:', e
+        except Exception as e:
+            print('failed:', e)
             raise
     
     #FREQUENCY SETTINGS    
@@ -306,7 +306,7 @@ class SR760Server(GPIBManagedServer):
                     raise Exception('Spans specified as Values must be in frequency units')
                 if not sp['Hz']<=100000 and sp['Hz']>0.191:
                     raise Exception('Frequency span out of range')
-                sp = indexOfClosest(SPANS.values(),sp['Hz'])
+                sp = indexOfClosest(list(SPANS.values()),sp['Hz'])
             else:
                 raise Exception('Unrecognized span. Span must be an integer or a Value with frequency units')
             yield dev.write('SPAN%d\n' % sp)
@@ -456,7 +456,7 @@ class SR760Server(GPIBManagedServer):
         #Read back the current measure type for the specified trace, comes back as integer code
         resp = yield dev.query('MEAS?%d\n' %trace)
         #Turn the integer code into a string for the user
-        answer = dict([(intCode,meas) for meas,intCode in MEAS_TYPES.items()])[int(resp)]
+        answer = dict([(intCode,meas) for meas,intCode in list(MEAS_TYPES.items())])[int(resp)]
         returnValue((int(resp),answer))
 
     @setting(31, trace = 'i', disp=['s', 'i'], returns=['i{integer code of display type}s{display type}'])
@@ -488,7 +488,7 @@ class SR760Server(GPIBManagedServer):
                 raise Exception('OCTAVE measurement requires LOG MAG display type')
             yield dev.write('DISP%d,%d\n' %(trace,disp))
         resp = yield dev.query('DISP?%d\n' %trace)
-        answer = dict([(intCode,displayType) for displayType,intCode in DISPLAY_TYPES.items()])[int(resp)]
+        answer = dict([(intCode,displayType) for displayType,intCode in list(DISPLAY_TYPES.items())])[int(resp)]
         returnValue((int(resp),answer))
 
     @setting(32, trace='i', unit='s', returns=['is'])
@@ -511,10 +511,10 @@ class SR760Server(GPIBManagedServer):
         #If the user wants to set a new unit
         if unit is not None:
             #Find out whether we're trying to set units to a phase unit or amplitude unit
-            if unit.upper() in PHASE_UNITS.keys():
+            if unit.upper() in list(PHASE_UNITS.keys()):
                 unitSetType='PHASE'
                 intCode = PHASE_UNITS[unit.upper()]
-            elif unit.upper() in AMPLITUDE_UNITS.keys():
+            elif unit.upper() in list(AMPLITUDE_UNITS.keys()):
                 unitSetType='AMPLITUDE'
                 intCode = AMPLITUDE_UNITS[unit.upper()]
             else:
@@ -678,14 +678,14 @@ def scaleLogData(data, inputLevel):
     return corrected
 
 def unpackBinary(data):
-    print 'unpackBinary in server, data length',len(data)
+    print('unpackBinary in server, data length',len(data))
     if len(data)==800:
         return np.array(unpack('h'*400,data))
     elif len(data)==799:
         return np.array(unpack('h'*399,data[0:798]))
 
 def inverseDict(d):
-    outDict = dict([(value,key) for key,value in d.items()])
+    outDict = dict([(value,key) for key,value in list(d.items())])
     return outDict
 
 def findIndexOfMinimum(arr):

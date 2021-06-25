@@ -290,7 +290,7 @@ if __name__ == '__main__':
 
     try:
         exitStatus = app.exec_()
-        print 'Done...'
+        print('Done...')
         sys.exit(exitStatus)
     except:
         pass

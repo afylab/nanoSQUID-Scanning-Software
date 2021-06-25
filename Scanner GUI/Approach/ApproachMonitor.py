@@ -4,7 +4,7 @@ from twisted.internet.defer import inlineCallbacks, Deferred
 import time
 import pyqtgraph as pg
 import numpy as np
-from DetachableTabWidget import DetachableTabWidget
+from .DetachableTabWidget import DetachableTabWidget
 
 path = sys.path[0] + r"\Approach"
 ApproachMonitorUI, QtBaseClass = uic.loadUiType(path + r"\ApproachMonitor.ui")
@@ -79,7 +79,7 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.deltaFPlot.setTitle('PLL Delta F vs. Time (s)')
 
         self.phaseErrorPlot = pg.PlotWidget(parent = self)
-        self.phaseErrorPlot.setLabel('left', 'Phase Error', units = u'\N{DEGREE SIGN}')
+        self.phaseErrorPlot.setLabel('left', 'Phase Error', units = '\N{DEGREE SIGN}')
         self.phaseErrorPlot.setLabel('bottom', 'Time', units = 's')
         self.phaseErrorPlot.showAxis('right', show = True)
         self.phaseErrorPlot.showAxis('top', show = True)
