@@ -1,15 +1,15 @@
 import sys
-from PyQt4 import QtCore, QtGui, uic
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks
 
 path = sys.path[0] + r"\DataVaultBrowser"
 Ui_dvExplorer, QtBaseClass = uic.loadUiType(path + r"\dvExplorer.ui")
 
-class dataVaultExplorer(QtGui.QMainWindow, Ui_dvExplorer):
+class dataVaultExplorer(QtWidgets.QMainWindow, Ui_dvExplorer):
     accepted = QtCore.pyqtSignal()
 
     def __init__(self, dv, reactor, parent = None):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         super(dataVaultExplorer, self).__init__(parent)
         self.setupUi(self)
 
@@ -83,7 +83,7 @@ class dataVaultExplorer(QtGui.QMainWindow, Ui_dvExplorer):
 
     @inlineCallbacks
     def makeDir(self):
-        direct, ok = QtGui.QInputDialog.getText(self, "Make directory", "Directory Name: " )
+        direct, ok = QtWidgets.QInputDialog.getText(self, "Make directory", "Directory Name: " )
         if ok:
             yield self.dv.mkdir(str(direct))
             yield self.popDirs()
@@ -114,7 +114,7 @@ class dataVaultExplorer(QtGui.QMainWindow, Ui_dvExplorer):
         self.close()
 
 if __name__ == "__main__":
-	app = QtGui.QApplication([])
+	app = QtWidgets.QApplication([])
 	from qtreactor import pyqt4reactor
 	pyqt4reactor.install()
 	from twisted.internet import reactor

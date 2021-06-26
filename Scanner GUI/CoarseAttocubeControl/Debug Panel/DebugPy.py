@@ -1,13 +1,13 @@
 
 import sys
-from PyQt4 import QtCore, QtGui, QtTest, uic
+from PyQt5 import QtCore, QtGui, QtWidgets, QtTest, uic
 import numpy as np
 from twisted.internet.defer import inlineCallbacks, Deferred
 
 path = sys.path[0] + r"\CoarseAttocubeControl\Debug Panel"
 Ui_DebugWindow, QtBaseClass = uic.loadUiType(path + r"\Debug.ui")
 
-class DebugWindow(QtGui.QMainWindow, Ui_DebugWindow):
+class DebugWindow(QtWidgets.QMainWindow, Ui_DebugWindow):
     def __init__(self, reactor, parent = None):
         super(DebugWindow, self).__init__()
         

@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtWidgets, QtCore, uic
 import numpy as np
 import pyqtgraph as pg
 
@@ -108,14 +108,14 @@ class Virtual_SampleChar(VirtualModule):
         self.rampOutputVoltage = lambda *args, **kwargs : self.addEvent('rampOutputVoltage', *args, **kwargs)
 
     def get_initial_state(self):
-        self.Dict_Variable = self.real.Dict_Variable.copy()
-        self.FourTerminal_ChannelInput = self.real.FourTerminal_ChannelInput
-        self.FourTerminal_ChannelOutput = self.real.FourTerminal_ChannelOutput
-        self.FourTerminal_Output1 = self.real.FourTerminal_Output1
-        self.FourTerminal_Input1 = self.real.FourTerminal_Input1
-        self.FourTerminal_Input2 = self.real.FourTerminal_Input2
-        self.currentDAC_Output = self.real.currentDAC_Output
-        self.setpointDAC_Output = self.real.setpointDAC_Output
+        self.sweepParameters = self.real.sweepParameters.copy()
+        # self.FourTerminal_ChannelInput = self.real.FourTerminal_ChannelInput
+        # self.FourTerminal_ChannelOutput = self.real.FourTerminal_ChannelOutput
+        # self.FourTerminal_Output1 = self.real.FourTerminal_Output1
+        # self.FourTerminal_Input1 = self.real.FourTerminal_Input1
+        # self.FourTerminal_Input2 = self.real.FourTerminal_Input2
+        # self.currentDAC_Output = self.real.currentDAC_Output
+        # self.setpointDAC_Output = self.real.setpointDAC_Output
     #
 
     def get_starting_outputs(self):
@@ -125,16 +125,16 @@ class Virtual_SampleChar(VirtualModule):
         '''
         ret = dict()
         for i in range(4):
-            ret['DAC'+str(i+1)] = self.real.currentDAC_Output[i]
+            ret['DAC'+str(i+1)] = self.real.DAC_output[i]
         return ret
     #
 
     def _Update_Parameters(self, value, key, range=None):
         if isinstance(value,float) or isinstance(value,int):
             if range == None:
-                self.Dict_Variable[key] = value
+                self.sweepParameters[key] = value
             elif value >= range[0] and value <= range[1]:
-                self.Dict_Variable[key] = value
+                self.sweepParameters[key] = value
     #
 
     def _setFourTermMinVoltage(self, vmin):
@@ -146,14 +146,14 @@ class Virtual_SampleChar(VirtualModule):
     #
 
     def _setFourTermVoltagePoints(self, points):
-        self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] = "Numberofsteps"
-        self.Dict_Variable['FourTerminal_Numberofstep'] = int(round(points))
+        self.sweepParameters['FourTerminal_VoltageSteps_Status'] = "Numberofsteps"
+        self.sweepParameters['FourTerminal_VoltageSteps'] = int(round(points))
     #
 
     def _setFourTermVoltageStepSize(self, vstep):
-        self.Dict_Variable['FourTerminalSetting_Numberofsteps_Status'] = "StepSize"
-        Max, Min, SS = self.Dict_Variable['FourTerminal_MaxVoltage'], self.Dict_Variable['FourTerminal_MinVoltage'], float(vstep)
-        self.Dict_Variable['FourTerminal_Numberofstep']=int((Max-Min)/float(SS)+1)
+        self.sweepParameters['FourTerminal_VoltageSteps_Status'] = "StepSize"
+        Max, Min, SS = self.sweepParameters['FourTerminal_MaxVoltage'], self.sweepParameters['FourTerminal_MinVoltage'], float(vstep)
+        self.sweepParameters['FourTerminal_VoltageSteps']=int((Max-Min)/float(SS)+1)
 
     def _setFourTermDelay(self, delay):
         self._Update_Parameters(delay, 'FourTerminal_Delay')
@@ -175,13 +175,13 @@ class Virtual_SampleChar(VirtualModule):
         self.FourTerminal_ChannelOutput=[self.FourTerminal_Output1]
         self.FourTerminal_ChannelInput=[self.FourTerminal_Input1]
 
-        dt, points = self._Ramp1(self.FourTerminal_ChannelOutput[0],self.currentDAC_Output[self.FourTerminal_ChannelOutput[0]],self.Dict_Variable['FourTerminal_MinVoltage'],10000,100)    #ramp to initial value
+        dt, points = self._Ramp1(self.FourTerminal_ChannelOutput[0],self.currentDAC_Output[self.FourTerminal_ChannelOutput[0]],self.sweepParameters['FourTerminal_MinVoltage'],10000,100)    #ramp to initial value
 
         ix = "DAC"+str(self.FourTerminal_ChannelOutput[0]+1)
-        points[ix].append(self.Dict_Variable['FourTerminal_MaxVoltage'])
-        dt.append(self.Dict_Variable['FourTerminal_Numberofstep']*self.Dict_Variable['FourTerminal_Delay'])
+        points[ix].append(self.sweepParameters['FourTerminal_MaxVoltage'])
+        dt.append(self.sweepParameters['FourTerminal_VoltageSteps']*self.sweepParameters['FourTerminal_Delay'])
 
-        dt_2, points_2 = self._Ramp1(self.FourTerminal_ChannelOutput[0],self.Dict_Variable['FourTerminal_MaxVoltage'],0.0,10000,100)
+        dt_2, points_2 = self._Ramp1(self.FourTerminal_ChannelOutput[0],self.sweepParameters['FourTerminal_MaxVoltage'],0.0,10000,100)
         dt.append(dt_2[0])
         points[ix].append(points_2[ix][0])
 
@@ -581,7 +581,7 @@ class CustomViewBox(pg.ViewBox):
             pg.ViewBox.mouseDragEvent(self, ev, axis=axis)
 #
 
-class ScriptSimulator(QtGui.QMainWindow, SimulatorWindowUI):
+class ScriptSimulator(QtWidgets.QMainWindow, SimulatorWindowUI):
     '''
     A window to display the potential experimental outputs of a given script to
     evaluate it prior to running the script.

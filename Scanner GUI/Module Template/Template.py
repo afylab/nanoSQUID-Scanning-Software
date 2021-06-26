@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 
 path = sys.path[0] + r"\Module Template"
@@ -10,7 +10,7 @@ Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
 
-class Window(QtGui.QMainWindow, ScanControlWindowUI):
+class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
@@ -81,7 +81,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
     def unlockInterface(self):
         pass
         
-class serversList(QtGui.QDialog, Ui_ServerList):
+class serversList(QtWidgets.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)
         self.setupUi(self)

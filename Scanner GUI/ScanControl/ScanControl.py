@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 import pyqtgraph as pg
@@ -18,7 +18,7 @@ Check whether or not scanning works with different x and y calibration
 make tilt compatible with stepwise constant height approach - should be done
 '''
 
-class Window(QtGui.QMainWindow, ScanControlWindowUI):
+class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     updateScanningStatus = QtCore.pyqtSignal(bool)
 
     def __init__(self, reactor, parent=None):
@@ -441,7 +441,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.traceLinePlot.showAxis('top', show = True)
         self.PlotArea_3.hide()
 
-        horizontalSpacer = QtGui.QSpacerItem(130, 20, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
+        horizontalSpacer = QtWidgets.QSpacerItem(130, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
 
         self.horizontalLayout_3.addWidget(self.traceLinePlot)
         self.horizontalLayout_3.addItem(horizontalSpacer)
@@ -2075,7 +2075,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
 
-class serversList(QtGui.QDialog, Ui_ServerList):
+class serversList(QtWidgets.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)
         self.setupUi(self)

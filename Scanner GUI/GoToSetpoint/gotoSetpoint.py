@@ -1,7 +1,7 @@
 
 import sys
 import twisted
-from PyQt4 import QtCore, QtGui, QtTest, uic
+from PyQt5 import QtCore, QtGui, QtWidgets, QtTest, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import numpy as np
 import time
@@ -13,7 +13,7 @@ sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
 
 #Window for going to a particular nSOT bias or magnetic field 
-class Window(QtGui.QMainWindow, GoToSetpointUI):
+class Window(QtWidgets.QMainWindow, GoToSetpointUI):
     def __init__(self, reactor, parent = None):
         super(Window, self).__init__(parent)
         

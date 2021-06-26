@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui, uic
+from PyQt5 import QtGui, QtWidgets, uic
 import ctypes
 myappid = 'YoungLab.nSOTScannerSoftware'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
@@ -27,7 +27,7 @@ from SampleCharacterizer import SampleCharacterizer
 
 from Equipment.Equipment import EquipmentHandler
 
-class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
+class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
     """ The following section initializes, or defines the initialization of the GUI and
     connecting to servers."""
     def __init__(self, reactor, parent=None):
@@ -237,7 +237,7 @@ class nanoSQUIDSystem(QtGui.QMainWindow, MainWindowUI):
 """ The following runs the GUI"""
 if __name__=="__main__":
     import qt5reactor
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     qt5reactor.install()
     from twisted.internet import reactor
     window = nanoSQUIDSystem(reactor)

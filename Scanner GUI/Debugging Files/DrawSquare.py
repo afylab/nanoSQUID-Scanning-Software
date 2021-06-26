@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtWidgets, QtCore
 from twisted.internet.defer import inlineCallbacks
 import twisted
 import numpy as np
@@ -9,7 +9,7 @@ from . import DrawSquareWindowUI
 
 
 
-class Window(QtGui.QMainWindow, DrawSquareWindowUI.Ui_MainWindow):
+class Window(QtWidgets.QMainWindow, DrawSquareWindowUI.Ui_MainWindow):
     
     def __init__(self, reactor, parent=None):
         

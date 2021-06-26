@@ -1,6 +1,6 @@
 
 import sys
-from PyQt4 import QtCore, QtGui, uic
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 import pyqtgraph as pg
@@ -22,12 +22,12 @@ Ui_toeReminder, QtBaseClass = uic.loadUiType(toeReminder)
 Ui_ServerList, QtBaseClass = uic.loadUiType(serlist)
 
 #Main characterization window with plots, sweep paramteres, etc.
-class Window(QtGui.QMainWindow, Ui_MainWindow):
+class Window(QtWidgets.QMainWindow, Ui_MainWindow):
     newToeField = QtCore.pyqtSignal(float, float, float)
 
     def __init__(self, reactor, parent = None):
         super(Window, self).__init__(parent)
-        #QtGui.QDialog.__init__(self)
+        #QtWidgets.QDialog.__init__(self)
         self.parent = parent
         self.reactor = reactor
 
@@ -1531,7 +1531,7 @@ class Window(QtGui.QMainWindow, Ui_MainWindow):
         pass
 
 #Window for reminding user to turn Toellner output on
-class toellnerReminder(QtGui.QDialog, Ui_toeReminder):
+class toellnerReminder(QtWidgets.QDialog, Ui_toeReminder):
     def __init__(self, parent = None):
         super(toellnerReminder, self).__init__(parent)
         self.window = parent
@@ -1550,7 +1550,7 @@ class toellnerReminder(QtGui.QDialog, Ui_toeReminder):
         self.reject()
 
 #Window for finalizing sweep parameters, inherits the list of sweep parameters from the MainWindow checkSweep function
-class DialogBox(QtGui.QDialog, Ui_DialogBox):
+class DialogBox(QtWidgets.QDialog, Ui_DialogBox):
     def __init__(self, sweepParams, parent = None):
         super(DialogBox, self).__init__(parent)
 
@@ -1614,7 +1614,7 @@ class DialogBox(QtGui.QDialog, Ui_DialogBox):
         self.reject()
 
 #Window for doing preliminary sweeps of the nSOT
-class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
+class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
     def __init__(self, reactor, dv, dac, settings, parent = None):
         super(preliminarySweep, self).__init__(parent)
         self.window = parent
@@ -1848,7 +1848,7 @@ class preliminarySweep(QtGui.QDialog, Ui_prelimSweep):
         self.window.push_prelim.setEnabled(True)
         self.close()
 
-class serversList(QtGui.QDialog, Ui_ServerList):
+class serversList(QtWidgets.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)
         self.setupUi(self)

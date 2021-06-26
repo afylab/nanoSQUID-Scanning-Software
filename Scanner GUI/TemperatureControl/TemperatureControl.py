@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import time
 import pyqtgraph as pg
@@ -14,7 +14,7 @@ Ui_MeasurementSettings, QtBaseClass = uic.loadUiType(path + r"\MeasurementSettin
 sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
 
-class Window(QtGui.QMainWindow, ScanControlWindowUI):
+class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
@@ -418,7 +418,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         
         self.lineEdit_setpoint.setEnabled(True)
         
-class serversList(QtGui.QDialog, Ui_ServerList):
+class serversList(QtWidgets.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)
         self.setupUi(self)
@@ -426,7 +426,7 @@ class serversList(QtGui.QDialog, Ui_ServerList):
         self.move(pos)
         
 
-class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
+class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
     def __init__(self,reactor, measSettings, parent = None):
         super(MeasurementSettings, self).__init__(parent)
         self.reactor = reactor

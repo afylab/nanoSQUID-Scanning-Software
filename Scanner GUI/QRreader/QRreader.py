@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import time 
 from array import array
@@ -15,7 +15,7 @@ path = sys.path[0]
 sys.path.append(path+'\Resources')
 QRreaderWindowUI, QtBaseClass = uic.loadUiType(path + r"\QRreader\QRreaderWindow.ui")
 
-class Window(QtGui.QMainWindow, QRreaderWindowUI):
+class Window(QtWidgets.QMainWindow, QRreaderWindowUI):
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
         self.reactor = reactor
@@ -220,7 +220,7 @@ class Window(QtGui.QMainWindow, QRreaderWindowUI):
 
 if __name__=="__main__":
     import qt4reactor
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     qt4reactor.install()
     from twisted.internet import reactor
     window = Window(reactor)

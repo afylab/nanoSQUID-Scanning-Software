@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import pyqtgraph as pg
 import pyqtgraph.exporters
@@ -15,7 +15,7 @@ Ui_advancedSettings, QtBaseClass = uic.loadUiType(path + r"\advancedSettings.ui"
 sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
 
-class Window(QtGui.QMainWindow, ScanControlWindowUI):
+class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     workingPointSelected = QtCore.pyqtSignal(float, float, int, float)
 
     def __init__(self, reactor, parent=None):
@@ -727,14 +727,14 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
         
-class serversList(QtGui.QDialog, Ui_ServerList):
+class serversList(QtWidgets.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)
         self.setupUi(self)
         pos = parent.pos()
         self.move(pos)
         
-class advancedSettings(QtGui.QDialog, Ui_advancedSettings):
+class advancedSettings(QtWidgets.QDialog, Ui_advancedSettings):
     def __init__(self,reactor, values,parent = None):
         super(advancedSettings, self).__init__(parent)
         self.setupUi(self)

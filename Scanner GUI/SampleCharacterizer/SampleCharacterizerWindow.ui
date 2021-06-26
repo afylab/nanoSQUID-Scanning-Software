@@ -2075,7 +2075,7 @@ background-color: rgb(0, 0, 0);
                <enum>QLayout::SetNoConstraint</enum>
               </property>
               <item>
-               <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Resistance_VersusGateVoltage" stretch="">
+               <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Resistance_VersusGateVoltage">
                 <property name="sizeConstraint">
                  <enum>QLayout::SetNoConstraint</enum>
                 </property>
@@ -2161,7 +2161,7 @@ background-color: rgb(0, 0, 0);
                <enum>QLayout::SetNoConstraint</enum>
               </property>
               <item>
-               <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Conductance_VersusGateVoltage" stretch="">
+               <layout class="QHBoxLayout" name="Layout_FourTerminalMagneticField_Conductance_VersusGateVoltage">
                 <property name="sizeConstraint">
                  <enum>QLayout::SetNoConstraint</enum>
                 </property>
@@ -2749,8 +2749,7 @@ border:1px solid rgb(168,168,168)
                 <enum>Qt::LeftToRight</enum>
                </property>
                <property name="styleSheet">
-                <string notr="true">setStyleSheet(&quot;margin-left:50%; margin-right:50%;&quot;);
-</string>
+                <string notr="true"/>
                </property>
                <property name="text">
                 <string/>
@@ -2813,8 +2812,7 @@ border:1px solid rgb(168,168,168)
                 <enum>Qt::LeftToRight</enum>
                </property>
                <property name="styleSheet">
-                <string notr="true">setStyleSheet(&quot;margin-left:50%; margin-right:50%;&quot;);
-</string>
+                <string notr="true"/>
                </property>
                <property name="text">
                 <string/>
@@ -3499,8 +3497,7 @@ border:1px solid rgb(168,168,168)
                  <bool>false</bool>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">setStyleSheet(&quot;margin-left:50%; margin-right:50%;&quot;);
-</string>
+                 <string notr="true"/>
                 </property>
                 <property name="text">
                  <string/>
@@ -3598,9 +3595,11 @@ border:1px solid rgb(168,168,168)
                 <property name="layoutDirection">
                  <enum>Qt::LeftToRight</enum>
                 </property>
+                <property name="autoFillBackground">
+                 <bool>false</bool>
+                </property>
                 <property name="styleSheet">
-                 <string notr="true">setStyleSheet(&quot;margin-left:50%; margin-right:50%;&quot;);
-</string>
+                 <string notr="true"/>
                 </property>
                 <property name="text">
                  <string/>

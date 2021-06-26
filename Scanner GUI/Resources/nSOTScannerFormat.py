@@ -67,13 +67,13 @@ def readNum(string, parent = None, warningFlag = False):
 #---------------------------------------------------------------------------------------------------------#
 """ The following section creates a generic warning if a number is input without a unit."""
 
-from PyQt4 import QtGui, uic
+from PyQt5 import QtGui, QtWidgets, uic
 import sys
 
 path = sys.path[0] + r"\Resources"
 Ui_UnitWarning, QtBaseClass = uic.loadUiType(path + r"\UnitWarningWindow.ui")
 
-class UnitWarning(QtGui.QDialog, Ui_UnitWarning):
+class UnitWarning(QtWidgets.QDialog, Ui_UnitWarning):
     def __init__(self, parent, val):
         super(UnitWarning, self).__init__(parent)
         self.window = parent

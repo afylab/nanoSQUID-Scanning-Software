@@ -1,6 +1,6 @@
 
 import sys
-from PyQt4 import QtCore, QtGui, uic #, QtTest
+from PyQt5 import QtCore, QtGui, QtWidgets, uic #, QtTest
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 import pyqtgraph as pg
@@ -14,7 +14,7 @@ Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum#, processLineData, processImageData, ScanImageView
 
-class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
+class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
 
@@ -1432,7 +1432,7 @@ class Window(QtGui.QMainWindow, SampleCharacterizerWindowUI):
                 fake[i].append((1/(abs(xpoints[j])+.5))+(math.cos(0.25/(self.i+0.01)*(0.01+xpoints[j]))+1))
         return fake
 
-class serversList(QtGui.QDialog, Ui_ServerList):
+class serversList(QtWidgets.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)
         self.setupUi(self)

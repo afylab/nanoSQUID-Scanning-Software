@@ -9,7 +9,7 @@ TODO test how the DAC responds to having a voltage prompted while it's ramping o
 '''
 
 import sys
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 #import time
@@ -24,7 +24,7 @@ Ui_MeasurementSettings, QtBaseClass = uic.loadUiType(path + r"\MeasurementSettin
 sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
 
-class Window(QtGui.QMainWindow, ApproachUI):
+class Window(QtWidgets.QMainWindow, ApproachUI):
     #initialize signals for new data to be plotted in the approach monitor window
     newPLLData = QtCore.pyqtSignal(float, float)
     newAux2Data = QtCore.pyqtSignal(float)
@@ -714,11 +714,11 @@ class Window(QtGui.QMainWindow, ApproachUI):
                     #Turn the approaching PID off (which should already be off, but you can never be too safe!)
                     yield self.hf.set_pid_on(self.PID_Index, False)
             else:
-                msgBox = QtGui.QMessageBox(self)
-                msgBox.setIcon(QtGui.QMessageBox.Information)
+                msgBox = QtWidgets.QMessageBox(self)
+                msgBox.setIcon(QtWidgets.QMessageBox.Information)
                 msgBox.setWindowTitle('Measurements Necessary')
                 msgBox.setText("\r\n You cannot stop measuring mid-approach. Safely abort the approach before stopping the measurements.")
-                msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+                msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
                 msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
                 msgBox.exec_()
         except Exception as inst:
@@ -953,11 +953,11 @@ class Window(QtGui.QMainWindow, ApproachUI):
                             self.label_pidApproachStatus.setText('Approaching with Zurich')
 
             else: #If not measuring the PLL, throw a warning
-                msgBox = QtGui.QMessageBox(self)
-                msgBox.setIcon(QtGui.QMessageBox.Information)
+                msgBox = QtWidgets.QMessageBox(self)
+                msgBox.setIcon(QtWidgets.QMessageBox.Information)
                 msgBox.setWindowTitle('Start PLL to Approach')
                 msgBox.setText("\r\n You cannot approach until the PLL has been started.")
-                msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+                msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
                 msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
                 msgBox.exec_()
         except Exception as inst:
@@ -1886,14 +1886,14 @@ class Window(QtGui.QMainWindow, ApproachUI):
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
 
-class serversList(QtGui.QDialog, Ui_ServerList):
+class serversList(QtWidgets.QDialog, Ui_ServerList):
     def __init__(self, reactor, parent = None):
         super(serversList, self).__init__(parent)
         self.setupUi(self)
         pos = parent.pos()
         self.move(pos)
 
-class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
+class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
     def __init__(self, reactor, settings, parent = None):
         super(generalApproachSettings, self).__init__(parent)
         self.setupUi(self)
@@ -2001,7 +2001,7 @@ class generalApproachSettings(QtGui.QDialog, Ui_generalApproachSettings):
     def getValues(self):
         return self.generalApproachSettings
 
-class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
+class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
     def __init__(self,reactor, measSettings, parent = None, server = None):
         super(MeasurementSettings, self).__init__(parent)
         self.reactor = reactor
@@ -2324,7 +2324,7 @@ class MeasurementSettings(QtGui.QDialog, Ui_MeasurementSettings):
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
 
-class MySlider(QtGui.QSlider):
+class MySlider(QtWidgets.QSlider):
     '''
     Creates a log scale slider bar.
     '''

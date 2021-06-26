@@ -1,5 +1,5 @@
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import pyqtSignal, pyqtSlot
+from PyQt5 import QtGui, QtWidgets, QtCore
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 ##
 # The DetachableTabWidget adds additional functionality to Qt's QTabWidget that allows it
@@ -14,12 +14,12 @@ from PyQt4.QtCore import pyqtSignal, pyqtSlot
 #     double clicking the detached tab's window frame
 #
 # Modified Features:
-#   Re-ordering (moving) tabs by dragging was re-implemented  
-# 
+#   Re-ordering (moving) tabs by dragging was re-implemented
+#
 
-class DetachableTabWidget(QtGui.QTabWidget):
+class DetachableTabWidget(QtWidgets.QTabWidget):
     def __init__(self, parent=None):
-        QtGui.QTabWidget.__init__(self, parent)
+        QtWidgets.QTabWidget.__init__(self, parent)
 
         self.tabBar = self.TabBar(self)
         self.tabBar.onDetachTabSignal.connect(self.detachTab)
@@ -61,9 +61,9 @@ class DetachableTabWidget(QtGui.QTabWidget):
 
         # Get the tab content
         name = self.tabText(index)
-        icon = self.tabIcon(index)        
+        icon = self.tabIcon(index)
         if icon.isNull():
-            icon = self.window().windowIcon()              
+            icon = self.window().windowIcon()
         contentWidget = self.widget(index)
         contentWidgetRect = contentWidget.frameGeometry()
 
@@ -86,7 +86,7 @@ class DetachableTabWidget(QtGui.QTabWidget):
     #  @param    contentWidget    the content widget from the DetachedTab dialog
     #  @param    name             the name of the detached tab
     #  @param    icon             the window icon for the detached tab
-    @pyqtSlot(QtGui.QWidget, QtCore.QString, QtGui.QIcon)
+    @pyqtSlot(QtWidgets.QWidget, str, QtGui.QIcon)
     def attachTab(self, contentWidget, name, icon):
 
         # Make the content widget a child of this widget
@@ -126,17 +126,17 @@ class DetachableTabWidget(QtGui.QTabWidget):
     #  When a tab is detached, the contents are placed into this QMainWindow.  The tab
     #  can be re-attached by closing thewindow. Originally, this was programmed as a QDialog
     #  but a QMainWindow allows double clicking the frame to expand to the full screen.
-    class DetachedTab(QtGui.QMainWindow):
-        onCloseSignal = pyqtSignal(QtGui.QWidget, QtCore.QString, QtGui.QIcon)
+    class DetachedTab(QtWidgets.QMainWindow):
+        onCloseSignal = pyqtSignal(QtWidgets.QWidget, str, QtGui.QIcon)
 
         def __init__(self, contentWidget, parent=None):
-            QtGui.QMainWindow.__init__(self, parent)
+            QtWidgets.QMainWindow.__init__(self, parent)
             self.setCentralWidget(contentWidget)
             self.contentWidget = contentWidget
-            
+
             style = 'background-color: rgb(0,0,0);'
             self.setStyleSheet(style)
-            
+
             self.contentWidget.show()
 
         ##
@@ -201,7 +201,7 @@ class DetachableTabWidget(QtGui.QTabWidget):
         def mouseMoveEvent(self, event):
 
             # Determine if the current movement is detected as a drag
-            if not self.dragStartPos.isNull() and ((event.pos() - self.dragStartPos).manhattanLength() < QtGui.QApplication.startDragDistance()):
+            if not self.dragStartPos.isNull() and ((event.pos() - self.dragStartPos).manhattanLength() < QtWidgets.QApplication.startDragDistance()):
                 self.dragInitiated = True
 
             # If the current movement is a drag initiated by the left button
@@ -270,18 +270,18 @@ class DetachableTabWidget(QtGui.QTabWidget):
 if __name__ == '__main__':
     import sys
 
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
-    mainWindow = QtGui.QMainWindow()
+    mainWindow = QtWidgets.QMainWindow()
     tabWidget = DetachableTabWidget(mainWindow)
 
-    tab1 = QtGui.QLabel('Test Widget 1')    
+    tab1 = QtWidgets.QLabel('Test Widget 1')
     tabWidget.addTab(tab1, 'Tab1')
 
-    tab2 = QtGui.QLabel('Test Widget 2')
+    tab2 = QtWidgets.QLabel('Test Widget 2')
     tabWidget.addTab(tab2, 'Tab2')
 
-    tab3 = QtGui.QLabel('Test Widget 3')
+    tab3 = QtWidgets.QLabel('Test Widget 3')
     tabWidget.addTab(tab3, 'Tab3')
 
     tabWidget.show()

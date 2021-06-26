@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 
 path = sys.path[0] + r"\DeviceSelect"
@@ -9,7 +9,7 @@ DeviceSelectUI, QtBaseClass = uic.loadUiType(path + r"\DeviceSelect.ui")
 sys.path.append(sys.path[0]+'\Resources')
 # from nSOTScannerFormat import readNum, formatNum
 
-class Window(QtGui.QMainWindow, DeviceSelectUI):
+class Window(QtWidgets.QMainWindow, DeviceSelectUI):
     newDeviceInfo = QtCore.pyqtSignal(dict)
 
     def __init__(self, reactor, parent=None):
@@ -425,7 +425,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         self.loadConfigurationInfo()
 
     def loadNewConfigurationInfo(self):
-        file = str(QtGui.QFileDialog.getOpenFileName(self, directory = path, filter = "Text files (*.txt)"))
+        file = str(QtWidgets.QFileDialog.getOpenFileName(self, directory = path, filter = "Text files (*.txt)"))
         self.configFileName = file.split('/')[-1]
         self.label_currentConfigFile.setText(self.configFileName)
 
@@ -482,13 +482,13 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
 
             #If something wasn't found, throw error letting user know that the config wasn't valid
             if len(configNotFound) > 0:
-                msgBox = QtGui.QMessageBox(self)
-                msgBox.setIcon(QtGui.QMessageBox.Information)
+                msgBox = QtWidgets.QMessageBox(self)
+                msgBox.setIcon(QtWidgets.QMessageBox.Information)
                 msgBox.setWindowTitle('Loaded Configuration Invalid')
                 message = '''\r\n The loaded configuration file cannot be properly loaded with the servers and devices currently connected to the computer. The following
                                 connections cannot be made: \n''' + configNotFound
                 msgBox.setText(message)
-                msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+                msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
                 msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
                 msgBox.exec_()
 
@@ -524,7 +524,7 @@ class Window(QtGui.QMainWindow, DeviceSelectUI):
         print('Channels: ', self.deviceDictionary['channels'])
 
     def saveConfigurationInfo(self):
-        file = str(QtGui.QFileDialog.getSaveFileName(self, directory = path, filter = "Text files (*.txt)"))
+        file = str(QtWidgets.QFileDialog.getSaveFileName(self, directory = path, filter = "Text files (*.txt)"))
         if len(file) >0:
             f = open(file,'w')
             message  = ''

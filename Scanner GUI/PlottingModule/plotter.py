@@ -1,7 +1,7 @@
 
 import os
 import sys
-from PyQt4 import QtCore, QtGui, uic
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, returnValue
 import numpy as np
 import pyqtgraph as pg
@@ -27,7 +27,7 @@ Ui_FitTFSettings, QtBaseClass = uic.loadUiType(ui_path + r"\TuningForkFittingWin
 '''
 Write a description here
 '''
-class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
+class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
     plotInfoChanged = QtCore.pyqtSignal()
     plotClosed = QtCore.pyqtSignal(object)
 
@@ -333,9 +333,9 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
         self.pushButton_Info.clicked.connect(self.displayInfo)
         self.pushButton_lockratio.clicked.connect(self.toggleAspectRatio)
 
-        self.trSelectMenu = QtGui.QMenu()
-        showTrace = QtGui.QAction("Plot Trace", self)
-        showRetrace = QtGui.QAction("Plot Retrace", self)
+        self.trSelectMenu = QtWidgets.QMenu()
+        showTrace = QtWidgets.QAction("Plot Trace", self)
+        showRetrace = QtWidgets.QAction("Plot Retrace", self)
         self.trSelectMenu.addAction(showTrace)
         self.trSelectMenu.addAction(showRetrace)
         showTrace.triggered.connect(self.plotTrace)
@@ -343,88 +343,88 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
         self.pushButton_trSelect.setMenu(self.trSelectMenu)
 
         #Define and connect the drop down menu for the data set subtraction button
-        subtractMenu = QtGui.QMenu() #Create Qt menu object
+        subtractMenu = QtWidgets.QMenu() #Create Qt menu object
 
-        subOverallAvg = QtGui.QAction("Subtract average", self)
+        subOverallAvg = QtWidgets.QAction("Subtract average", self)
         subOverallAvg.triggered.connect(self.subtractOverallAvg)
         subtractMenu.addAction(subOverallAvg)
 
-        subPlane = QtGui.QAction("Subtract plane", self)
+        subPlane = QtWidgets.QAction("Subtract plane", self)
         subPlane.triggered.connect(self.subtractPlane)
         subtractMenu.addAction(subPlane)
 
-        subOverallQuad = QtGui.QAction("Subtract quadratic plane", self)
+        subOverallQuad = QtWidgets.QAction("Subtract quadratic plane", self)
         subOverallQuad.triggered.connect(self.subtractOverallQuad)
         subtractMenu.addAction(subOverallQuad)
 
-        subXAvg = QtGui.QAction("Subtract line average - X", self)
+        subXAvg = QtWidgets.QAction("Subtract line average - X", self)
         subXAvg.triggered.connect(self.subtractXAvg)
         subtractMenu.addAction(subXAvg)
 
-        subYAvg = QtGui.QAction("Subtract line average - Y", self)
+        subYAvg = QtWidgets.QAction("Subtract line average - Y", self)
         subYAvg.triggered.connect(self.subtractYAvg)
         subtractMenu.addAction(subYAvg)
 
-        subXLinear = QtGui.QAction("Subtract line linear fit - X", self)
+        subXLinear = QtWidgets.QAction("Subtract line linear fit - X", self)
         subXLinear.triggered.connect(self.subtractXLinear)
         subtractMenu.addAction(subXLinear)
 
-        subYLinear = QtGui.QAction("Subtract line linear fit - Y", self)
+        subYLinear = QtWidgets.QAction("Subtract line linear fit - Y", self)
         subYLinear.triggered.connect(self.subtractYLinear)
         subtractMenu.addAction(subYLinear)
 
-        subXQuad = QtGui.QAction("Subtract line quadratic fit - X", self)
+        subXQuad = QtWidgets.QAction("Subtract line quadratic fit - X", self)
         subXQuad.triggered.connect(self.subtractXQuad)
         subtractMenu.addAction(subXQuad)
 
-        subYQuad = QtGui.QAction("Subtract line quadratic fit - Y", self)
+        subYQuad = QtWidgets.QAction("Subtract line quadratic fit - Y", self)
         subYQuad.triggered.connect(self.subtractYQuad)
         subtractMenu.addAction(subYQuad)
 
         self.pushButton_subtract.setMenu(subtractMenu) #Set as the menu for the subtraction pushButton
 
         #Define and connect the drop down menu for saving data as mat files
-        saveMenu = QtGui.QMenu()
+        saveMenu = QtWidgets.QMenu()
 
-        twoDSave = QtGui.QAction("Save 2D plot", self)
+        twoDSave = QtWidgets.QAction("Save 2D plot", self)
         twoDSave.triggered.connect(self.matPlot)
         saveMenu.addAction(twoDSave)
 
-        oneDSaveh = QtGui.QAction("Save horizontal line cut", self)
+        oneDSaveh = QtWidgets.QAction("Save horizontal line cut", self)
         oneDSaveh.triggered.connect(self.matLinePloth)
         saveMenu.addAction(oneDSaveh)
 
-        oneDSavev = QtGui.QAction("Save vertical line cut", self)
+        oneDSavev = QtWidgets.QAction("Save vertical line cut", self)
         oneDSavev.triggered.connect(self.matLinePlotv)
         saveMenu.addAction(oneDSavev)
 
         self.pushButton_savePlot.setMenu(saveMenu)
 
         #Define and connect the drop down menu for despiking data
-        despikeMenu = QtGui.QMenu()
+        despikeMenu = QtWidgets.QMenu()
 
-        despike = QtGui.QAction("Despike data", self)
+        despike = QtWidgets.QAction("Despike data", self)
         despike.triggered.connect(lambda: self.despikeData())
         despikeMenu.addAction(despike)
 
-        despikeSetting = QtGui.QAction("Settings", self)
+        despikeSetting = QtWidgets.QAction("Settings", self)
         despikeSetting.triggered.connect(self.openDespikeSettings)
         despikeMenu.addAction(despikeSetting)
 
         self.pushButton_despike.setMenu(despikeMenu)
 
         #Define and connect the drop down menu for taking gradients of the data
-        derivMenu = QtGui.QMenu()
+        derivMenu = QtWidgets.QMenu()
 
-        gradX = QtGui.QAction(QtGui.QIcon("nablaXIcon.png"), "Compute x-gradient", self)
+        gradX = QtWidgets.QAction(QtGui.QIcon("nablaXIcon.png"), "Compute x-gradient", self)
         gradX.triggered.connect(self.xDeriv)
         derivMenu.addAction(gradX)
 
-        gradY = QtGui.QAction(QtGui.QIcon("nablaYIcon.png"), "Compute y-gradient", self)
+        gradY = QtWidgets.QAction(QtGui.QIcon("nablaYIcon.png"), "Compute y-gradient", self)
         gradY.triggered.connect(self.yDeriv)
         derivMenu.addAction(gradY)
 
-        derivSettings = QtGui.QAction("Settings", self)
+        derivSettings = QtWidgets.QAction("Settings", self)
         derivSettings.triggered.connect(self.openDerivSettings)
         derivMenu.addAction(derivSettings)
 
@@ -434,30 +434,30 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
         self.pushButton_symHist.clicked.connect(self.symmetrizeHistogram)
 
         #Estimate the sensitivity of the SQUID at various points
-        squidSensMenu = QtGui.QMenu()
+        squidSensMenu = QtWidgets.QMenu()
 
-        computeSens = QtGui.QAction("Compute sensitivity", self)
+        computeSens = QtWidgets.QAction("Compute sensitivity", self)
         computeSens.triggered.connect(self.computeSQUIDSensitivity)
         squidSensMenu.addAction(computeSens)
 
-        sensOptimal = QtGui.QAction("Plot optimal parameters", self)
+        sensOptimal = QtWidgets.QAction("Plot optimal parameters", self)
         sensOptimal.triggered.connect(self.plotOptimalSQUIDParameters)
         squidSensMenu.addAction(sensOptimal)
 
-        sensSettings = QtGui.QAction("Settings", self)
+        sensSettings = QtWidgets.QAction("Settings", self)
         sensSettings.triggered.connect(self.openSensitivitySettings)
         squidSensMenu.addAction(sensSettings)
 
         self.pushButton_sensitivity.setMenu(squidSensMenu)
 
         #Fit the scan AC data to the TF data to extract the TF oscillation amplitude and direction
-        tfFittingMenu = QtGui.QMenu()
+        tfFittingMenu = QtWidgets.QMenu()
 
-        fitOscillation = QtGui.QAction("Extract TF Oscillation Info", self)
+        fitOscillation = QtWidgets.QAction("Extract TF Oscillation Info", self)
         fitOscillation.triggered.connect(self.extractTFOscillationInfo)
         tfFittingMenu.addAction(fitOscillation)
 
-        fitTFSettings = QtGui.QAction("Settings", self)
+        fitTFSettings = QtWidgets.QAction("Settings", self)
         fitTFSettings.triggered.connect(self.openFitTFSettings)
         tfFittingMenu.addAction(fitTFSettings)
 
@@ -865,7 +865,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
 
     def matPlot(self):
         if (not self.PlotData is None):
-            fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
+            fold = str(QtWidgets.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             print(fold)
             if fold:
                 self.genMatFile(fold)
@@ -890,7 +890,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
 
     def matLinePloth(self):
         if (not self.PlotData is None):
-            fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
+            fold = str(QtWidgets.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
                 self.genLineMatFileh(fold)
 
@@ -907,7 +907,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
 
     def matLinePlotv(self):
         if (not self.PlotData is None):
-            fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
+            fold = str(QtWidgets.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
                 self.genLineMatFilev(fold)
 
@@ -1227,7 +1227,7 @@ class Plotter(QtGui.QMainWindow, Ui_Plotter2D):
         self.plotClosed.emit(self)
         self.close()
 
-class Plot1D(QtGui.QMainWindow, Ui_Plotter1D):
+class Plot1D(QtWidgets.QMainWindow, Ui_Plotter1D):
     def __init__(self, name, parent = None ):
         super(Plot1D, self).__init__()
         self.setupUi(self)
@@ -1346,7 +1346,7 @@ class Plot1D(QtGui.QMainWindow, Ui_Plotter1D):
         self.updateLinecutValue()
 
     def saveDataMatlab(self):
-        fold = str(QtGui.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
+        fold = str(QtWidgets.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
         if fold:
             XData = np.asarray(self.XData)
             YData = np.asarray(self.YData)
@@ -1365,7 +1365,7 @@ class Plot1D(QtGui.QMainWindow, Ui_Plotter1D):
         elif self.name == 'Optimal Bias':
             self.move(parentx + parentwidth/2, parenty + Offset)
 
-class dataInfoWindow(QtGui.QDialog, Ui_DataInfo):
+class dataInfoWindow(QtWidgets.QDialog, Ui_DataInfo):
     def __init__(self, dataInfo, plotParams, parent = None):
         super(dataInfoWindow, self).__init__(parent)
         self.parent = parent
@@ -1425,7 +1425,7 @@ class dataInfoWindow(QtGui.QDialog, Ui_DataInfo):
         else:
             self.lineEdit_SweepingAxis.setText("none")
 
-class despikeSettingsWindow(QtGui.QDialog, Ui_DespikesSetting):
+class despikeSettingsWindow(QtWidgets.QDialog, Ui_DespikesSetting):
     def __init__(self, settings, parent = None):
         super(despikeSettingsWindow, self).__init__(parent)
         self.setupUi(self)
@@ -1450,7 +1450,7 @@ class despikeSettingsWindow(QtGui.QDialog, Ui_DespikesSetting):
     def getValues(self):
         return self.settings
 
-class derivSettingsWindow(QtGui.QDialog, Ui_DerivSet):
+class derivSettingsWindow(QtWidgets.QDialog, Ui_DerivSet):
     def __init__(self, settings, parent = None):
         super(derivSettingsWindow, self).__init__(parent)
 
@@ -1477,7 +1477,7 @@ class derivSettingsWindow(QtGui.QDialog, Ui_DerivSet):
     def getValues(self):
         return self.settings
 
-class sensitivitySettingsWindow(QtGui.QDialog, Ui_SensitivitySettings):
+class sensitivitySettingsWindow(QtWidgets.QDialog, Ui_SensitivitySettings):
     def __init__(self, sensSettingsDict, parent = None):
         super(sensitivitySettingsWindow, self).__init__(parent)
 
@@ -1502,7 +1502,7 @@ class sensitivitySettingsWindow(QtGui.QDialog, Ui_SensitivitySettings):
     def getValues(self):
         return self.settings
 
-class fitTFSettingsWindow(QtGui.QDialog, Ui_FitTFSettings):
+class fitTFSettingsWindow(QtWidgets.QDialog, Ui_FitTFSettings):
     def __init__(self, datainfo, settings, parent):
         super(fitTFSettingsWindow, self).__init__(parent)
 
@@ -1553,7 +1553,7 @@ class fitTFSettingsWindow(QtGui.QDialog, Ui_FitTFSettings):
         return self.settings
 
 if __name__ == "__main__":
-    app = QtGui.QApplication([])
+    app = QtWidgets.QApplication([])
     from qtreactor import pyqt4reactor
     pyqt4reactor.install()
     from twisted.internet import reactor

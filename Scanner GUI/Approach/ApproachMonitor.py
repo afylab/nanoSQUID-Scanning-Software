@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui, uic
+from PyQt5 import QtGui, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import time
 import pyqtgraph as pg
@@ -9,7 +9,7 @@ from .DetachableTabWidget import DetachableTabWidget
 path = sys.path[0] + r"\Approach"
 ApproachMonitorUI, QtBaseClass = uic.loadUiType(path + r"\ApproachMonitor.ui")
 
-class Window(QtGui.QMainWindow, ApproachMonitorUI):
+class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
 
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
@@ -85,9 +85,9 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.phaseErrorPlot.showAxis('top', show = True)
         self.phaseErrorPlot.setTitle('PLL Error vs. Time (s)')
 
-        tab1 = QtGui.QWidget()
+        tab1 = QtWidgets.QWidget()
 
-        tab1_layout = QtGui.QVBoxLayout()
+        tab1_layout = QtWidgets.QVBoxLayout()
         tab1_layout.addWidget(self.deltaFPlot)
         tab1_layout.addWidget(self.phaseErrorPlot)
 
@@ -101,9 +101,9 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.zPlot.showAxis('top', show = True)
         self.zPlot.setTitle('Atto. Z Extension (m) vs. Time (s)')
 
-        tab2 = QtGui.QWidget()
+        tab2 = QtWidgets.QWidget()
 
-        tab2_layout = QtGui.QVBoxLayout()
+        tab2_layout = QtWidgets.QVBoxLayout()
         tab2_layout.addWidget(self.zPlot)
 
         tab2.setLayout(tab2_layout)
@@ -116,9 +116,9 @@ class Window(QtGui.QMainWindow, ApproachMonitorUI):
         self.aux2Plot.showAxis('top', show = True)
         self.aux2Plot.setTitle('Aux 2 Input vs. Time (s)')
 
-        tab3 = QtGui.QWidget()
+        tab3 = QtWidgets.QWidget()
 
-        tab3_layout = QtGui.QVBoxLayout()
+        tab3_layout = QtWidgets.QVBoxLayout()
         tab3_layout.addWidget(self.aux2Plot)
 
         tab3.setLayout(tab3_layout)

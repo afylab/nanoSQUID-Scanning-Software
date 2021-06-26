@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 
 path = sys.path[0] + r"\PositionCalibration"
@@ -10,7 +10,7 @@ Ui_getCalibrationName, QtBaseClass = uic.loadUiType(path + r"\getCalibrationName
 sys.path.append(sys.path[0]+'\Resources')
 from nSOTScannerFormat import readNum, formatNum
 
-class Window(QtGui.QMainWindow, CalibrationUI):
+class Window(QtWidgets.QMainWindow, CalibrationUI):
     newTemperatureCalibration = QtCore.pyqtSignal(list)
 
     def __init__(self, reactor, parent=None):
@@ -163,11 +163,11 @@ class Window(QtGui.QMainWindow, CalibrationUI):
 
         if name == 'Add New Calibration':
             if None in self.tempData:
-                msgBox = QtGui.QMessageBox(self)
-                msgBox.setIcon(QtGui.QMessageBox.Information)
+                msgBox = QtWidgets.QMessageBox(self)
+                msgBox.setIcon(QtWidgets.QMessageBox.Information)
                 msgBox.setWindowTitle('Define All Values Error')
                 msgBox.setText("\r\n Make sure that all the values are properly defined")
-                msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+                msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
                 msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
                 msgBox.exec_()
             else:
@@ -328,7 +328,7 @@ class Window(QtGui.QMainWindow, CalibrationUI):
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
 
-class getCalibrationName(QtGui.QDialog, Ui_getCalibrationName):
+class getCalibrationName(QtWidgets.QDialog, Ui_getCalibrationName):
     def __init__(self,reactor, calibrationDictionary, parent = None):
         super(getCalibrationName, self).__init__(parent)
         self.setupUi(self)
@@ -347,11 +347,11 @@ class getCalibrationName(QtGui.QDialog, Ui_getCalibrationName):
         if len(self.lineEdit.text())> 10:
             self.accept()
         else:
-            msgBox = QtGui.QMessageBox(self)
-            msgBox.setIcon(QtGui.QMessageBox.Information)
+            msgBox = QtWidgets.QMessageBox(self)
+            msgBox.setIcon(QtWidgets.QMessageBox.Information)
             msgBox.setWindowTitle('Define Name Error')
             msgBox.setText("\r\n Make sure that the name is defined and is at least 10 characters long.")
-            msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+            msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
             msgBox.exec_()
 

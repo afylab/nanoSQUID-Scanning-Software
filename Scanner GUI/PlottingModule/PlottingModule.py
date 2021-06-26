@@ -1,6 +1,6 @@
 #Written by Marec, Avi and Raymond
 import sys
-from PyQt4 import QtCore, QtGui, uic
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 from nSOTScannerFormat import readNum, formatNum
 
@@ -21,7 +21,7 @@ Each dataset is opened into its own window and object, called a Plotter.
 All the Plotter objects are kept in a list and displayed in the command center GUI.
 '''
 
-class CommandCenter(QtGui.QMainWindow, Ui_CommandCenter):
+class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
     def __init__(self, reactor, parent = None):
         super(CommandCenter, self).__init__(parent)
         self.reactor = reactor
@@ -94,7 +94,7 @@ class CommandCenter(QtGui.QMainWindow, Ui_CommandCenter):
             self.listWidget_Plots.clear()
 
             for plot in self.plotterList:
-                item = QtGui.QListWidgetItem()
+                item = QtWidgets.QListWidgetItem()
                 self.formatListWidgetItem(item, plot)
                 self.listWidget_Plots.addItem(item)
 
@@ -200,7 +200,7 @@ class CommandCenter(QtGui.QMainWindow, Ui_CommandCenter):
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
 
-class settingsWindow(QtGui.QDialog, Ui_SettingsWindow):
+class settingsWindow(QtWidgets.QDialog, Ui_SettingsWindow):
     def __init__(self, settings, parent = None):
         super(settingsWindow, self).__init__(parent)
 

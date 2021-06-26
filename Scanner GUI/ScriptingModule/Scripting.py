@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred #, returnValue
 from traceback import format_exc
 
@@ -10,7 +10,7 @@ ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\Scripting.ui")
 sys.path.append(sys.path[0]+'\Resources')
 #from nSOTScannerFormat import readNum, formatNum
 
-class Window(QtGui.QMainWindow, ScanControlWindowUI):
+class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def __init__(self, reactor, parent=None, *args):
         super(Window, self).__init__(parent)
@@ -37,7 +37,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_simulate.clicked.connect(lambda *args : self.runScript(True, *args))
 
         #Have Ctrl+S
-        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self.codeEditor, self.saveFile, context=QtCore.Qt.WidgetShortcut)
+        QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+S"), self.codeEditor, self.saveFile, context=QtCore.Qt.WidgetShortcut)
 
         #Initialize all the labrad connections as none
         self.cxn = None
@@ -87,7 +87,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
 
         try:
             self.current_line = 0
-            exec(code_to_run) # Generates function f
+            exec(code_to_run, globals()) # Generates function f
             self.current_line = 1
             if sim:
                 ScanControl, Approach, nSOTChar, FieldControl, TempControl, SampleChar, nSOTBias = self.simulate.get_virtual_modules()
@@ -159,7 +159,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         return line[0:num]
 
     def loadFile(self):
-        file = str(QtGui.QFileDialog.getOpenFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts'))
+        file = str(QtWidgets.QFileDialog.getOpenFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts'))
         if file:
             f = open(file,'r')
             message = f.read()
@@ -167,7 +167,7 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
             f.close()
 
     def saveFile(self):
-        file = str(QtGui.QFileDialog.getSaveFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts'))
+        file = str(QtWidgets.QFileDialog.getSaveFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts'))
         if file:
             f = open(file,'w')
             message = self.codeEditor.toPlainText()
@@ -196,10 +196,10 @@ class Window(QtGui.QMainWindow, ScanControlWindowUI):
         self.push_load.setEnabled(True)
         self.push_abort.setEnabled(False)
 
-class LineNumberArea(QtGui.QWidget):
+class LineNumberArea(QtWidgets.QWidget):
 
     def __init__(self, editor):
-        super(QtGui.QWidget, self).__init__(editor)
+        super(QtWidgets.QWidget, self).__init__(editor)
         self.myeditor = editor
 
     def sizeHint(self):
@@ -209,15 +209,19 @@ class LineNumberArea(QtGui.QWidget):
         self.myeditor.lineNumberAreaPaintEvent(event)
 
 
-class CodeEditor(QtGui.QPlainTextEdit):
+class CodeEditor(QtWidgets.QPlainTextEdit):
     def __init__(self, parent = None):
-        super(QtGui.QPlainTextEdit, self).__init__(parent)
+        super(QtWidgets.QPlainTextEdit, self).__init__(parent)
 
         self.lineNumberArea = LineNumberArea(self)
 
-        self.connect(self, QtCore.SIGNAL('blockCountChanged(int)'), self.updateLineNumberAreaWidth)
-        self.connect(self, QtCore.SIGNAL('updateRequest(QRect,int)'), self.updateLineNumberArea)
-        self.connect(self, QtCore.SIGNAL('cursorPositionChanged()'), self.highlightCurrentLine)
+        self.blockCountChanged.connect(self.updateLineNumberAreaWidth)
+        self.updateRequest.connect(self.updateLineNumberArea)
+        self.cursorPositionChanged.connect(self.highlightCurrentLine)
+        # # This is PyQt4 syntax
+        # self.connect(self, QtCore.SIGNAL('blockCountChanged(int)'), self.updateLineNumberAreaWidth)
+        # self.connect(self, QtCore.SIGNAL('updateRequest(QRect,int)'), self.updateLineNumberArea)
+        # self.connect(self, QtCore.SIGNAL('cursorPositionChanged()'), self.highlightCurrentLine)
 
         self.updateLineNumberAreaWidth(0)
 
@@ -248,7 +252,7 @@ class CodeEditor(QtGui.QPlainTextEdit):
 
 
     def resizeEvent(self, event):
-        super(QtGui.QPlainTextEdit, self).resizeEvent(event)
+        super(QtWidgets.QPlainTextEdit, self).resizeEvent(event)
 
         cr = self.contentsRect();
         self.lineNumberArea.setGeometry(QtCore.QRect(cr.left(), cr.top(),
@@ -274,7 +278,7 @@ class CodeEditor(QtGui.QPlainTextEdit):
                 mypainter.drawText(0, top, self.lineNumberArea.width(), height,
                  QtCore.Qt.AlignRight, number)
 
-            block = next(block)
+            block = block.next()
             top = bottom
             bottom = top + self.blockBoundingRect(block).height()
             blockNumber += 1
@@ -283,7 +287,7 @@ class CodeEditor(QtGui.QPlainTextEdit):
         extraSelections = []
 
         if not self.isReadOnly():
-            selection = QtGui.QTextEdit.ExtraSelection()
+            selection = QtWidgets.QTextEdit.ExtraSelection()
 
             #TODO Edit color
             lineColor = QtGui.QColor(QtCore.Qt.yellow).lighter(160)

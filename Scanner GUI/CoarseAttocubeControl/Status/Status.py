@@ -1,12 +1,12 @@
 
 import sys
-from PyQt4 import QtCore, QtGui, QtTest, uic
+from PyQt5 import QtCore, QtGui, QtWidgets, QtTest, uic
 import numpy as np
 
 path = sys.path[0] + r"\CoarseAttocubeControl\Status"
 Ui_StatusWindow, QtBaseClass = uic.loadUiType(path + r"\Status.ui")
 
-class StatusWindow(QtGui.QMainWindow, Ui_StatusWindow):
+class StatusWindow(QtWidgets.QMainWindow, Ui_StatusWindow):
     def __init__(self, reactor, parent = None):
         super(StatusWindow, self).__init__()
         

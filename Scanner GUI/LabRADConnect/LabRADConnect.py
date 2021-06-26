@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore, uic
+from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import sys
 from DataVaultBrowser import dirExplorer
@@ -9,7 +9,7 @@ import os
 path = sys.path[0] + r"\LabRADConnect"
 LabRADConnectUI, QtBaseClass = uic.loadUiType(path + r"\LabRADConnect.ui")
 
-class Window(QtGui.QMainWindow, LabRADConnectUI):
+class Window(QtWidgets.QMainWindow, LabRADConnectUI):
     cxnLocal = QtCore.pyqtSignal(dict)
     cxnRemote = QtCore.pyqtSignal(dict)
     cxnDisconnected = QtCore.pyqtSignal()
@@ -218,20 +218,21 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
 
     @inlineCallbacks
     def disconnectLabRAD(self):
-        try:
-            yield self.connectionLocalDictionary['cxn'].anc350_server.disconnect()
-            print('Disconnected ANC350')
-        except Exception as inst:
-            print(inst)
-            print('Error disconnecting the ANC350 server.')
+        if not self.connectionLocalDictionary['cxn'] is False:
+            try:
+                yield self.connectionLocalDictionary['cxn'].anc350_server.disconnect()
+                print('Disconnected ANC350')
+            except Exception as inst:
+                print(inst)
+                print('Error disconnecting the ANC350 server.')
 
-        try:
-            yield self.connectionLocalDictionary['cxn'].disconnect()
-            print('Disconnected local')
-            yield self.connectionRemoteDictionary['cxn'].disconnect()
-            print('Disconnected remote')
-        except:
-            print('Error disconnecting the Labrad connection server.')
+            try:
+                yield self.connectionLocalDictionary['cxn'].disconnect()
+                print('Disconnected local')
+                yield self.connectionRemoteDictionary['cxn'].disconnect()
+                print('Disconnected remote')
+            except:
+                print('Error disconnecting the Labrad connection server.')
 
         self.connectionLocalDictionary = self.emptyLocalDictionary.copy()
         self.connectionRemoteDictionary = self.emptyRemoteDictionary.copy()
@@ -812,11 +813,11 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
     def chooseSession(self, c = None):
         try:
             if self.connectionLocalDictionary['dv'] is False:
-                msgBox = QtGui.QMessageBox(self)
-                msgBox.setIcon(QtGui.QMessageBox.Information)
+                msgBox = QtWidgets.QMessageBox(self)
+                msgBox.setIcon(QtWidgets.QMessageBox.Information)
                 msgBox.setWindowTitle('Data Vault Connection Missing')
                 msgBox.setText("\r\n Cannot choose data vault folder until connected to data vault.")
-                msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+                msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
                 msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
                 msgBox.exec_()
             else:
@@ -845,7 +846,7 @@ class Window(QtGui.QMainWindow, LabRADConnectUI):
             print('Error:', inst, ' on line: ', sys.exc_traceback.tb_lineno)
 
     def chooseSession_2(self):
-        folder = str(QtGui.QFileDialog.getExistingDirectory(self, directory = 'C:\\Users\\cltschirhart\\Data Sets\\ScanData'))
+        folder = str(QtWidgets.QFileDialog.getExistingDirectory(self, directory = 'C:\\Users\\cltschirhart\\Data Sets\\ScanData'))
         if folder:
             self.session_2 = folder
             self.lineEdit_Session_2.setText(self.session_2)
