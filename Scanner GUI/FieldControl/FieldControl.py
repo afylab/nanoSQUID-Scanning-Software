@@ -2,14 +2,11 @@ import sys
 from PyQt5 import QtGui, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
+from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
 path = sys.path[0] + r"\FieldControl"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\FieldControl.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
-
-#Not required, but strongly recommended functions used to format numbers in a particular way.
-sys.path.append(sys.path[0]+'\Resources')
-from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     def __init__(self, reactor, parent=None):
@@ -26,12 +23,12 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.push_viewField.clicked.connect(self.viewField)
         self.push_viewCurr.clicked.connect(self.viewCurr)
         self.push_viewVolts.clicked.connect(self.viewVolts)
-        self.push_GotoSet.clicked.connect(self.goToSetpoint)
-        self.push_GotoZero.clicked.connect(self.gotoZero)
-        self.push_hold.clicked.connect(self.hold)
-        self.push_clamp.clicked.connect(self.clamp)
+        self.push_GotoSet.clicked.connect(lambda: self.goToSetpoint())
+        self.push_GotoZero.clicked.connect(lambda: self.gotoZero())
+        self.push_hold.clicked.connect(lambda: self.hold())
+        self.push_clamp.clicked.connect(lambda: self.clamp())
         self.push_toggleView.clicked.connect(self.toggleView)
-        self.push_persistSwitch.clicked.connect(self.togglePersist)
+        self.push_persistSwitch.clicked.connect(lambda: self.togglePersist())
 
         self.lineEdit_setpoint.editingFinished.connect(self.setSetpoint)
         self.lineEdit_ramprate.editingFinished.connect(self.setRamprate)
@@ -130,11 +127,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     elif self.monitor_param == 'Volts':
                         self.label_fieldval.setText(formatNum(self.currVoltage,3))
                 except Exception as inst:
-                    print(inst)
+                    printErrorInfo()
                 yield self.sleep(0.5)
         except Exception as inst:
-            print('This is it')
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def loadInitialValues(self):
@@ -155,7 +151,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.lineEdit_setpoint.setText(formatNum(self.setpoint))
             self.lineEdit_ramprate.setText(formatNum(self.ramprate))
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def updateSwitchStatus(self):
@@ -189,14 +185,14 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def setSetpoint(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_setpoint.text()), self, False)
+            val = readNum(str(self.lineEdit_setpoint.text()))
         if isinstance(val,float):
             self.setpoint = val
         self.lineEdit_setpoint.setText(formatNum(self.setpoint, 4))
 
     @inlineCallbacks
     def setRamprate(self):
-        val = readNum(str(self.lineEdit_ramprate.text()), self, False)
+        val = readNum(str(self.lineEdit_ramprate.text()))
         if isinstance(val,float):
             self.ramprate = val
             if self.magDevice == 'IPS 120-10':
@@ -229,7 +225,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             else:
                 yield self.toeSweepField(self.currField, self.setpoint, self.ramprate)
         except Exception as inst:
-            print('GTS, ', str(inst))
+            printErrorInfo()
 
     @inlineCallbacks
     def goToSetpointIPS(self, B = None):
@@ -243,17 +239,17 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.setting_value = False
 
     @inlineCallbacks
-    def gotoZero(self, c = None):
+    def gotoZero(self):
         try:
             if self.magDevice == 'IPS 120-10':
                 yield self.gotoZeroIPS()
             else:
                 yield self.toeSweepField(self.currField, 0, self.ramprate)
         except Exception as inst:
-            print('GTZ, ', str(inst))
+            printErrorInfo()
 
     @inlineCallbacks
-    def gotoZeroIPS(self, c = None):
+    def gotoZeroIPS(self):
         self.setting_value = True
         yield self.ips.set_control(3) #Set IPS to remote communication (prevents user from using the front panel)
         yield self.ips.set_activity(2)
@@ -286,7 +282,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.push_toggleView.setText('Monitoring Charging')
 
     @inlineCallbacks
-    def togglePersist(self, c = None):
+    def togglePersist(self):
         try:
             self.setting_value = True
             if self.persist:
@@ -303,10 +299,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 yield self.ips.set_control(2)
             self.setting_value = False
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
-    def toeSweepField(self, B_i, B_f, B_speed, c = None):
+    def toeSweepField(self, B_i, B_f, B_speed):
         try:
             #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
             VV_conv = 3.20
@@ -351,7 +347,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.currCurrent = B_f/IB_conv
             self.currField = B_f
         except Exception as inst:
-            print('SF, ', str(inst ))
+            printErrorInfo()
 
     def updateToeField(self, field, curr, volt):
         self.currField = field

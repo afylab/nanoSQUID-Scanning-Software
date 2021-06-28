@@ -1,8 +1,8 @@
 #Written by Marec, Avi and Raymond
-import sys
+import sys, traceback
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
-from nSOTScannerFormat import readNum, formatNum
+from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
 path = sys.path[0] + r"\PlottingModule"
 sys.path.append(sys.path[0] + r'\DataVaultBrowser')
@@ -66,7 +66,7 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
             self.unlockInterface()
         except Exception as e:
             print("Plotting module labrad connection failed")
-            print(e)
+            printErrorInfo()
 
     def disconnectLabRAD(self):
         self.gen_cxn = False
@@ -99,8 +99,7 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
                 self.listWidget_Plots.addItem(item)
 
         except Exception as inst:
-            print("Error: ", inst)
-            print("Occured at line: ", sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     def formatListWidgetItem(self, ListWidgetItem, plotter):
         try:
@@ -114,15 +113,14 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
             #Check if the plotter has data. It may not if the datavault file opened did not contain
             #any data
             if not plotter.data is None: #If yes, set the text color appropriately
-                ListWidgetItem.setTextColor(Color_ContainData[0])
-                ListWidgetItem.setBackgroundColor(Color_ContainData[1])
+                ListWidgetItem.setForeground(Color_ContainData[0])
+                ListWidgetItem.setBackground(Color_ContainData[1])
             else: #If no, set text to a different color and set tooltip indicating to the user that there's no data
-                ListWidgetItem.setTextColor(Color_NoData[0])
-                ListWidgetItem.setBackgroundColor(Color_NoData[1])
+                ListWidgetItem.setForeground(Color_NoData[0])
+                ListWidgetItem.setBackground(Color_NoData[1])
                 ListWidgetItem.setToolTip('No Data Loaded')
         except Exception as inst:
-            print("Error: ",inst)
-            print("Occured at line: ", sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     def removePlot(self, plotter):
         self.plotterList.remove(plotter) #Remove the plotter from the plotterlist
@@ -152,8 +150,7 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
             #If the file selection is selected, have them be opened in Plotter objects
 
         except Exception as inst:
-            print("Error: ", inst)
-            print("Occured at line: ", sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     def openFilesInPlotter(self, filelist, directory):
         for file in filelist:
@@ -177,8 +174,7 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
                 self.refreshPlotList() #Refresh the plot list UI
 
             except Exception as inst:
-                print("Error: ",inst)
-                print("Occured at line: ", sys.exc_traceback.tb_lineno)
+                printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has the functions for opening the settings window"""

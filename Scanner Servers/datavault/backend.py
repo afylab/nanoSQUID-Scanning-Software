@@ -56,6 +56,8 @@ def labrad_urldecode(data_url):
         # decode parameter data from dataurl
         all_bytes = base64.urlsafe_b64decode(data_url[len(DATA_URL_PREFIX):])
         t, data_bytes = T.unflatten(all_bytes, 'ss')
+        if isinstance(data_bytes, str):
+            data_bytes = data_bytes.encode('utf-8')
         data = T.unflatten(data_bytes, t)
         return data
     else:

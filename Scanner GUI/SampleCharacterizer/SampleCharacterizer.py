@@ -6,13 +6,11 @@ import numpy as np
 import pyqtgraph as pg
 import time
 import math
+from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
 path = sys.path[0] + r"\SampleCharacterizer"
 SampleCharacterizerWindowUI, QtBaseClass = uic.loadUiType(path + r"\SampleCharacterizerWindow.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
-
-sys.path.append(sys.path[0]+'\Resources')
-from nSOTScannerFormat import readNum, formatNum#, processLineData, processImageData, ScanImageView
 
 class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
     def __init__(self, reactor, parent=None):
@@ -178,9 +176,9 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.fourTerminalGatePoints = np.linspace(self.sweepParameters['FourTerminal_MinVoltage'],self.sweepParameters['FourTerminal_MaxVoltage'],self.sweepParameters['FourTerminal_VoltageSteps'])
 
         #Connect pushButtons to start and abort sweeps
-        self.pushButton_StartFourTerminalSweep.clicked.connect(self.startFourTerminalSweep)
-        self.pushButton_StartLandauFan.clicked.connect(self.startLandauFanSweep)
-        self.pushButton_Start1DFieldSweep.clicked.connect(self.startFieldSweep1D)
+        self.pushButton_StartFourTerminalSweep.clicked.connect(lambda: self.startFourTerminalSweep())
+        self.pushButton_StartLandauFan.clicked.connect(lambda: self.startLandauFanSweep())
+        self.pushButton_Start1DFieldSweep.clicked.connect(lambda: self.startFieldSweep1D())
 
         self.abortMagneticFieldSweep_Flag = False #By default do not abort a sweep
         self.pushButton_AbortLandauFan.clicked.connect(self.abortMagneticFieldSweep)
@@ -238,9 +236,8 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         except Exception:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-            #print 'nsot labrad connect', inst
-            #exc_type, exc_obj, exc_tb = sys.exc_info()
-            #print 'line num ', exc_tb.tb_lineno
+            printErrorInfo()
+            printErrorInfo()
 
     def disconnectLabRAD(self):
         self.cxn = False
@@ -439,7 +436,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
     def setLandauFanFieldLinecut(self):
         #Called when the FieldLinecut linedit is changed
-        val=readNum(str(self.lineEdit_landauFan_FieldLinecut.text()), self , False)
+        val = readNum(str(self.lineEdit_landauFan_FieldLinecut.text()))
         if isinstance(val,float):
             self.landauFanFieldLinecutPosition = val
         self.lineEdit_landauFan_FieldLinecut.setText(formatNum(self.landauFanFieldLinecutPosition, 6))
@@ -448,7 +445,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
     def setLandauFanGateLinecut(self):
         #Called when the GateLinecut linedit is changed
-        val=readNum(str(self.lineEdit_landauFan_GateLinecut.text()), self , False)
+        val = readNum(str(self.lineEdit_landauFan_GateLinecut.text()))
         if isinstance(val,float):
             self.landauFanGateLinecutPosition = val
         self.lineEdit_landauFan_GateLinecut.setText(formatNum(self.landauFanGateLinecutPosition, 6))
@@ -602,7 +599,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
     """ The following section has functions for updating the four terminal sweep parameters"""
 
     def updateSweepParameter(self, lineEdit, key, range = None):
-        val=readNum(str(lineEdit.text()), self , False) #Read the text from the provided lineEdit
+        val = readNum(str(lineEdit.text())) #Read the text from the provided lineEdit
         if isinstance(val,float): #If it's a proper number, update the sweep Parameter dictionary
             if range == None:
                 self.sweepParameters[key] = val
@@ -621,7 +618,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
     def updateFourTerminalSteps(self):
         #Updates the four terminal steps. This gets its own function to allow the UI to toggle between entering StepNumber and StepSize
-        val=readNum(str(self.lineEdit_FourTerminal_Numberofstep.text()), self , False)
+        val = readNum(str(self.lineEdit_FourTerminal_Numberofstep.text()))
         if isinstance(val,float):
             #Software toggle between the lineEdit switching the number of step and the size of the steps
             if self.sweepParameters['FourTerminal_VoltageSteps_Status'] == "StepNumber":  #If setting the number of sets, do that
@@ -706,7 +703,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
     def updateFieldSweep1DSteps(self):
         #Updates the 1D field sweep steps. This gets its own function to allow the UI to toggle between entering StepNumber and StepSize
-        val=readNum(str(self.lineEdit_1DFieldSweepSetting_Numberofsteps.text()), self , False)
+        val = readNum(str(self.lineEdit_1DFieldSweepSetting_Numberofsteps.text()))
         if isinstance(val,float):
             if self.sweepParameters['FieldSweep1D_FieldSteps_Status'] == "StepNumber":   #based on status, dummyval is deterimined and update the Numberof steps parameters
                 self.sweepParameters['FieldSweep1D_FieldSteps']=int(round(val))
@@ -737,7 +734,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
     def updateLandauFanSteps(self):
         #Updates the landau fan steps. This gets its own function to allow the UI to toggle between entering StepNumber and StepSize
-        val=readNum(str(self.lineEdit_landauFan_Steps.text()), self , False)
+        val = readNum(str(self.lineEdit_landauFan_Steps.text()))
         if isinstance(val,float):
             if self.sweepParameters['landauFan_FieldSteps_Status'] == "StepNumber":   #based on status, dummyval is deterimined and update the Numberof steps parameters
                 self.sweepParameters['landauFan_FieldSteps']=int(round(val))
@@ -773,11 +770,11 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         try:
             yield self.ramp1_display(channel, self.DAC_output[channel], self.DAC_setpoint[channel], 10000, 100)
         except Exception as inst:
-            print(inst, sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     def setDACSetpoint(self, channel, lineEdit):
         #Set the DAC setpoint
-        val = readNum(str(lineEdit.text()), self, False)
+        val = readNum(str(lineEdit.text()))
         if isinstance(val, float) and val <= 10.0 and val >= -10.0:
             self.DAC_setpoint[channel] = val
         lineEdit.setText(formatNum(self.DAC_setpoint[channel],6))
@@ -918,7 +915,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             #Ramp the output gate voltage back down to zero after the sweep is done
             yield self.ramp1_display(self.FourTerminal_ChannelOutput[0],self.sweepParameters['FourTerminal_MaxVoltage'],0.0,10000,100)
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
         self.unlockInterface()
         yield self.sleep(0.25)
@@ -952,7 +949,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 yield self.rampMagneticField(0, self.sweepParameters['FieldSweep1D_SweepSpeed'])
 
         except Exception as inst:
-            print(inst, sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
         self.unlockInterface() #unlock the interface when done
         yield self.sleep(0.25)
@@ -1041,7 +1038,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             returnValue(plot_data)
 
         except Exception as inst:
-            print(inst, sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
     def startLandauFanSweep(self):
@@ -1142,7 +1139,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 yield self.rampMagneticField(0.0, self.sweepParameters['landauFan_SweepSeed'])
 
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
         self.unlockInterface() #Unlock the interface when done
         yield self.sleep(0.25) #Wait a quarter second before saving a screenshot
@@ -1181,8 +1178,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                     break
 
         except Exception as inst:
-            print('Field error: ', inst)
-            print('on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
     def goToSetpointIPS(self, B, rate):
@@ -1199,8 +1195,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             if not a:
                 print("Error saving Scan data picture")
         except Exception as inst:
-            print('Scan error: ', inst)
-            print('on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions for setting the DAC-ADC voltage at the same time as the UI"""
@@ -1220,7 +1215,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             if steps*delay/1e6  > 0.7:
                 yield self.clearBufferedData()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def clearBufferedData(self):
@@ -1239,7 +1234,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             self.label_DACOout_list[DAC_Out_Channels[0]].setText(formatNum(stop, 6))
             returnValue(data)
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     def calculateRealVoltage(self,reading):
         #Take the DAC reading and convert it to real unit (V)

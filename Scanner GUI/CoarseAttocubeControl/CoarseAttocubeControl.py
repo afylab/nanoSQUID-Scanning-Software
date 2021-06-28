@@ -2,6 +2,7 @@ import sys
 from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import numpy as np
+from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
 path = sys.path[0] + r"\CoarseAttocubeControl"
 sys.path.append(path + r'\Status')
@@ -12,9 +13,6 @@ Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 
 import Status
 import DebugPy
-
-sys.path.append(sys.path[0]+'\Resources')
-from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
     def __init__(self, reactor, parent=None):
@@ -98,7 +96,6 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         self.pushButton_SingleStepMinus = [self.pushButton_ManualStepMinus_Axis1, self.pushButton_ManualStepMinus_Axis2, self.pushButton_ManualStepMinus_Axis3]
         self.checkBox_OutputEnabled = [self.checkBox_OutputEnabled_Axis1, self.checkBox_OutputEnabled_Axis2, self.checkBox_OutputEnabled_Axis3]
 
-
         self.lcddisplay = [self.lcdNumber_Axis1, self.lcdNumber_Axis2, self.lcdNumber_Axis3]
         self.CurrentPosition = [0.0, 0.0, 0.0]
         self.RelativePosition = [0.0, 0.0, 0.0]
@@ -128,7 +125,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 yield self.loadParameters()
                 self.MonitorStatus()
         except Exception as inst:
-            print(inst, sys.exc_traceback.tb_lineno)
+            printErrorInfo()
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
 
@@ -173,7 +170,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 yield self.RefreshAttocubeStatus()
                 yield self.sleep(0.1)
             except Exception as inst:
-                print('Monitor error: ', inst, sys.exc_traceback.tb_lineno)
+                printErrorInfo()
                 yield self.sleep(0.1)
 
     @inlineCallbacks
@@ -221,7 +218,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 stylesheet = '#pushButton_Status_Axis' + str(i+1) + '{\nimage:url(' + self.IconPath[self.Status[i]] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
                 self.pushButton_Status[i].setStyleSheet(stylesheet)
         except Exception as inst:
-            print(inst, sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     def SetIndicatorMoving(self, AxisNo):
         self.pushButton_Relative[AxisNo].setText('Moving')
@@ -239,7 +236,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             Capacitance = yield self.anc350.measure_capacitance(AxisNo)
             label.setText(formatNum(Capacitance))
         except Exception as inst:
-            print(inst, sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
     def MovingRelative(self, AxisNo):
@@ -254,7 +251,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             elif self.pushButton_Relative[AxisNo].text() == 'Moving':
                 yield self.anc350.start_auto_move(AxisNo, False, True) #Only stop auto move but not disble the aixs
         except Exception as inst:
-            print(inst, sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
     def MovingAbsolute(self, AxisNo):
@@ -278,85 +275,80 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             yield self.anc350.start_single_step(AxisNo, flag)
             yield self.sleep(0.1)
         except Exception as inst:
-            print(inst, sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     def UpdateAutomaticPositioningRelativePosition(self, AxisNo):
-        dummystr=str(self.lineEdit_Relative[AxisNo].text())
-        dummyval=readNum(dummystr, self)
-        if isinstance(dummyval,float):
-            if dummyval >= -5.0 * 10**-3 and dummyval <= 5.0 * 10**-3:
-                self.RelativePosition[AxisNo] = dummyval
-            elif dummyval < -5.0 * 10**-3:
+        val = readNum(str(self.lineEdit_Relative[AxisNo].text()), self, True)
+        if isinstance(val,float):
+            if val >= -5.0 * 10**-3 and val <= 5.0 * 10**-3:
+                self.RelativePosition[AxisNo] = val
+            elif val < -5.0 * 10**-3:
                 self.RelativePosition[AxisNo] = -5.0 * 10**-3
-            elif dummyval > 5.0 * 10**-3:
+            elif val > 5.0 * 10**-3:
                 self.RelativePosition[AxisNo] = 5.0 * 10**-3
-        self.lineEdit_Relative[AxisNo].setText(formatNum(self.RelativePosition[AxisNo],6))
+        self.lineEdit_Relative[AxisNo].setText(formatNum(self.RelativePosition[AxisNo], 6))
 
     def UpdateAutomaticPositioningAbsolutePosition(self, AxisNo):
-        dummystr=str(self.lineEdit_Absolute[AxisNo].text())
-        dummyval=readNum(dummystr, self)
-        if isinstance(dummyval,float):
-            if dummyval >= -5.0 * 10**-3 and dummyval <= 5.0 * 10**-3:
-                self.AbsolutePosition[AxisNo]=dummyval
-            elif dummyval < -5.0 * 10**-3:
+        val = readNum(str(self.lineEdit_Absolute[AxisNo].text()), self, True)
+        if isinstance(val,float):
+            if val >= -5.0 * 10**-3 and val <= 5.0 * 10**-3:
+                self.AbsolutePosition[AxisNo] = val
+            elif val < -5.0 * 10**-3:
                 self.AbsolutePosition[AxisNo] = -5.0 * 10**-3
-            elif dummyval > 5.0 * 10**-3:
+            elif val > 5.0 * 10**-3:
                 self.AbsolutePosition[AxisNo] = 5.0 * 10**-3
         self.lineEdit_Absolute[AxisNo].setText(formatNum(self.AbsolutePosition[AxisNo],6))
 
     @inlineCallbacks
     def UpdateAmplitude(self, AxisNo):
         try:
-            dummystr=str(self.lineEdit_Amplitude[AxisNo].text())
-            dummyval=readNum(dummystr, self , False)
-            if isinstance(dummyval,float):
-                if dummyval >= 0 and dummyval <= 60:
+            val = readNum(str(self.lineEdit_Amplitude[AxisNo].text()))
+            if isinstance(val, float):
+                if val >= 0 and val <= 60:
                     self.manual_Amplitude[AxisNo] = dummyval
-                elif dummyval < 0:
+                elif val < 0:
                     self.manual_Amplitude[AxisNo] = 0
-                elif dummyval > 60:
+                elif val > 60:
                     self.manual_Amplitude[AxisNo] = 60
             self.lineEdit_Amplitude[AxisNo].setText(formatNum(self.manual_Amplitude[AxisNo],6))
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_amplitude(AxisNo, self.manual_Amplitude[AxisNo])
         except Exception as inst:
-            print(inst, sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
     def UpdateFrequency(self, AxisNo):
         try:
-            dummystr=str(self.lineEdit_Frequency[AxisNo].text())
-            dummyval=readNum(dummystr, self , False)
-            if isinstance(dummyval,float):
-                if dummyval >= 1 and dummyval <= 2000:
+            val = readNum(str(self.lineEdit_Frequency[AxisNo].text()))
+            if isinstance(val, float):
+                if val >= 1 and val <= 2000:
                     self.manual_Frequency[AxisNo]= int(dummyval)
-                elif dummyval < 1:
+                elif val < 1:
                     self.manual_Frequency[AxisNo] = 1
-                elif dummyval > 2000:
+                elif val > 2000:
                     self.manual_Frequency[AxisNo] = 2000
             self.lineEdit_Frequency[AxisNo].setText(formatNum(self.manual_Frequency[AxisNo],6))
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_frequency(AxisNo, self.manual_Frequency[AxisNo])
         except Exception as inst:
-            print(inst, sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
     def UpdateTargetRange(self, AxisNo):
         try:
-            dummystr=str(self.lineEdit_TargetRange[AxisNo].text())
-            dummyval=readNum(dummystr, self)
-            if isinstance(dummyval,float):
-                if dummyval >= 1*10**-9 and dummyval <= 10**-3:
-                    self.TargetRange[AxisNo]= dummyval
-                elif dummyval < 1*10**-9:
+            val = readNum(str(self.lineEdit_TargetRange[AxisNo].text()), self, True)
+            if isinstance(val, float):
+                if val >= 1*10**-9 and val <= 10**-3:
+                    self.TargetRange[AxisNo]= val
+                elif val < 1*10**-9:
                     self.TargetRange[AxisNo] = 1*10**-9
-                elif dummyval > 10**-3:
+                elif val > 10**-3:
                     self.TargetRange[AxisNo] = 10**-3
             self.lineEdit_TargetRange[AxisNo].setText(formatNum(self.TargetRange[AxisNo],6))
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_target_range(AxisNo, self.TargetRange[AxisNo])
         except Exception as inst:
-            print(inst, sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
     def toggleTargetGround(self, AxisNo):

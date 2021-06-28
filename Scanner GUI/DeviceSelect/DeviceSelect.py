@@ -1,13 +1,10 @@
 import sys
 from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
+from nSOTScannerFormat import printErrorInfo
 
 path = sys.path[0] + r"\DeviceSelect"
 DeviceSelectUI, QtBaseClass = uic.loadUiType(path + r"\DeviceSelect.ui")
-
-#Not required, but strongly recommended functions used to format numbers in a particular way.
-sys.path.append(sys.path[0]+'\Resources')
-# from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtWidgets.QMainWindow, DeviceSelectUI):
     newDeviceInfo = QtCore.pyqtSignal(dict)
@@ -342,7 +339,6 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
 
                 #For this section, adding the items to the comboBoxes
                 for device in list:
-                    self.GUIDictionary['devices']['approach and TF']['dac_adc'].addItem(device[1])
                     self.GUIDictionary['devices']['scan']['dac_adc'].addItem(device[1])
                     self.GUIDictionary['devices']['nsot']['dac_adc'].addItem(device[1])
                     self.GUIDictionary['devices']['sample']['dac_adc'].addItem(device[1])
@@ -379,8 +375,7 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
             if self.localLabRADConnected and self.remoteLabRADConnected:
                 self.loadDefaultConfigurationInfo()
         except Exception as inst:
-            print('connectLocal', inst)
-            print('on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
     def connectRemoteLabRAD(self, dict):
@@ -400,8 +395,7 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
             if self.localLabRADConnected and self.remoteLabRADConnected:
                 self.loadDefaultConfigurationInfo()
         except Exception as inst:
-            print('connectRemote', inst)
-            print('on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     def disconnectLabRAD(self):
         #Reinitialize deviceDictionary to be empty
@@ -495,9 +489,7 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
             self.sendDeviceInfo()
 
         except Exception as inst:
-            print('check Loaded', inst)
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print('line num ', exc_tb.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
     def sendDeviceInfo(self):
@@ -513,8 +505,7 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
             self.newDeviceInfo.emit(self.deviceDictionary)
             self.setConfigStatus(True)
         except Exception as inst:
-            print('check Loaded: ', inst)
-            print('on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     def setDefaultConfiguration(self):
         f = open(self.fileName,'w')

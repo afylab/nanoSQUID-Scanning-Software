@@ -1,14 +1,10 @@
 import sys
 from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred #, returnValue
-from traceback import format_exc
+from nSOTScannerFormat import printErrorInfo
 
 path = sys.path[0] + r"\ScriptingModule"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\Scripting.ui")
-
-#Not required, but strongly recommended functions used to format numbers in a particular way.
-sys.path.append(sys.path[0]+'\Resources')
-#from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
@@ -83,7 +79,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         try:
             code_to_run = self.formatCode()
         except Exception as inst:
-            print("Error when formatting code: ", inst)
+            printErrorInfo()
 
         try:
             self.current_line = 0
@@ -114,13 +110,12 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.label_status.setText("Syntax error thrown on line " +  str(inst.lineno))
                 self.unlockInterface()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
             self.runningScript = False
             if self.current_line == 0:
                 self.label_status.setText(str(inst) + ' error thrown while compiling')
             else:
                 self.label_status.setText(str(inst) + ' thrown on line ' + str(self.current_line))
-            print(format_exc())
             self.unlockInterface()
 
     def abortScript(self):

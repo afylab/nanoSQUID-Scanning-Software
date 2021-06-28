@@ -6,7 +6,7 @@ import numpy as np
 import pyqtgraph as pg
 import time
 import math
-from nSOTScannerFormat import readNum, formatNum
+from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
 path = sys.path[0] + r"\nSOTCharacterizer"
 characterGUI = path + r"\character_GUI.ui"
@@ -79,7 +79,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         self.updatePlots()
 
         #Starts a sweep
-        self.push_startSweep.clicked.connect(self.startSweep)
+        self.push_startSweep.clicked.connect(lambda: self.startSweep())
 
         #Flag used to initiate an abort function in the middle of a sweep
         self.abortFlag = False
@@ -156,7 +156,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         self.blink_server = False
 
         #By default lock the interface
-        #self.lockInterface()
+        self.lockInterface()
 
     def setupAdditionalUi(self):
         #Set up the plot for the DC output trace data
@@ -270,7 +270,6 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         self.view3.addItem(self.vRetraceNoiseLine, ignoreBounds = True)
         self.view3.addItem(self.hRetraceNoiseLine, ignoreBounds = True)
 
-
         #Initialize all the plots for the linecuts
         self.IVTracePlot = pg.PlotWidget(parent = self.curbiasTracePlot)
         self.IVTracePlot.setGeometry(QtCore.QRect(0, 0, 640, 175))
@@ -330,7 +329,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
             #Connected to the appropriate DACADC
             self.dac = yield cxn.dac_adc
-            self.dac.select_device(dict['devices']['nsot']['dac_adc'])
+            yield self.dac.select_device(dict['devices']['nsot']['dac_adc'])
 
             #Select the appropriate magnet power supply
             if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
@@ -343,6 +342,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.ips = dict['servers']['remote']['ips120']
                 self.settingsDict['Magnet device'] = 'IPS 120-10'
                 self.comboBox_magnetPower.addItem('IPS 120-10')
+            else:
 
             #select the appropriate blink device
             if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
@@ -371,9 +371,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         except Exception as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-            print('nsot char labrad connect', inst)
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print('line num ', exc_tb.tb_lineno)
+            printErrorInfo()
 
     def disconnectLabRAD(self):
         self.comboBox_magnetPower.removeItem(0)
@@ -395,7 +393,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
     def updateFieldMin(self, val = None):
         #If no value is specified get the value from the lineEdit
         if val is None:
-            val = readNum(str(self.lineEdit_fieldMin.text()), self, False)
+            val = readNum(str(self.lineEdit_fieldMin.text()))
         #If the val retrieved from the lineedit is a float
         if isinstance(val,float):
             #Update the parameters dictionary with the new value
@@ -408,7 +406,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def updateFieldMax(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_fieldMax.text()), self, False)
+            val = readNum(str(self.lineEdit_fieldMax.text()))
         if isinstance(val,float):
             self.sweepParamDict['B_max'] = self.checkFieldRange(val)
         self.lineEdit_fieldMax.setText(formatNum(self.sweepParamDict['B_max']))
@@ -430,14 +428,14 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def updateFieldSpeed(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_fieldSpeed.text()), self, False)
+            val = readNum(str(self.lineEdit_fieldSpeed.text()))
         if isinstance(val,float):
             self.sweepParamDict['B_rate'] = val
         self.lineEdit_fieldSpeed.setText(formatNum(self.sweepParamDict['B_rate']))
 
     def updateFieldPoints(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_fieldPoints.text()), self, False)
+            val = readNum(str(self.lineEdit_fieldPoints.text()))
         if isinstance(val,float) and val > 2:
             #Updates both the number of field points and the field step size.
             #If the GUI is toggled such that it enters the step size instead of
@@ -458,7 +456,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def updateBiasMin(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_biasMin.text()), self, False)
+            val = readNum(str(self.lineEdit_biasMin.text()))
         if isinstance(val,float):
             self.sweepParamDict['V_min'] = self.checkBiasRange(val)
             self.checkSweepVoltageParameters()
@@ -466,7 +464,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def updateBiasMax(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_biasMax.text()), self, False)
+            val = readNum(str(self.lineEdit_biasMax.text()))
         if isinstance(val,float):
             self.sweepParamDict['V_max'] = self.checkBiasRange(val)
             self.checkSweepVoltageParameters()
@@ -499,7 +497,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def updateBiasPoints(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_biasPoints.text()), self, False)
+            val = readNum(str(self.lineEdit_biasPoints.text()))
         if isinstance(val,float) and val > 2:
             #Updates both the number of bias points and the bias step size.
             #If the GUI is toggled such that it enters the step size instead of
@@ -520,7 +518,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def updateBiasDelay(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_biasDelay.text()), self, False)
+            val = readNum(str(self.lineEdit_biasDelay.text()))
         if isinstance(val,float) and val > 0:
             self.sweepParamDict['delay'] = val
         self.lineEdit_biasDelay.setText(formatNum(self.sweepParamDict['delay']))
@@ -882,7 +880,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
             self.newToeField.emit(B_f, B_f/IB_conv, V_setpoint)
         except Exception as inst:
-            print('SF, ', str(inst ))
+            printErrorInfo()
 
     @inlineCallbacks
     def ipsSetField(self, B_f, B_rate):
@@ -1473,8 +1471,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             if not a:
                 print("Error saving nSOT data picture")
         except Exception as inst:
-            print('nSOTChar error: ', inst)
-            print('on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     def updateDataVaultDirectory(self):
         curr_folder = yield self.gen_dv.cd()
@@ -1793,8 +1790,7 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
                 try:
                     yield self.window.blink()
                 except Exception as inst:
-                    print(inst)
-                    print('Blinks the problem yo')
+                    printErrorInfo()
 
                 if biasMin != 0:
                     yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [0], [biasMin], abs(int(biasMin * 1000)), 1000)
@@ -1822,7 +1818,7 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
                 self.push_startSweep.setEnabled(True)
 
             except Exception as inst:
-                print(inst)
+                printErrorInfo()
         elif self.btnAction == 'reset':
             self.toggleStartBtn('sweep')
 
@@ -1834,8 +1830,7 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
             if not a:
                 print("Error saving nSOT Prelim data picture")
         except Exception as inst:
-            print('nSOTChar Prelim error: ', inst)
-            print('on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     def sleep(self, secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows

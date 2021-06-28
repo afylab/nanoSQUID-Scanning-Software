@@ -5,6 +5,7 @@ from DataVaultBrowser import dirExplorer
 import platform
 import datetime
 import os
+from nSOTScannerFormat import printErrorInfo
 
 path = sys.path[0] + r"\LabRADConnect"
 LabRADConnectUI, QtBaseClass = uic.loadUiType(path + r"\LabRADConnect.ui")
@@ -75,10 +76,10 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
         if not folderExists:
             os.makedirs(self.session_2)
 
-        self.push_ConnectAll.clicked.connect(self.connectAllServers)
-        self.push_ConnectLocal.clicked.connect(self.connectLocalServers)
-        self.push_ConnectRemote.clicked.connect(self.connectRemoteServers)
-        self.push_DisconnectAll.clicked.connect(self.disconnectLabRAD)
+        self.push_ConnectAll.clicked.connect(lambda: self.connectAllServers())
+        self.push_ConnectLocal.clicked.connect(lambda: self.connectLocalServers())
+        self.push_ConnectRemote.clicked.connect(lambda: self.connectRemoteServers())
+        self.push_DisconnectAll.clicked.connect(lambda: self.disconnectLabRAD())
 
         self.key_list = []
 
@@ -91,7 +92,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
         self.push_HF2LI.clicked.connect(self.connectHF2LI)
         '''
 
-        self.push_Session.clicked.connect(self.chooseSession)
+        self.push_Session.clicked.connect(lambda: self.chooseSession())
         self.push_Session_2.clicked.connect(self.chooseSession_2)
 
     def setupAdditionalUi(self):
@@ -150,7 +151,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.connectGPIBDevices()
 
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def connectRemoteServers(self):
@@ -172,10 +173,10 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.connectRemoteGPIBDevices()
 
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
-    def displayAllConnectingGraphics(self, c = None):
+    def displayAllConnectingGraphics(self):
         i = 0
         while not self.allConnectionsAttmpted():
             self.push_ConnectAll.setStyleSheet(self.sheets[i])
@@ -223,8 +224,8 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                 yield self.connectionLocalDictionary['cxn'].anc350_server.disconnect()
                 print('Disconnected ANC350')
             except Exception as inst:
-                print(inst)
                 print('Error disconnecting the ANC350 server.')
+                printErrorInfo()
 
             try:
                 yield self.connectionLocalDictionary['cxn'].disconnect()
@@ -233,6 +234,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                 print('Disconnected remote')
             except:
                 print('Error disconnecting the Labrad connection server.')
+                printErrorInfo()
 
         self.connectionLocalDictionary = self.emptyLocalDictionary.copy()
         self.connectionRemoteDictionary = self.emptyRemoteDictionary.copy()
@@ -445,14 +447,14 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
     """ The following section has the methods for connecting local Serial devices."""
 
     @inlineCallbacks
-    def connectSerialDevices(self, c = None):
+    def connectSerialDevices(self):
         yield self.connectSerialServer()
         self.connectDACADC()
         self.connectDCBox()
         self.connectAMI430()
 
     @inlineCallbacks
-    def connectSerialServer(self, c = None):
+    def connectSerialServer(self):
         if self.connectionLocalDictionary['cxn'] is False:
             self.push_SerialServer.setStyleSheet("#push_SerialServer{" +
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -476,7 +478,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
         self.emitLocalConnectionDictionary()
 
     @inlineCallbacks
-    def connectDACADC(self, c = None):
+    def connectDACADC(self):
         if self.connectionLocalDictionary['ser_server'] is False:
             self.push_DACADC.setStyleSheet("#push_DACADC{" +
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -504,7 +506,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
         self.emitLocalConnectionDictionary()
 
     @inlineCallbacks
-    def connectDCBox(self, c = None):
+    def connectDCBox(self):
         if self.connectionLocalDictionary['ser_server'] is False:
             self.push_DCBox.setStyleSheet("#push_DCBox{" +
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -532,7 +534,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
         self.emitLocalConnectionDictionary()
 
     @inlineCallbacks
-    def connectAMI430(self, c = None):
+    def connectAMI430(self):
         if self.connectionLocalDictionary['ser_server'] is False:
             self.push_AMI430.setStyleSheet("#push_AMI430{" +
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -590,7 +592,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['ser_server'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def connectRemoteLM510(self):
@@ -620,20 +622,20 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['lm510'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
 #--------------------------------------------------------------------------------------------------------------------------#
 
     """ The following section has the methods for connecting local GPIB devices."""
 
     @inlineCallbacks
-    def connectGPIBDevices(self, c = None):
+    def connectGPIBDevices(self):
         yield self.connectGPIBServer()
         yield self.connectGPIBManager()
         #add gpib devices here
 
     @inlineCallbacks
-    def connectGPIBServer(self, c = None):
+    def connectGPIBServer(self):
         #TODO
         #Get local information to get GPIB bus server name
         try:
@@ -656,10 +658,10 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.cxnAttemptLocalDictionary['gpib_server'] = True
             self.emitLocalConnectionDictionary()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
-    def connectGPIBManager(self, c = None):
+    def connectGPIBManager(self):
         try:
             if self.connectionLocalDictionary['cxn'] is False:
                 self.push_GPIBMan.setStyleSheet("#push_GPIBMan{" +
@@ -680,21 +682,21 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.cxnAttemptLocalDictionary['gpib_manager'] = True
             self.emitLocalConnectionDictionary()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
 #--------------------------------------------------------------------------------------------------------------------------#
 
     """ The following section has the methods for connecting remote GPIB devices."""
 
     @inlineCallbacks
-    def connectRemoteGPIBDevices(self, c = None):
+    def connectRemoteGPIBDevices(self):
         yield self.connectRemoteGPIBServer()
         yield self.connectRemoteGPIBManager()
         self.connectRemoteIPS120()
         self.connectRemoteLS350()
 
     @inlineCallbacks
-    def connectRemoteGPIBServer(self, c = None):
+    def connectRemoteGPIBServer(self):
         try:
             if self.connectionRemoteDictionary['cxn'] is False:
                 self.push_remoteGPIBServer.setStyleSheet("#push_remoteGPIBServer{" +
@@ -715,10 +717,10 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['gpib_server'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
-    def connectRemoteGPIBManager(self, c = None):
+    def connectRemoteGPIBManager(self):
         try:
             if self.connectionRemoteDictionary['cxn'] is False:
                 self.push_remoteGPIBMan.setStyleSheet("#push_remoteGPIBMan{" +
@@ -739,7 +741,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['gpib_manager'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def connectRemoteIPS120(self):
@@ -774,10 +776,10 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['ips120'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
-    def connectRemoteLS350(self, c = None):
+    def connectRemoteLS350(self):
         try:
             if self.connectionRemoteDictionary['gpib_server'] is False or self.connectionRemoteDictionary['gpib_manager'] is False:
                 self.push_LS350.setStyleSheet("#push_LS350{" +
@@ -804,13 +806,13 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.cxnAttemptRemoteDictionary['ls350'] = True
             self.emitRemoteConnectionDictionary()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 #--------------------------------------------------------------------------------------------------------------------------#
 
     """ The following section has the methods for choosing the datavault location."""
 
     @inlineCallbacks
-    def chooseSession(self, c = None):
+    def chooseSession(self):
         try:
             if self.connectionLocalDictionary['dv'] is False:
                 msgBox = QtWidgets.QMessageBox(self)
@@ -826,13 +828,13 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                 yield dvExplorer.popDirs()
                 dvExplorer.show()
                 dvExplorer.raise_()
-                dvExplorer.accepted.connect(lambda: self.OpenDataVaultFolder(self.reactor, dv, dvExplorer.directory))
+                dvExplorer.accepted.connect(lambda: self.OpenDataVaultFolder(dv, dvExplorer.directory))
 
         except Exception as inst:
-            print('Error:', inst, ' on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
-    def OpenDataVaultFolder(self, c, datavault, directory):
+    def OpenDataVaultFolder(self, datavault, directory):
         try:
             yield datavault.cd(directory)
             directory = directory[1:]
@@ -843,7 +845,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.lineEdit_Session.setText(self.session)
             self.newDVFolder.emit()
         except Exception as inst:
-            print('Error:', inst, ' on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     def chooseSession_2(self):
         folder = str(QtWidgets.QFileDialog.getExistingDirectory(self, directory = 'C:\\Users\\cltschirhart\\Data Sets\\ScanData'))
@@ -866,7 +868,6 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
         if len(self.key_list) == 10:
             if self.key_list == [QtCore.Qt.Key_Up,QtCore.Qt.Key_Up,QtCore.Qt.Key_Down,QtCore.Qt.Key_Down,QtCore.Qt.Key_Left,QtCore.Qt.Key_Right,QtCore.Qt.Key_Left,QtCore.Qt.Key_Right,QtCore.Qt.Key_B,QtCore.Qt.Key_A]:
                 self.flashSQUID()
-
 
     @inlineCallbacks
     def flashSQUID(self):

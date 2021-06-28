@@ -18,7 +18,7 @@
 [info]
 name = HF2LI Server
 version = 1.0
-description = Communicates with the Lock in, which has built in PLL / PID methods.  
+description = Communicates with the Lock in, which has built in PLL / PID methods.
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -47,10 +47,10 @@ import sys
 
 class HF2LIServer(LabradServer):
     name = "HF2LI Server"    # Will be labrad name of server
- 
+
 #------------------------------------------------------------------------------------------------------------------------------------------#
     """
-    The following section of code has initializing and general lock in commands that can be useful in multiple contexts. 
+    The following section of code has initializing and general lock in commands that can be useful in multiple contexts.
     """
 
     def initServer(self):  # Do initialization here
@@ -62,7 +62,7 @@ class HF2LIServer(LabradServer):
         self.pidAdvisor = None
         self.poll_data = None
         print("Server initialization complete")
-        
+
     @inlineCallbacks
     def initPIDAdvisor(self, c = None):
         self.pidAdvisor = yield self.daq.pidAdvisor()
@@ -97,7 +97,7 @@ class HF2LIServer(LabradServer):
         except RuntimeError:
             print ('Failed to detected LabOne DAQ Server and an associated Zurich Instruments device.'
                 ' Check that everything is plugged into the computer.')
-                
+
     @setting(101, 'List Devices', returns=['*(ws)'])
     def list_devices(self, c):
         """Returns the list of devices. If none have been detected (either because detect_devices has not yet
@@ -107,11 +107,11 @@ class HF2LIServer(LabradServer):
         length = len(self.device_list)
         IDs = list(range(0,length))
         return list(zip(IDs, names))
-            
+
     @setting(102, 'Select Device', key=[': Select first device', 's: Select device by name', 'w: Select device by ID'], returns=['s: Name of the selected device'])
     def select_device(self, c, key = None):
         """Select a device for the current context. DOES NOT WORK. Instead, sets the active device ID to the provided dev_ID. If no dev_ID is provided, sets the active
-        device to the first device from the device list. Sets the API level to 1, which should provide all the functionality for the HF2LI. Right now, this is a 
+        device to the first device from the device list. Sets the API level to 1, which should provide all the functionality for the HF2LI. Right now, this is a
         server setting, NOT a context setting, so you cannot have multiple connections with different contexts connected to different devices."""
         if key is None:
             self.dev_ID = self.device_list[0]
@@ -124,34 +124,34 @@ class HF2LIServer(LabradServer):
                 self.initSweeper()
             else:
                 print("Provided device key is not in the list of possible devices.")
-        else: 
+        else:
             try:
                 self.dev_ID = self.device_list[key]
                 self.initPIDAdvisor()
                 self.initSweeper()
             except:
                 print("Provided device key is not in the list of possible devices.")
-            
+
         return self.dev_ID
-        
+
     @setting(103,settings = '**s', returns = '')
     def set_settings(self, c, settings):
-        """Simultaneously set all the settings described in the settings input. Settings should be a 
+        """Simultaneously set all the settings described in the settings input. Settings should be a
             list of string and input tuples, where the string provides the node information and the
-            input is the required input. For example: 
+            input is the required input. For example:
             setting =   [['/%s/demods/*/enable' % self.dev_ID, '0'],
                         ['/%s/demods/*/trigger' % self.dev_ID, '0'],
                         ['/%s/sigouts/*/enables/*' % self.dev_ID, '0'],
                         ['/%s/scopes/*/enable' % self.dev_ID, '0']]
-            This function allows changing multiple settings quickly, however it requires knowledge 
-            of the node names. Most settings that can be set through this function can also be 
+            This function allows changing multiple settings quickly, however it requires knowledge
+            of the node names. Most settings that can be set through this function can also be
             set through other functions."""
-            
+
         for el in settings:
             el[1] = float(el[1])
-            
+
         yield self.daq.set(settings)
-        
+
     @setting(104,returns = '')
     def sync(self,c):
         """Perform a global synchronisation between the device and the data server:
@@ -164,10 +164,10 @@ class HF2LIServer(LabradServer):
         """Returns the version of the software installed on this computer"""
         ver = yield self.daq.version()
         returnValue(ver)
-               
+
 #------------------------------------------------------------------------------------------------------------------------------------------#
     """
-    The following section of code has all of the commands relevant to basic controls of the lock in reading and output. 
+    The following section of code has all of the commands relevant to basic controls of the lock in reading and output.
     """
 
     @setting(105,returns = '')
@@ -182,41 +182,41 @@ class HF2LIServer(LabradServer):
         # Ensure that the settings have taken effect on the device before setting
         # the next configuration.
 
-        
+
     @setting(106,input_channel = 'i', on = 'b', returns = '')
     def set_ac(self, c, input_channel, on):
-        """Set the AC coupling of the provided input channel (1 indexed) to on, if on is True, 
+        """Set the AC coupling of the provided input channel (1 indexed) to on, if on is True,
         and to off, if on is False"""
         setting = ['/%s/sigins/%d/ac' % (self.dev_ID, input_channel-1), on],
         yield self.daq.set(setting)
-        
+
     @setting(107,input_channel = 'i', on = 'b', returns = '')
     def set_imp50(self, c, input_channel, on):
-        """Set the input impedance of the provided input channel (1 indexed) to 50 ohms, if on is True, 
+        """Set the input impedance of the provided input channel (1 indexed) to 50 ohms, if on is True,
         and to 1 mega ohm, if on is False"""
         setting = ['/%s/sigins/%d/imp50' % (self.dev_ID, input_channel-1), on],
         yield self.daq.set(setting)
-        
+
     @setting(108,input_channel = 'i', amplitude = 'v[]', returns = '')
     def set_range(self, c, input_channel, amplitude):
         """Set the input voltage range of the provided input channel (1 indexed) to the provided amplitude in Volts."""
         setting = ['/%s/sigins/%d/range' % (self.dev_ID, input_channel-1), amplitude],
         yield self.daq.set(setting)
-        
+
     @setting(1080,input_channel = 'i', returns = 'v[]')
     def get_range(self, c, input_channel):
         """Set the input voltage range of the provided input channel (1 indexed) to the provided amplitude in Volts."""
         setting = '/%s/sigins/%d/range' % (self.dev_ID, input_channel-1)
         range = yield self.daq.get(setting, True)
         returnValue(float(range[setting]))
-        
+
     @setting(109,input_channel = 'i', on = 'b', returns = '')
     def set_diff(self, c, input_channel, on):
-        """Set the input mode of the provided input channel (1 indexed) to differential, if on is True, 
+        """Set the input mode of the provided input channel (1 indexed) to differential, if on is True,
         and to single ended, if on is False"""
         setting = ['/%s/sigins/%d/diff' % (self.dev_ID, input_channel-1), on],
         yield self.daq.set(setting)
-        
+
     @setting(110,osc_index= 'i', freq = 'v[]', returns = '')
     def set_oscillator_freq(self,c, osc_index, freq):
         """Set the frequency of the designated oscillator (1 indexed) to the provided frequency. The HF2LI Lock-in has
@@ -229,53 +229,53 @@ class HF2LIServer(LabradServer):
         """Turns the specified demodulator on, if on is True, and off, if on is False"""
         setting = ['/%s/demods/%d/enable' % (self.dev_ID, demod_index-1), on],
         yield self.daq.set(setting)
-        
+
     @setting(111,demod_index= 'i', oscselect = 'i', returns = '')
     def set_demod_osc(self,c, demod_index, oscselect):
         """Sets the provided demodulator to select the provided oscillator as its reference frequency. The HF2LI Lock-in has
         six demodulators and two oscillators."""
         setting = ['/%s/demods/%d/oscselect' % (self.dev_ID, demod_index-1), oscselect-1],
         yield self.daq.set(setting)
-        
+
     @setting(112,demod_index= 'i', harm = 'i', returns = '')
     def set_demod_harm(self,c, demod_index, harm):
         """Sets the provided demodulator harmonic. Demodulation frequency will be the reference oscillator times the provided
         integer harmonic."""
         setting = ['/%s/demods/%d/harmonic' % (self.dev_ID, demod_index-1), harm],
         yield self.daq.set(setting)
-        
+
     @setting(113,demod_index= 'i', phase = 'v[]', returns = '')
     def set_demod_phase(self,c, demod_index, phase):
         """Sets the provided demodulator phase."""
         setting = ['/%s/demods/%d/phaseshift' % (self.dev_ID, demod_index-1), phaseshift],
         yield self.daq.set(setting)
-        
+
     @setting(114,demod_index= 'i', input_channel = 'i', returns = '')
     def set_demod_input(self,c, demod_index, input_channel):
         """Sets the provided demodulator phase."""
         setting = ['/%s/demods/%d/adcselect' % (self.dev_ID, demod_index-1), input_channel-1],
         yield self.daq.set(setting)
-        
+
     @setting(115,demod_index= 'i', time_constant = 'v[]', returns = '')
     def set_demod_time_constant(self,c, demod_index, time_constant):
         """Sets the provided demodulator time constant in seconds."""
         setting = ['/%s/demods/%d/timeconstant' % (self.dev_ID, demod_index-1), time_constant],
         yield self.daq.set(setting)
-        
+
     @setting(1150,demod_index= 'i', returns = 'v[]')
     def get_demod_time_constant(self,c, demod_index):
         """Sets the provided demodulator time constant in seconds."""
         setting = '/%s/demods/%d/timeconstant' % (self.dev_ID, demod_index-1)
         tc = yield self.daq.get(setting, True)
         returnValue(float(tc[setting]))
-        
+
     @setting(117,output_channel = 'i', on = 'b', returns = '')
     def set_output(self, c, output_channel, on):
-        """Turns the output of the provided output channel (1 indexed) to on, if on is True, 
+        """Turns the output of the provided output channel (1 indexed) to on, if on is True,
         and to off, if on is False"""
         setting = ['/%s/sigouts/%d/on' % (self.dev_ID, output_channel-1), on],
         yield self.daq.set(setting)
-        
+
     @setting(118,output_channel = 'i', amp = 'v[]', returns = '')
     def set_output_amplitude(self, c, output_channel, amp):
         """Sets the output amplitude of the provided output channel (1 indexed) to the provided input amplitude
@@ -285,7 +285,7 @@ class HF2LIServer(LabradServer):
         elif output_channel == 2:
             setting = ['/%s/sigouts/%d/amplitudes/7' % (self.dev_ID, output_channel-1), amp],
         yield self.daq.set(setting)
-        
+
     @setting(1180,output_channel = 'i', returns = 'v[]')
     def get_output_amplitude(self, c, output_channel):
         """Gets the output amplitude of the provided output channel (1 indexed) in units of the output range."""
@@ -296,7 +296,7 @@ class HF2LIServer(LabradServer):
         dic = yield self.daq.get(setting, True)
         amp = float(dic[setting])
         returnValue(amp)
-        
+
     @setting(119,output_channel = 'i', range = 'v[]', returns = '')
     def set_output_range(self, c, output_channel, range):
         """Sets the output range of the provided output channel (1 indexed) to the provided input amplitude
@@ -304,7 +304,7 @@ class HF2LIServer(LabradServer):
         10 mV, 100 mV, 1 V or 10V."""
         setting = ['/%s/sigouts/%d/range' % (self.dev_ID, output_channel-1), range],
         yield self.daq.set(setting)
-        
+
     @setting(120,output_channel = 'i', returns = 'v[]')
     def get_output_range(self, c, output_channel):
         """Gets the output amplitude of the provided output channel (1 indexed) to the provided input amplitude
@@ -313,15 +313,15 @@ class HF2LIServer(LabradServer):
         dic = yield self.daq.get(setting,True)
         range = float(dic[setting])
         returnValue(range)
-        
+
 #------------------------------------------------------------------------------------------------------------------------------------------#
     """
-    The following section of code has all of the commands relevant to using the HF2LI built in sweeper. 
+    The following section of code has all of the commands relevant to using the HF2LI built in sweeper.
     """
 
     @setting(121,start = 'v[]', stop = 'v[]', samplecount  = 'i', sweep_param = 's', demod = 'i', log = 'b', bandwidthcontrol = 'i', bandwidth = 'v[]', bandwidthoverlap = 'b', loopcount = 'i', settle_time = 'v[]', settle_inaccuracy = 'v[]', averaging_tc = 'v[]', averaging_sample = 'v[]', returns = 'b')
     def create_sweep_object(self,c,start,stop, samplecount, sweep_param, demod = 1, log = False, bandwidthcontrol = 2, bandwidth = 1000, bandwidthoverlap = False, loopcount = 1, settle_time = 0, settle_inaccuracy = 0.001, averaging_tc = 5, averaging_sample = 5):
-        """Sweeps the provided sweep parameter from the provided start value to the provided stop value with 
+        """Sweeps the provided sweep parameter from the provided start value to the provided stop value with
         the desired number of points. The sweep records all data at each point in the sweep. The sweeper will
         not turn on any outputs or configure anything else. It only sweeps the parameter and records data.
         Available sweep_param inputs are (spaces included): \r\n
@@ -331,10 +331,10 @@ class HF2LIServer(LabradServer):
         output 2 amplitude \r\n
         output 1 offset \r\n
         output 2 offset \r\n
-        Returns the 4 by samplecount array with the first column corresponding to grid of the swept parameter, 
+        Returns the 4 by samplecount array with the first column corresponding to grid of the swept parameter,
         the second corresponds to the demodulator R, the third to the phase, and the fourth to the frequency.
         Loop count greater than 1 not yet implemented. """
-            
+
         self.sweeper_path = '/%s/demods/%d/sample' % (self.dev_ID, demod - 1)
         #Set the parameter to be swept
         sweep_param_set = False
@@ -367,9 +367,9 @@ class HF2LIServer(LabradServer):
                 yield self.sweeper.set('sweep/start', stop)
                 yield self.sweeper.set('sweep/stop', start)
                 yield self.sweeper.set('sweep/scan', 3)
-                
+
             yield self.sweeper.set('sweep/samplecount', samplecount)
-            
+
             #Specify linear or logarithmic grid spacing. Off by default
             yield self.sweeper.set('sweep/xmapping', log)
             # Automatically control the demodulator bandwidth/time constants used.
@@ -386,13 +386,13 @@ class HF2LIServer(LabradServer):
             # overlap should be enabled to achieve maximal sweep speed (default: 0). 0 =
             # Disable, 1 = Enable.
             yield self.sweeper.set('sweep/bandwidthoverlap', bandwidthoverlap)
-            
+
             # Specify the number of sweeps to perform back-to-back.
             yield self.sweeper.set('sweep/loopcount', loopcount)
-            
-            #Specify the settling time between data points. 
+
+            #Specify the settling time between data points.
             yield self.sweeper.set('sweep/settling/time', settle_time)
-            
+
             # The sweep/settling/inaccuracy' parameter defines the settling time the
             # sweeper should wait before changing a sweep parameter and recording the next
             # sweep data point. The settling time is calculated from the specified
@@ -404,23 +404,23 @@ class HF2LIServer(LabradServer):
             # time specified by sweep/settling/time and defined by
             # sweep/settling/inaccuracy.
             yield self.sweeper.set('sweep/settling/inaccuracy', settle_inaccuracy)
-            
+
             # Set the minimum time to record and average data. By default set to 10 demodulator
             # filter time constants.
             yield self.sweeper.set('sweep/averaging/tc', averaging_tc)
-            
+
             # Minimal number of samples that we want to record and average. Note,
             # the number of samples used for averaging will be the maximum number of
             # samples specified by either sweep/averaging/tc or sweep/averaging/sample.
             # By default this is set to 5.
             yield self.sweeper.set('sweep/averaging/sample', averaging_sample)
-            
-            
+
+
             #Subscribe to path defined previously
             yield self.sweeper.subscribe(self.sweeper_path)
 
             returnValue(True)
-        else: 
+        else:
             print('Desired sweep parameter does not exist')
             returnValue(False)
 
@@ -431,9 +431,9 @@ class HF2LIServer(LabradServer):
             yield self.sweeper.execute()
             success = True
         returnValue(success)
-        
+
     @setting(123, returns = '**v[]')
-    def read_latest_values(self,c):  
+    def read_latest_values(self,c):
         return_flat_dict = True
         data = yield self.sweeper.read(return_flat_dict)
         demod_data = data[self.sweeper_path]
@@ -443,7 +443,7 @@ class HF2LIServer(LabradServer):
         #phi = np.angle(demod_data[0][0]['x'] + 1j*demod_data[0][0]['y'], True)
         phi = 180*np.arctan2(demod_data[0][0]['y'], demod_data[0][0]['x'])/np.pi
         frequency  = demod_data[0][0]['frequency']
-        
+
         formatted_data = [[],[],[],[]]
         length = len(grid)
         for i in range(0,length):
@@ -456,7 +456,7 @@ class HF2LIServer(LabradServer):
                 pass
 
         returnValue(formatted_data)
-        
+
     @setting(124,returns = 'b')
     def sweep_complete(self,c):
         '''Checks to see if there's a sweep was completed. Returns True if the sweeper is not
@@ -466,7 +466,7 @@ class HF2LIServer(LabradServer):
         else:
             done = True
         returnValue(done)
-        
+
     @setting(125,returns = 'v[]')
     def sweep_time_remaining(self,c):
         if self.sweeper is not None:
@@ -475,7 +475,7 @@ class HF2LIServer(LabradServer):
         else:
             time = float('nan')
         returnValue(time)
-    
+
     @setting(126, returns = 'b')
     def stop_sweep(self,c):
         success = False
@@ -483,21 +483,21 @@ class HF2LIServer(LabradServer):
             yield self.sweeper.finish()
             success = True
         returnValue(success)
-        
+
     @setting(127,returns = '')
     def clear_sweep(self,c):
         try:
             # Stop the sweeper thread and clear the memory.
             self.sweeper.unsubscribe(path)
             self.sweeper.clear()
-        except: 
+        except:
             pass
 
 #------------------------------------------------------------------------------------------------------------------------------------------#
     """
-    The following section of code has all of the commands relevant to modifing the PLL module options. 
+    The following section of code has all of the commands relevant to modifing the PLL module options.
     """
-            
+
     @setting(129,PLL = 'i', freq = 'v[]', returns = '')
     def set_PLL_freqcenter(self, c, PLL, freq):
         """Sets the center frequency of the specified PLL (either 1 or 2)"""
@@ -581,7 +581,7 @@ class HF2LIServer(LabradServer):
         dic = yield self.daq.get(setting,True)
         setpoint = float(dic[setting])
         returnValue(setpoint)
-        
+
     @setting(141,PLL = 'i', P = 'v[]', returns = '')
     def set_PLL_P(self, c, PLL, P):
         """Sets the proportional term of the specified PLL (either 1 or 2) PID loop"""
@@ -595,7 +595,7 @@ class HF2LIServer(LabradServer):
         dic = yield self.daq.get(setting,True)
         P = float(dic[setting])
         returnValue(P)
-        
+
     @setting(143,PLL = 'i', I = 'v[]', returns = '')
     def set_PLL_I(self, c, PLL, I):
         """Sets the intergral term of the specified PLL (either 1 or 2) PID loop"""
@@ -635,7 +635,7 @@ class HF2LIServer(LabradServer):
         """Turns off the PLL"""
         setting = ['/%s/plls/%d/enable' % (self.dev_ID, PLL-1), 0],
         yield self.daq.set(setting)
-        
+
     @setting(1480,PLL = 'i', returns = 'b')
     def get_PLL_on(self, c, PLL):
         """Turns off the PLL"""
@@ -660,15 +660,15 @@ class HF2LIServer(LabradServer):
         returnValue(sigin+1)
 
     '''
-    Following two methods currently do not work, also don't really ever need to be used. Kept commented out in case someone 
+    Following two methods currently do not work, also don't really ever need to be used. Kept commented out in case someone
     needs them in the future and wants a starting point. Farily certain that PLL rate cannot be set, through reading it
-    should be possible. 
+    should be possible.
     @setting(151,PLL = 'i', rate = 'v[]', returns = '')
     def set_PLL_rate(self, c, PLL, rate):
         """Sets the PLL PID sampling rate"""
         setting = ['/%s/plls/%d/rate' % (self.dev_ID, PLL-1), rate],
         yield self.daq.set(setting)
-        
+
     @setting(152, PLL = 'i', returns = 'v[]')
     def get_PLL_rate(self, c, PLL):
         """Gets the PLL PID sampling rate"""
@@ -680,21 +680,21 @@ class HF2LIServer(LabradServer):
 
     @setting(174,PLL_index = 'i', on = 'b', returns = '')
     def set_PLL_autocenter(self, c, PLL_index, on):
-        """Set the PLL auto center frequency of the provided PLL (1 indexed) to on, if on is True, 
+        """Set the PLL auto center frequency of the provided PLL (1 indexed) to on, if on is True,
         and to off, if on is False"""
         setting = ['/%s/plls/%d/autocenter' % (self.dev_ID, PLL_index-1), on],
         yield self.daq.set(setting)
 
     @setting(175,PLL_index = 'i', on = 'b', returns = '')
     def set_PLL_autotc(self, c, PLL_index, on):
-        """Set the PLL auto time constant of the provided PLL (1 indexed) to on, if on is True, 
+        """Set the PLL auto time constant of the provided PLL (1 indexed) to on, if on is True,
         and to off, if on is False"""
         setting = ['/%s/plls/%d/autotimeconstant' % (self.dev_ID, PLL_index-1), on],
         yield self.daq.set(setting)
 
     @setting(176,PLL_index = 'i', on = 'b', returns = '')
     def set_PLL_autopid(self, c, PLL_index, on):
-        """Set the PLL auto pid of the provided PLL (1 indexed) to on, if on is True, 
+        """Set the PLL auto pid of the provided PLL (1 indexed) to on, if on is True,
         and to off, if on is False"""
         setting = ['/%s/plls/%d/autopid' % (self.dev_ID, PLL_index-1), on],
         yield self.daq.set(setting)
@@ -727,10 +727,10 @@ class HF2LIServer(LabradServer):
 
     @setting(128, PLL_index = 'i', targetBW = 'v[]', pidMode = 'i', returns = 'b')
     def advise_PLL_PID(self, c, PLL_index, targetBW, pidMode):
-        """Simulates and computes values for the PLL PID loop. Make sure that the Harmonic 
-        and Filter Order is set on the advisor before running. Requires the index of the PLL, 
+        """Simulates and computes values for the PLL PID loop. Make sure that the Harmonic
+        and Filter Order is set on the advisor before running. Requires the index of the PLL,
         the desired BW of the PLL PID, and the PID Mode (0 is P, 1 is I, 2 is PI, and 3 is PID)
-        Function returns true once calculations are complete. Computer parameters should be 
+        Function returns true once calculations are complete. Computer parameters should be
         retrieved using the appropriate get commands."""
 
         yield self.pidAdvisor.set('pidAdvisor/pid/type', 'pll')
@@ -747,7 +747,7 @@ class HF2LIServer(LabradServer):
         elif pidMode == 3:
             #PID mode
             yield self.pidAdvisor.set('pidAdvisor/pid/mode',7)
-        
+
         yield self.pidAdvisor.set('pidAdvisor/pid/targetbw', targetBW)
 
         # PID index to use (first PID of device: 0)
@@ -776,8 +776,8 @@ class HF2LIServer(LabradServer):
                 raise Exception("PID advising failed due to timeout.")
 
         print(("Advice took {:0.1f} s.".format(time.time() - t_start)))
-    	
-    	"""
+
+        """
         # Get all calculated parameters.
         result = yield self.pidAdvisor.get('pidAdvisor/*')
         # Check that the dictionary returned by poll contains the data that are needed.
@@ -785,7 +785,7 @@ class HF2LIServer(LabradServer):
         assert 'pid' in result, "data dictionary has no key 'pid'"
         assert 'step' in result, "data dictionary has no key 'step'"
         assert 'bode' in result, "data dictionary has no key 'bode'"
-		"""
+        """
 
         returnValue(True)
 
@@ -802,7 +802,7 @@ class HF2LIServer(LabradServer):
         dic = yield self.pidAdvisor.get(setting,True)
         P = float(dic['/pid/p'])
         returnValue(P)
-        
+
     @setting(158,I = 'v[]', returns = '')
     def set_Advisor_I(self, c, I):
         """Sets the integral term on the PID Advisor"""
@@ -834,7 +834,7 @@ class HF2LIServer(LabradServer):
     @setting(162, returns = 'v[]')
     def get_Advisor_PM(self, c):
         """Gets the PLL PID phase margin"""
-        setting = 'pidAdvisor/pm' 
+        setting = 'pidAdvisor/pm'
         dic = yield self.pidAdvisor.get(setting,True)
         PM = float(dic['/pm'])
         returnValue(PM)
@@ -842,7 +842,7 @@ class HF2LIServer(LabradServer):
     @setting(163, returns = 'i')
     def get_Advisor_stable(self, c):
         """Returns whether or not the current parameters in the PID Advisor are stable."""
-        setting = 'pidAdvisor/stable' 
+        setting = 'pidAdvisor/stable'
         dic = yield self.pidAdvisor.get(setting,True)
         stable = int(dic['/stable'])
         returnValue(stable)
@@ -856,7 +856,7 @@ class HF2LIServer(LabradServer):
     @setting(165, returns = 'v[]')
     def get_Advisor_tc(self, c):
         """Gets the PLL PID adivsor tc"""
-        setting = 'pidAdvisor/demod/timeconstant' 
+        setting = 'pidAdvisor/demod/timeconstant'
         dic = yield self.pidAdvisor.get(setting,True)
         tc = float(dic['/demod/timeconstant'])
         returnValue(tc)
@@ -866,11 +866,11 @@ class HF2LIServer(LabradServer):
         """Sets the PLL PID advisor sampling rate"""
         setting = ['pidAdvisor/pid/rate', rate],
         yield self.pidAdvisor.set(setting)
-        
+
     @setting(167, returns = 'v[]')
     def get_Advisor_rate(self, c):
         """Gets the PLL PID advisor sampling rate"""
-        setting = 'pidAdvisor/pid/rate' 
+        setting = 'pidAdvisor/pid/rate'
         dic = yield self.pidAdvisor.get(setting,True)
         rate = float(dic['/pid/rate'])
         returnValue(rate)
@@ -880,11 +880,11 @@ class HF2LIServer(LabradServer):
         """Sets the PLL PID advisor harmonic (can be 1 or 2)"""
         setting = ['pidAdvisor/demod/harmonic', harm],
         yield self.pidAdvisor.set(setting)
-        
+
     @setting(169, returns = 'i')
     def get_Advisor_harmonic(self, c):
         """Gets the PLL PID advisor sampling rate"""
-        setting = 'pidAdvisor/demod/harmonic' 
+        setting = 'pidAdvisor/demod/harmonic'
         dic = yield self.pidAdvisor.get(setting,True)
         rate = int(dic['/demod/harmonic'])
         returnValue(rate)
@@ -894,19 +894,19 @@ class HF2LIServer(LabradServer):
         """Sets the PLL PID advisor harmonic (can be 1 or 2)"""
         setting = ['pidAdvisor/demod/order', order],
         yield self.pidAdvisor.set(setting)
-        
+
     @setting(171, returns = 'i')
     def get_Advisor_filterorder(self, c):
         """Gets the PLL PID advisor sampling rate"""
-        setting = 'pidAdvisor/demod/order' 
+        setting = 'pidAdvisor/demod/order'
         dic = yield self.pidAdvisor.get(setting,True)
         order = int(dic['/demod/order'])
         returnValue(order)
-        
+
     @setting(172, returns = 'v[]')
     def get_Advisor_simbw(self, c):
         """Gets the PLL PID advisor simulated bandwidth"""
-        setting = 'pidAdvisor/bw' 
+        setting = 'pidAdvisor/bw'
         dic = yield self.pidAdvisor.get(setting,True)
         bw = float(dic['/bw'])
         returnValue(bw)
@@ -922,12 +922,12 @@ class HF2LIServer(LabradServer):
 
 #------------------------------------------------------------------------------------------------------------------------------------------#
     """
-    The following section of code has all of the commands relevant to modifing the auxiliary outputs. 
+    The following section of code has all of the commands relevant to modifing the auxiliary outputs.
     """
 
     @setting(177, aux_out_index = 'i', signal_index = 'i', returns = '')
     def set_aux_output_signal(self, c, aux_out_index, signal_index):
-        """Set the Auxilary Output Signal (1 through 4) to be proportional to the specified signal. 
+        """Set the Auxilary Output Signal (1 through 4) to be proportional to the specified signal.
         Signal index: Corresponding Signal
          0          : Demod X
          1          : Demod Y
@@ -946,7 +946,7 @@ class HF2LIServer(LabradServer):
 
     @setting(178, aux_out_index = 'i', returns = 'i')
     def get_aux_output_signal(self, c, aux_out_index):
-        """Get the Auxilary Output Signal (1 through 4) to be proportional to the specified signal. 
+        """Get the Auxilary Output Signal (1 through 4) to be proportional to the specified signal.
         Signal index: Corresponding Signal
          0          : Demod X
          1          : Demod Y
@@ -967,14 +967,14 @@ class HF2LIServer(LabradServer):
 
     @setting(179, aux_out_index = 'i', demod_index = 'i', returns = '')
     def set_aux_output_demod(self, c, aux_out_index, demod_index):
-        """If the Auxilary Output Signal (1 through 4) is set to a deomulator signal (signal index 0 through 3), 
+        """If the Auxilary Output Signal (1 through 4) is set to a deomulator signal (signal index 0 through 3),
         then this allows you to specify which demodulator is being used (1 through 6)."""
         setting = ['/%s/auxouts/%d/demodselect' % (self.dev_ID, aux_out_index-1), demod_index - 1],
         yield self.daq.set(setting)
 
     @setting(180, aux_out_index = 'i', returns = 'i')
     def get_aux_output_demod(self, c, aux_out_index):
-        """If the Auxilary Output Signal (1 through 4) is set to a deomulator signal (signal index 0 through 3), 
+        """If the Auxilary Output Signal (1 through 4) is set to a deomulator signal (signal index 0 through 3),
         then this allows you to get which demodulator is being used (1 through 6)."""
         setting = '/%s/auxouts/%d/demodselect' % (self.dev_ID, aux_out_index-1)
         dic = yield self.daq.get(setting,True)
@@ -1051,19 +1051,19 @@ class HF2LIServer(LabradServer):
 
     @setting(1850,aux_in_index = 'i', returns = 'v[]')
     def get_aux_input_value(self,c,aux_in_index):
-        """Gets the Auxilary Input (1 through 4) latest input value."""
+        """Gets the Auxilary Input (1 through 2) latest input value."""
         setting = '/%s/auxins/0/values/%d' % (self.dev_ID, aux_in_index-1)
         val = yield self.daq.getDouble(setting)
         returnValue(val)
 
 #------------------------------------------------------------------------------------------------------------------------------------------#
     """
-    The following section of code has all of the commands relevant to modifing the PID module options. 
+    The following section of code has all of the commands relevant to modifing the PID module options.
     """
 
     @setting(186, pid_index = 'i', signal_index = 'i', returns = '')
     def set_pid_input_signal(self, c, pid_index, signal_index):
-        """Set the PID Input Signal (1 through 4) to be the specified signal. 
+        """Set the PID Input Signal (1 through 4) to be the specified signal.
         Signal index: Corresponding Signal
          0          : Demod X
          1          : Demod Y
@@ -1082,7 +1082,7 @@ class HF2LIServer(LabradServer):
 
     @setting(187, pid_index = 'i', returns = 'i')
     def get_pid_input_signal(self, c, pid_index):
-        """Gets the PID Input Signal (1 through 4). 
+        """Gets the PID Input Signal (1 through 4).
         Signal index: Corresponding Signal
          0          : Demod X
          1          : Demod Y
@@ -1269,20 +1269,20 @@ class HF2LIServer(LabradServer):
 
 #------------------------------------------------------------------------------------------------------------------------------------------#
     """
-    The following section of code has all of the commands relevant to polling data. Most of the data reading happens in this section. 
-    This allows you to probe data that being read quickly by the Zurich lock in. Poll data will update the server polled data variable 
-    with a dictionary containing the data to all the subscribed paths. Ie, if you're interested in the data coming from the PLL, you 
-    need to subscribe to the PLL, then poll the data. Then, use the functions to extract the desired data from the polled data dictionary. 
+    The following section of code has all of the commands relevant to polling data. Most of the data reading happens in this section.
+    This allows you to probe data that being read quickly by the Zurich lock in. Poll data will update the server polled data variable
+    with a dictionary containing the data to all the subscribed paths. Ie, if you're interested in the data coming from the PLL, you
+    need to subscribe to the PLL, then poll the data. Then, use the functions to extract the desired data from the polled data dictionary.
     """
 
     @setting(501, rec_time= 'v[]', timeout = 'i', returns = '')
     def poll_data(self,c, rec_time, timeout):
         """This function returns the data previously in the API's buffers or
-        obtained during the specified time. It only returns data of subscribed 
+        obtained during the specified time. It only returns data of subscribed
         channels. This function blocks until the recording time is
-        elapsed. Recording time input is in seconds. Timeout time input is in 
-        milliseconds. Recommended timeout value is 500ms. Below is an example of code: 
-            
+        elapsed. Recording time input is in seconds. Timeout time input is in
+        milliseconds. Recommended timeout value is 500ms. Below is an example of code:
+
         cxn = labrad.connect() \n
         hf = cxn.hf2li_server \n
         hf.detect_devices() \n
@@ -1296,7 +1296,7 @@ class HF2LIServer(LabradServer):
 
         self.poll_data = yield self.daq.poll(rec_time, timeout, 1, True)
         print(self.poll_data)
-       
+
     @setting(502, PLL_index = 'i', returns = '')
     def subscribe_pll(self, c, PLL_index):
         """Subscribes the poll command to the outputs of the PLL with the provided index. This includes the
@@ -1352,7 +1352,7 @@ class HF2LIServer(LabradServer):
         """Subscribes the poll command to the outputs of the Auxiliary Output with the provided index. CURRENLTY NOT FUNCTIONAL"""
         path = '/%s/auxouts/%d/value' % (self.dev_ID, aux_out_index-1)
         yield self.daq.unsubscribe(path)
-    
+
     @setting(508, aux_out_index = 'i', returns = '*v[]')
     def polled_aux_out(self, c, aux_out_index):
         """Returns the data Subscribes the poll command to the outputs of the PLL with the provided index. CURRENLTY NOT FUNCTIONAL"""
@@ -1365,7 +1365,7 @@ class HF2LIServer(LabradServer):
 
 #------------------------------------------------------------------------------------------------------------------------------------------#
     """
-    Additional functions that may be useful for programming the server. 
+    Additional functions that may be useful for programming the server.
     """
 
     def sleep(self,secs):
@@ -1376,7 +1376,7 @@ class HF2LIServer(LabradServer):
         return d
 
 __server__ = HF2LIServer()
-  
+
 if __name__ == '__main__':
     from labrad import util
     util.runServer(__server__)

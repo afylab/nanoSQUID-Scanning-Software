@@ -1,21 +1,18 @@
 import sys
 from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
+from nSOTScannerFormat import readNum, formatNum
 
 path = sys.path[0] + r"\PositionCalibration"
 CalibrationUI, QtBaseClass = uic.loadUiType(path + r"\Calibration.ui")
 Ui_getCalibrationName, QtBaseClass = uic.loadUiType(path + r"\getCalibrationName.ui")
-
-#Not required, but strongly recommended functions used to format numbers in a particular way. 
-sys.path.append(sys.path[0]+'\Resources')
-from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtWidgets.QMainWindow, CalibrationUI):
     newTemperatureCalibration = QtCore.pyqtSignal(list)
 
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
-        
+
         self.reactor = reactor
         self.setupUi(self)
         self.setupAdditionalUi()
@@ -28,7 +25,7 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
 
         self.push_remove.clicked.connect(self.removeCalibration)
         self.push_set.clicked.connect(self.saveSetCalibration)
-        
+
         #Connect all line edits
         self.lineEdit_XCon.editingFinished.connect(self.set_XCon)
         self.lineEdit_YCon.editingFinished.connect(self.set_YCon)
@@ -103,7 +100,7 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
                 self.setLineEditsReadOnly(True)
 
                 self.loadSelectedCalibration(key)
-            else: 
+            else:
                 self.comboBox.insertItem(insert_index, key)
 
     def selectCalibration(self,string):
@@ -221,7 +218,7 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
         f.close()
 
     def set_XCon(self):
-        val = readNum(str(self.lineEdit_XCon.text()), self)
+        val = readNum(str(self.lineEdit_XCon.text()), self, True)
         if isinstance(val,float):
             self.tempData[1] = val
             if self.tempData[1] is not None and self.tempData[4] is not None:
@@ -229,11 +226,11 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
                 self.set_XMaxVolts()
         if self.tempData[1] is None:
             self.lineEdit_XCon.setText('')
-        else: 
+        else:
             self.lineEdit_XCon.setText(formatNum(self.tempData[1]))
 
     def set_YCon(self):
-        val = readNum(str(self.lineEdit_YCon.text()), self)
+        val = readNum(str(self.lineEdit_YCon.text()), self, True)
         if isinstance(val,float):
             self.tempData[2] = val
             if self.tempData[2] is not None and self.tempData[5] is not None:
@@ -241,11 +238,11 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
                 self.set_YMaxVolts()
         if self.tempData[2] is None:
             self.lineEdit_YCon.setText('')
-        else: 
+        else:
             self.lineEdit_YCon.setText(formatNum(self.tempData[2]))
 
     def set_ZCon(self):
-        val = readNum(str(self.lineEdit_ZCon.text()), self)
+        val = readNum(str(self.lineEdit_ZCon.text()), self, True)
         if isinstance(val,float):
             self.tempData[3] = val
             if self.tempData[3] is not None and self.tempData[6] is not None:
@@ -253,11 +250,11 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
                 self.set_ZMaxVolts()
         if self.tempData[3] is None:
             self.lineEdit_ZCon.setText('')
-        else: 
+        else:
             self.lineEdit_ZCon.setText(formatNum(self.tempData[3]))
 
     def set_XMax(self):
-        val = readNum(str(self.lineEdit_XMax.text()), self)
+        val = readNum(str(self.lineEdit_XMax.text()), self, True)
         if isinstance(val,float):
             self.tempData[4] = val
             if self.tempData[1] is not None and self.tempData[4] is not None:
@@ -265,11 +262,11 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
                 self.set_XMaxVolts()
         if self.tempData[4] is None:
             self.lineEdit_XMax.setText('')
-        else: 
+        else:
             self.lineEdit_XMax.setText(formatNum(self.tempData[4]))
 
     def set_YMax(self):
-        val = readNum(str(self.lineEdit_YMax.text()), self)
+        val = readNum(str(self.lineEdit_YMax.text()), self, True)
         if isinstance(val,float):
             self.tempData[5] = val
             if self.tempData[2] is not None and self.tempData[5] is not None:
@@ -277,11 +274,11 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
                 self.set_YMaxVolts()
         if self.tempData[5] is None:
             self.lineEdit_YMax.setText('')
-        else: 
+        else:
             self.lineEdit_YMax.setText(formatNum(self.tempData[5]))
 
     def set_ZMax(self):
-        val = readNum(str(self.lineEdit_ZMax.text()), self)
+        val = readNum(str(self.lineEdit_ZMax.text()), self, True)
         if isinstance(val,float):
             self.tempData[6] = val
             if self.tempData[3] is not None and self.tempData[6] is not None:
@@ -289,7 +286,7 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
                 self.set_ZMaxVolts()
         if self.tempData[6] is None:
             self.lineEdit_ZMax.setText('')
-        else: 
+        else:
             self.lineEdit_ZMax.setText(formatNum(self.tempData[6]))
 
     def set_XMaxVolts(self):
@@ -298,7 +295,7 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
         #    self.tempData[7] = val
         if self.tempData[7] is None:
             self.lineEdit_XMaxVolts.setText('')
-        else: 
+        else:
             self.lineEdit_XMaxVolts.setText(formatNum(self.tempData[7]))
 
     def set_YMaxVolts(self):
@@ -307,7 +304,7 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
         #    self.tempData[8] = val
         if self.tempData[8] is None:
             self.lineEdit_YMaxVolts.setText('')
-        else: 
+        else:
             self.lineEdit_YMaxVolts.setText(formatNum(self.tempData[8]))
 
     def set_ZMaxVolts(self):
@@ -316,11 +313,11 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
         #    self.tempData[9] = val
         if self.tempData[9] is None:
             self.lineEdit_ZMaxVolts.setText('')
-        else: 
+        else:
             self.lineEdit_ZMaxVolts.setText(formatNum(self.tempData[9]))
 
-    # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous 
-    # delay that allows other labrad / pyqt methods to run   
+    # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous
+    # delay that allows other labrad / pyqt methods to run
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
         other operations to be done elsewhere while paused."""
@@ -332,7 +329,7 @@ class getCalibrationName(QtWidgets.QDialog, Ui_getCalibrationName):
     def __init__(self,reactor, calibrationDictionary, parent = None):
         super(getCalibrationName, self).__init__(parent)
         self.setupUi(self)
-        
+
         self.pushButton.clicked.connect(self.acceptNewValues)
         self.calibrationDictionary = calibrationDictionary
         self.lineEdit.editingFinished.connect(self.checkUniqueName)

@@ -25,12 +25,13 @@ from GoToSetpoint import gotoSetpoint
 from DeviceSelect import DeviceSelect
 from SampleCharacterizer import SampleCharacterizer
 
+from nSOTScannerFormat import printErrorInfo
 from Equipment.Equipment import EquipmentHandler
 
 class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
     """ The following section initializes, or defines the initialization of the GUI and
     connecting to servers."""
-    def __init__(self, reactor, parent=None):
+    def __init__(self, reactor, parent = None):
         """ nSOT Scanner GUI """
 
         super(nanoSQUIDSystem, self).__init__(parent)
@@ -94,7 +95,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         try:
             window.moveDefault()
         except:
-            pass
+            printErrorInfo()
         window.raise_()
 
 #----------------------------------------------------------------------------------------------#
@@ -231,7 +232,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
                 if hasattr(window, "close"):
                     window.close()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
 """ The following runs the GUI"""

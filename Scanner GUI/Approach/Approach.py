@@ -12,17 +12,14 @@ import sys
 from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
-#import time
 from collections import deque
+from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
 path = sys.path[0] + r"\Approach"
 ApproachUI, QtBaseClass = uic.loadUiType(path + r"\Approach.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 Ui_generalApproachSettings, QtBaseClass = uic.loadUiType(path + r"\generalApproachSettings.ui")
 Ui_MeasurementSettings, QtBaseClass = uic.loadUiType(path + r"\MeasurementSettings.ui")
-
-sys.path.append(sys.path[0]+'\Resources')
-from nSOTScannerFormat import readNum, formatNum
 
 class Window(QtWidgets.QMainWindow, ApproachUI):
     #initialize signals for new data to be plotted in the approach monitor window
@@ -52,21 +49,21 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.push_Servers.clicked.connect(self.showServersList)
 
         #Connect measurement buttons
-        self.push_StartControllers.clicked.connect(self.toggleControllers)
 
+        self.push_StartControllers.clicked.connect(lambda: self.toggleControllers())
         #Connect advanced setting pop up menues
         self.push_MeasurementSettings.clicked.connect(self.showMeasurementSettings)
         self.push_GenSettings.clicked.connect(self.showGenSettings)
 
         #Connect GUI elements for updating the frequency threshold
-        self.push_addFreq.clicked.connect(self.incrementFreqThresh)
-        self.push_subFreq.clicked.connect(self.decrementFreqThresh)
-        self.radioButton_plus.toggled.connect(self.setFreqThreshholdSign)
+        self.push_addFreq.clicked.connect(lambda: self.incrementFreqThresh())
+        self.push_subFreq.clicked.connect(lambda: self.decrementFreqThresh())
+        self.radioButton_plus.toggled.connect(lambda: self.setFreqThreshholdSign())
         self.lineEdit_freqSet.editingFinished.connect(self.setFreqThresh)
         self.freqSlider.logValueChanged.connect(self.updateFreqThresh)
 
         #Connect button and lineEdit for manual approach setting z extension
-        self.push_setZExtension.clicked.connect(self.setZExtension)
+        self.push_setZExtension.clicked.connect(lambda: self.setZExtension())
         self.lineEdit_Man_Z_Extension.editingFinished.connect(self.set_man_z_extension)
         self.comboBox_ZMultiplier.currentIndexChanged.connect(self.setZMultiplier)
 
@@ -77,14 +74,14 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
         #Connect lineEdits to update constant height parameter for approach
         self.lineEdit_PID_Const_Height.editingFinished.connect(self.set_pid_const_height)
-        self.push_PIDApproachForConstant.clicked.connect(self.startPIDConstantHeightApproachSequence)
+        self.push_PIDApproachForConstant.clicked.connect(lambda: self.startPIDConstantHeightApproachSequence())
         self.checkBox_autoThreshold.stateChanged.connect(self.setAutoThreshold)
-        self.push_setPLLThresh.clicked.connect(self.setPLLThreshold)
+        self.push_setPLLThresh.clicked.connect(lambda: self.setPLLThreshold())
 
         #Connect GUI elements for approach to maintain feedback with surface
         self.lineEdit_PID_Step_Size.editingFinished.connect(self.set_pid_step_size)
         self.lineEdit_PID_Step_Speed.editingFinished.connect(self.set_pid_step_speed)
-        self.push_ApproachForFeedback.clicked.connect(self.startFeedbackApproachSequence)
+        self.push_ApproachForFeedback.clicked.connect(lambda: self.startFeedbackApproachSequence())
 
         #Connect abort feedback button
         self.push_Abort.clicked.connect(lambda: self.abortApproachSequence())
@@ -94,7 +91,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.lineEdit_Withdraw.editingFinished.connect(self.setWithdrawDistance)
 
         #Connect button setting the current extension as frustrated feedback in constant height mode
-        self.push_frustrateFeedback.clicked.connect(self.setFrustratedFeedback)
+        self.push_frustrateFeedback.clicked.connect(lambda: self.setFrustratedFeedback())
 
         #Initialize all the labrad connections as not connected
         self.anc = False
@@ -271,7 +268,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.monitorZ = True
             self.monitorZVoltage()
         except Exception as inst:
-            print(inst)
             #Set the connected square to be red indicating that we failed to connect to LabRAD
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
@@ -474,8 +470,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         if self.hf != False:
             self.setPIDParameters()
 
-        print('Approach Window Voltage Calibration Set')
-
     def setWorkingPoint(self, freq, phase, out, amp):
         #Function called when the working point is set from a signal emitted by the tuning fork characterization module
         #By default, whatever output amplitude was used by the TF characterizer is used here as well (though it can be
@@ -494,7 +488,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
     def set_p(self):
         #Read the P parameter from the lineEdit and set it
-        val = readNum(str(self.lineEdit_P.text()), self)
+        val = readNum(str(self.lineEdit_P.text()), self, True)
         if isinstance(val,float):
             self.PIDApproachSettings['p'] = val
             self.setPIDParameters()
@@ -504,7 +498,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         #Read the I parameter from the lineEdit and set it
         #note that i can never be set to 0, otherwise the hidden integrator value jumps back to 0
         #which can lead to dangerous voltage spikes to the attocube.
-        val = readNum(str(self.lineEdit_I.text()), self)
+        val = readNum(str(self.lineEdit_I.text()), self, True)
         if isinstance(val,float):
             if np.abs(val)> 1e-30:
                 self.PIDApproachSettings['i'] = val
@@ -513,7 +507,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
     def set_d(self):
         #Read the D parameter from the lineEdit and set it
-        val = readNum(str(self.lineEdit_D.text()), self)
+        val = readNum(str(self.lineEdit_D.text()), self, True)
         if isinstance(val,float):
             self.PIDApproachSettings['d'] = val
             self.setPIDParameters()
@@ -523,7 +517,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         #Set the constant height parameter. If there's an input, so to that value. Otherwise
         #read from the lineEdit.
         if val is None:
-            val = readNum(str(self.lineEdit_PID_Const_Height.text()), self)
+            val = readNum(str(self.lineEdit_PID_Const_Height.text()), self, True)
         if isinstance(val,float):
             if val < 0:
                 val = 0
@@ -534,21 +528,21 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
     def set_pid_step_size(self):
         #Read the step size parameter from the lineEdit and set it
-        val = readNum(str(self.lineEdit_PID_Step_Size.text()), self)
+        val = readNum(str(self.lineEdit_PID_Step_Size.text()), self, True)
         if isinstance(val,float):
             self.PIDApproachSettings['step_size'] = val
         self.lineEdit_PID_Step_Size.setText(formatNum(self.PIDApproachSettings['step_size']))
 
     def set_pid_step_speed(self):
         #Read the step speed parameter from the lineEdit and set it
-        val = readNum(str(self.lineEdit_PID_Step_Speed.text()), self)
+        val = readNum(str(self.lineEdit_PID_Step_Speed.text()), self, True)
         if isinstance(val,float):
             self.PIDApproachSettings['step_speed'] = val
         self.lineEdit_PID_Step_Speed.setText(formatNum(self.PIDApproachSettings['step_speed']))
 
     def set_man_z_extension(self):
         #Read the desired z extension from the lineEdit and set it
-        val = readNum(str(self.lineEdit_Man_Z_Extension.text()), self)
+        val = readNum(str(self.lineEdit_Man_Z_Extension.text()), self, True)
         if isinstance(val,float):
             self.PIDApproachSettings['man z extension'] = val
         self.lineEdit_Man_Z_Extension.setText(formatNum(self.PIDApproachSettings['man z extension'],5))
@@ -563,7 +557,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.freqSlider.setPosition(self.freqThreshold)
             yield self.setFreqThreshholdSign()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def setFreqThreshholdSign(self):
@@ -579,7 +573,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
     @inlineCallbacks
     def setFreqThresh(self):
         #Set the frequency threshold when set by changing the value in the lineEdit
-        val = readNum(str(self.lineEdit_freqSet.text()), self, False)
+        val = readNum(str(self.lineEdit_freqSet.text()))
         if isinstance(val,float):
             if val < 0.008:
                 val = 0.008
@@ -620,7 +614,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
     def setWithdrawDistance(self):
         #Read the withdraw distance parameter from the lineEdit and set it
-        val = readNum(str(self.lineEdit_Withdraw.text()), self)
+        val = readNum(str(self.lineEdit_Withdraw.text()), self, True)
         if isinstance(val,float):
             if val < 0:
                 val = 0
@@ -722,7 +716,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
                 msgBox.exec_()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def setHF2LI_PLL_Settings(self):
@@ -753,7 +747,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             output_range = yield self.hf.get_output_range(self.measurementSettings['pll_output'])
             yield self.hf.set_output_amplitude(self.measurementSettings['pll_output'],self.measurementSettings['pll_output_amp']/output_range)
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def monitorPLL(self):
@@ -818,7 +812,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             yield self.hf.set_pll_off(self.measurementSettings['pll_output'])
             yield self.hf.set_output(self.measurementSettings['pll_output'], False)
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def monitorZVoltage(self):
@@ -856,6 +850,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             except Exception as inst:
                 print('monitor error: ' + str(inst))
                 yield self.sleep(0.1)
+                printErrorInfo()
 
 #--------------------------------------------------------------------------------------------------------------------------#
     """ The following section contains the PID approach sequence and all related functions."""
@@ -962,7 +957,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 msgBox.exec_()
         except Exception as inst:
             print("Gen PID Approach Error:")
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def setHF2LI_PID_Settings(self):
@@ -988,7 +983,8 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             else:
                 yield self.hf.set_pid_setpoint(self.PID_Index, self.measurementSettings['pll_centerfreq'] - self.freqThreshold)
         except Exception as inst:
-            print("Set PID settings error" + str(inst))
+            print("Set PID settings error")
+            printErrorInfo()
 
     @inlineCallbacks
     def setPIDParameters(self):
@@ -1010,7 +1006,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 yield self.hf.set_pid_d(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['d']/self.voltageMultiplier)
         except Exception as inst:
             print("PID errror:")
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def setPIDOutputRange(self, max_voltage):
@@ -1137,8 +1133,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             #Unlock the sensitive GUI elements
             self.unlockWithdrawSensitiveInputs()
         except Exception as inst:
-            print("Set integrator error: " + str(inst))
-            print('Error occured on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
     def stepCoarsePositioners(self):
@@ -1319,8 +1314,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                     self.approaching = False
 
         except Exception as inst:
-            print(inst)
-            print(sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
     @inlineCallbacks
     def resetVoltageMultiplier(self):
@@ -1475,10 +1469,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                     self.comboBox_ZMultiplier.setEnabled(True)
                 except Exception as inst:
                     print("Feedback Sequence 2 error:")
-                    print(inst)
+                    printErrorInfo()
         except Exception as inst:
             print("Feedback Sequence error:")
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def setDAC_Voltage(self, start, end, speed):
@@ -1616,7 +1610,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.label_stepApproachStatus.setText('Idle')
             self.label_pidApproachStatus.setText('Idle')
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def initializePID(self):
@@ -1685,7 +1679,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             #set output back to manual control
             yield self.hf.set_aux_output_signal(self.generalSettings['pid_z_output'], -1)
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def zeroHF2LI_Aux_Out(self):
@@ -1721,7 +1715,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             yield self.hf.set_aux_output_offset(4,0)
 
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions intended for use when running scripts from the scripting module."""
@@ -1787,6 +1781,8 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
         self.push_setPLLThresh.setDisabled(True)
 
+        self.push_frustrateFeedback.setDisabled(True)
+
         self.lineEdit_Withdraw.setDisabled(True)
 
         self.lineEdit_FineZ.setDisabled(True)
@@ -1838,6 +1834,8 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.push_setZExtension.setEnabled(True)
 
         self.push_setPLLThresh.setDisabled(False)
+
+        self.push_frustrateFeedback.setDisabled(False)
 
         self.lineEdit_Withdraw.setDisabled(False)
 
@@ -1933,7 +1931,7 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
 
     def setStep_Retract_Speed(self):
         #Set the retracting speed in m/s when withdrawing with the DAC-ADC
-        val = readNum(str(self.lineEdit_Step_Retract_Speed.text()), self)
+        val = readNum(str(self.lineEdit_Step_Retract_Speed.text()), self, True)
         if isinstance(val,float):
             self.generalApproachSettings['step_retract_speed'] = val
             self.generalApproachSettings['step_retract_time'] = self.generalApproachSettings['total_retract_dist'] / self.generalApproachSettings['step_retract_speed']
@@ -1942,7 +1940,7 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
 
     def setStep_Retract_Time(self):
         #Set the time in seconds to fully retract from full extension when withdrawing with the DAC-ADC
-        val = readNum(str(self.lineEdit_Step_Retract_Time.text()), self, False)
+        val = readNum(str(self.lineEdit_Step_Retract_Time.text()))
         if isinstance(val,float):
             self.generalApproachSettings['step_retract_time'] = val
             self.generalApproachSettings['step_retract_speed'] = self.generalApproachSettings['total_retract_dist'] / self.generalApproachSettings['step_retract_time']
@@ -1951,7 +1949,7 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
 
     def setPID_Retract_Speed(self):
         #Set the retracting speed in m/s when withdrawing with the DAC-ADC
-        val = readNum(str(self.lineEdit_PID_Retract_Speed.text()), self)
+        val = readNum(str(self.lineEdit_PID_Retract_Speed.text()), self, True)
         if isinstance(val,float):
             self.generalApproachSettings['pid_retract_speed'] = val
             self.generalApproachSettings['pid_retract_time'] = self.generalApproachSettings['total_retract_dist'] / self.generalApproachSettings['pid_retract_speed']
@@ -1960,7 +1958,7 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
 
     def setPID_Retract_Time(self):
         #Set the time in seconds to fully retract from full extension when withdrawing with the HF2LI
-        val = readNum(str(self.lineEdit_PID_Retract_Time.text()), self, False)
+        val = readNum(str(self.lineEdit_PID_Retract_Time.text()))
         if isinstance(val,float):
             self.generalApproachSettings['pid_retract_time'] = val
             self.generalApproachSettings['pid_retract_speed'] = self.generalApproachSettings['total_retract_dist'] / self.generalApproachSettings['pid_retract_time']
@@ -1969,28 +1967,28 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
 
     def setAutoRetractDist(self):
         #Set the distance to auto retract when the frequency monitor notices an event while in constant height mode
-        val = readNum(str(self.lineEdit_AutoRetractDist.text()), self)
+        val = readNum(str(self.lineEdit_AutoRetractDist.text()), self, True)
         if isinstance(val,float):
             self.generalApproachSettings['auto_retract_dist'] = val
         self.lineEdit_AutoRetractDist.setText(formatNum(self.generalApproachSettings['auto_retract_dist']))
 
     def setAutoRetractPoints(self):
         #Set the number of PLL points that neeed to be above the set frequency threshold to trigger an auto retraction event
-        val = readNum(str(self.lineEdit_AutoRetractPoints.text()), self, False)
+        val = readNum(str(self.lineEdit_AutoRetractPoints.text()))
         if isinstance(val,float):
             self.generalApproachSettings['auto_retract_points'] = int(val)
         self.lineEdit_AutoRetractPoints.setText(formatNum(self.generalApproachSettings['auto_retract_points']))
 
     def setAttoDist(self):
         #Set the distance in meters that the attocube `coarse positioners attempt to move forward at each step of the woodpecker approach
-        val = readNum(str(self.lineEdit_Atto_Distance.text()), self, False)
+        val = readNum(str(self.lineEdit_Atto_Distance.text()))
         if isinstance(val,float):
             self.generalApproachSettings['atto_distance'] = val
         self.lineEdit_Atto_Distance.setText(formatNum(self.generalApproachSettings['atto_distance']))
 
     def setAttoDelay(self):
         #Set the delay time between steps taken by the attocube coarse positioners
-        val = readNum(str(self.lineEdit_Atto_Delay.text()), self, False)
+        val = readNum(str(self.lineEdit_Atto_Delay.text()))
         if isinstance(val,float):
             self.generalApproachSettings['atto_delay'] = val
         self.lineEdit_Atto_Delay.setText(formatNum(self.generalApproachSettings['atto_delay']))
@@ -2081,16 +2079,14 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
 
     def setPLL_TargetBW(self):
         #update the target bandwidth of the PLL
-        new_target = str(self.lineEdit_TargetBW.text())
-        val = readNum(new_target, self, False)
+        val = readNum(str(self.lineEdit_TargetBW.text()))
         if isinstance(val,float):
             self.measSettings['pll_targetBW'] = val
         self.lineEdit_TargetBW.setText(formatNum(self.measSettings['pll_targetBW']))
 
     def setPLL_Range(self):
         #Set the range of frequencies aroudn the frequency center the PLL can access
-        new_range = str(self.lineEdit_PLL_Range.text())
-        val = readNum(new_range, self, False)
+        val = readNum(str(self.lineEdit_PLL_Range.text()))
         if isinstance(val,float):
             self.measSettings['pll_range'] = val
         self.lineEdit_PLL_Range.setText(formatNum(self.measSettings['pll_range']))
@@ -2098,7 +2094,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def setPLL_TC(self):
         #Set the PLL time constant
-        val = readNum(str(self.lineEdit_PLL_TC.text()), self)
+        val = readNum(str(self.lineEdit_PLL_TC.text()), self, True)
         if isinstance(val,float):
             self.measSettings['pll_tc'] = val
             self.measSettings['pll_filterBW'] = calculate_FilterBW(self.measSettings['pll_filterorder'], self.measSettings['pll_tc'])
@@ -2110,8 +2106,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def setPLL_FilterBW(self):
         #Set the PLL filter bandwidth
-        new_filterBW = str(self.lineEdit_PLL_FilterBW.text())
-        val = readNum(new_filterBW, self, False)
+        val = readNum(str(self.lineEdit_PLL_FilterBW.text()))
         if isinstance(val,float):
             self.measSettings['pll_filterBW']  = val
             self.measSettings['pll_tc']  = calculate_FilterBW(self.measSettings['pll_filterorder'], self.measSettings['pll_filterBW'])
@@ -2123,8 +2118,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def setPLL_P(self):
         #Set the PLL proportional term
-        new_P = str(self.lineEdit_PLL_P.text())
-        val = readNum(new_P, self, False)
+        val = readNum(str(self.lineEdit_PLL_P.text()))
         if isinstance(val,float):
             self.measSettings['pll_p'] = val
             yield self.hf.set_advisor_p(self.measSettings['pll_p'])
@@ -2134,8 +2128,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def setPLL_I(self):
         #Set the PLL integral term
-        new_I = str(self.lineEdit_PLL_I.text())
-        val = readNum(new_I, self, False)
+        val = readNum(str(self.lineEdit_PLL_I.text()))
         if isinstance(val,float):
             self.measSettings['pll_i'] = val
             yield self.hf.set_advisor_i(self.measSettings['pll_i'])
@@ -2145,8 +2138,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
     @inlineCallbacks
     def setPLL_D(self):
         #Set the PLL derivative term
-        new_D = str(self.lineEdit_PLL_D.text())
-        val = readNum(new_D, self, False)
+        val = readNum(str(self.lineEdit_PLL_D.text()))
         if isinstance(val,float):
             self.measSettings['pll_d'] = val
             yield self.hf.set_advisor_d(self.measSettings['pll_d'])
@@ -2163,7 +2155,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
 
     def setPLL_Output_Amplitude(self):
         #Set the output amplitude of the PLL's AC excitation
-        val = readNum(str(self.lineEdit_PLL_Amplitude.text()), self)
+        val = readNum(str(self.lineEdit_PLL_Amplitude.text()), self, True)
         if isinstance(val,float):
             self.measSettings['pll_output_amp'] = val
         self.lineEdit_PLL_Amplitude.setText(formatNum(self.measSettings['pll_output_amp']))
@@ -2208,7 +2200,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
             #Check to see if new parameters are stable
             yield self.updateStability()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def updateStability(self):
@@ -2239,7 +2231,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
             self.computePIDParameters()
             self.displayCalculatingGraphics()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def computePIDParameters(self):
@@ -2271,7 +2263,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
 
             self.updateStability()
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def displayCalculatingGraphics(self):
@@ -2286,7 +2278,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
                 i = (i+1)%80
             self.push_AdvisePID.setStyleSheet(self.sheets[0])
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
 
     def createLoadingColors(self):

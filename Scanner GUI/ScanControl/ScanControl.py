@@ -4,13 +4,13 @@ from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 import pyqtgraph as pg
 import time
+from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData, ScanImageView, printErrorInfo
 
 path = sys.path[0] + r"\ScanControl"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\ScanControlWindow.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 
-sys.path.append(sys.path[0]+'\Resources')
-from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData, ScanImageView
+
 
 '''
 TODO:
@@ -156,11 +156,11 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.push_scanCoordinates.clicked.connect(self.toggleCoordinates)
         self.push_apply2DFit.clicked.connect(self.apply2DFit)
         self.push_setView.clicked.connect(self.setView)
-        self.push_Scan.clicked.connect(self.startScan)
-        self.push_Abort.clicked.connect(lambda: self.abortScan(self.reactor))
+        self.push_Scan.clicked.connect(lambda: self.startScan())
+        self.push_Abort.clicked.connect(lambda: self.abortScan())
         self.push_ZeroXY.clicked.connect(lambda: self.setPosition(-self.x_meters_max/2, -self.y_meters_max/2))
         self.push_Set.clicked.connect(lambda: self.setPosition(self.Xset, self.Yset))
-        self.push_ZeroZ.clicked.connect(self.zeroZOffset)
+        self.push_ZeroZ.clicked.connect(lambda: self.zeroZOffset())
         self.push_toggleSmooth.clicked.connect(self.toggleSmoothScan)
         self.push_ResetScan.clicked.connect(self.resetScan)
 
@@ -271,7 +271,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
             #Similarly uses that extra connection so that we can talk to the scan dac at the same time as other dacs
             self.dac = yield self.cxn_scan.dac_adc
-            self.dac.select_device(dict['devices']['scan']['dac_adc'])
+            yield self.dac.select_device(dict['devices']['scan']['dac_adc'])
 
             self.outputs['z out'] = dict['channels']['scan']['z out']
             self.outputs['x out'] = dict['channels']['scan']['x out']
@@ -296,9 +296,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         except Exception: # as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-            #print 'nsot labrad connect', inst
-            #exc_type, exc_obj, exc_tb = sys.exc_info()
-            #print 'line num ', exc_tb.tb_lineno
 
     def disconnectLabRAD(self):
         self.cxn = False
@@ -315,11 +312,14 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     @inlineCallbacks
     def loadCurrentState(self):
-        self.Atto_X_Voltage = yield self.dac.read_dac_voltage(self.outputs['x out']-1)
-        self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out']-1)
-        self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out']-1)
+        try:
+            self.Atto_X_Voltage = yield self.dac.read_dac_voltage(self.outputs['x out']-1)
+            self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out']-1)
+            self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out']-1)
 
-        self.updatePosition()
+            self.updatePosition()
+        except:
+            printErrorInfo()
 
     def updateDataVaultDirectory(self):
         curr_folder = yield self.gen_dv.cd()
@@ -943,7 +943,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def updateXc(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_Xc.text()), self)
+            val = readNum(str(self.lineEdit_Xc.text()), self, True)
         if isinstance(val,float):
             Xc = val
             x = Xc + self.H*np.sin(self.angle*np.pi/180)/2 - self.W*np.cos(self.angle*np.pi/180)/2
@@ -955,7 +955,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def updateYc(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_Yc.text()), self)
+            val = readNum(str(self.lineEdit_Yc.text()), self, True)
         if isinstance(val,float):
             Yc = val
             y = Yc - self.H*np.cos(self.angle*np.pi/180)/2 - self.W*np.sin(self.angle*np.pi/180)/2
@@ -967,7 +967,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def updateAngle(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_Angle.text()), self, False)
+            val = readNum(str(self.lineEdit_Angle.text()))
         if isinstance(val,float):
             angle = val
             x = self.Xc + self.H*np.sin(angle*np.pi/180)/2 - self.W*np.cos(angle*np.pi/180)/2
@@ -981,7 +981,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def updateH(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_H.text()), self)
+            val = readNum(str(self.lineEdit_H.text()), self, True)
         if isinstance(val,float):
             H = val
             if self.FrameLocked:
@@ -1004,7 +1004,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def updateW(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_W.text()), self)
+            val = readNum(str(self.lineEdit_W.text()), self, True)
         if isinstance(val,float):
             W = val
             if self.FrameLocked:
@@ -1027,7 +1027,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def updatePixels(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_Pixels.text()), self, False)
+            val = readNum(str(self.lineEdit_Pixels.text()))
         if isinstance(val,float) and int(val) > 0:
             self.pixels = int(val)
             if self.DataLocked:
@@ -1043,7 +1043,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def updateLines(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_Lines.text()), self, False)
+            val = readNum(str(self.lineEdit_Lines.text()))
         if isinstance(val,float) and int(val) > 0:
             self.lines = int(val)
             if self.DataLocked:
@@ -1059,7 +1059,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def updateLinearSpeed(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_Linear.text()), self)
+            val = readNum(str(self.lineEdit_Linear.text()), self, True)
         if isinstance(val,float) and val > 0:
             if self.scanSmooth:
                 self.linearSpeed = val
@@ -1080,7 +1080,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def updateXTilt(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_XTilt.text()), self, False)
+            val = readNum(str(self.lineEdit_XTilt.text()))
         if isinstance(val,float):
             self.x_tilt = val*np.pi / 180
             self.updateScanPlaneCenter()
@@ -1088,7 +1088,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def updateYTilt(self, val = None):
         if val is None:
-            val = readNum(str(self.lineEdit_YTilt.text()), self, False)
+            val = readNum(str(self.lineEdit_YTilt.text()))
         if isinstance(val,float):
             self.y_tilt = val*np.pi / 180
             self.updateScanPlaneCenter()
@@ -1202,8 +1202,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         return np.array([z_volts,x_volts,y_volts])
 
     def updateXset(self):
-        new_Xset = str(self.lineEdit_Xset.text())
-        val = readNum(new_Xset, self)
+        val = readNum(self.lineEdit_Xset.text())
         if isinstance(val,float):
             Xset = val
             Vset = Xset * self.x_volts_to_meters + self.x_volts_max/2
@@ -1212,8 +1211,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.lineEdit_Xset.setText(formatNum(self.Xset))
 
     def updateYset(self):
-        new_Yset = str(self.lineEdit_Yset.text())
-        val = readNum(new_Yset, self)
+        val = readNum(self.lineEdit_Yset.text())
         if isinstance(val,float):
             Yset = val
             Vset = Yset * self.y_volts_to_meters + self.y_volts_max/2
@@ -1329,8 +1327,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             pass
 
     def setInputConversion(self, index, lineEdit):
-        text = str(lineEdit.text())
-        val = readNum(text, self, False)
+        val = readNum(lineEdit.text())
         if isinstance(val,float):
             self.inputs[index]['Conversion'] = val
         lineEdit.setText(formatNum(self.inputs[index]['Conversion']))
@@ -1342,14 +1339,14 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     """ The following section has scanning functions and live graph updating."""
 
     @inlineCallbacks
-    def blink(self, c = None):
+    def blink(self):
         yield self.blink_server.set_voltage(self.outputs['blink out']-1, 5)
         yield self.sleep(0.25)
         yield self.blink_server.set_voltage(self.outputs['blink out']-1, 0)
         yield self.sleep(0.25)
 
     @inlineCallbacks
-    def abortScan(self, c = None):
+    def abortScan(self):
         self.scanning = False
         print('Attempting to stop ramp')
         self.dac.stop_ramp()
@@ -1403,10 +1400,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.push_ZeroXY.setEnabled(True)
                 self.push_Set.setEnabled(True)
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
-    def zeroZOffset(self, c = None):
+    def zeroZOffset(self):
         #So that, no matter what, after a scan back at 0 height relative to the Offset point. FIX THIS SOON
         print('Moving by: ' + str(self.Atto_Z_Voltage) + ' in the z direction to return to zero z offset.')
         #By default ramps output 0 from the current z voltage back to 0 with 1000 points at 1 ms delay
@@ -1689,8 +1686,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     tzero = time.clock()
 
         except Exception as inst:
-            print('update_data error: ', str(inst))
-            print('on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
         #Successfully or not finished the scan!
         self.scanning = False
@@ -1762,7 +1758,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.retraceLinePlot.plot(pos, self.plotData_retrace[:,self.currLine])
 
         except Exception as inst:
-            print('update_gph: ' + str(inst))
+            printErrorInfo()
 
 
     def scanInterfaceEnabled(self, status):
@@ -1907,8 +1903,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             if not a:
                 print("Error saving Scan data picture")
         except Exception as inst:
-            print('Scan error: ', inst)
-            print('on line: ', sys.exc_traceback.tb_lineno)
+            printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions intended for use when running scripts from the scripting module."""

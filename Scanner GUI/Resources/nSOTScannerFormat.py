@@ -1,5 +1,15 @@
 import numpy as np
 import itertools
+import sys
+
+'''Function that prints the error information in a standard way across the software with the relevant
+information in a reasonable format'''
+
+def printErrorInfo():
+    type, inst, tb = sys.exc_info()
+    print("Error: ", inst)
+    print("Occured at line: ", tb.tb_lineno)
+    print("In the file: ", tb.tb_frame.f_code.co_filename)
 
 #---------------------------------------------------------------------------------------------------------#
 """ The following section describes how to read and write values to various lineEdits on the GUI."""
@@ -39,9 +49,11 @@ def formatNum(val, decimal_values = 2):
 
     return string
 
-#By default, accepts no parent and will warn you for inputting a number without units.
-#Adding a parent is needed to have error thrown in a reasonable place and avoid recursion errors.
-#For entries that are expected to be of order unity the warningFlag can be set to False.
+#By default, accepts no parent and will not warn you for inputting a number without units.
+#Adding a parent is needed to have error thrown in a reasonable place and avoid recursion errors
+#associated with changing GUI element focus.
+#For entries where the unit is critical (ie, scan range of 10 um instead of 10 m), it is suggested
+#that the parent module is input and the warningFlag is set to True.
 def readNum(string, parent = None, warningFlag = False):
     try:
         val = float(string)

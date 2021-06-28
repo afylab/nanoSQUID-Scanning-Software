@@ -1,6 +1,7 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks
+from nSOTScannerFormat import printErrorInfo
 
 path = sys.path[0] + r"\DataVaultBrowser"
 Ui_dvExplorer, QtBaseClass = uic.loadUiType(path + r"\dvExplorer.ui")
@@ -53,7 +54,7 @@ class dataVaultExplorer(QtWidgets.QMainWindow, Ui_dvExplorer):
                 self.dirName.setText(self.curDir)
                 self.dirName.setStyleSheet("QLabel#dirName {color: rgb(131,131,131);}")
         except Exception as inst:
-            print(inst)
+            printErrorInfo()
 
     @inlineCallbacks
     def updateDirs(self, subdir):
@@ -107,7 +108,7 @@ class dataVaultExplorer(QtWidgets.QMainWindow, Ui_dvExplorer):
         #Reset all selected files and close
         selectedItem = self.fileList.selectedItems()
         for item in selectedItem:
-            self.fileList.setItemSelected(item, False)
+            item.setSelected(False)
         self.close()
 
     def closeWindow(self):

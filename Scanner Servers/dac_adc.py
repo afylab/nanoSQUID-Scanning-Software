@@ -37,7 +37,6 @@ from twisted.internet import reactor, defer
 from labrad.types import Value
 #import numpy as np
 import time
-from exceptions import IndexError
 
 TIMEOUT = Value(1,'s')
 BAUD    = 115200
