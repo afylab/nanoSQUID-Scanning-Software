@@ -374,7 +374,7 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
             self.localLabRADConnected = True
             if self.localLabRADConnected and self.remoteLabRADConnected:
                 self.loadDefaultConfigurationInfo()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -394,7 +394,7 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
             self.remoteLabRADConnected = True
             if self.localLabRADConnected and self.remoteLabRADConnected:
                 self.loadDefaultConfigurationInfo()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def disconnectLabRAD(self):
@@ -488,7 +488,7 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
 
             self.sendDeviceInfo()
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -504,7 +504,7 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
 
             self.newDeviceInfo.emit(self.deviceDictionary)
             self.setConfigStatus(True)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def setDefaultConfiguration(self):

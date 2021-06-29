@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import QtWidgets, uic
-from twisted.internet.defer import inlineCallbacks, Deferred
+from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
@@ -89,7 +89,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             yield self.readBias()
             yield self.readGate()
             yield self.readFeedback()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def feedbackButtonColors(self, on):
@@ -172,11 +172,11 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             curr_bias = float(self.setpointDict['bias'])
             steps = int(np.absolute(curr_bias) * 1000 + 5)
             delay = 2000
-            tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [0], steps, delay)
+            yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [0], steps, delay)
             self.setpointDict['bias'] = 0
             new_bias = yield self.dac.read_voltage(self.biasRefChan)
             self.currBiasLbl.setText('Current Bias: ' + str(new_bias) + 'V')
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks

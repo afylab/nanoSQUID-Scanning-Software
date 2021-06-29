@@ -123,8 +123,9 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             if self.anc350 != False:
                 yield self.loadParameters()
                 self.MonitorStatus()
-        except Exception as inst:
-            printErrorInfo()
+            else:
+                raise
+        except:
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
 
@@ -168,7 +169,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             try:
                 yield self.RefreshAttocubeStatus()
                 yield self.sleep(0.1)
-            except Exception as inst:
+            except:
                 printErrorInfo()
                 yield self.sleep(0.1)
 
@@ -216,7 +217,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 #Change the Pushbutton
                 stylesheet = '#pushButton_Status_Axis' + str(i+1) + '{\nimage:url(' + self.IconPath[self.Status[i]] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
                 self.pushButton_Status[i].setStyleSheet(stylesheet)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def SetIndicatorMoving(self, AxisNo):
@@ -234,7 +235,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         try:
             Capacitance = yield self.anc350.measure_capacitance(AxisNo)
             label.setText(formatNum(Capacitance))
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -249,7 +250,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                     self.Direction[AxisNo] = 'Negative'
             elif self.pushButton_Relative[AxisNo].text() == 'Moving':
                 yield self.anc350.start_auto_move(AxisNo, False, True) #Only stop auto move but not disble the aixs
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -273,7 +274,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 flag = True
             yield self.anc350.start_single_step(AxisNo, flag)
             yield self.sleep(0.1)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def UpdateAutomaticPositioningRelativePosition(self, AxisNo):
@@ -312,7 +313,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             self.lineEdit_Amplitude[AxisNo].setText(formatNum(self.manual_Amplitude[AxisNo],6))
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_amplitude(AxisNo, self.manual_Amplitude[AxisNo])
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -329,7 +330,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             self.lineEdit_Frequency[AxisNo].setText(formatNum(self.manual_Frequency[AxisNo],6))
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_frequency(AxisNo, self.manual_Frequency[AxisNo])
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -346,7 +347,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             self.lineEdit_TargetRange[AxisNo].setText(formatNum(self.TargetRange[AxisNo],6))
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_target_range(AxisNo, self.TargetRange[AxisNo])
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks

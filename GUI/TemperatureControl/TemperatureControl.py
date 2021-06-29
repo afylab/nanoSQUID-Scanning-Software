@@ -99,7 +99,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.unlockInterface()
                 yield self.readCurrentSettings()
                 yield self.startTempMonitoring()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
 
@@ -157,7 +157,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.measurementSettings['i'] = float(pid[1])
             self.measurementSettings['d'] = float(pid[2])
             self.measurementSettings['setpoint'] = float(setpoint)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -186,7 +186,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 else:
                     self.label_setpoint.setText('WTF?!?!')
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -234,7 +234,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.updatePlots()
 
                 yield self.sleep(self.measurementSettings['sample delay'])
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def updatePlots(self):
@@ -256,7 +256,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     self.sampleTempPlot.plot(self.timeData[a:], self.sampleTempData[a:])
                     #self.potTempPlot.clear()
                     #self.potTempPlot.plot(self.timeData[a:], self.potTempData[a:])
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -549,7 +549,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
 
             self.comboBox_heaterMode.setCurrentIndex(self.measurementSettings['heater mode'])
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def updateMagInput(self):

@@ -150,7 +150,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.connectSerialDevices()
             self.connectGPIBDevices()
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -172,7 +172,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.connectRemoteSerialDevices()
             self.connectRemoteGPIBDevices()
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -223,7 +223,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             try:
                 yield self.connectionLocalDictionary['cxn'].anc350_server.disconnect()
                 print('Disconnected ANC350')
-            except Exception as inst:
+            except:
                 print('Error disconnecting the ANC350 server.')
                 printErrorInfo()
 
@@ -591,7 +591,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                     self.label_remoteSerialServer_status.setText('Connection Failed')
             self.cxnAttemptRemoteDictionary['ser_server'] = True
             self.emitRemoteConnectionDictionary()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -621,7 +621,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                     self.label_LM510_status.setText('No device detected')
             self.cxnAttemptRemoteDictionary['lm510'] = True
             self.emitRemoteConnectionDictionary()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
 #--------------------------------------------------------------------------------------------------------------------------#
@@ -657,7 +657,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                     self.label_GPIBServer_status.setText('Connection Failed')
             self.cxnAttemptLocalDictionary['gpib_server'] = True
             self.emitLocalConnectionDictionary()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -681,7 +681,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                     self.label_GPIBMan_status.setText('Connection Failed')
             self.cxnAttemptLocalDictionary['gpib_manager'] = True
             self.emitLocalConnectionDictionary()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
 #--------------------------------------------------------------------------------------------------------------------------#
@@ -716,7 +716,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                     self.label_remoteGPIBServer_status.setText('Connection Failed')
             self.cxnAttemptRemoteDictionary['gpib_server'] = True
             self.emitRemoteConnectionDictionary()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -740,7 +740,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                     self.label_remoteGPIBMan_status.setText('Connection Failed')
             self.cxnAttemptRemoteDictionary['gpib_manager'] = True
             self.emitRemoteConnectionDictionary()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -775,7 +775,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                     self.label_IPS120_status.setText('No device detected')
             self.cxnAttemptRemoteDictionary['ips120'] = True
             self.emitRemoteConnectionDictionary()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -805,7 +805,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                     self.label_LS350_status.setText('No device detected')
             self.cxnAttemptRemoteDictionary['ls350'] = True
             self.emitRemoteConnectionDictionary()
-        except Exception as inst:
+        except:
             printErrorInfo()
 #--------------------------------------------------------------------------------------------------------------------------#
 
@@ -830,7 +830,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                 dvExplorer.raise_()
                 dvExplorer.accepted.connect(lambda: self.OpenDataVaultFolder(dv, dvExplorer.directory))
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -844,7 +844,7 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
             self.session = r'\.datavault' + session
             self.lineEdit_Session.setText(self.session)
             self.newDVFolder.emit()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def chooseSession_2(self):

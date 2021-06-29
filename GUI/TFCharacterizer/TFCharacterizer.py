@@ -347,7 +347,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 range = yield self.hf.get_range(self.input)
                 self.sensitvity = range
             self.lineEdit_sensitivity.setText(formatNum(self.sensitvity))
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -360,7 +360,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 yield self.hf.set_output_amplitude(self.output,val/range)
                 self.exAmp = val
             self.lineEdit_Amplitude.setText(formatNum(self.exAmp))
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -451,7 +451,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 try:
                     data = yield self.hf.read_latest_values()
                     self.plotData(data)
-                except Exception as inst:
+                except:
                     pass
 
             self.updateRemainingTime()
@@ -487,7 +487,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
             yield self.hf.clear_sweep()
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -495,7 +495,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         try:
             time  = yield self.hf.sweep_time_remaining()
             self.lineEdit_timeRemaining.setText(formatNum(time))
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -503,7 +503,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         try:
             yield self.hf.stop_sweep()
             yield self.hf.clear_sweep()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -511,7 +511,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         #Uses demodulater 1, might need to change depending on input/output selected
         try:
             yield self.hf.create_sweep_object(self.startFreq, self.stopFreq, self.points, self.sweep_param, self.demod, self.log, self.bandcontrol, self.bandwidth, self.overlap, self.loopcount, self.settle_time, self.settle_acc, self.average_TC, self.average_sample)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def plotData(self, data):
@@ -523,7 +523,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         try:
             self.ampPlot.removeItem(self.prevAmpPlot)
             self.phasePlot.removeItem(self.prevPhasePlot)
-        except Exception as inst:
+        except:
             pass
 
         self.prevAmpPlot = self.ampPlot.plot(self.freq,self.R)
@@ -557,7 +557,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         try:
             self.ampPlot.removeItem(self.prevAmpPlot)
             self.phasePlot.removeItem(self.prevPhasePlot)
-        except Exception as inst:
+        except:
             pass
 
         self.prevAmpPlot = self.ampPlot.plot(self.freq,self.R)
@@ -599,7 +599,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.lineEdit_PhasePeakFSig.setText(formatNum(perr[0]))
             self.lineEdit_PhaseQFactor.setText(formatNum(self.phaseFitParams[1]))
             #Maybe iterate fits/starting parameters?
-        except Exception as inst:
+        except:
             printErrorInfo()
 
         #wait for plots to udpate before saving data screenshot
@@ -641,7 +641,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
             if not a:
                 print("Error saving TF data picture")
-        except Exception as inst:
+        except:
             printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#

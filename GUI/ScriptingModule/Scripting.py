@@ -78,7 +78,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.label_status.setText('Script is compiling')
         try:
             code_to_run = self.formatCode()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
         try:

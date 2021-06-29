@@ -126,10 +126,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                         self.label_fieldval.setText(formatNum(self.currCurrent,3))
                     elif self.monitor_param == 'Volts':
                         self.label_fieldval.setText(formatNum(self.currVoltage,3))
-                except Exception as inst:
+                except:
                     printErrorInfo()
                 yield self.sleep(0.5)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -150,7 +150,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
             self.lineEdit_setpoint.setText(formatNum(self.setpoint))
             self.lineEdit_ramprate.setText(formatNum(self.ramprate))
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -224,7 +224,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 yield self.goToSetpointIPS()
             else:
                 yield self.toeSweepField(self.currField, self.setpoint, self.ramprate)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -245,7 +245,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 yield self.gotoZeroIPS()
             else:
                 yield self.toeSweepField(self.currField, 0, self.ramprate)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -298,7 +298,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 yield self.updateSwitchStatus()
                 yield self.ips.set_control(2)
             self.setting_value = False
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -346,7 +346,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.currVoltage = V_setpoint
             self.currCurrent = B_f/IB_conv
             self.currField = B_f
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def updateToeField(self, field, curr, volt):

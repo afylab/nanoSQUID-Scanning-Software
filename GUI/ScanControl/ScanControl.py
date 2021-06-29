@@ -1399,7 +1399,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             if not self.scanning:
                 self.push_ZeroXY.setEnabled(True)
                 self.push_Set.setEnabled(True)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -1685,7 +1685,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     print('Time taken to move to next line: ' + str(time.time()-tzero))
                     tzero = time.time()
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
         #Successfully or not finished the scan!
@@ -1757,7 +1757,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.traceLinePlot.plot(pos, self.plotData[:,self.currLine])
                 self.retraceLinePlot.plot(pos, self.plotData_retrace[:,self.currLine])
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
 
@@ -1902,7 +1902,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
             if not a:
                 print("Error saving Scan data picture")
-        except Exception as inst:
+        except:
             printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#

@@ -119,7 +119,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
             #Signal that the plot now has data, and the Command Center should refresh the plot list
             self.plotInfoChanged.emit()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -154,7 +154,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
                 self.dataInfoDict['parameters'] = dict(parameters) #Parameters comes in tuples ('key', 'value'). Cast to dictionary
 
             returnValue(dv)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def parseVariables(self, variables):
@@ -219,7 +219,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             elif np.isnan(rawData).any(): #Alert user if data is corrupted by NaNs
                 rawData = self.removeNaN(rawData)
                 self.updatePlotterStatus('NaN detected in data. Check data integrity')
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -253,7 +253,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             self.updatePlotterStatus("Data loaded")
 
             returnValue(rawData)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def removeNaN(self, data):
@@ -267,7 +267,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             raw = np.delete(raw, listtodelete, 0)# 0 for horizontal
             return raw
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def splitTraceRetraceData(self, rawData):
@@ -285,7 +285,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
             return self.traceData
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def split(self, arr, cond):
@@ -309,7 +309,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
             self.connectUi()
             self.moveDefault()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def setupAdditionalUi(self):
@@ -533,7 +533,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
                 self.comboBox_zAxis.addItem(var)
                 self.comboBox_zAxis.setCurrentIndex(0)#Default
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def refreshInterface(self):
@@ -592,7 +592,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             self.updatePlotterStatus('Plot Refreshed')
             self.refreshInterface()
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def setPlotAxesNames(self):
@@ -633,7 +633,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
                 self.plotParamsDict['deltaY'] = self.plotParamsDict['yMax'] - self.plotParamsDict['yMin']
                 self.plotParamsDict['yPoints'] = np.amax(self.data[:, yIndex]) + 1
                 self.plotParamsDict['yscale'] = (self.plotParamsDict['yMax']-self.plotParamsDict['yMin']) / (self.plotParamsDict['yPoints'] - 1)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def formatPlotData(self):
@@ -658,7 +658,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
                     self.PlotData[1].append(i[zIndex])
 
                 self.plotParamsDict['xPoints'], self.plotParamsDict['yPoints'] = len(self.PlotData[0]), 0
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def determineSweepDirection(self):
@@ -733,7 +733,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             if isinstance(val, float):
                 self.verticalposition = val
             self.updateLinecuts()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def setHorizontalLinecutPos(self):
@@ -742,7 +742,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             if isinstance(val, float):
                 self.horizontalposition = val
                 self.updateLinecuts()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def updateLinecuts(self, linecut = None):
@@ -759,7 +759,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             self.hLine.setValue(float(self.horizontalposition))
 
             self.updateLinecutPlot()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def clearLinecutPlots(self):
@@ -788,7 +788,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
                 self.linecutYZ_yvals = self.PlotData[xindex]
                 self.linecutYZ_zvals = np.linspace(self.plotParamsDict['yMin'], self.plotParamsDict['yMax'], num = self.plotParamsDict['yPoints'])
                 self.YZPlot.plot(x = self.linecutYZ_yvals, y = self.linecutYZ_zvals, pen = 0.5)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
@@ -1281,7 +1281,7 @@ class Plot1D(QtWidgets.QMainWindow, Ui_Plotter1D):
                 self.position = val
             self.lineObject.setValue(float(self.position))
             self.updateLinecutValue()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def setupPlot(self):

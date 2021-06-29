@@ -1,27 +1,20 @@
 import sys
 from PyQt5 import QtWidgets, uic
-from twisted.internet.defer import inlineCallbacks, Deferred
-import time
-from array import array
-import pyqtgraph as pg
 import numpy
 import decimal #required for more digits
 from nSOTScannerFormat import readNum, formatNum
-import threading
-from scipy.signal import detrend
-
 
 path = sys.path[0]
-sys.path.append(path+'\Resources')
 QRreaderWindowUI, QtBaseClass = uic.loadUiType(path + r"\QRreader\QRreaderWindow.ui")
 
 class Window(QtWidgets.QMainWindow, QRreaderWindowUI):
-    def __init__(self, reactor, parent=None):
+    def __init__(self, reactor, parent = None):
         super(Window, self).__init__(parent)
         self.reactor = reactor
         self.setupUi(self)
         self.setupAdditionalUi()
 
+        #Connect all the pushbuttons in the grid
         self.pushButton_qrcode00.clicked.connect(lambda: self.toggleqrcode((0,0),self.pushButton_qrcode00))
         self.pushButton_qrcode01.clicked.connect(lambda: self.toggleqrcode((0,1),self.pushButton_qrcode01))
         self.pushButton_qrcode02.clicked.connect(lambda: self.toggleqrcode((0,2),self.pushButton_qrcode02))
@@ -39,38 +32,36 @@ class Window(QtWidgets.QMainWindow, QRreaderWindowUI):
         self.pushButton_qrcode32.clicked.connect(lambda: self.toggleqrcode((3,2),self.pushButton_qrcode32))
         self.pushButton_qrcode33.clicked.connect(lambda: self.toggleqrcode((3,3),self.pushButton_qrcode33))
 
+        #Connect lineEdits and pushBUtton to updating QR code grid center points
         self.lineEdit_Xpositioncenter.editingFinished.connect(self.UpdateCenterX)
         self.lineEdit_Ypositioncenter.editingFinished.connect(self.UpdateCenterY)
+        self.pushButton_setGridCenter.clicked.connect(self.setGridCenter)
 
-        self.CenterX=83
+        #Initialize position tracking variables
+        self.CenterX=83 #
         self.CenterY=83
+
         self.TotalX=166
         self.TotalY=166
-        self.QRpictureX=200
-        self.QRpictureY=200
+
+        #
+        self.QRpictureX = 200
+        self.QRpictureY = 200
+
+        #Se4t lineEdit to default center values
         self.lineEdit_Xpositioncenter.setText(str(self.CenterX))
         self.lineEdit_Ypositioncenter.setText(str(self.CenterY))
 
+        #initialize a grid to keep track of which grid elements are selected and which are not
         self.fill=numpy.zeros((4,4))
 
-        #self.pushButton_Gotobutton.clicked.connect(self.GoTo)    #Obsolete
-        self.pushButton_SetupCenter.clicked.connect(self.SetupCenter)
-
         self.moveDefault()
-
-        #Connect show servers list pop up
-
-        #Initialize all the labrad connections as none
-        self.cxn = None
-        self.dv = None
 
     def moveDefault(self):
         self.move(550,10)
 
-
-
-    def Updateposition(self):
-        self.xposition=int(self.fill[0,0])*2**7+int(self.fill[0,1])*2**6+int(self.fill[0,2])*2**5+int(self.fill[0,3])*2**4+int(self.fill[1,0])*2**3+int(self.fill[1,1])*2**2+int(self.fill[1,2])*2**1+int(self.fill[1,3])*2**0
+    def updatePosition(self):
+        self.xposition = int(self.fill[0,0])*2**7+int(self.fill[0,1])*2**6+int(self.fill[0,2])*2**5+int(self.fill[0,3])*2**4+int(self.fill[1,0])*2**3+int(self.fill[1,1])*2**2+int(self.fill[1,2])*2**1+int(self.fill[1,3])*2**0
         #This convert the QR code to the integer it correspond to
         valx=formatNum(self.inttonum(self.xposition)-float(decimal.Decimal(self.CenterX*30)/decimal.Decimal(10**6)))
         self.lineEdit_Xposition.setText(valx)
@@ -87,61 +78,35 @@ class Window(QtWidgets.QMainWindow, QRreaderWindowUI):
             button.setStyleSheet(notfillstatus)
             # This just change the color of the button
 
-    def colorAllButton(self):
-        for i in range(0,4):
-            for j in range (0,4):
-                Status=self.fill[i,j]
-                self.colorButton(eval("self.pushButton_qrcode"+str(i)+str(j)),Status)
-                #this change the color of all the button
-
     def numtoint(self,num):
+        #convert the distance in microns to the index of the QR code on the grid, knowing that they
+        #code are separated by 30 microns
         val=int((num*10**6)/30.0)
         return val
-        #convert the distance to the actual number
 
     def inttonum(self,int):
+        #convert the index of the QR code on the grid to a position knowing that the QR codes
+        #are separated by 30 microns
         val=float(decimal.Decimal(int*30)/decimal.Decimal((10**6)))
         return val
-        #convert the number to the actual distance
 
-    def GoTo(self):
-        if self.lineEdit_Xposition.text()=="SQUID":
-            print("yes")
-            self.ASQUID()
-        else:
-            valx=readNum(str(self.lineEdit_Xposition.text()), self, True)
-            valy=readNum(str(self.lineEdit_Yposition.text()), self, True)#read the position from entered value
-            x = self.numtoint(valx)
-            y = self.numtoint(valy)
-            xbinaryarray=list('{0:08b}'.format(x))
-            ybinaryarray=list('{0:08b}'.format(y))
-            for i in range(0, 2):
-                for j in range(0,4):
-                    self.fill[i,j]=xbinaryarray[i*4+j]
-            for i in range(2, 4):
-                for j in range(0,4):
-                    self.fill[i,j]=ybinaryarray[(i-2)*4+j]
-            self.Updateposition()
-            self.colorAllButton()
-            self.UpdateTipTF()
-
-    def SetupCenter(self):
+    def setGridCenter(self):
         self.CenterX=int(self.fill[0,0])*2**7+int(self.fill[0,1])*2**6+int(self.fill[0,2])*2**5+int(self.fill[0,3])*2**4+int(self.fill[1,0])*2**3+int(self.fill[1,1])*2**2+int(self.fill[1,2])*2**1+int(self.fill[1,3])*2**0
         self.CenterY=int(self.fill[2,0])*2**7+int(self.fill[2,1])*2**6+int(self.fill[2,2])*2**5+int(self.fill[2,3])*2**4+int(self.fill[3,0])*2**3+int(self.fill[3,1])*2**2+int(self.fill[3,2])*2**1+int(self.fill[3,3])*2**0
         self.TotalX=2*self.CenterX
         self.TotalY=2*self.CenterY#read the configuration of QRCode
         self.lineEdit_Xpositioncenter.setText(str(self.CenterX))
         self.lineEdit_Ypositioncenter.setText(str(self.CenterY))
-        self.Updateposition()
+        self.updatePosition()
         self.UpdateTipTF()
 
     def UpdateCenterX(self):
         new_CenterX = readNum(self.lineEdit_Xpositioncenter.text())
-        if new_CenterX>0 and new_CenterX<129 and isinstance(new_CenterX, float):
+        if isinstance(new_CenterX, float) and new_CenterX > 0 and new_CenterX < 129:
             self.CenterX=int(str(self.lineEdit_Xpositioncenter.text()))
             self.TotalX=2*self.CenterX
         self.lineEdit_Xpositioncenter.setText(str(self.CenterX))
-        self.Updateposition()
+        self.updatePosition()
         self.UpdateTipTF()
 
     def UpdateCenterY(self):
@@ -150,7 +115,7 @@ class Window(QtWidgets.QMainWindow, QRreaderWindowUI):
             self.CenterY=int(str(self.lineEdit_Ypositioncenter.text()))
             self.TotalY=2*self.CenterY
         self.lineEdit_Ypositioncenter.setText(str(self.CenterY))
-        self.Updateposition()
+        self.updatePosition()
         self.UpdateTipTF()
 
     def setupAdditionalUi(self):
@@ -164,9 +129,7 @@ class Window(QtWidgets.QMainWindow, QRreaderWindowUI):
         else:
             self.fill[location] = False
             self.colorButton(button, False)
-        self.Updateposition()
-        x = readNum((self.lineEdit_Xposition.text()), self, True)
-        y = readNum((self.lineEdit_Yposition.text()), self, True)
+        self.updatePosition()
         self.UpdateTipTF()
 
     def UpdateTipTF(self):
@@ -177,39 +140,6 @@ class Window(QtWidgets.QMainWindow, QRreaderWindowUI):
         y = readNum(str(self.lineEdit_Yposition.text()), self, True)
         self.Frame_TFTP.move(int(x/(self.TotalX*30)*(10**6)*Length+W/2-70),int(-y/(self.TotalY*30)*(10**6)*Length-60+Length/2))#formula is empirical
         self.Frame_TFTP.raise_()
-
-    # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous
-    # delay that allows other labrad / pyqt methods to run
-    def sleep(self,secs):
-        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
-        other operations to be done elsewhere while paused."""
-        d = Deferred()
-        self.reactor.callLater(secs,d.callback,'Sleeping')
-        return d
-
-    @inlineCallbacks
-    def ASQUID(self):
-        print("hey")
-        style = '''
-                {
-                image:url(:/nSOTScanner/Pictures/SQUIDRotated.png);
-                background:black;
-                }
-                '''
-        defaultstyle=self.centralwidget.styleSheet()
-        self.centralwidget.setStyleSheet(style)
-
-        yield self.sleep(1)
-        self.centralwidget.setStyleSheet(defaultstyle)
-
-#----------------------------------------------------------------------------------------------#
-    """ The following section has generally useful functions."""
-
-    def lockInterface(self):
-        pass
-
-    def unlockInterface(self):
-        pass
 
 if __name__=="__main__":
     import qt4reactor

@@ -556,7 +556,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.lineEdit_freqSet.setText(formatNum(self.freqThreshold))
             self.freqSlider.setPosition(self.freqThreshold)
             yield self.setFreqThreshholdSign()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -715,7 +715,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
                 msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
                 msgBox.exec_()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -746,7 +746,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             yield self.hf.set_output_range(self.measurementSettings['pll_output'],self.measurementSettings['pll_output_amp'])
             output_range = yield self.hf.get_output_range(self.measurementSettings['pll_output'])
             yield self.hf.set_output_amplitude(self.measurementSettings['pll_output'],self.measurementSettings['pll_output_amp']/output_range)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -811,7 +811,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             #When done measuring, turn off the PLL and the output
             yield self.hf.set_pll_off(self.measurementSettings['pll_output'])
             yield self.hf.set_output(self.measurementSettings['pll_output'], False)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -847,8 +847,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                 #Wait 100ms before going through the loop again
                 yield self.sleep(0.1)
-            except Exception as inst:
-                print('monitor error: ' + str(inst))
+            except:
                 yield self.sleep(0.1)
                 printErrorInfo()
 
@@ -955,7 +954,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
                 msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
                 msgBox.exec_()
-        except Exception as inst:
+        except:
             print("Gen PID Approach Error:")
             printErrorInfo()
 
@@ -982,7 +981,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 yield self.hf.set_pid_setpoint(self.PID_Index, self.measurementSettings['pll_centerfreq'] + self.freqThreshold)
             else:
                 yield self.hf.set_pid_setpoint(self.PID_Index, self.measurementSettings['pll_centerfreq'] - self.freqThreshold)
-        except Exception as inst:
+        except:
             print("Set PID settings error")
             printErrorInfo()
 
@@ -1004,7 +1003,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 yield self.hf.set_pid_p(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['p']/self.voltageMultiplier)
                 yield self.hf.set_pid_i(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['i']/self.voltageMultiplier)
                 yield self.hf.set_pid_d(self.PID_Index, self.z_volts_to_meters*self.PIDApproachSettings['d']/self.voltageMultiplier)
-        except Exception as inst:
+        except:
             print("PID errror:")
             printErrorInfo()
 
@@ -1132,7 +1131,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
             #Unlock the sensitive GUI elements
             self.unlockWithdrawSensitiveInputs()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -1313,7 +1312,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                     self.label_pidApproachStatus.setText('Could not extend to desired height')
                     self.approaching = False
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -1467,10 +1466,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                     self.approaching = False
                     self.comboBox_ZMultiplier.setEnabled(True)
-                except Exception as inst:
+                except:
                     print("Feedback Sequence 2 error:")
                     printErrorInfo()
-        except Exception as inst:
+        except:
             print("Feedback Sequence error:")
             printErrorInfo()
 
@@ -1609,7 +1608,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
             self.label_stepApproachStatus.setText('Idle')
             self.label_pidApproachStatus.setText('Idle')
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -1678,7 +1677,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             yield self.hf.set_aux_output_monitorscale(self.generalSettings['pid_z_output'], 1)
             #set output back to manual control
             yield self.hf.set_aux_output_signal(self.generalSettings['pid_z_output'], -1)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -1714,7 +1713,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             yield self.hf.set_aux_output_offset(3,0)
             yield self.hf.set_aux_output_offset(4,0)
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
@@ -2199,7 +2198,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
 
             #Check to see if new parameters are stable
             yield self.updateStability()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -2230,7 +2229,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
             self.PID_advice = False
             self.computePIDParameters()
             self.displayCalculatingGraphics()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -2262,7 +2261,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
             self.lineEdit_PLL_TC.setText(formatNum(self.measSettings['pll_tc']))
 
             self.updateStability()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -2277,7 +2276,7 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
                 yield self.sleep(0.025)
                 i = (i+1)%80
             self.push_AdvisePID.setStyleSheet(self.sheets[0])
-        except Exception as inst:
+        except:
             printErrorInfo()
 
 

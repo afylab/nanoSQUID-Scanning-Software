@@ -231,7 +231,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
             for window in self.windows:
                 if hasattr(window, "close"):
                     window.close()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#

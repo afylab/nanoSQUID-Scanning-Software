@@ -1098,13 +1098,10 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.liveRetracePlotStatus is False:
             if self.tab_retrace.currentIndex() == 0:
                 posRetrace = self.vRetraceLine.value()
-                print(posRetrace)
                 self.vCutRetracePos.setValue(posRetrace)
                 self.updateBottomRetracePlot()
-
             elif self.tab_retrace.currentIndex() == 1:
                 posRetrace = self.vRetraceNoiseLine.value()
-                print(posRetrace)
                 self.vCutRetracePos.setValue(posRetrace)
                 self.updateBottomRetracePlot()
 
@@ -1436,7 +1433,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
             if not a:
                 print("Error saving nSOT data picture")
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def updateDataVaultDirectory(self):
@@ -1755,7 +1752,7 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
                 yield self.dac.set_voltage(DAC_out, 0)
                 try:
                     yield self.window.blink()
-                except Exception as inst:
+                except:
                     printErrorInfo()
 
                 if biasMin != 0:
@@ -1783,7 +1780,7 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
                 yield self.dac.set_voltage(DAC_out, 0)
                 self.push_startSweep.setEnabled(True)
 
-            except Exception as inst:
+            except:
                 printErrorInfo()
         elif self.btnAction == 'reset':
             self.toggleStartBtn('sweep')
@@ -1795,7 +1792,7 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
             a = p.save(self.window.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
             if not a:
                 print("Error saving nSOT Prelim data picture")
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def sleep(self, secs):

@@ -767,7 +767,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         #Ramps from the current value to the desired (setpoint) value
         try:
             yield self.ramp1_display(channel, self.DAC_output[channel], self.DAC_setpoint[channel], 10000, 100)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def setDACSetpoint(self, channel, lineEdit):
@@ -912,7 +912,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
             #Ramp the output gate voltage back down to zero after the sweep is done
             yield self.ramp1_display(self.FourTerminal_ChannelOutput[0],self.sweepParameters['FourTerminal_MaxVoltage'],0.0,10000,100)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
         self.unlockInterface()
@@ -946,7 +946,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 print('Set magnetic field  to: ' + str(0))
                 yield self.rampMagneticField(0, self.sweepParameters['FieldSweep1D_SweepSpeed'])
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
         self.unlockInterface() #unlock the interface when done
@@ -1035,7 +1035,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             #Return the plot_data
             returnValue(plot_data)
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -1136,7 +1136,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 print("Ramp Field Back to Zero")
                 yield self.rampMagneticField(0.0, self.sweepParameters['landauFan_SweepSeed'])
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
         self.unlockInterface() #Unlock the interface when done
@@ -1175,7 +1175,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 elif self.abortMagneticFieldSweep_Flag:
                     break
 
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -1192,7 +1192,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
             if not a:
                 print("Error saving Scan data picture")
-        except Exception as inst:
+        except:
             printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
@@ -1212,7 +1212,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             #of serial communication)
             if steps*delay/1e6  > 0.7:
                 yield self.clearBufferedData()
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks
@@ -1231,7 +1231,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             data = yield self.dac.buffer_ramp(DAC_Out_Channels, DAC_In_Channels, start, stop, steps, delay)
             self.label_DACOout_list[DAC_Out_Channels[0]].setText(formatNum(stop, 6))
             returnValue(data)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     def calculateRealVoltage(self,reading):
