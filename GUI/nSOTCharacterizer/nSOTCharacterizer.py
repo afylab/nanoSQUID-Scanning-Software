@@ -1137,34 +1137,23 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             if self.tab_trace.currentIndex() == 0:
                 posTrace = self.vCutTracePos.value()
                 self.vTraceLine.setValue(posTrace)
-                if self.isData == True:
-                    self.updateBottomTracePlot()
-                else:
-                    pass
+                self.updateBottomTracePlot()
+
             elif self.tab_trace.currentIndex() == 1:
                 posTrace = self.vCutTracePos.value()
                 self.vTraceNoiseLine.setValue(posTrace)
-                if self.isData == True:
-                    self.updateBottomTracePlot()
-                else:
-                    pass
+                self.updateBottomTracePlot()
         if self.liveRetracePlotStatus is True:
             pass
         elif self.liveRetracePlotStatus is False:
             if self.tab_retrace.currentIndex() == 0:
                 posRetrace = self.vCutRetracePos.value()
                 self.vRetraceLine.setValue(posRetrace)
-                if self.isData == True:
-                    self.updateBottomRetracePlot()
-                else:
-                    pass
+                self.updateBottomRetracePlot()
             elif self.tab_retrace.currentIndex() == 1:
                 posRetrace = self.vCutRetracePos.value()
                 self.vRetraceNoiseLine.setValue(posRetrace)
-                if self.isData == True:
-                    self.updateBottomRetracePlot()
-                else:
-                    pass
+                self.updateBottomRetracePlot()
 
     def changeHLine(self):
         if self.liveTracePlotStatus is False:
@@ -1270,37 +1259,25 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             self.curfieldTracePlot.lower()
             self.curbiasTracePlot.raise_()
             self.IVTracePlot.setLabel('bottom', 'Bias Voltage', units = 'V')
-            if self.isData == True:
-                self.updateBottomTracePlot()
-            else:
-                pass
+            self.updateBottomTracePlot()
         elif self.tab_trace.currentIndex() == 0 and self.tracePlotNow == "bias":
             self.tracePlotNow = "field"
             self.curbiasTracePlot.lower()
             self.curfieldTracePlot.raise_()
             self.IBTracePlot.setLabel('bottom', 'Magnetic Field', units = 'T')
-            if self.isData == True:
-                self.updateBottomTracePlot()
-            else:
-                pass
+            self.updateBottomTracePlot()
         elif self.tab_trace.currentIndex() == 1 and self.traceNoiseNow == "field":
             self.traceNoiseNow = "bias"
             self.curfieldTracePlot.lower()
             self.curbiasTracePlot.raise_()
             self.IVTracePlot.setLabel('bottom', 'Bias Voltage', units = 'V')
-            if self.isData == True:
-                self.updateBottomTracePlot()
-            else:
-                pass
+            self.updateBottomTracePlot()
         elif self.tab_trace.currentIndex() == 1 and self.traceNoiseNow == "bias":
             self.traceNoiseNow = "field"
             self.curbiasTracePlot.lower()
             self.curfieldTracePlot.raise_()
             self.IBTracePlot.setLabel('bottom', 'Magnetic Field', units = 'T')
-            if self.isData == True:
-                self.updateBottomTracePlot()
-            else:
-                pass
+            self.updateBottomTracePlot()
 
     def toggle_bottomRetracePlot(self):
         if self.tab_retrace.currentIndex() == 0 and self.retracePlotNow == "field":
@@ -1308,37 +1285,25 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             self.curfieldRetracePlot.lower()
             self.curbiasRetracePlot.raise_()
             self.IVRetracePlot.setLabel('bottom', 'Bias Voltage', units = 'V')
-            if self.isData == True:
-                self.updateBottomRetracePlot()
-            else:
-                pass
+            self.updateBottomRetracePlot()
         elif self.tab_retrace.currentIndex() == 0 and self.retracePlotNow == "bias":
             self.retracePlotNow = "field"
             self.curbiasRetracePlot.lower()
             self.curfieldRetracePlot.raise_()
             self.IBRetracePlot.setLabel('bottom', 'Magnetic Field', units = 'T')
-            if self.isData == True:
-                self.updateBottomRetracePlot()
-            else:
-                pass
+            self.updateBottomRetracePlot()
         elif self.tab_retrace.currentIndex() == 1 and self.retraceNoiseNow == "field":
             self.retraceNoiseNow = "bias"
             self.curfieldRetracePlot.lower()
             self.curbiasRetracePlot.raise_()
             self.IVRetracePlot.setLabel('bottom', 'Bias Voltage', units = 'V')
-            if self.isData == True:
-                self.updateBottomRetracePlot()
-            else:
-                pass
+            self.updateBottomRetracePlot()
         elif self.tab_retrace.currentIndex() == 1 and self.retraceNoiseNow == "bias":
             self.retraceNoiseNow = "field"
             self.IBRetracePlot.setLabel('bottom', 'Magnetic Field', units = 'T')
             self.curbiasRetracePlot.lower()
             self.curfieldRetracePlot.raise_()
-            if self.isData == True:
-                self.updateBottomRetracePlot()
-            else:
-                pass
+            self.updateBottomRetracePlot()
 
     def updateBottomTracePlot(self):
         index = self.comboBox_traceLinecut.currentIndex()
