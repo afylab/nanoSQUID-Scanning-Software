@@ -425,7 +425,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         If changes are accepted, then the measurement settings dictionary is updated with the
         new values.
         '''
-        MeasSet = MeasurementSettings(self.reactor, self.measurementSettings, parent = self, server = self.hf)
+        MeasSet = MeasurementSettings(self.reactor, self.measurementSettings.copy(), parent = self, server = self.hf)
         if MeasSet.exec_():
             self.measurementSettings = MeasSet.getValues()
 
@@ -861,7 +861,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         yield self.hf.set_pid_on(self.PID_Index, False)
 
         self.label_pidApproachStatus.setText('Idle')
-        self.label_stepApproachStatus.setText('Idle')
 
     @inlineCallbacks
     def startPIDApproachSequence(self):
@@ -987,7 +986,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
     @inlineCallbacks
     def setPIDParameters(self):
-        print('PID Parameters Set')
         #Sets PID parameters, noting that i cannot ever be 0, because otherwise this will lead to
         #voltage jumps as it resets the integrator value.
 
@@ -1430,7 +1428,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                         PID_output = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
                         #If we're midrange of the Zurich PID output, then we're in contact with good range
                         if PID_output < max_zurich_voltage/2:
-                            print('In feedback biotch')
                             self.label_pidApproachStatus.setText('In Feedback')
                             self.updateFeedbackStatus.emit(True)
                             break
@@ -1497,7 +1494,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             if points * delay / 1e6 > 0.9:
                 a = yield self.dac.read()
                 while a != '':
-                    print(a)
                     a = yield self.dac.read()
 
     @inlineCallbacks
@@ -1529,7 +1525,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.generalSettings['step_z_output'] - 1)
 
             #update labels on the GUI
-            self.label_stepApproachStatus.setText('Withdrawing')
             self.label_pidApproachStatus.setText('Withdrawing')
 
             #Keep track of how much distance still needs to be withdrawn after each step
@@ -1542,11 +1537,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 if self.voltageMultiplied:
                     end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters/self.voltageMultiplier
 
-                print('Zurich start voltage: ')
-                print(z_voltage)
-                print('Zurich end voltage: ')
-                print(end_voltage)
-
                 #If we need to withdraw by more than just the voltage from the Zurich, keep track of how much
                 if end_voltage < 0:
                     end_voltage = 0
@@ -1558,9 +1548,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 else:
                     #Remaining withdraw distance
                     withdrawDistance = 0
-
-                print('Zurich distance remaning: ')
-                print(withdrawDistance)
 
                 #Get the desired retract speed in volts per second
                 retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
@@ -1576,18 +1563,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 start_voltage = self.Atto_Z_Voltage
                 end_voltage = self.Atto_Z_Voltage - withdrawDistance * self.z_volts_to_meters
 
-                print('DACADC start voltage: ')
-                print(start_voltage)
-                print('DACADC end voltage: ')
-                print(end_voltage)
-
                 if end_voltage < 0:
                     end_voltage = 0
                     #distance being withdrawn by DAC
                     withdrawDistance = start_voltage / self.z_volts_to_meters
-
-                print('DACADC withdraw distance: ')
-                print(withdrawDistance)
 
                 #speed in volts / second
                 speed = self.generalSettings['step_retract_speed']*self.z_volts_to_meters
@@ -1606,7 +1585,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.push_ApproachForFeedback.setEnabled(True)
             self.push_PIDApproachForConstant.setEnabled(True)
 
-            self.label_stepApproachStatus.setText('Idle')
             self.label_pidApproachStatus.setText('Idle')
         except:
             printErrorInfo()
@@ -2013,8 +1991,6 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
 
         self.push_AdvisePID.clicked.connect(self.advisePID)
 
-        self.checkBox_pll.stateChanged.connect(self.setMeasPLL)
-
         self.lineEdit_TargetBW.editingFinished.connect(self.setPLL_TargetBW)
         self.lineEdit_PLL_Range.editingFinished.connect(self.setPLL_Range)
         self.lineEdit_PLL_TC.editingFinished.connect(self.setPLL_TC)
@@ -2024,8 +2000,8 @@ class MeasurementSettings(QtWidgets.QDialog, Ui_MeasurementSettings):
         self.lineEdit_PLL_D.editingFinished.connect(self.setPLL_D)
 
         self.comboBox_PLL_Advise.currentIndexChanged.connect(self.setPLL_AdviseMode)
-        self.comboBox_PLL_FilterOrder.currentIndexChanged.connect(self.setPLL_FilterOrder)
-        self.comboBox_PLL_Harmonic.currentIndexChanged.connect(self.setPLL_Harmonic)
+        self.comboBox_PLL_FilterOrder.currentIndexChanged.connect(lambda: self.setPLL_FilterOrder())
+        self.comboBox_PLL_Harmonic.currentIndexChanged.connect(lambda: self.setPLL_Harmonic())
         self.comboBox_PLL_Input.currentIndexChanged.connect(self.setPLL_Input)
 
         self.lineEdit_PLL_Amplitude.editingFinished.connect(self.setPLL_Output_Amplitude)

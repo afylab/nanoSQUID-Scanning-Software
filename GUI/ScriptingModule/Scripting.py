@@ -154,7 +154,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         return line[0:num]
 
     def loadFile(self):
-        file = str(QtWidgets.QFileDialog.getOpenFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts'))
+        file, file1 = QtWidgets.QFileDialog.getOpenFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts')
         if file:
             f = open(file,'r')
             message = f.read()
@@ -162,7 +162,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             f.close()
 
     def saveFile(self):
-        file = str(QtWidgets.QFileDialog.getSaveFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts'))
+        file, file1 = QtWidgets.QFileDialog.getSaveFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts')
         if file:
             f = open(file,'w')
             message = self.codeEditor.toPlainText()

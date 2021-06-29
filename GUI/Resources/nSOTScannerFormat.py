@@ -11,6 +11,14 @@ def printErrorInfo():
     print("Occured at line: ", tb.tb_lineno)
     print("In the file: ", tb.tb_frame.f_code.co_filename)
 
+def saveDataToSessionFolder(window, folder, filename):
+    try:
+        app = QtWidgets.QApplication.instance()
+        pixmap = QtGui.QScreen.grabWindow(app.primaryScreen(), window.winId())
+        pixmap.save(folder + '\\' + filename + '.jpg','jpg')
+    except:
+        printErrorInfo()
+
 #---------------------------------------------------------------------------------------------------------#
 """ The following section describes how to read and write values to various lineEdits on the GUI."""
 

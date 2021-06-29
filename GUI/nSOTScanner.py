@@ -1,6 +1,7 @@
 import sys
 from PyQt5 import QtWidgets, uic
 import ctypes
+from twisted.internet.defer import inlineCallbacks, Deferred
 myappid = 'YoungLab.nSOTScannerSoftware'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
@@ -225,14 +226,24 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
             if hasattr(window, "hide"):
                 window.hide()
 
+    #@inlineCallbacks
     def closeEvent(self, e):
         try:
             self.disconnectLabRADConnections()
             for window in self.windows:
                 if hasattr(window, "close"):
                     window.close()
+            #yield self.sleep(2)
+            self.reactor.stop()
         except:
             printErrorInfo()
+
+    def sleep(self,secs):
+        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
+        other operations to be done elsewhere while paused."""
+        d = Deferred()
+        self.reactor.callLater(secs,d.callback,'Sleeping')
+        return d
 
 #----------------------------------------------------------------------------------------------#
 """ The following runs the GUI"""

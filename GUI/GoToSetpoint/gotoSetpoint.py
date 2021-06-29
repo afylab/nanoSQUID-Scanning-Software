@@ -83,6 +83,9 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
 
+    def disconnectLabRAD(self):
+        self.lockInterface()
+
     @inlineCallbacks
     def readInitVals(self):
         try:
@@ -306,7 +309,6 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             returnValue(feedback)
         except:
             print('Blink server does not have voltage reading capabilities.')
-            printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""

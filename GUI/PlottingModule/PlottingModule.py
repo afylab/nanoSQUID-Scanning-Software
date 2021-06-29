@@ -145,9 +145,8 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
     def openDataVaultFiles(self):
         try:
             #First open a data vault browser to allow the user to select the files
+            self.dvBrowser.popDirs()
             self.dvBrowser.show()
-            #If the file selection is selected, have them be opened in Plotter objects
-
         except Exception as inst:
             printErrorInfo()
 

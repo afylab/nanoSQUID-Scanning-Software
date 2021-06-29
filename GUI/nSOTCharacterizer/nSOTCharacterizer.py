@@ -5,7 +5,7 @@ import numpy as np
 import pyqtgraph as pg
 import time
 import math
-from nSOTScannerFormat import readNum, formatNum, printErrorInfo
+from nSOTScannerFormat import readNum, formatNum, printErrorInfo, saveDataToSessionFolder
 
 path = sys.path[0] + r"\nSOTCharacterizer"
 characterGUI = path + r"\character_GUI.ui"
@@ -62,7 +62,6 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                                 'delay' : 0.001,
                                 'sweep mode' : 0,
                                 'blink mode' : 0,
-                                'Magnet device' : 'Toellner 8851',
                                 'sweep time' : '1 hours 0 minutes'}
 
         #Initialize plots
@@ -375,7 +374,10 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             "background: rgb(161, 0, 0);border-radius: 4px;}")
 
     def disconnectLabRAD(self):
-        self.comboBox_magnetPower.removeItem(0)
+        try:
+            self.comboBox_magnetPower.removeItem(0)
+        except:
+            pass
         self.gen_dv = False
         self.dv = False
         self.dac = False
@@ -444,7 +446,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             #Then the value is taken to be the step size instad of the number of
             #points
             if self.fieldSIStat == 'num pnts':
-                self.sweepParamDict['B_pnts'] = val
+                self.sweepParamDict['B_pnts'] = int(val)
                 self.sweepParamDict['B_step'] = (self.sweepParamDict['B_max']-self.sweepParamDict['B_min'])/(val-1)
             else:
                 self.sweepParamDict['B_pnts'] = round(1+(self.sweepParamDict['B_max']-self.sweepParamDict['B_min'])/val)
@@ -506,7 +508,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             #Then the value is taken to be the step size instad of the number of
             #points
             if self.biasSIStat == 'num pnts':
-                self.sweepParamDict['V_pnts'] = val
+                self.sweepParamDict['V_pnts'] = int(val)
                 self.sweepParamDict['V_step'] = (self.sweepParamDict['V_max']-self.sweepParamDict['V_min'])/(val-1)
             else:
                 self.sweepParamDict['V_pnts'] = round(1+(self.sweepParamDict['V_max']-self.sweepParamDict['V_min'])/val)
@@ -678,7 +680,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
         #Have user review the sweep parameters before starting
         if not self.abortFlag:
-            checkSweepParams = DialogBox(self.sweepParamDict, self)
+            checkSweepParams = DialogBox(self.settingsDict['Magnet device'], self.sweepParamDict, self)
             #If the user does not like the sweep parameters, abort the sweep
             if not checkSweepParams.exec_():
                 self.abortFlag = True
@@ -723,112 +725,117 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @inlineCallbacks
     def initSweep(self):
-        #Lock GUI elements that should not be changed mid scan
-        self.lockSweepParameters()
+        try:
+            #Lock GUI elements that should not be changed mid scan
+            self.lockSweepParameters()
 
-        #First create shorter local variables of all the important sweep parameters
-        b_min, b_max, b_rate = self.sweepParamDict['B_min'], self.sweepParamDict['B_max'], self.sweepParamDict['B_rate']
-        v_min, v_max = self.sweepParamDict['V_min'], self.sweepParamDict['V_max']
-        b_pnts, v_pnts = self.sweepParamDict['B_pnts'], self.sweepParamDict['V_pnts']
-        delay = int(1e6 * self.sweepParamDict['delay']) #Get the delay in units of microseconds
+            #First create shorter local variables of all the important sweep parameters
+            b_min, b_max, b_rate = self.sweepParamDict['B_min'], self.sweepParamDict['B_max'], self.sweepParamDict['B_rate']
+            v_min, v_max = self.sweepParamDict['V_min'], self.sweepParamDict['V_max']
+            b_pnts, v_pnts = self.sweepParamDict['B_pnts'], self.sweepParamDict['V_pnts']
+            delay = int(1e6 * self.sweepParamDict['delay']) #Get the delay in units of microseconds
 
-        #Create a data vault file for this sweep
-        file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise', 'dI/dV'])
-        self.dvFileName = file_info[1] #Get the name of the file
-        self.lineEdit_ImageNum.setText(file_info[1][0:5]) #Update the GUI element showing the dataset number
-        session = ''
-        for folder in file_info[0][1:]:
-            session = session + '\\' + folder
-        self.lineEdit_ImageDir.setText(r'\.datavault' + session) #Update the GUI element showing the dataset directory
-        print('DataVault setup complete')
+            #Create a data vault file for this sweep
+            file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise'])
+            self.dvFileName = file_info[1] #Get the name of the file
+            self.lineEdit_ImageNum.setText(file_info[1][0:5]) #Update the GUI element showing the dataset number
+            session = ''
+            for folder in file_info[0][1:]:
+                session = session + '\\' + folder
+            self.lineEdit_ImageDir.setText(r'\.datavault' + session) #Update the GUI element showing the dataset directory
+            print('DataVault setup complete')
 
-        #For the data of the speed, determine the position of the plot and the scale factors
-        self.plt_pos = [b_min, v_min] #Position of the bottom left corner of the plot
-        self.plt_scale = [(b_max-b_min) / b_pnts, (v_max-v_min) / v_pnts] #Scale factor for the size of each pixel
+            print(self.sweepParamDict)
 
-        #Initialize empty arrays for the data for plotting
-        self.curTraceData = np.zeros([b_pnts, v_pnts])
-        self.noiseTraceData =np.zeros([b_pnts, v_pnts])
-        self.curRetraceData = np.zeros([b_pnts, v_pnts])
-        self.noiseRetraceData = np.zeros([b_pnts, v_pnts])
+            #For the data of the speed, determine the position of the plot and the scale factors
+            self.plt_pos = [b_min, v_min] #Position of the bottom left corner of the plot
+            self.plt_scale = [(b_max-b_min) / b_pnts, (v_max-v_min) / v_pnts] #Scale factor for the size of each pixel
 
-        #Update the plots with the empty datasets
-        self.updatePlots()
+            #Initialize empty arrays for the data for plotting
+            self.curTraceData = np.zeros([b_pnts, v_pnts])
+            self.noiseTraceData = np.zeros([b_pnts, v_pnts])
+            self.curRetraceData = np.zeros([b_pnts, v_pnts])
+            self.noiseRetraceData = np.zeros([b_pnts, v_pnts])
 
-        #Generate arrays with values of magnetic fields that need to be sampled
-        b_vals = np.linspace(float(b_min),float(b_max), num = int(b_pnts))
+            #Update the plots with the empty datasets
+            self.updatePlots()
 
-        #Start by making sure the voltage output on the nSOT is zero.
-        #This should be improved at some point to coordinate with the setpoint
-        #module to not jump the bias voltage on the SQUID.
-        #That being said, it isn't a problem that damages SQUIDs usually
-        yield self.dac.set_voltage(self.settingsDict['nsot bias output'] - 1, 0)
+            #Generate arrays with values of magnetic fields that need to be sampled
+            b_vals = np.linspace(float(b_min),float(b_max), num = int(b_pnts))
 
-        #If starting (minimum) bias voltage is not zero, sweep bias to minimum value, 1mV per step with a 1ms delay
-        if v_min != 0:
-            yield self.dac.buffer_ramp([self.settingsDict['nsot bias output'] - 1], [0], [0], [v_min], np.absolute(int(v_min * 1000)), 1000)
+            #Start by making sure the voltage output on the nSOT is zero.
+            #This should be improved at some point to coordinate with the setpoint
+            #module to not jump the bias voltage on the SQUID.
+            #That being said, it isn't a problem that damages SQUIDs usually
+            yield self.dac.set_voltage(self.settingsDict['nsot bias output'] - 1, 0)
 
-        #Loop through the magnetic field points
-        for i in range(0, b_pnts):
-            #Check if user selected to abort the sweep
-            if self.abortFlag:
-                yield self.abortSweepFunc(0, v_min)
-                break
+            #If starting (minimum) bias voltage is not zero, sweep bias to minimum value, 1mV per step with a 1ms delay
+            if v_min != 0:
+                a = yield self.dac.buffer_ramp([self.settingsDict['nsot bias output'] - 1], [0], [0], [v_min], np.absolute(int(v_min * 1000)), 1000)
 
-            #Ramp the magnetic field from the current field to
-            print('Ramping field to ' + str(b_vals[i])+'.')
-            if i == 0:
-                #For the first field point, assume we were at zero field to begin with
-                yield self.setMagneticField(0, b_vals[0], b_rate)
-            else:
-                yield self.setMagneticField(b_vals[i-1], b_vals[i], b_rate)
+            #Loop through the magnetic field points
+            for i in range(0, b_pnts):
+                #Check if user selected to abort the sweep
+                if self.abortFlag:
+                    yield self.abortSweepFunc(0, v_min)
+                    break
 
-            #Check if user selected to abort the sweep while the field was changing
-            if self.abortFlag:
-                yield self.abortSweepFunc(b_vals[i], v_min)
-                break
+                #Ramp the magnetic field from the current field to
+                print('Ramping field to ' + str(b_vals[i])+'.')
+                if i == 0:
+                    #For the first field point, assume we were at zero field to begin with
+                    yield self.setMagneticField(0, b_vals[0], b_rate)
+                else:
+                    yield self.setMagneticField(b_vals[i-1], b_vals[i], b_rate)
 
-            print('Starting sweep with magnetic field set to: ' + str(b_vals[i]))
+                #Check if user selected to abort the sweep while the field was changing
+                if self.abortFlag:
+                    yield self.abortSweepFunc(b_vals[i], v_min)
+                    break
 
-            #Do the voltage sweep. The function takes into account the sweep mode
-            trace, retrace = yield self.rampVoltage(v_min, v_max, v_pnts, delay, self.sweepParamDict['sweep mode'])
+                print('Starting sweep with magnetic field set to: ' + str(b_vals[i]))
 
-            #Reform data and add to data vault
-            formated_trace = []
-            for j in range(0, v_pnts):
-                formated_trace.append((0, i, j, b_vals[i], trace[0][j], trace[1][j], trace[2][j]))
+                #Do the voltage sweep. The function takes into account the sweep mode
+                trace, retrace = yield self.rampVoltage(v_min, v_max, v_pnts, delay, self.sweepParamDict['sweep mode'])
 
-            formated_retrace = []
-            for j in range(0, v_pnts):
-                formated_trace.append((1, i, v_pnts - 1 - j, b_vals[i], retrace[0][j], retrace[1][j], retrace[2][j]))
+                #Reform data and add to data vault
+                formated_trace = []
+                for j in range(0, v_pnts):
+                    formated_trace.append((0, i, j, b_vals[i], trace[0][j], trace[1][j], trace[2][j]))
 
-            yield self.dv.add(formated_trace)
-            yield self.dv.add(formated_retrace)
+                formated_retrace = []
+                for j in range(0, v_pnts):
+                    formated_retrace.append((1, i, v_pnts - 1 - j, b_vals[i], retrace[0][j], retrace[1][j], retrace[2][j]))
 
-            #update the plots
-            yield self.updatePlots(formated_trace)
-            yield self.updatePlots(formated_retrace)
+                yield self.dv.add(formated_trace)
+                yield self.dv.add(formated_retrace)
 
-            #Check if user selected to abort the sweep while voltages were sweeping
-            if self.abortFlag:
-                yield self.abortSweepFunc(b_vals[i], v_min)
-                break
+                #update the plots
+                yield self.updatePlots(formated_trace)
+                yield self.updatePlots(formated_retrace)
 
-        #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
-        if v_min != 0 and not self.abortFlag:
-            yield self.dac.buffer_ramp([self.settingsDict['nsot bias output'] - 1], [0], [v_min], [0], np.absolute(int(v_min * 1000)), 1000)
+                #Check if user selected to abort the sweep while voltages were sweeping
+                if self.abortFlag:
+                    yield self.abortSweepFunc(b_vals[i], v_min)
+                    break
 
-        #Zero the magnetic field if the checkBox is checked
-        if self.checkBox_ZeroField.isChecked() and not self.abortFlag:
-            #Go to zero field and set power supply voltage setpoint to zero.
-            yield self.setMagneticField(b_vals[-1], 0, b_rate)
+            #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
+            if v_min != 0 and not self.abortFlag:
+                yield self.dac.buffer_ramp([self.settingsDict['nsot bias output'] - 1], [0], [v_min], [0], np.absolute(int(v_min * 1000)), 1000)
 
-        print('Sweep complete')
-        #unlock the GUI elements now that the sweep is complete
-        self.unlockSweepParameters()
-        #Wait until all plots are appropriately updated before saving screenshot
-        yield self.sleep(0.25)
-        self.saveDataToSessionFolder()
+            #Zero the magnetic field if the checkBox is checked
+            if self.checkBox_ZeroField.isChecked() and not self.abortFlag:
+                #Go to zero field and set power supply voltage setpoint to zero.
+                yield self.setMagneticField(b_vals[-1], 0, b_rate)
+
+            print('Sweep complete')
+            #unlock the GUI elements now that the sweep is complete
+            self.unlockSweepParameters()
+            #Wait until all plots are appropriately updated before saving screenshot
+            yield self.sleep(0.25)
+            saveDataToSessionFolder(self, self.sessionFolder, self.dvFileName)
+        except:
+            printErrorInfo()
 
     @inlineCallbacks
     def setMagneticField(self, B_i, B_f, B_rate):
@@ -940,7 +947,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         noise = self.settingsDict['noise input'] - 1 #DAC in channel to read noise measurement
 
         #Here differentiate between sweep modes
-        if self.settingsDict['sweep mode'] == 0: #This corresponds to min to max sweeps
+        if mode == 0: #This corresponds to min to max sweeps
             #If blink mode is enabled, blink before the voltage sweep step
             if self.sweepParamDict['blink mode'] == 0:
                 print('Blinking prior to sweep')
@@ -957,7 +964,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             #Flip the retrace data so that the ith point corresponds to the same voltage as the ith point of the trace data
             retrace = retrace[::-1]
 
-        elif self.settingsDict['sweep mode'] == 1: #This corresponds to zero to mix max
+        elif mode == 1: #This corresponds to zero to mix max
             #If sweeping from zero to min/max, find the appropriate number of points
             #for positive and negative voltages
             v_range = v_max - v_min
@@ -1368,7 +1375,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         index = self.comboBox_traceLinecut.currentIndex()
         if index == 0:
             self.IVTracePlot.clear()
-            xVals = np.linspace(self.vMin, self.vMax, num = self.vPoints)
+            xVals = np.linspace(self.sweepParamDict['V_min'], self.sweepParamDict['V_max'], num = self.sweepParamDict['V_pnts'])
             yVals = self.curTraceData[i]
             self.IVTracePlot.plot(x = xVals, y = yVals, pen = 0.5)
 
@@ -1376,7 +1383,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         index = self.comboBox_retraceLinecut.currentIndex()
         if index == 0:
             self.IVRetracePlot.clear()
-            xVals = np.linspace(self.vMin, self.vMax, num = self.vPoints)
+            xVals = np.linspace(self.sweepParamDict['V_min'], self.sweepParamDict['V_max'], num = self.sweepParamDict['V_pnts'])
             yVals = self.curRetraceData[i]
             self.IVRetracePlot.plot(x = xVals, y = yVals, pen = 0.5)
 
@@ -1426,15 +1433,6 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def setSessionFolder(self, folder):
         self.sessionFolder = folder
-
-    def saveDataToSessionFolder(self):
-        try:
-            p = QtGui.QPixmap.grabWindow(self.winId())
-            a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
-            if not a:
-                print("Error saving nSOT data picture")
-        except:
-            printErrorInfo()
 
     def updateDataVaultDirectory(self):
         curr_folder = yield self.gen_dv.cd()
@@ -1511,10 +1509,11 @@ class toellnerReminder(QtWidgets.QDialog, Ui_toeReminder):
 
 #Window for finalizing sweep parameters, inherits the list of sweep parameters from the MainWindow checkSweep function
 class DialogBox(QtWidgets.QDialog, Ui_DialogBox):
-    def __init__(self, sweepParams, parent = None):
+    def __init__(self, magnet, sweepParams, parent = None):
         super(DialogBox, self).__init__(parent)
 
         self.sweepParamDict = sweepParams
+        self.magnetDevice = magnet
 
         self.window = parent
         self.setupUi(self)
@@ -1537,12 +1536,13 @@ class DialogBox(QtWidgets.QDialog, Ui_DialogBox):
         self.biasSpeedValue.setText(str(self.sweepParamDict['delay']))
         self.biasSpeedValue.setStyleSheet("QLabel#biasSpeedValue {color: rgb(168,168,168); font-size: 10pt}")
 
-        if self.sweepParamDict['Magnet device'] == 'IPS 120-10':
+        if self.magnetDevice == 'IPS 120-10':
             self.magnetPowerSupply.setText('Oxford IPS 120-10 Magnet Power Supply')
             self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168); font-size: 10pt}")
-        elif self.sweepParamDict['Magnet device'] == 'Toellner 8851':
+        elif self.magnetDevice == 'Toellner 8851':
             self.magnetPowerSupply.setText('Toellner 8851 Power Supply')
             self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168); font-size: 10pt}")
+
         if self.sweepParamDict['sweep mode'] == 0:
             self.sweepModeSetting.setText('Min to Max')
             self.sweepModeSetting.setStyleSheet("QLabel#sweepModeSetting {color: rgb(168,168,168); font-size: 10pt}")
@@ -1593,14 +1593,14 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
         self.fitPlotItem = pg.PlotCurveItem()
         self.dataPlotItem = pg.PlotCurveItem()
 
-        self.push_startSweep.clicked.connect(self.sweep)
+        self.push_startSweep.clicked.connect(lambda: self.sweep())
         self.push_showFitBtn.clicked.connect(self.showFitFunc)
         self.btnAction = 'sweep'
 
         self.flag_IcLineShowing = False
         self.pushButton_Show.clicked.connect(self.toggleIcMeasurementLine)
 
-        self.push_closeWin.clicked.connect(self._close)
+        self.push_closeWin.clicked.connect(self.close)
 
     def toggleIcMeasurementLine(self):
         if self.flag_IcLineShowing:
@@ -1772,7 +1772,7 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
                 yield self.plotSweepData(formatted_data)
 
                 yield self.sleep(0.25)
-                self.saveDataToSessionFolder()
+                saveDataToSessionFolder(self, self.window.sessionFolder, self.dvFileName)
 
                 #Return to zero voltage gently
                 yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, DAC_in_sig, DAC_in_noise], [biasMax], [0], abs(int(biasMax * 1000)), 1000)
@@ -1784,16 +1784,6 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
                 printErrorInfo()
         elif self.btnAction == 'reset':
             self.toggleStartBtn('sweep')
-
-    def saveDataToSessionFolder(self):
-        try:
-            p = QtGui.QPixmap.grabWindow(self.winId())
-            #grab the sessionFolder name from the main window
-            a = p.save(self.window.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
-            if not a:
-                print("Error saving nSOT Prelim data picture")
-        except:
-            printErrorInfo()
 
     def sleep(self, secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows

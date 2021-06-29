@@ -113,7 +113,6 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
     @inlineCallbacks
     def connectLabRAD(self, dict):
         try:
-            self.cxn = dict['servers']['local']['cxn']
             self.anc350 = dict['servers']['local']['anc350']
 
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" +
@@ -155,10 +154,8 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             yield self.anc350.set_target_ground(i, self.TargetGround[i])
 
     def disconnectLabRAD(self):
-        self.cxn = False
-        self.anc350 = False
-
         self.serversConnected = False
+        self.anc350 = False
 
         self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" +
             "background: rgb(144, 140, 9);border-radius: 4px;}")
@@ -170,7 +167,6 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 yield self.RefreshAttocubeStatus()
                 yield self.sleep(0.1)
             except:
-                printErrorInfo()
                 yield self.sleep(0.1)
 
     @inlineCallbacks

@@ -5,7 +5,7 @@ import pyqtgraph as pg
 import pyqtgraph.exporters
 import numpy as np
 from scipy.optimize import curve_fit
-from nSOTScannerFormat import readNum, formatNum, printErrorInfo
+from nSOTScannerFormat import readNum, formatNum, printErrorInfo, saveDataToSessionFolder
 
 path = sys.path[0] + r"\TFCharacterizer"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\TFCharacterizer.ui")
@@ -207,10 +207,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
         self.minFreqLine = pg.InfiniteLine(pos = 30000, angle = 90, movable = True)
         self.minFreqLine.sigPositionChanged.connect(self.ampMinChanged)
-        self.minFreqLine.sigPositionChangeFinished.connect(self.reinitSweep)
+        self.minFreqLine.sigPositionChangeFinished.connect(lambda: self.reinitSweep())
         self.maxFreqLine = pg.InfiniteLine(pos = 34000, angle = 90, movable = True)
         self.maxFreqLine.sigPositionChanged.connect(self.ampMaxChanged)
-        self.maxFreqLine.sigPositionChangeFinished.connect(self.reinitSweep)
+        self.maxFreqLine.sigPositionChangeFinished.connect(lambda: self.reinitSweep())
         self.freqSelectLine = pg.InfiniteLine(pos = 32000, angle = 90, movable = True)
         self.freqSelectLine.sigPositionChanged.connect(self.ampSelectChanged)
         self.freqSelectLine.setPen((255,255,255))
@@ -234,10 +234,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
         self.minFreqLine2 = pg.InfiniteLine(pos = 30000, angle = 90, movable = True)
         self.minFreqLine2.sigPositionChanged.connect(self.phaseMinChanged)
-        self.minFreqLine2.sigPositionChangeFinished.connect(self.reinitSweep)
+        self.minFreqLine2.sigPositionChangeFinished.connect(lambda: self.reinitSweep())
         self.maxFreqLine2 = pg.InfiniteLine(pos = 34000, angle = 90, movable = True)
         self.maxFreqLine2.sigPositionChanged.connect(self.phaseMaxChanged)
-        self.maxFreqLine2.sigPositionChangeFinished.connect(self.reinitSweep)
+        self.maxFreqLine2.sigPositionChangeFinished.connect(lambda: self.reinitSweep())
         self.freqSelectLine2 = pg.InfiniteLine(pos = 32000, angle = 90, movable = True)
         self.freqSelectLine2.sigPositionChanged.connect(self.phaseSelectChanged)
         self.freqSelectLine2.setPen((255,255,255))
@@ -477,7 +477,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             #Wait for plot and lineEdit to update
             yield self.sleep(0.25)
             #save an image of the data to the session folder
-            self.saveDataToSessionFolder()
+            saveDataToSessionFolder(self, self.sessionFolder, self.dvFileName)
 
             formated_data = []
             for j in range(0, self.points):
@@ -605,7 +605,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         #wait for plots to udpate before saving data screenshot
         yield self.sleep(0.25)
         #If a fit is done, resave the data to show the results
-        self.saveDataToSessionFolder()
+        saveDataToSessionFolder(self, self.sessionFolder, self.dvFileName)
 
     def toggleFitView(self):
         if self.showFit:
@@ -634,15 +634,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def setSessionFolder(self, folder):
         self.sessionFolder = folder
-
-    def saveDataToSessionFolder(self):
-        try:
-            p = QtGui.QPixmap.grabWindow(self.winId())
-            a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
-            if not a:
-                print("Error saving TF data picture")
-        except:
-            printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""

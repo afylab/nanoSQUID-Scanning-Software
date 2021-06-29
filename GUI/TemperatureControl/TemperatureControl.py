@@ -96,7 +96,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 yield self.readCurrentSettings()
                 yield self.startTempMonitoring()
         except:
-            printErrorInfo()
+            pass
+            #printErrorInfo()
 
 
     def disconnectLabRAD(self):

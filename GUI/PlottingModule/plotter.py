@@ -154,7 +154,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
                 self.dataInfoDict['parameters'] = dict(parameters) #Parameters comes in tuples ('key', 'value'). Cast to dictionary
 
             returnValue(dv)
-        except:
+        except Exception as inst:
             printErrorInfo()
 
     def parseVariables(self, variables):
@@ -219,7 +219,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             elif np.isnan(rawData).any(): #Alert user if data is corrupted by NaNs
                 rawData = self.removeNaN(rawData)
                 self.updatePlotterStatus('NaN detected in data. Check data integrity')
-        except:
+        except Exception as inst:
             printErrorInfo()
 
     @inlineCallbacks
@@ -253,7 +253,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             self.updatePlotterStatus("Data loaded")
 
             returnValue(rawData)
-        except:
+        except Exception as inst:
             printErrorInfo()
 
     def removeNaN(self, data):
@@ -844,7 +844,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
     def matPlot(self):
         if (not self.PlotData is None):
-            fold = str(QtWidgets.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
+            fold, fold1 = QtWidgets.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)")
             print(fold)
             if fold:
                 self.genMatFile(fold)
@@ -922,7 +922,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
         number = 0 #Number of datapoints removed from algorithm
         #Loop through all the points in the 2D dataset
-        t0 = time.clock() #Keep track of the time where the despiking algorithm started
+        t0 = time.time() #Keep track of the time where the despiking algorithm started
         for i in range(xpnts):
             for j in range(ypnts):
 
@@ -949,13 +949,13 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
                 #if more than 30ms have passed since the algorithm has been running
                 #The shorter this time, the smoother the rest of the GUI runs, but the slower the algorithm runs.
-                if time.clock() - t0 > 0.03:
+                if time.time() - t0 > 0.03:
                     #Update the plotter status
                     statusUpdate = "Despiking point: " + str(i) + " " + str(j) + "."
                     self.updatePlotterStatus(statusUpdate)
 
                     yield self.parent.sleep(0.001) #Wait 1ms to allow rest of the GUI to update
-                    t0 = time.clock() #Reset the zero time
+                    t0 = time.time() #Reset the zero time
 
         self.plotData()
         statusUpdate = "Flattened " + str(number) + " datapoints."

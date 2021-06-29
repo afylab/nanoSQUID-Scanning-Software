@@ -6,7 +6,7 @@ import numpy as np
 import pyqtgraph as pg
 import time
 import math
-from nSOTScannerFormat import readNum, formatNum, printErrorInfo
+from nSOTScannerFormat import readNum, formatNum, printErrorInfo, saveDataToSessionFolder
 
 path = sys.path[0] + r"\SampleCharacterizer"
 SampleCharacterizerWindowUI, QtBaseClass = uic.loadUiType(path + r"\SampleCharacterizerWindow.ui")
@@ -524,11 +524,11 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
     """ The following section has functions for updating and clearing plots"""
 
     def plotFourTerminalData(self, plot_data, color = 0.5):
-        yield self.fourTerminalPlot1.plot(plot_data[0], plot_data[1], pen = color)
+        self.fourTerminalPlot1.plot(plot_data[0], plot_data[1], pen = color)
         if np.size(self.FourTerminal_ChannelInput)!=4:
-            yield self.fourTerminalPlot2.plot(plot_data[0], plot_data[2], pen = color)
-            yield self.fourTerminalPlot3.plot(plot_data[0], plot_data[3], pen = color)
-            yield self.fourTerminalPlot4.plot(plot_data[0], plot_data[4], pen = color)
+            self.fourTerminalPlot2.plot(plot_data[0], plot_data[2], pen = color)
+            self.fourTerminalPlot3.plot(plot_data[0], plot_data[3], pen = color)
+            self.fourTerminalPlot4.plot(plot_data[0], plot_data[4], pen = color)
 
     def clearFourTerminalPlots(self):
         self.fourTerminalPlot1.clear()
@@ -537,11 +537,11 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.fourTerminalPlot4.clear()
 
     def plotFieldSweep1DData(self, plot_data, color):
-        self.fieldSweep1DPlot1.plot(plot_data[1], plot_data[2], pen = color)
+        self.fieldSweep1DPlot1.plot(plot_data[0], plot_data[1], pen = color)
         if np.size(self.FourTerminal_ChannelInput)!=4:
-            self.fieldSweep1DPlot2.plot(plot_data[1], plot_data[3], pen = color)
-            self.fieldSweep1DPlot3.plot(plot_data[1], plot_data[4], pen = color)
-            self.fieldSweep1DPlot4.plot(plot_data[1], plot_data[5], pen = color)
+            self.fieldSweep1DPlot2.plot(plot_data[0], plot_data[2], pen = color)
+            self.fieldSweep1DPlot3.plot(plot_data[0], plot_data[3], pen = color)
+            self.fieldSweep1DPlot4.plot(plot_data[0], plot_data[4], pen = color)
 
     def clearFieldSweep1DPlots(self):
         self.fieldSweep1DPlot1.clear()
@@ -833,46 +833,48 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         Data for plotting is a list of 1D arrays with entries corresponding to the gate voltage,
         measured voltage, current, resistance, and conductance
         """
+        try:
+            formatted_data = [] #Data formatted properly to be added to datavault
+            plot_data = [] #Data formatted properly to enable easy plotting
 
-        formatted_data = [] #Data formatted properly to be added to datavault
-        plot_data = [] #Data formatted properly to enable easy plotting
+            for i in range(0,5):
+                #plot_data has 5 columns. gate voltage points, measured voltage, current, resistance, and conductance
+                plot_data.append(np.zeros(points))
 
-        for i in range(0,5):
-            #plot_data has 5 columns. gate voltage points, measured voltage, current, resistance, and conductance
-            plot_data.append(np.zeros(points))
+            #Generate gate voltage point array from input variables
+            plot_data[0] = np.linspace(min, max, points)
 
-        #Generate gate voltage point array from input variables
-        plot_data[0] = np.linspace(min, max, points)
+            #interate through all the points in the buffer ramp
+            for j in range(0, points):
+                #Calculate real voltage from the measured voltage
+                voltage = self.calculateRealVoltage(data[0][j])
 
-        #interate through all the points in the buffer ramp
-        for j in range(0, points):
-            #Calculate real voltage from the measured voltage
-            voltage = self.calculateRealVoltage(data[0][j])
+                #Add touples to formatted data for data vault with voltage data
+                if sweep_type == "Landau Fan":
+                    formatted_data.append((fieldIndex, j, self.landauFanFieldPoints[fieldIndex], self.fourTerminalGatePoints[j], voltage))
+                else:
+                    formatted_data.append((j, plot_data[0][j], voltage))
 
-            #Add touples to formatted data for data vault with voltage data
-            if sweep_type == "Landau Fan":
-                formatted_data.append((fieldIndex, j, self.landauFanFieldPoints[self.i], self.fourTerminalGatePoints[j], voltage))
-            else:
-                formatted_data.append((j, plot_data[0][j], voltage))
+                #Add the data to the 1D array in the plot data
+                plot_data[1][j] = voltage
 
-            #Add the data to the 1D array in the plot data
-            plot_data[1][j] = voltage
+                if np.size(self.FourTerminal_ChannelInput) == 2:  #add additional data if Input2 is not None
+                    #First convert measured voltage to a real current
+                    current = self.calculateRealCurrent(data[1][j])
 
-            if np.size(self.FourTerminal_ChannelInput) == 2:  #add additional data if Input2 is not None
-                #First convert measured voltage to a real current
-                current = self.calculateRealCurrent(data[1][j])
+                    #Calculate the resistance and conductance from the voltage and current values
+                    resistance, conductance =self.calculateResistance(voltage,current)
 
-                #Calculate the resistance and conductance from the voltage and current values
-                resistance, conductance =self.calculateResistance(voltage,current)
+                    #Add the values to both the data vault and plotting formatted datasets
+                    formatted_data[j] += (current, resistance, conductance,)
 
-                #Add the values to both the data vault and plotting formatted datasets
-                formatted_data[i] += (current, resistance, conductance,)
+                    plot_data[2][j] = current
+                    plot_data[3][j] = resistance
+                    plot_data[4][j] = conductance
 
-                plot_data[2][i] = current
-                plot_data[3][i] = resistance
-                plot_data[4][i] = conductance
-
-        return [formatted_data, plot_data]
+            return [formatted_data, plot_data]
+        except:
+            printErrorInfo()
 
     @inlineCallbacks
     def startFourTerminalSweep(self):
@@ -917,7 +919,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
         self.unlockInterface()
         yield self.sleep(0.25)
-        self.saveDataToSessionFolder() #save a screenshot of the data
+        saveDataToSessionFolder(self, self.sessionFolder, self.dvFileName) #save a screenshot of the data
 
         #Return the formatted_data so that, if called from scripting window, it can be saved into another datavault file
         returnValue(formatted_data)
@@ -951,7 +953,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
         self.unlockInterface() #unlock the interface when done
         yield self.sleep(0.25)
-        self.saveDataToSessionFolder() #Save a screenshot of the data
+        saveDataToSessionFolder(self, self.sessionFolder, self.dvFileName) #Save a screenshot of the data
 
     @inlineCallbacks
     def fieldSweep1D(self, direction):
@@ -1035,7 +1037,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             #Return the plot_data
             returnValue(plot_data)
 
-        except:
+        except Exception as inst:
             printErrorInfo()
 
     @inlineCallbacks
@@ -1083,7 +1085,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                     print("Abort the Sweep.")
                     break
 
-                print('Starting sweep with magnetic field set to: ' + str(self.landauFanFieldPoints[self.i]))
+                print('Starting sweep with magnetic field set to: ' + str(self.landauFanFieldPoints[i]))
 
                 #Go to the next field
                 yield self.rampMagneticField(self.landauFanFieldPoints[i], bspeed)
@@ -1109,7 +1111,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 formatted_data, plot_data = self.formatData(vmin, vmax, vpoints, dac_read, i, "Landau Fan")
 
                 #Add the formatted data to datavault
-                yield self.dv.add(self.formatted_data)
+                yield self.dv.add(formatted_data)
 
                 #Update the 2D plots. This also adds the latest line of data to the self.landauFanData instances
                 yield self.updateLandauFan2DPlots(i, plot_data)
@@ -1141,7 +1143,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
         self.unlockInterface() #Unlock the interface when done
         yield self.sleep(0.25) #Wait a quarter second before saving a screenshot
-        self.saveDataToSessionFolder() #save the screenshot
+        saveDataToSessionFolder(self, self.sessionFolder, self.dvFileName) #save the screenshot
 
     def abortMagneticFieldSweep(self):
         self.abortMagneticFieldSweep_Flag = True
@@ -1154,7 +1156,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         on different set ups.
         '''
         try:
-            yield self.gotoSetIPS(end, rate) #Set the setpoint and update the IPS mode to sweep to field
+            yield self.goToSetpointIPS(end, rate) #Set the setpoint and update the IPS mode to sweep to field
 
             print('Setting field to ' + str(end))
 
@@ -1165,7 +1167,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 #Sometimes communication is buggy and repeated attempts helps
                 if time.time() - t0 > 1:
                     print('restarting loop')
-                    yield self.gotoSetIPS(end, rate)
+                    yield self.goToSetpointIPS(end, rate)
                     t0 = time.time()
                 yield self.sleep(0.25)
                 curr_field = yield self.ips.read_parameter(7)
@@ -1174,7 +1176,6 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                     break
                 elif self.abortMagneticFieldSweep_Flag:
                     break
-
         except:
             printErrorInfo()
 
@@ -1185,15 +1186,6 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         yield self.ips.set_targetfield(B) #Set targetfield to desired field in T
         yield self.ips.set_activity(1) #Set IPS mode to ramping instead of hold
         yield self.ips.set_control(2) #Set IPS to local control (allows user to edit IPS from the front panel)
-
-    def saveDataToSessionFolder(self):
-        try:
-            p = QtGui.QPixmap.grabWindow(self.winId())
-            a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
-            if not a:
-                print("Error saving Scan data picture")
-        except:
-            printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions for setting the DAC-ADC voltage at the same time as the UI"""
@@ -1220,7 +1212,6 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         #Needs to be called after a long dac.ramp1 (as the ramp function does not read all the data)
         a = yield self.dac.read()
         while a != '':
-            print(a)
             a = yield self.dac.read()
 
     @inlineCallbacks
@@ -1229,19 +1220,19 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         try:
             self.label_DACOout_list[DAC_Out_Channels[0]].setText('Sweeping')
             data = yield self.dac.buffer_ramp(DAC_Out_Channels, DAC_In_Channels, start, stop, steps, delay)
-            self.label_DACOout_list[DAC_Out_Channels[0]].setText(formatNum(stop, 6))
+            self.label_DACOout_list[DAC_Out_Channels[0]].setText(formatNum(stop[0], 6))
             returnValue(data)
-        except:
+        except Exception as inst:
             printErrorInfo()
 
-    def calculateRealVoltage(self,reading):
+    def calculateRealVoltage(self, reading):
         #Take the DAC reading and convert it to real unit (V)
-        realVoltage=float(reading)/10.0*self.lockinVoltageMultiplier
+        realVoltage = float(reading)/10.0*self.lockinVoltageMultiplier
         return realVoltage
 
-    def calculateRealCurrent(self,reading): \
+    def calculateRealCurrent(self, reading):
         #Take the DAC reading and convert it to real unit (A)
-        realCurrent=float(reading)/10.0*self.lockinCurrentMultiplier
+        realCurrent = float(reading)/10.0*self.lockinCurrentMultiplier
         return realCurrent
 
     def calculateResistance(self, voltage, current):

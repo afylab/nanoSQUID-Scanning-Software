@@ -214,11 +214,14 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
                 # Convert the move event into a drag
                 drag = QtGui.QDrag(self)
                 mimeData = QtCore.QMimeData()
-                mimeData.setData('action', 'application/tab-detach')
+                mimeData.setData('action', 'application/tab-detach'.encode('utf-8'))
                 drag.setMimeData(mimeData)
 
                 # Create the appearance of dragging the tab content
-                pixmap = QtGui.QPixmap.grabWindow(self.parentWidget().currentWidget().winId())
+                #pixmap = QtGui.QPixmap.grabWindow(self.parentWidget().currentWidget().winId())
+                app = QtWidgets.QApplication.instance()
+                pixmap = QtGui.QScreen.grabWindow(app.primaryScreen(), QtWidgets.QApplication.activeWindow().winId())
+
                 targetPixmap = QtGui.QPixmap(pixmap.size())
                 targetPixmap.fill(QtCore.Qt.transparent)
                 painter = QtGui.QPainter(targetPixmap)
@@ -253,7 +256,7 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
             mimeData = event.mimeData()
             formats = mimeData.formats()
 
-            if formats.contains('action') and mimeData.data('action') == 'application/tab-detach':
+            if 'action' in formats and mimeData.data('action') == 'application/tab-detach':
                 event.acceptProposedAction()
 
             QtGui.QTabBar.dragMoveEvent(self, event)

@@ -419,7 +419,7 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
         self.loadConfigurationInfo()
 
     def loadNewConfigurationInfo(self):
-        file = str(QtWidgets.QFileDialog.getOpenFileName(self, directory = path, filter = "Text files (*.txt)"))
+        file = QtWidgets.QFileDialog.getOpenFileName(self, directory = path, filter = "Text files (*.txt)")
         self.configFileName = file[0].split('/')[-1]
         self.label_currentConfigFile.setText(self.configFileName)
 
@@ -515,7 +515,7 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
         print('Channels: ', self.deviceDictionary['channels'])
 
     def saveConfigurationInfo(self):
-        file = str(QtWidgets.QFileDialog.getSaveFileName(self, directory = path, filter = "Text files (*.txt)"))
+        file, file1 = QtWidgets.QFileDialog.getSaveFileName(self, directory = path, filter = "Text files (*.txt)")
         if len(file) >0:
             f = open(file,'w')
             message  = ''

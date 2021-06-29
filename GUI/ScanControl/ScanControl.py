@@ -4,7 +4,7 @@ from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 import pyqtgraph as pg
 import time
-from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData, ScanImageView, printErrorInfo
+from nSOTScannerFormat import readNum, formatNum, processLineData, processImageData, ScanImageView, printErrorInfo, saveDataToSessionFolder
 
 path = sys.path[0] + r"\ScanControl"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\ScanControlWindow.ui")
@@ -1359,7 +1359,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             if not self.scanning:
                 self.push_ZeroXY.setEnabled(False)
                 self.push_Set.setEnabled(False)
-            print('Getting here')
             #Buffer ramp is being used here to ramp 1 and 2, or 0,1,2 at the same time
             #Read values are not being used for anything (but are being read to avoid
             #bugs related to having 0 read values)
@@ -1379,16 +1378,14 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
             #Get delay in microseconds to ensure going at the module specified line speed
             delay = int(1e6 * time / points)
-            print('Getting here')
+
             #Only change the z value when moving around if we're in constant height mode
             if self.scanMode == 'Constant Height' and self.ConstantHeightReady:
                 out_list = [self.outputs['z out']-1, self.outputs['x out']-1,self.outputs['y out']-1]
-                print(out_list, startz, startx, starty, stopz, stopx, stopy, points, delay)
                 yield self.dac.buffer_ramp_dis(out_list,[0],[startz,startx, starty],[stopz, stopx, stopy], points, delay,2)
                 self.Atto_Z_Voltage = stopz
             else:
                 out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
-                print(out_list, startx, starty, stopx, stopy, points, delay)
                 yield self.dac.buffer_ramp_dis(out_list,[0],[startx, starty],[stopx, stopy], points, delay,2)
 
             self.Atto_X_Voltage = stopx
@@ -1416,7 +1413,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         #timeout problem
         a = yield self.dac.read()
         while a != '':
-            print(a)
             a = yield self.dac.read()
 
         #Call this the new center of the plane
@@ -1713,7 +1709,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
         #Wait until all plots are appropriately updated before saving screenshot
         yield self.sleep(0.25)
-        self.saveDataToSessionFolder()
+        saveDataToSessionFolder(self, self.sessionFolder, self.dvFileName)
 
         #yield [trace_data, retrace_data]
         returnValue([trace_data, retrace_data])
@@ -1895,15 +1891,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def setSessionFolder(self, folder):
         self.sessionFolder = folder
-
-    def saveDataToSessionFolder(self):
-        try:
-            p = QtGui.QPixmap.grabWindow(self.winId())
-            a = p.save(self.sessionFolder + '\\' + self.dvFileName + '.jpg','jpg')
-            if not a:
-                print("Error saving Scan data picture")
-        except:
-            printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions intended for use when running scripts from the scripting module."""
