@@ -420,7 +420,7 @@ class Window(QtWidgets.QMainWindow, DeviceSelectUI):
 
     def loadNewConfigurationInfo(self):
         file = str(QtWidgets.QFileDialog.getOpenFileName(self, directory = path, filter = "Text files (*.txt)"))
-        self.configFileName = file.split('/')[-1]
+        self.configFileName = file[0].split('/')[-1]
         self.label_currentConfigFile.setText(self.configFileName)
 
         self.loadConfigurationInfo()
