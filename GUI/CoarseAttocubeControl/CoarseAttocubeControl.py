@@ -1,7 +1,6 @@
 import sys
-from PyQt5 import QtGui, QtWidgets, QtCore, uic
+from PyQt5 import QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
-import numpy as np
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
 path = sys.path[0] + r"\CoarseAttocubeControl"

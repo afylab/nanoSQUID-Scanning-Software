@@ -1,5 +1,5 @@
 import sys
-from PyQt5 import QtGui, QtWidgets, QtCore, uic
+from PyQt5 import QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import time
 from array import array
@@ -144,8 +144,6 @@ class Window(QtWidgets.QMainWindow, QRreaderWindowUI):
         self.Updateposition()
         self.UpdateTipTF()
 
-
-
     def UpdateCenterY(self):
         new_CenterY = readNum(self.lineEdit_Ypositioncenter.text())
         if new_CenterY>0 and new_CenterY<129 and isinstance(new_CenterY, float):
@@ -155,19 +153,9 @@ class Window(QtWidgets.QMainWindow, QRreaderWindowUI):
         self.Updateposition()
         self.UpdateTipTF()
 
-
     def setupAdditionalUi(self):
     #Set up UI that isn't easily done from Qt Designer
         pass
-
-    # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous
-    # delay that allows other labrad / pyqt methods to run
-    def sleep(self,secs):
-        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
-        other operations to be done elsewhere while paused."""
-        d = Deferred()
-        self.reactor.callLater(secs,d.callback,'Sleeping')
-        return d
 
     def toggleqrcode(self, location, button):
         if self.fill[location] == False:
@@ -190,6 +178,16 @@ class Window(QtWidgets.QMainWindow, QRreaderWindowUI):
         self.Frame_TFTP.move(int(x/(self.TotalX*30)*(10**6)*Length+W/2-70),int(-y/(self.TotalY*30)*(10**6)*Length-60+Length/2))#formula is empirical
         self.Frame_TFTP.raise_()
 
+    # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous
+    # delay that allows other labrad / pyqt methods to run
+    def sleep(self,secs):
+        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
+        other operations to be done elsewhere while paused."""
+        d = Deferred()
+        self.reactor.callLater(secs,d.callback,'Sleeping')
+        return d
+
+    @inlineCallbacks
     def ASQUID(self):
         print("hey")
         style = '''

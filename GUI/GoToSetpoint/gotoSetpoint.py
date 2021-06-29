@@ -1,10 +1,7 @@
-
 import sys
-import twisted
-from PyQt5 import QtCore, QtGui, QtWidgets, QtTest, uic
+from PyQt5 import QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import numpy as np
-import time
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
 path = sys.path[0] + r"\GoToSetpoint"

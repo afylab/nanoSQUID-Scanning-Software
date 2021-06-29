@@ -236,8 +236,6 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         except Exception:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-            printErrorInfo()
-            printErrorInfo()
 
     def disconnectLabRAD(self):
         self.cxn = False

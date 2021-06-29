@@ -87,7 +87,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.push_Stop.clicked.connect(lambda: self.stopSweep())
         self.push_WorkingPoint.clicked.connect(self.selectWorkingPoint)
 
-
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
         self.push_advancedSettings.clicked.connect(self.showAdvancedSettings)
@@ -123,35 +122,34 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             yield self.dv.cd(curr_folder)
 
             self.hf = yield self.cxn_tf.hf2li_server
-            self.hf.select_device(dict['devices']['approach and TF']['hf2li'])
+            yield self.hf.select_device(dict['devices']['approach and TF']['hf2li'])
 
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
 
             try:
                 self.reinitSweep()
-            except Exception as inst:
+            except:
                 printErrorInfo()
             try:
                 range = yield self.hf.get_output_range(self.output)
                 amp = yield self.hf.get_output_amplitude(self.output)
                 self.exAmp = amp*range
                 self.lineEdit_Amplitude.setText(formatNum(self.exAmp))
-            except Exception as inst:
+            except:
                 printErrorInfo()
             try:
                 self.updateSensitivity()
-            except Exception as inst:
+            except:
                 printErrorInfo()
             try:
                 self.updateTC()
-            except Exception as inst:
+            except:
                 printErrorInfo()
             self.unlockInterface()
-        except Exception as inst:
+        except:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-            printErrorInfo()
 
     def disconnectLabRAD(self):
         if self.hf is not False:

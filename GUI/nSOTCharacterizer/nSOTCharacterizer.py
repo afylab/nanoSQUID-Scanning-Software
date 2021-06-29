@@ -1,4 +1,3 @@
-
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
@@ -343,6 +342,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.settingsDict['Magnet device'] = 'IPS 120-10'
                 self.comboBox_magnetPower.addItem('IPS 120-10')
             else:
+                raise #Raise error if no magnet power supply is connected
 
             #select the appropriate blink device
             if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
@@ -353,6 +353,8 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.blink_server = yield cxn.dac_adc
                 yield self.blink_server.select_device(dict['devices']['system']['blink device'])
                 print('DAC ADC Blink Device')
+            else:
+                raise #Raise error if no blink device is selected
 
             #Set all the channels as specified by the DeviceSelect module
             self.blinkDevice = dict['devices']['system']['blink device']
@@ -368,10 +370,9 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
             #Unlock the interface
             self.unlockInterface()
-        except Exception as inst:
+        except:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-            printErrorInfo()
 
     def disconnectLabRAD(self):
         self.comboBox_magnetPower.removeItem(0)
@@ -879,7 +880,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             yield self.dac_toe.buffer_ramp([self.settingsDict['toellner current']-1, self.settingsDict['toellner current']-1],[0],[v_start, V_initial],[v_end, V_setpoint], sweep_steps, magnet_delay)
 
             self.newToeField.emit(B_f, B_f/IB_conv, V_setpoint)
-        except Exception as inst:
+        except:
             printErrorInfo()
 
     @inlineCallbacks

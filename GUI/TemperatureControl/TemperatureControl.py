@@ -1,6 +1,6 @@
 import sys
-from PyQt5 import QtGui, QtWidgets, QtCore, uic
-from twisted.internet.defer import inlineCallbacks, Deferred
+from PyQt5 import QtWidgets, uic
+from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import time
 import pyqtgraph as pg
 import numpy as np
@@ -211,14 +211,14 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         try:
             self.monitoring = True
             if self.first_data_point:
-                self.time_offset = time.clock()
+                self.time_offset = time.time()
                 self.first_data_point = False
 
             while self.monitoring:
                 magTemp = yield self.ls.read_temp(self.measurementSettings['mag Input'])
                 sampleTemp = yield self.ls.read_temp(self.measurementSettings['sample Input'])
                 #potTemp =  yield self.ls.read_temp(self.measurementSettings['pot Input'])
-                t = time.clock() - self.time_offset
+                t = time.time() - self.time_offset
                 #Convert time to hours
                 t = t / 3600
 

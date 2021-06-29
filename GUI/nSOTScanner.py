@@ -1,5 +1,5 @@
 import sys
-from PyQt5 import QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets, uic
 import ctypes
 myappid = 'YoungLab.nSOTScannerSoftware'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)

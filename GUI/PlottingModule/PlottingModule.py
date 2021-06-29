@@ -1,5 +1,5 @@
 #Written by Marec, Avi and Raymond
-import sys, traceback
+import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
@@ -64,9 +64,8 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
             self.dvBrowser.accepted.connect(lambda: self.openFilesInPlotter(self.dvBrowser.file, self.dvBrowser.directory))
 
             self.unlockInterface()
-        except Exception as e:
-            print("Plotting module labrad connection failed")
-            printErrorInfo()
+        except:
+            pass
 
     def disconnectLabRAD(self):
         self.gen_cxn = False

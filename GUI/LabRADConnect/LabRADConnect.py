@@ -1,4 +1,4 @@
-from PyQt5 import QtGui, QtWidgets, QtCore, uic
+from PyQt5 import QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import sys
 from DataVaultBrowser import dirExplorer

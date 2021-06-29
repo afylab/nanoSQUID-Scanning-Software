@@ -1,5 +1,5 @@
 import sys
-from PyQt5 import QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo

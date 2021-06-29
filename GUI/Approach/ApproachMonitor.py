@@ -133,10 +133,10 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
     def updatePLLPlots(self, deltaF, phaseError):
         # Updates the PLL plots with new deltaF and phaseError datapoints received from the approach module
         if self.first_data_point:
-            self.time_offset = time.clock()
+            self.time_offset = time.time()
             self.first_data_point = False
 
-        timepoint = time.clock() - self.time_offset
+        timepoint = time.time() - self.time_offset
 
         self.pllTimeData = np.append(self.pllTimeData, timepoint)
         self.deltaFData = np.append(self.deltaFData, deltaF)
@@ -146,10 +146,10 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
     def updateAux2Plot(self,volts):
         # Updates the Aux input 2 plots with voltage datapoints received from the approach module
         if self.first_data_point:
-            self.time_offset = time.clock()
+            self.time_offset = time.time()
             self.first_data_point = False
 
-        timepoint = time.clock() - self.time_offset
+        timepoint = time.time() - self.time_offset
 
         self.aux2TimeData = np.append(self.aux2TimeData, timepoint)
         self.aux2Data = np.append(self.aux2Data, volts)
@@ -158,10 +158,10 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
     def updateZPlot(self,z_meters):
         # Updates the z extension plots with datapoints received from the approach module
         if self.first_data_point:
-            self.time_offset = time.clock()
+            self.time_offset = time.time()
             self.first_data_point = False
 
-        timepoint = time.clock() - self.time_offset
+        timepoint = time.time() - self.time_offset
 
         self.zTimeData = np.append(self.zTimeData, timepoint)
         self.zData = np.append(self.zData, z_meters)
@@ -221,7 +221,7 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
 
     def zeroTime(self):
         #Get the time relative to the offset when the function is run
-        timepoint = time.clock() - self.time_offset
+        timepoint = time.time() - self.time_offset
 
         #super secret code
         if timepoint < 0.25:
@@ -240,7 +240,7 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
             self.zTimeData = self.zTimeData - timepoint
 
         #Set the current time to be the new offset
-        self.time_offset = time.clock()
+        self.time_offset = time.time()
 
         #Update all the plots
         self.plotPlots()

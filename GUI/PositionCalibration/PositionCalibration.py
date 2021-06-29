@@ -1,6 +1,5 @@
 import sys
-from PyQt5 import QtGui, QtWidgets, QtCore, uic
-from twisted.internet.defer import inlineCallbacks, Deferred
+from PyQt5 import QtWidgets, QtCore, uic
 from nSOTScannerFormat import readNum, formatNum
 
 path = sys.path[0] + r"\PositionCalibration"
@@ -315,15 +314,6 @@ class Window(QtWidgets.QMainWindow, CalibrationUI):
             self.lineEdit_ZMaxVolts.setText('')
         else:
             self.lineEdit_ZMaxVolts.setText(formatNum(self.tempData[9]))
-
-    # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous
-    # delay that allows other labrad / pyqt methods to run
-    def sleep(self,secs):
-        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
-        other operations to be done elsewhere while paused."""
-        d = Deferred()
-        self.reactor.callLater(secs,d.callback,'Sleeping')
-        return d
 
 class getCalibrationName(QtWidgets.QDialog, Ui_getCalibrationName):
     def __init__(self,reactor, calibrationDictionary, parent = None):

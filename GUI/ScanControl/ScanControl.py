@@ -1539,7 +1539,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     break
 
                 #Measure time for debugging
-                tzero = time.clock()
+                tzero = time.time()
                 #Do buffer ramp. If in feedback mode,
                 if self.scanMode == 'Feedback':
                     print("X and Y outputs: ", out_list)
@@ -1563,19 +1563,19 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.updatePosition()
 
                 #bin newData to appropriate number of pixels
-                print('Time taken for trace buffer ramp: ' + str(time.clock()-tzero))
-                tzero = time.clock()
+                print('Time taken for trace buffer ramp: ' + str(time.time()-tzero))
+                tzero = time.time()
                 #Add the binned Z data to the dataset. Note that right now, newData is the same length as self.pixels,
                 #and the binning does nothing except flip the order of the data for retraces. The function is kept to
                 #allow future modifications for multiple types of binning
                 for k in range(0,num_datasets):
                     self.data[k][:,i] = self.bin_data(newData[k]/self.inputs[self.inputScanOrder[k]-1]['Conversion'], self.pixels, 'trace')
 
-                print('Time taken to bin data: ' + str(time.clock()-tzero))
-                tzero = time.clock()
+                print('Time taken to bin data: ' + str(time.time()-tzero))
+                tzero = time.time()
                 self.plotData[:,i] = processLineData(np.copy(self.data[self.channel][:,i]), self.dataProcessing)
-                print('Time taken to process the line data: ' + str(time.clock()-tzero))
-                tzero = time.clock()
+                print('Time taken to process the line data: ' + str(time.time()-tzero))
+                tzero = time.time()
 
                 #Reformat data and add to data vault
                 x_voltage = np.linspace(startx, stopx, self.pixels)
@@ -1588,7 +1588,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     formatted_data.append(data_point)
                     trace_data.append(data_point)
                 yield self.dv.add(formatted_data)
-                print('Time taken to add data to data vault: ' + str(time.clock()-tzero))
+                print('Time taken to add data to data vault: ' + str(time.time()-tzero))
 
                 #------------------------------------#
 
@@ -1606,7 +1606,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 if not self.scanning:
                     break
 
-                tzero = time.clock()
+                tzero = time.time()
                 if self.scanMode == 'Feedback':
                     print("X and Y outputs: ", out_list)
                     print("Input in use in order: ", in_list)
@@ -1627,8 +1627,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.Atto_Y_Voltage = stopy
                 self.updatePosition()
 
-                print('Time taken for retrace buffer ramp: ' + str(time.clock()-tzero))
-                tzero = time.clock()
+                print('Time taken for retrace buffer ramp: ' + str(time.time()-tzero))
+                tzero = time.time()
 
                 #Add the binned Z data to the dataset. Note that right now, newData is the same length as self.pixels,
                 #and the binning does nothing except flip the order of the data for retraces. The function is kept to
@@ -1670,7 +1670,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     #Buffer ramp is being used here to ramp 1 and 2, or 0,1,2 at the same time
                     #Read values are not being used for anything (but are being read to avoid
                     #bugs related to having 0 read values)
-                    tzero = time.clock()
+                    tzero = time.time()
                     if self.scanMode == 'Feedback':
                         print("X and Y outputs: ", out_list)
                         yield self.dac.buffer_ramp_dis(out_list,[0],[startx, starty],[stopx, stopy], self.scanParameters['pixel_points'], self.scanParameters['pixel_delay'],2)
@@ -1682,8 +1682,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     self.Atto_Y_Voltage = stopy
                     self.updatePosition()
                     #ramp to next y point
-                    print('Time taken to move to next line: ' + str(time.clock()-tzero))
-                    tzero = time.clock()
+                    print('Time taken to move to next line: ' + str(time.time()-tzero))
+                    tzero = time.time()
 
         except Exception as inst:
             printErrorInfo()
@@ -1887,9 +1887,9 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     @inlineCallbacks
     def startScanTimer(self):
-        t_zero = time.clock()
+        t_zero = time.time()
         while self.scanning:
-            t = time.clock() - t_zero
+            t = time.time() - t_zero
             self.lineEdit_TimeElapsed.setText(formatNum(t))
             yield self.sleep(0.25)
 
