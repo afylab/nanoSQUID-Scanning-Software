@@ -124,7 +124,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 yield self.loadParameters()
                 self.MonitorStatus()
             else:
-                raise
+                raise Exception
         except:
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
@@ -305,7 +305,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             val = readNum(str(self.lineEdit_Amplitude[AxisNo].text()))
             if isinstance(val, float):
                 if val >= 0 and val <= 60:
-                    self.manual_Amplitude[AxisNo] = dummyval
+                    self.manual_Amplitude[AxisNo] = val
                 elif val < 0:
                     self.manual_Amplitude[AxisNo] = 0
                 elif val > 60:
@@ -322,7 +322,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             val = readNum(str(self.lineEdit_Frequency[AxisNo].text()))
             if isinstance(val, float):
                 if val >= 1 and val <= 2000:
-                    self.manual_Frequency[AxisNo]= int(dummyval)
+                    self.manual_Frequency[AxisNo]= int(val)
                 elif val < 1:
                     self.manual_Frequency[AxisNo] = 1
                 elif val > 2000:

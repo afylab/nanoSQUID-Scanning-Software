@@ -211,23 +211,23 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             yield self.dv.cd(curr_folder)
 
             self.dac = yield self.cxn_sample.dac_adc
-            self.dac.select_device(dict['devices']['sample']['dac_adc'])
+            yield self.dac.select_device(dict['devices']['sample']['dac_adc'])
 
             #Eventually make this module compatible with Toellner, for now it is not
             if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
                 self.dac_toe = dict['servers']['local']['dac_adc']
                 self.ips = None
                 self.ami = None
-
             elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
                 self.dac_toe = None
                 self.ips = dict['servers']['remote']['ips120']
                 self.ami = None
-
             elif dict['devices']['system']['magnet supply'] == 'AMI 430 Power Supply':
                 self.dac_toe = None
                 self.ips = None
                 self.ami = dict['servers']['local']['ami_430']
+            else:
+                raise Exception
 
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")

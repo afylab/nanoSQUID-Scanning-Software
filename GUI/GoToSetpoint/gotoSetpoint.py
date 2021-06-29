@@ -56,10 +56,10 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
             if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
                 self.blink_server = yield self.cxn_nsot.ad5764_dcbox
-                self.blink_server.select_device(dict['devices']['system']['blink device'])
+                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
             elif dict['devices']['system']['blink device'].startswith('DA'):
                 self.blink_server = yield self.cxn_nsot.dac_adc
-                self.blink_server.select_device(dict['devices']['system']['blink device'])
+                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
 
             self.blinkChan = dict['channels']['system']['blink channel'] - 1
 
@@ -79,7 +79,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
             self.unlockInterface()
 
-        except Exception as inst:
+        except:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
 

@@ -82,10 +82,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.move(550,10)
         self.resize(800,500)
 
-    def connectLabRAD(self, dict):
-        #This module doesn't use any local labrad connections
-        pass
-
     @inlineCallbacks
     def connectLabRAD(self,dict):
         try:

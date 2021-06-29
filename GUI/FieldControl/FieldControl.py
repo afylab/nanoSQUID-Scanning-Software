@@ -63,6 +63,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.ips = dict['servers']['remote']['ips120']
                 self.magDevice = 'IPS 120-10'
                 self.setDefaultButtonConfig()
+            else:
+                raise Exception
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")

@@ -280,10 +280,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             #Create a connection to the proper device for blinking
             if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
                 self.blink_server = yield self.cxn_scan.ad5764_dcbox
-                self.blink_server.select_device(dict['devices']['system']['blink device'])
+                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
             elif dict['devices']['system']['blink device'].startswith('DA'):
                 self.blink_server = yield self.cxn_scan.dac_adc
-                self.blink_server.select_device(dict['devices']['system']['blink device'])
+                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
 
             self.outputs['blink out'] = dict['channels']['system']['blink channel']
 

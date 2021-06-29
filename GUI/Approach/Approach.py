@@ -234,15 +234,15 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
             #Connect to the Zurich HF2LI lock in
             self.hf = yield cxn.hf2li_server
-            self.hf.select_device(dic['devices']['approach and TF']['hf2li'])
+            yield self.hf.select_device(dic['devices']['approach and TF']['hf2li'])
 
             #Connect to the scanning DAC-ADC for z control
             self.dac = yield cxn.dac_adc
-            self.dac.select_device(dic['devices']['scan']['dac_adc'])
+            yield self.dac.select_device(dic['devices']['scan']['dac_adc'])
 
             #Connect to the DC box to toggle the voltage multiplier board
             self.dcbox = yield cxn.ad5764_dcbox
-            self.dcbox.select_device(dic['devices']['approach and TF']['dc_box'])
+            yield self.dcbox.select_device(dic['devices']['approach and TF']['dc_box'])
 
             #Set the output settings selected in the Device Select module
             self.generalSettings['step_z_output'] = dic['channels']['scan']['z out']
@@ -267,7 +267,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             #Start monitoring the Z voltage
             self.monitorZ = True
             self.monitorZVoltage()
-        except Exception as inst:
+        except:
             #Set the connected square to be red indicating that we failed to connect to LabRAD
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")

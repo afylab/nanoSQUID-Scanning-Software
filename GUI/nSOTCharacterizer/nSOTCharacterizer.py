@@ -342,7 +342,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.settingsDict['Magnet device'] = 'IPS 120-10'
                 self.comboBox_magnetPower.addItem('IPS 120-10')
             else:
-                raise #Raise error if no magnet power supply is connected
+                raise Exception #Raise error if no magnet power supply is connected
 
             #select the appropriate blink device
             if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
@@ -354,7 +354,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 yield self.blink_server.select_device(dict['devices']['system']['blink device'])
                 print('DAC ADC Blink Device')
             else:
-                raise #Raise error if no blink device is selected
+                raise Exception #Raise error if no blink device is selected
 
             #Set all the channels as specified by the DeviceSelect module
             self.blinkDevice = dict['devices']['system']['blink device']

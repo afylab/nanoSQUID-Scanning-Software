@@ -1019,7 +1019,7 @@ background-color: red</string>
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_SetupCenter">
+   <widget class="QPushButton" name="pushButton_setGridCenter">
     <property name="geometry">
      <rect>
       <x>820</x>
@@ -1057,7 +1057,7 @@ background-color: red</string>
    <zorder>line_10</zorder>
    <zorder>lineEdit_Xpositioncenter</zorder>
    <zorder>lineEdit_Ypositioncenter</zorder>
-   <zorder>pushButton_SetupCenter</zorder>
+   <zorder>pushButton_setGridCenter</zorder>
   </widget>
  </widget>
  <resources>
