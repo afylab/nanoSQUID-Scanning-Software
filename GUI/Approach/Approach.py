@@ -1007,10 +1007,12 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
     @inlineCallbacks
     def setPIDOutputRange(self, max_voltage):
-        if max_voltage > 0:
+        if max_voltage >= 0:
             #Set the output range to be 0 to 'max' V.
             yield self.hf.set_pid_output_center(self.PID_Index, float(max_voltage)/2)
             yield self.hf.set_pid_output_range(self.PID_Index, float(max_voltage)/2)
+            if max_voltage == 0:
+                print('Warning, frustrated feedback output range is zero.')
             returnValue(True)
         else:
             #If for some reason trying to go into the negative voltages, at least withdraw as far as possible with the Zurich
@@ -1726,15 +1728,18 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         yield self.setHF2LI_PID_Settings()
 
         #Set the output range to be 0 to the current z voltage
-        yield self.setPIDOutputRange(z_voltage)
+        success = yield self.setPIDOutputRange(z_voltage)
 
-        #Turn on PID to start the approach
-        yield self.hf.set_pid_on(self.PID_Index, True)
+        if success:
+            #Turn on PID to start the approach
+            yield self.hf.set_pid_on(self.PID_Index, True)
 
-        #Emit signal allowing for constant height scanning
-        self.constantHeight = True
-        self.updateConstantHeightStatus.emit(True)
-        self.label_pidApproachStatus.setText('Constant Height')
+            #Emit signal allowing for constant height scanning
+            self.constantHeight = True
+            self.updateConstantHeightStatus.emit(True)
+            self.label_pidApproachStatus.setText('Constant Height')
+        else:
+            self.label_pidApproachStatus.setText('Frustrating Error')
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""

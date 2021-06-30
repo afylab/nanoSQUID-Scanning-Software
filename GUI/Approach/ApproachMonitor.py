@@ -141,6 +141,14 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
         self.pllTimeData = np.append(self.pllTimeData, timepoint)
         self.deltaFData = np.append(self.deltaFData, deltaF)
         self.phaseErrorData = np.append(self.phaseErrorData, phaseError)
+
+        #The module plots at most 3 hours worth of data. If more than that is stored, shorten the data list
+        if self.pllTimeData[-1] - self.pllTimeData[0] > 10800:
+            a = np.argmin(np.abs(self.pllTimeData - (self.pllTimeData[-1] - 10800)))
+            self.pllTimeData = self.pllTimeData[a:]
+            self.deltaFData = self.deltaFData[a:]
+            self.phaseErrorData = self.phaseErrorData[a:]
+
         self.plotPLL()
 
     def updateAux2Plot(self,volts):
@@ -153,6 +161,13 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
 
         self.aux2TimeData = np.append(self.aux2TimeData, timepoint)
         self.aux2Data = np.append(self.aux2Data, volts)
+
+        #The module plots at most 3 hours worth of data. If more than that is stored, shorten the data list
+        if self.aux2TimeData[-1] - self.aux2TimeData[0] > 10800:
+            a = np.argmin(np.abs(self.aux2TimeData - (self.aux2TimeData[-1] - 10800)))
+            self.aux2TimeData = self.aux2TimeData[a:]
+            self.aux2Data = self.aux2Data[a:]
+
         self.plotAux2()
 
     def updateZPlot(self,z_meters):
@@ -165,6 +180,13 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
 
         self.zTimeData = np.append(self.zTimeData, timepoint)
         self.zData = np.append(self.zData, z_meters)
+
+        #The module plots at most 3 hours worth of data. If more than that is stored, shorten the data list
+        if self.zTimeData[-1] - self.zTimeData[0] > 10800:
+            a = np.argmin(np.abs(self.zTimeData - (self.zTimeData[-1] - 10800)))
+            self.zTimeData = self.zTimeData[a:]
+            self.zData = self.zData[a:]
+
         self.plotZ()
 
     def plotPlots(self):
@@ -178,14 +200,14 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
         length = len(self.pllTimeData)
         if length > 1:
             #Plot all datapoints if they occured in less time than the specified plotTimeRange
-            if (self.pllTimeData[length-1] - self.pllTimeData[0]) <= self.plotTimeRange:
+            if (self.pllTimeData[-1] - self.pllTimeData[0]) <= self.plotTimeRange:
                 self.deltaFPlot.clear()
                 self.deltaFPlot.plot(self.pllTimeData, self.deltaFData)
                 self.phaseErrorPlot.clear()
                 self.phaseErrorPlot.plot(self.pllTimeData, self.phaseErrorData)
             #Otherwise only plot those that occurred in the specified plotTimeRange
             else:
-                a = np.argmin(np.abs(self.pllTimeData - (self.pllTimeData[length-1] - self.plotTimeRange)))
+                a = np.argmin(np.abs(self.pllTimeData - (self.pllTimeData[-1] - self.plotTimeRange)))
                 self.deltaFPlot.clear()
                 self.deltaFPlot.plot(self.pllTimeData[a:], self.deltaFData[a:])
                 self.phaseErrorPlot.clear()
@@ -196,12 +218,12 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
         length = len(self.aux2TimeData)
         if length > 1:
             #Plot all datapoints if they occured in less time than the specified plotTimeRange
-            if (self.aux2TimeData[length-1] - self.aux2TimeData[0]) <= self.plotTimeRange:
+            if (self.aux2TimeData[-1] - self.aux2TimeData[0]) <= self.plotTimeRange:
                 self.aux2Plot.clear()
                 self.aux2Plot.plot(self.aux2TimeData, self.aux2Data)
             #Otherwise only plot those that occurred in the specified plotTimeRange
             else:
-                a = np.argmin(np.abs(self.aux2TimeData - (self.aux2TimeData[length-1] - self.plotTimeRange)))
+                a = np.argmin(np.abs(self.aux2TimeData - (self.aux2TimeData[-1] - self.plotTimeRange)))
                 self.aux2Plot.clear()
                 self.aux2Plot.plot(self.aux2TimeData[a:], self.aux2Data[a:])
 
@@ -210,12 +232,12 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
         length = len(self.zTimeData)
         if length > 1:
             #Plot all datapoints if they occured in less time than the specified plotTimeRange
-            if (self.zTimeData[length-1] - self.zTimeData[0]) <= self.plotTimeRange:
+            if (self.zTimeData[-1] - self.zTimeData[0]) <= self.plotTimeRange:
                 self.zPlot.clear()
                 self.zPlot.plot(self.zTimeData, self.zData)
             #Otherwise only plot those that occurred in the specified plotTimeRange
             else:
-                a = np.argmin(np.abs(self.zTimeData - (self.zTimeData[length-1] - self.plotTimeRange)))
+                a = np.argmin(np.abs(self.zTimeData - (self.zTimeData[-1] - self.plotTimeRange)))
                 self.zPlot.clear()
                 self.zPlot.plot(self.zTimeData[a:], self.zData[a:])
 
