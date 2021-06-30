@@ -56,7 +56,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
 
             if dict['servers']['remote']['cxn'] is not False:
-                print('test')
                 self.cxnr = yield connectAsync(host = '4KMonitor', password = 'pass')
         except Exception:
             pass
