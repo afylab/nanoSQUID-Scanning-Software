@@ -35,12 +35,12 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         }
 
         self.lineEdit_biasSetpoint.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'bias setpoint', [-10.0, 10.0]))
-        self.lineEdit_biasSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'bias steps'))
-        self.lineEdit_biasDelay.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'bias delay'))
+        self.lineEdit_biasSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSteps, 'bias steps'))
+        self.lineEdit_biasDelay.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasDelay, 'bias delay'))
 
         self.lineEdit_gateSetpoint.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'gate setpoint', [-10.0, 10.0]))
-        self.lineEdit_gateSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'gate steps'))
-        self.lineEdit_gateDelay.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'gate delay'))
+        self.lineEdit_gateSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSteps, 'gate steps'))
+        self.lineEdit_gateDelay.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasDelay, 'gate delay'))
 
         self.zeroBiasBtn.clicked.connect(lambda: self.zeroBiasFunc())
         self.gotoBiasBtn.clicked.connect(lambda: self.gotoBiasFunc())
@@ -239,7 +239,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         delay = int(1e6*self.settingsDict['gate delay'])
 
         yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [curr_gate], [new_gate], steps, delay)
-        self.setpointDict['gate'] = new_gate
+        self.settingsDict['gate current'] = new_gate
         self.currGateLbl.setText('Current Gate: '+ str(new_gate) + 'V')
         self.currGateLbl.setStyleSheet("QLabel#currGateLbl{color: rgb(168,168,168); font:bold 10pt;}")
 
