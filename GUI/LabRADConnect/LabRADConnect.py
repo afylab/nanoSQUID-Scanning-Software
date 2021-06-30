@@ -225,7 +225,6 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                 print('Disconnected ANC350')
             except:
                 print('Error disconnecting the ANC350 server.')
-                printErrorInfo()
 
             try:
                 yield self.connectionLocalDictionary['cxn'].disconnect()
@@ -234,7 +233,6 @@ class Window(QtWidgets.QMainWindow, LabRADConnectUI):
                 print('Disconnected remote')
             except:
                 print('Error disconnecting the Labrad connection server.')
-                printErrorInfo()
 
         self.connectionLocalDictionary = self.emptyLocalDictionary.copy()
         self.connectionRemoteDictionary = self.emptyRemoteDictionary.copy()

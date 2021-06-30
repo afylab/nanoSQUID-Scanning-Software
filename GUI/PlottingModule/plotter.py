@@ -19,9 +19,6 @@ Ui_DerivSet, QtBaseClass = uic.loadUiType(ui_path + r"\DerivSettings.ui")
 Ui_SensitivitySettings, QtBaseClass = uic.loadUiType(ui_path + r"\SensitivitySettings.ui")
 Ui_FitTFSettings, QtBaseClass = uic.loadUiType(ui_path + r"\TuningForkFittingWindow.ui")
 
-'''
-Write a description here
-'''
 class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
     plotInfoChanged = QtCore.pyqtSignal()
     plotClosed = QtCore.pyqtSignal(object)
@@ -34,7 +31,8 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
         self.plotSettings = settings #Get default plot settings from the command center
 
-        self.data = None
+        self.data = None #Raw data from the datafile
+        self.dataToPlot = None #Data formatted for plotting that is currently being plotted
 
         self.dataInfoDict = {
             'file': file, #Name of the dataset
@@ -89,7 +87,6 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
         self.initializePlotter()
 
-        self.PlotData = None
         self.aspectLocked = False
 
 #----------------------------------------------------------------------------------------------#
@@ -154,7 +151,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
                 self.dataInfoDict['parameters'] = dict(parameters) #Parameters comes in tuples ('key', 'value'). Cast to dictionary
 
             returnValue(dv)
-        except Exception as inst:
+        except Exception:
             printErrorInfo()
 
     def parseVariables(self, variables):
@@ -219,7 +216,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             elif np.isnan(rawData).any(): #Alert user if data is corrupted by NaNs
                 rawData = self.removeNaN(rawData)
                 self.updatePlotterStatus('NaN detected in data. Check data integrity')
-        except Exception as inst:
+        except Exception:
             printErrorInfo()
 
     @inlineCallbacks
@@ -253,7 +250,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             self.updatePlotterStatus("Data loaded")
 
             returnValue(rawData)
-        except Exception as inst:
+        except Exception:
             printErrorInfo()
 
     def removeNaN(self, data):
@@ -284,7 +281,6 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             self.retraceData = np.delete(self.retraceData, 0, 1)
 
             return self.traceData
-
         except:
             printErrorInfo()
 
@@ -543,7 +539,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
     def enableDataRelevantUIElements(self):
         dataExists = (not self.data is None) #Is there data?
-        plotDataExists = (not self.PlotData is None) #Is there plot data?
+        plotDataExists = (not self.dataToPlot is None) #Is there plot data?
         is2DData = ('2DPlot' == self.dataInfoDict['dataType']) #Is the data 2D?
         traceFlag = not self.dataInfoDict['traceFlag'] is None #Does the data have trace/retrace data
 
@@ -643,21 +639,21 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
         try:
             if "2DPlot" == self.dataInfoDict['dataType']:
-                self.PlotData = np.zeros([int(self.plotParamsDict['xPoints']), int(self.plotParamsDict['yPoints'])])
+                self.dataToPlot = np.zeros([int(self.plotParamsDict['xPoints']), int(self.plotParamsDict['yPoints'])])
                 for i in self.data:
-                    self.PlotData[int(i[xIndex]), int(i[yIndex])] = i[zIndex]
+                    self.dataToPlot[int(i[xIndex]), int(i[yIndex])] = i[zIndex]
 
-                self.plotParamsDict['xPoints'], self.plotParamsDict['yPoints'] = self.PlotData.shape
+                self.plotParamsDict['xPoints'], self.plotParamsDict['yPoints'] = self.dataToPlot.shape
 
                 self.determineSweepDirection()
 
             elif "1DPlot" == self.dataInfoDict['dataType']:
-                self.PlotData = [[],[]] #0 for x, 1 for y
+                self.dataToPlot = [[],[]] #0 for x, 1 for y
                 for i in self.data:
-                    self.PlotData[0].append(i[self.dataInfoDict['numIndexVars']])
-                    self.PlotData[1].append(i[zIndex])
+                    self.dataToPlot[0].append(i[self.dataInfoDict['numIndexVars']])
+                    self.dataToPlot[1].append(i[zIndex])
 
-                self.plotParamsDict['xPoints'], self.plotParamsDict['yPoints'] = len(self.PlotData[0]), 0
+                self.plotParamsDict['xPoints'], self.plotParamsDict['yPoints'] = len(self.dataToPlot[0]), 0
         except:
             printErrorInfo()
 
@@ -680,13 +676,13 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
     def plotData(self):
         if "2DPlot" in self.dataInfoDict['dataType']:
             self.setAspectRatio()
-            self.mainPlot.setImage(self.PlotData, autoRange = True , autoLevels = True, pos=[self.plotParamsDict['xMin'] - (self.plotParamsDict['xscale'] / 2), self.plotParamsDict['yMin'] - (self.plotParamsDict['yscale'] / 2)],scale=[self.plotParamsDict['xscale'], self.plotParamsDict['yscale']])
+            self.mainPlot.setImage(self.dataToPlot, autoRange = True , autoLevels = True, pos=[self.plotParamsDict['xMin'] - (self.plotParamsDict['xscale'] / 2), self.plotParamsDict['yMin'] - (self.plotParamsDict['yscale'] / 2)],scale=[self.plotParamsDict['xscale'], self.plotParamsDict['yscale']])
 
             self.resetLinecutPlots()
 
         elif "1DPlot" in self.dataInfoDict['dataType']:
-            self.linecutXZ_zvals = self.PlotData[1]
-            self.linecutXZ_xvals = self.PlotData[0]
+            self.linecutXZ_zvals = self.dataToPlot[1]
+            self.linecutXZ_xvals = self.dataToPlot[0]
             self.XZPlot.plot(x = self.linecutXZ_xvals, y = self.linecutXZ_zvals, pen = 0.5)
 
     def plotTrace(self):
@@ -718,7 +714,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
     """ The following section has functions for linecuts"""
 
     def resetLinecutPlots(self):
-        if self.PlotData is None:
+        if self.dataToPlot is None:
             pass
         else:
             self.vLine.setValue(self.plotParamsDict['xMin'])
@@ -778,14 +774,14 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             else:
                 yindex = int(round(abs((self.horizontalposition - self.plotParamsDict['yMin'])) / self.plotParamsDict['yscale']))
                 self.linecutXZ_xvals = np.linspace(self.plotParamsDict['xMin'], self.plotParamsDict['xMax'], num = self.plotParamsDict['xPoints'])
-                self.linecutXZ_zvals = self.PlotData[:,yindex]
+                self.linecutXZ_zvals = self.dataToPlot[:,yindex]
                 self.XZPlot.plot(x = self.linecutXZ_xvals, y = self.linecutXZ_zvals, pen = 0.5)
 
             if self.verticalposition > xMax or self.verticalposition < xMin:
                 self.YZPlot.clear()
             else:
                 xindex = int(round(abs((self.verticalposition - self.plotParamsDict['xMin'])) / self.plotParamsDict['xscale']))
-                self.linecutYZ_yvals = self.PlotData[xindex]
+                self.linecutYZ_yvals = self.dataToPlot[xindex]
                 self.linecutYZ_zvals = np.linspace(self.plotParamsDict['yMin'], self.plotParamsDict['yMax'], num = self.plotParamsDict['yPoints'])
                 self.YZPlot.plot(x = self.linecutYZ_yvals, y = self.linecutYZ_zvals, pen = 0.5)
         except:
@@ -795,47 +791,47 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
     """ The following section has functions for subtracting backgrounds from 2D data"""
 
     def subtractOverallAvg(self):
-        self.PlotData = processImageData(self.PlotData, 'Subtract Image Average')
+        self.dataToPlot = processImageData(self.dataToPlot, 'Subtract Image Average')
         self.updatePlotterStatus("Subtracted Overall Average")
         self.plotData()
 
     def subtractPlane(self):
-        self.PlotData = processImageData(self.PlotData, 'Subtract Image Plane')
+        self.dataToPlot = processImageData(self.dataToPlot, 'Subtract Image Plane')
         self.updatePlotterStatus("Subtracted Overall Plane Fit")
         self.plotData()
 
     def subtractOverallQuad(self):
-        self.PlotData = processImageData(self.PlotData, 'Subtract Image Quadratic')
+        self.dataToPlot = processImageData(self.dataToPlot, 'Subtract Image Quadratic')
         self.updatePlotterStatus("Subtracted Overall Quadratic Fit")
         self.plotData()
 
     def subtractXAvg(self):
-        self.PlotData = processImageData(self.PlotData, 'Subtract Line Average')
+        self.dataToPlot = processImageData(self.dataToPlot, 'Subtract Line Average')
         self.updatePlotterStatus("Subtracted Line Average in X")
         self.plotData()
 
     def subtractYAvg(self):
-        self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Average').T
+        self.dataToPlot = processImageData(self.dataToPlot.T, 'Subtract Line Average').T
         self.updatePlotterStatus("Subtracted Line Average in Y")
         self.plotData()
 
     def subtractXLinear(self):
-        self.PlotData = processImageData(self.PlotData, 'Subtract Line Linear')
+        self.dataToPlot = processImageData(self.dataToPlot, 'Subtract Line Linear')
         self.updatePlotterStatus("Subtracted Linear Fit in X")
         self.plotData()
 
     def subtractYLinear(self):
-        self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Linear').T
+        self.dataToPlot = processImageData(self.dataToPlot.T, 'Subtract Line Linear').T
         self.updatePlotterStatus("Subtracted Linear Fit in Y")
         self.plotData()
 
     def subtractXQuad(self):
-        self.PlotData = processImageData(self.PlotData, 'Subtract Line Quadratic')
+        self.dataToPlot = processImageData(self.dataToPlot, 'Subtract Line Quadratic')
         self.updatePlotterStatus("Subtracted Quadratic Fit in X")
         self.plotData()
 
     def subtractYQuad(self):
-        self.PlotData = processImageData(self.PlotData.T, 'Subtract Line Quadratic').T
+        self.dataToPlot = processImageData(self.dataToPlot.T, 'Subtract Line Quadratic').T
         self.updatePlotterStatus("Subtracted Quadratic Fit in Y")
         self.plotData()
 
@@ -843,7 +839,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
     """ The following section has functions for saving data as a matlab file"""
 
     def matPlot(self):
-        if (not self.PlotData is None):
+        if (not self.dataToPlot is None):
             fold, fold1 = QtWidgets.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)")
             print(fold)
             if fold:
@@ -862,13 +858,13 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
         zYI = np.ones([1,int(self.plotParamsDict['xPoints'])])
 
         X, Y,  XI, YI = np.outer(xVals, zX), np.outer(zY, yVals), np.outer(xInd, zXI), np.outer(zYI, yInd)
-        XX, YY, XXI, YYI, ZZ = X.flatten(), Y.flatten(), XI.flatten(), YI.flatten(), self.PlotData.flatten()
+        XX, YY, XXI, YYI, ZZ = X.flatten(), Y.flatten(), XI.flatten(), YI.flatten(), self.dataToPlot.flatten()
         matData = np.transpose(np.vstack((XXI, YYI, XX, YY, ZZ)))
         savename = fold.split("/")[-1].split('.mat')[0]
         sio.savemat(fold ,{savename:matData})
 
     def matLinePloth(self):
-        if (not self.PlotData is None):
+        if (not self.dataToPlot is None):
             fold = str(QtWidgets.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
                 self.genLineMatFileh(fold)
@@ -885,7 +881,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
         matData = None
 
     def matLinePlotv(self):
-        if (not self.PlotData is None):
+        if (not self.dataToPlot is None):
             fold = str(QtWidgets.QFileDialog.getSaveFileName(self, directory = os.getcwd(), filter = "MATLAB Data (*.mat)"))
             if fold:
                 self.genLineMatFilev(fold)
@@ -928,24 +924,24 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
                 #First just check if the ith point is between the i-1 and i+1 point. If true, we can
                 #avoid the more computationally expensive check of calculating mean / stdev
-                data_i = self.PlotData[i][j] #ith point
+                data_i = self.dataToPlot[i][j] #ith point
                 skipPoint = False
                 if sweepDir == 'x' and i > 0 and i < (xpnts - 1):
-                    data_im1 = self.PlotData[i-1][j] #i minus 1 along x axis
-                    data_ip1 = self.PlotData[i+1][j] #i plus 1 along x axis
+                    data_im1 = self.dataToPlot[i-1][j] #i minus 1 along x axis
+                    data_ip1 = self.dataToPlot[i+1][j] #i plus 1 along x axis
                     skipPoint = (data_im1 >= data_i >= data_ip1) or (data_im1 <= data_i <= data_ip1)
                 elif sweepDir== 'y' and j < 0 and j > (ypnts - 1):
-                    data_im1 = self.PlotData[i][j-1] #i minus 1 along y axis
-                    data_ip1 = self.PlotData[i][j+1] #i plus 1 along y axis
+                    data_im1 = self.dataToPlot[i][j-1] #i minus 1 along y axis
+                    data_ip1 = self.dataToPlot[i][j+1] #i plus 1 along y axis
                     skipPoint = (data_im1 >= data_i >= data_ip1) or (data_im1 <= data_i <= data_ip1)
 
                 #Proceed if data is not within range of adjacent two points, calculate the means / stdev
                 if not skipPoint:
                     avg, std = self.getAdjacentPointStatistics(i, j, adjPnts, xpnts, ypnts, sweepDir)
                      #If the point is above numSig* std above the mean of the adjacent points
-                    if abs(self.PlotData[i][j] - avg) > numSig * std:
+                    if abs(self.dataToPlot[i][j] - avg) > numSig * std:
                         number += 1 #Increment the number of datapoints flattened
-                        self.PlotData[i][j] = self.flattenPoint(i, j, xpnts, ypnts, sweepDir) #Linearly extrapolate a new value from nearest values
+                        self.dataToPlot[i][j] = self.flattenPoint(i, j, xpnts, ypnts, sweepDir) #Linearly extrapolate a new value from nearest values
 
                 #if more than 30ms have passed since the algorithm has been running
                 #The shorter this time, the smoother the rest of the GUI runs, but the slower the algorithm runs.
@@ -965,29 +961,29 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
         #Find the mean and stdev of the data adjacent to the points in the data array indexed by (x,y)
         if sweepDir == 'x':
             if x >= adjPnts and xpnts - 1 - x >= adjPnts: #If adjacent points can be sampled symmetrically around x, do so
-                data = [item[y] for item in self.PlotData][x - adjPnts:x + adjPnts +1] #This gives a list of 2*adjPnts + the original point
+                data = [item[y] for item in self.dataToPlot][x - adjPnts:x + adjPnts +1] #This gives a list of 2*adjPnts + the original point
                 data = data.tolist()
                 del data[adjPnts] #Removes the (x,y) point from the list
             elif x < adjPnts: #If enough datapoints for indices < x don't exist for symmetric sampling
-                data = [item[y] for item in self.PlotData][: 2*adjPnts + 1] #Grab the first 2*adjPnts + 1 pnts
+                data = [item[y] for item in self.dataToPlot][: 2*adjPnts + 1] #Grab the first 2*adjPnts + 1 pnts
                 data = data.tolist()
                 del data[x] #Remove the (x,y) point
             elif xpnts - 1 - x  < adjPnts: #If enough datapoints for indices > x don't exist for symmetric sampling
-                data = [item[y] for item in self.PlotData][-(2*adjPnts + 1):] #Grab the last 2*adjPnts + 1 pnts
+                data = [item[y] for item in self.dataToPlot][-(2*adjPnts + 1):] #Grab the last 2*adjPnts + 1 pnts
                 data = data.tolist()
                 del data[(x - xpnts - 1)] #Remove the (x,y) point
         elif sweepDir == 'y':
             #Do the same thing in the y direction
             if y >= adjPnts and ypnts - 1 - y >= adjPnts:
-                data = self.PlotData[x][y - adjPnts : y + adjPnts + 1]
+                data = self.dataToPlot[x][y - adjPnts : y + adjPnts + 1]
                 data = data.tolist()
                 del data[adjPnts]
             elif y < adjPnts:
-                data = self.PlotData[x][: 2*adjPnts + 1]
+                data = self.dataToPlot[x][: 2*adjPnts + 1]
                 data = data.tolist()
                 del data[y]
             elif ypnts - 1 - y < adjPnts:
-                data = self.PlotData[x][-(2*adjPnts + 1):]
+                data = self.dataToPlot[x][-(2*adjPnts + 1):]
                 data = data.tolist()
                 del data[(y - ypnts - 1)]
         #Return the mean and std of the data
@@ -997,19 +993,19 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
         #Do nearest neighbor linear extrapolation
         if sweepDir == 'x':
             if x == 0: #If it's the first point, extrapolate from 2nd and 3rd point
-                value = 2*self.PlotData[x+1][y] - self.PlotData[x+2][y]
+                value = 2*self.dataToPlot[x+1][y] - self.dataToPlot[x+2][y]
             elif x == xpnts - 1: #If it's the last point, extrapolate from the points before it
-                value = 2*self.PlotData[x-1][y] - self.PlotData[x-2][y]
+                value = 2*self.dataToPlot[x-1][y] - self.dataToPlot[x-2][y]
             else: #If points has adjacent points, take their average
-                value = (self.PlotData[x-1][y] + self.PlotData[x+1][y]) / 2
+                value = (self.dataToPlot[x-1][y] + self.dataToPlot[x+1][y]) / 2
         if sweepDir == 'y':
             #Do the same for the y direction
             if y == 0:
-                value = 2*self.PlotData[x][y+1] - self.PlotData[x][y+2]
+                value = 2*self.dataToPlot[x][y+1] - self.dataToPlot[x][y+2]
             elif y == ypnts- 1:
-                value = 2*self.PlotData[x][y-1] - self.PlotData[x][y-2]
+                value = 2*self.dataToPlot[x][y-1] - self.dataToPlot[x][y-2]
             else:
-                value = (self.PlotData[x][y-1] + self.PlotData[x][y+1]) / 2
+                value = (self.dataToPlot[x][y-1] + self.dataToPlot[x][y+1]) / 2
         return value
 
     def openDespikeSettings(self):
@@ -1028,8 +1024,8 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
         xVals = np.linspace(self.plotParamsDict['xMin'], self.plotParamsDict['xMax'], self.plotParamsDict['xPoints'])
         delta = (self.plotParamsDict['xMax'] - self.plotParamsDict['xMin']) / (self.plotParamsDict['xPoints']-1)
 
-        for i in range(0, self.PlotData.shape[1]):
-            self.PlotData[:, i] = deriv(self.PlotData[:,i], xVals, self.derivSettingsDict['adjPnts'], delta, self.derivSettingsDict['fitOrder'], self.derivSettingsDict['edgePnts'])
+        for i in range(0, self.dataToPlot.shape[1]):
+            self.dataToPlot[:, i] = deriv(self.dataToPlot[:,i], xVals, self.derivSettingsDict['adjPnts'], delta, self.derivSettingsDict['fitOrder'], self.derivSettingsDict['edgePnts'])
 
         self.plotData() #Plot the derivative data
         self.updatePlotterStatus("Plotted gradient along x-axis.")
@@ -1038,8 +1034,8 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
         yVals = np.linspace(self.plotParamsDict['yMin'], self.plotParamsDict['yMax'], num = self.plotParamsDict['yPoints'])
         delta = (self.plotParamsDict['yMax'] - self.plotParamsDict['yMin']) / (self.plotParamsDict['yPoints']-1)
 
-        for i in range(0, self.PlotData.shape[0]):
-            self.PlotData[i, :] = deriv(self.PlotData[i,:], yVals, self.derivSettingsDict['adjPnts'], delta, self.derivSettingsDict['fitOrder'], self.derivSettingsDict['edgePnts'])
+        for i in range(0, self.dataToPlot.shape[0]):
+            self.dataToPlot[i, :] = deriv(self.dataToPlot[i,:], yVals, self.derivSettingsDict['adjPnts'], delta, self.derivSettingsDict['fitOrder'], self.derivSettingsDict['edgePnts'])
 
         self.plotData()
         self.updatePlotterStatus("Plotted gradient along y-axis.")
@@ -1076,7 +1072,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
 
         #Conversion of noise data from volts to volts / rtHz using the gain and bandwidth of the noise measurement box
         ratio = self.sensSettingsDict['gain'] * sqrt(self.sensSettingsDict['bandwidth'])
-        self.PlotData = ratio * squidData / noiseData #Take the elementwise division of the x derivative to the noise
+        self.dataToPlot = ratio * squidData / noiseData #Take the elementwise division of the x derivative to the noise
 
         self.plotData()
         self.updatePlotterStatus('Sensitivity plotted (rtHz/T)')
@@ -1087,7 +1083,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             self.sensSettingsDict = sensitivitySet.getValues()
 
     def plotOptimalSQUIDParameters(self):
-        #Function assumes that self.PlotData is the result from self.computeSQUIDSensitivity
+        #Function assumes that self.dataToPlot is the result from self.computeSQUIDSensitivity
 
         #These need to be oject variables, otherwise they will close randomly when python garbage collector gets to them
         self.OptimalSensitivity = Plot1D('Optimal Sensitivity', self)
@@ -1098,10 +1094,10 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
         optBias = []
 
         for i in range(self.plotParamsDict['xPoints']):
-            sensMax = np.amax(self.PlotData[i])
-            sensMin = np.amin(self.PlotData[i])
-            indexMax = np.argmax(self.PlotData[i])
-            indexMin = np.argmin(self.PlotData[i])
+            sensMax = np.amax(self.dataToPlot[i])
+            sensMin = np.amin(self.dataToPlot[i])
+            indexMax = np.argmax(self.dataToPlot[i])
+            indexMin = np.argmin(self.dataToPlot[i])
 
             if abs(sensMax) < abs(sensMin):
                 optSensitivity.append(abs(sensMin))
@@ -1180,7 +1176,7 @@ class Plotter(QtWidgets.QMainWindow, Ui_Plotter2D):
             theta = 180.0 / pi * atan2(fitparameter[0], fitparameter[1])
             self.updatePlotterStatus('Amp = ' + formatNum(amp, 1) + 'm. Angle = ' + formatNum(theta, 1) + " degrees.")
 
-            self.PlotData = fitparameter[0] * self.x_deriv + fitparameter[1] * self.y_deriv + fitparameter[2]
+            self.dataToPlot = fitparameter[0] * self.x_deriv + fitparameter[1] * self.y_deriv + fitparameter[2]
             self.plotData()
         else:
             self.updatePlotterStatus('Failure: ' + str(fit.message))

@@ -671,6 +671,9 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         #By default, do not abort the sweep.
         self.abortFlag = False
 
+        #Update the estimated sweep time
+        yield self.updateSweepTime()
+
         #Throw a reminder to check that the output of the Toellner is on if it's being used
         if self.settingsDict['Magnet device'] == 'Toellner 8851':
             checkToe = toellnerReminder()

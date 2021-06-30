@@ -12,6 +12,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         super(Window, self).__init__(parent)
 
         self.reactor = reactor
+
         self.ScanControl = args[0]
         self.Approach = args[1]
         self.nSOTChar = args[2]
@@ -49,10 +50,16 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     @inlineCallbacks
     def connectLabRAD(self, dict):
-        from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
+        try:
+            from labrad.wrappers import connectAsync
+            if dict['servers']['local']['cxn'] is not False:
+                self.cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
 
-        self.cxnr = yield connectAsync(host = '4KMonitor', password = 'pass')
+            if dict['servers']['remote']['cxn'] is not False:
+                print('test')
+                self.cxnr = yield connectAsync(host = '4KMonitor', password = 'pass')
+        except Exception:
+            pass
 
     def disconnectLabRAD(self):
         self.cxn = None

@@ -668,6 +668,9 @@ background-color: red</string>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
     </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
    </widget>
    <widget class="QLabel" name="Fix_Y_Position_Label">
     <property name="enabled">
@@ -715,6 +718,9 @@ background-color: red</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QLabel" name="Fix_X_Position_Label">
@@ -977,7 +983,7 @@ background-color: red</string>
      <enum>Qt::Vertical</enum>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit_Xpositioncenter">
+   <widget class="QLineEdit" name="lineEdit_gridCenterX">
     <property name="geometry">
      <rect>
       <x>720</x>
@@ -998,7 +1004,7 @@ background-color: red</string>
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit_Ypositioncenter">
+   <widget class="QLineEdit" name="lineEdit_gridCenterY">
     <property name="geometry">
      <rect>
       <x>720</x>
@@ -1033,6 +1039,9 @@ background-color: red</string>
       <pointsize>8</pointsize>
      </font>
     </property>
+    <property name="toolTip">
+     <string>Sets the current QR code pattern as the central pattern.</string>
+    </property>
     <property name="text">
      <string>Center</string>
     </property>
@@ -1055,8 +1064,8 @@ background-color: red</string>
    <zorder>line_8</zorder>
    <zorder>line_9</zorder>
    <zorder>line_10</zorder>
-   <zorder>lineEdit_Xpositioncenter</zorder>
-   <zorder>lineEdit_Ypositioncenter</zorder>
+   <zorder>lineEdit_gridCenterX</zorder>
+   <zorder>lineEdit_gridCenterY</zorder>
    <zorder>pushButton_setGridCenter</zorder>
   </widget>
  </widget>

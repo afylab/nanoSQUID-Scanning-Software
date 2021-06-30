@@ -72,10 +72,16 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
         self.cxn = False
         self.gen_dv = False
         self.dv = False
+
         self.lockInterface()
 
     def moveDefault(self):
         self.move(10,170)
+
+    def closeEvent(self, e):
+        for plot in self.plotterList:
+            plot.close()
+        self.close()
 
     def lockInterface(self):
         self.pushButton_newPlotter.setEnabled(False)
@@ -97,7 +103,7 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
                 self.formatListWidgetItem(item, plot)
                 self.listWidget_Plots.addItem(item)
 
-        except Exception as inst:
+        except Exception:
             printErrorInfo()
 
     def formatListWidgetItem(self, ListWidgetItem, plotter):
@@ -118,7 +124,7 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
                 ListWidgetItem.setForeground(Color_NoData[0])
                 ListWidgetItem.setBackground(Color_NoData[1])
                 ListWidgetItem.setToolTip('No Data Loaded')
-        except Exception as inst:
+        except Exception:
             printErrorInfo()
 
     def removePlot(self, plotter):
@@ -147,7 +153,7 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
             #First open a data vault browser to allow the user to select the files
             self.dvBrowser.popDirs()
             self.dvBrowser.show()
-        except Exception as inst:
+        except Exception:
             printErrorInfo()
 
     def openFilesInPlotter(self, filelist, directory):
@@ -171,7 +177,7 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
 
                 self.refreshPlotList() #Refresh the plot list UI
 
-            except Exception as inst:
+            except Exception:
                 printErrorInfo()
 
 #----------------------------------------------------------------------------------------------#

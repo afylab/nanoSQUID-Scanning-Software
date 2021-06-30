@@ -22,6 +22,26 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.dac = False
         self.blink_server = False
 
+        #Dictionaries of the setpoint settings with some default values
+        self.settingsDict = {
+                'bias current':     0.0,
+                'bias setpoint':    0.0,
+                'bias steps':       500,
+                'bias delay':       0.001,
+                'gate current':     0.0,
+                'gate setpoint':    0.0,
+                'gate steps':       500,
+                'gate delay':       0.001,
+        }
+
+        self.lineEdit_biasSetpoint.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'bias setpoint', [-10.0, 10.0]))
+        self.lineEdit_biasSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'bias steps'))
+        self.lineEdit_biasDelay.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'bias delay'))
+
+        self.lineEdit_gateSetpoint.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'gate setpoint', [-10.0, 10.0]))
+        self.lineEdit_gateSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'gate steps'))
+        self.lineEdit_gateDelay.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'gate delay'))
+
         self.zeroBiasBtn.clicked.connect(lambda: self.zeroBiasFunc())
         self.gotoBiasBtn.clicked.connect(lambda: self.gotoBiasFunc())
 
@@ -62,15 +82,11 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
                 yield self.blink_server.select_device(dict['devices']['system']['blink device'])
 
             self.blinkChan = dict['channels']['system']['blink channel'] - 1
-
             self.biasChan = dict['channels']['nsot']['nSOT Bias'] - 1
             self.biasRefChan = dict['channels']['nsot']['Bias Reference'] - 1
             self.gateChan = dict['channels']['nsot']['nSOT Gate'] - 1
             self.gateRefChan = dict['channels']['nsot']['Gate Reference'] - 1
             self.feedbackChan = dict['channels']['nsot']['DC Readout'] - 1
-
-            self.setpointDict = {'bias' : 0,
-                                 'gate' : 0}
 
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -78,7 +94,6 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             yield self.readInitVals()
 
             self.unlockInterface()
-
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
@@ -169,14 +184,25 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             yield self.blink_server.set_voltage(self.blinkChan, 5)
         self.feedbackButtonColors(on)
 
+    def updateSweepParameter(self, lineEdit, key, range = None):
+        val = readNum(str(lineEdit.text())) #Read the text from the provided lineEdit
+        if isinstance(val,float): #If it's a proper number, update the sweep Parameter dictionary
+            if range == None:
+                self.settingsDict[key] = val
+            elif val >= range[0] and val <= range[1]: #Check that the number is within the proper range
+                self.settingsDict[key] = val
+        #Set the linedit to the formatted value. If it was input incorrectly, this resets the lineEdit to the previous value
+        lineEdit.setText(formatNum(self.settingsDict[key], 6))
+
     @inlineCallbacks
     def zeroBiasFunc(self):
         try:
-            curr_bias = float(self.setpointDict['bias'])
+            curr_bias = self.settingsDict['bias current']
             steps = int(np.absolute(curr_bias) * 1000 + 5)
             delay = 2000
-            yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [0], steps, delay)
-            self.setpointDict['bias'] = 0
+
+            yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [0.0], steps, delay)
+            self.settingsDict['bias current'] = 0.0
             new_bias = yield self.dac.read_voltage(self.biasRefChan)
             self.currBiasLbl.setText('Current Bias: ' + str(new_bias) + 'V')
         except:
@@ -184,75 +210,38 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
     @inlineCallbacks
     def gotoBiasFunc(self):
-        flag = False
+        new_bias = self.settingsDict['bias setpoint']
+        curr_bias = self.settingsDict['bias current']
+        steps = int(self.settingsDict['bias steps'])
+        delay = int(1e6*self.settingsDict['bias delay'])
 
-        new_bias = readNum(self.biasSetpntLine.text())
-        if not isinstance(new_bias, float):
-            flag = True
-            self.biasSetpntLine.setText('FORMAT ERROR')
-
-        steps = np.absolute(int(readNum(self.biasPntsLine.text())))
-        if not isinstance(steps, int):
-            flag = True
-            self.biasPntsLine.setText('FORMAT ERROR')
-
-        delay = np.absolute(int(readNum(self.biasDelayLine.text()))) * 1000
-        if not isinstance(delay, int):
-            flag = True
-            self.biasDelayLine.setText('FORMAT ERROR')
-
-        if np.absolute(new_bias) > 10:
-            new_bias = 10 * (new_bias / np.absolute(new_bias))
-            self.biasSetpntLine.setText(str(new_bias))
-
-        if flag == False:
-            tmp = yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [self.setpointDict['bias']], [new_bias], steps, delay)
-            self.setpointDict['bias'] = new_bias
-            self.currBiasLbl.setText('Current Bias: '+ str(new_bias) + 'V')
-            self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
-        else:
-            yield self.sleep(0.5)
+        yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [new_bias], steps, delay)
+        self.settingsDict['bias current'] = new_bias
+        self.currBiasLbl.setText('Current Bias: '+ str(new_bias) + 'V')
+        self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
 
     @inlineCallbacks
     def zeroGateFunc(self):
-        curr_gate = float(self.setpointDict['gate'])
+        curr_gate = self.settingsDict['gate current']
         steps = int(np.absolute(curr_gate) * 1000 + 5)
         delay = 2000
-        tmp = yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [curr_gate], [0], steps, delay)
-        self.setpointDict['gate'] = 0
+
+        yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [curr_gate], [0], steps, delay)
+        self.settingsDict['gate curent'] = 0.0
         new_gate = yield self.dac.read_voltage(self.gateRefChan)
         self.currGateLbl.setText('Current Gate: ' + str(new_gate) + 'V')
 
     @inlineCallbacks
     def gotoGateFunc(self):
-        flag = False
+        new_gate = self.settingsDict['gate setpoint']
+        curr_gate = self.settingsDict['gate current']
+        steps = int(self.settingsDict['gate steps'])
+        delay = int(1e6*self.settingsDict['gate delay'])
 
-        new_gate = readNum(self.gateSetpntLine.text())
-        if not isinstance(new_gate, float):
-            flag = True
-            self.gateSetpntLine.setText('FORMAT ERROR')
-
-        steps = np.absolute(int(readNum(self.gatePntsLine.text())))
-        if not isinstance(steps, int):
-            flag = True
-            self.gatePntsLine.setText('FORMAT ERROR')
-
-        delay = np.absolute(int(readNum(self.gateDelayLine.text()))) * 1000
-        if not isinstance(delay, int):
-            flag = True
-            self.gateDelayLine.setText('FORMAT ERROR')
-
-        if np.absolute(new_gate) > 10:
-            new_gate = 10 * (new_gate / np.absolute(new_gate))
-            self.gateSetpntLine.setText(str(new_gate))
-
-        if flag == False:
-            tmp = yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [self.setpointDict['gate']], [new_gate], steps, delay)
-            self.setpointDict['gate'] = new_gate
-            self.currGateLbl.setText('Current Gate: '+ str(new_gate) + 'V')
-            self.currGateLbl.setStyleSheet("QLabel#currGateLbl{color: rgb(168,168,168); font:bold 10pt;}")
-        else:
-            yield self.sleep(0.5)
+        yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [curr_gate], [new_gate], steps, delay)
+        self.setpointDict['gate'] = new_gate
+        self.currGateLbl.setText('Current Gate: '+ str(new_gate) + 'V')
+        self.currGateLbl.setStyleSheet("QLabel#currGateLbl{color: rgb(168,168,168); font:bold 10pt;}")
 
     @inlineCallbacks
     def blink(self):
@@ -267,13 +256,13 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
     @inlineCallbacks
     def setBias(self, bias):
-        self.biasSetpntLine.setText(formatNum(bias))
+        self.lineEdit_biasSetpoint.setText(formatNum(bias))
         yield self.gotoBiasFunc()
 
     @inlineCallbacks
     def readBias(self):
         curr_bias = yield self.dac.read_voltage(self.biasRefChan)
-        self.setpointDict['bias'] = float(curr_bias)
+        self.settingsDict['bias current'] = float(curr_bias)
 
         self.currBiasLbl.setText('Current Bias: '+ str(curr_bias) + 'V')
         self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
@@ -282,13 +271,13 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
     @inlineCallbacks
     def setGate(self, gate):
-        self.gateSetpntLine.setText(formatNum(gate))
+        self.lineEdit_gateSetpoint.setText(formatNum(gate))
         yield self.gotoGateFunc()
 
     @inlineCallbacks
     def readGate(self):
         curr_gate = yield self.dac.read_voltage(self.gateRefChan)
-        self.setpointDict['gate'] = float(curr_gate)
+        self.settingsDict['gate current'] = float(curr_gate)
 
         self.currGateLbl.setText('Current Gate: '+ str(curr_gate) + 'V')
         self.currGateLbl.setStyleSheet("QLabel#currGateLbl{color: rgb(168,168,168); font:bold 10pt;}")
@@ -314,9 +303,13 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
     """ The following section has generally useful functions."""
 
     def lockInterface(self):
-        self.biasSetpntLine.setEnabled(False)
-        self.biasPntsLine.setEnabled(False)
-        self.biasDelayLine.setEnabled(False)
+        self.lineEdit_biasSetpoint.setEnabled(False)
+        self.lineEdit_biasSteps.setEnabled(False)
+        self.lineEdit_biasDelay.setEnabled(False)
+
+        self.lineEdit_gateSetpoint.setEnabled(False)
+        self.lineEdit_gateSteps.setEnabled(False)
+        self.lineEdit_gateDelay.setEnabled(False)
 
         self.gotoBiasBtn.setEnabled(False)
         self.zeroBiasBtn.setEnabled(False)
@@ -332,9 +325,13 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.push_readGate.setEnabled(False)
 
     def unlockInterface(self):
-        self.biasSetpntLine.setEnabled(True)
-        self.biasPntsLine.setEnabled(True)
-        self.biasDelayLine.setEnabled(True)
+        self.lineEdit_biasSetpoint.setEnabled(True)
+        self.lineEdit_biasSteps.setEnabled(True)
+        self.lineEdit_biasDelay.setEnabled(True)
+
+        self.lineEdit_gateSetpoint.setEnabled(True)
+        self.lineEdit_gateSteps.setEnabled(True)
+        self.lineEdit_gateDelay.setEnabled(True)
 
         self.gotoBiasBtn.setEnabled(True)
         self.zeroBiasBtn.setEnabled(True)
