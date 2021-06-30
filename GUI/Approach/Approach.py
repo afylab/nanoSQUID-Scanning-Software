@@ -827,9 +827,11 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                 #Update the progress bar if z_voltage > 0 (small ofsets can sometimes make it less than 0)
                 if z_voltage >= 0:
-                    self.progressBar.setValue(int(1000*(z_voltage/self.z_volts_max)))
+                    self.progressBar.setValue(int(1000.0*(z_voltage/self.z_volts_max)))
+                    self.progressBar.update()
                 else:
                     self.progressBar.setValue(0)
+                    self.progressBar.update()
 
                 #Update the value of the z extension
                 z_meters = z_voltage / self.z_volts_to_meters
@@ -1347,9 +1349,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.constantHeight = False
             self.updateFeedbackStatus.emit(False)
 
-            #start PID approach sequence
-            self.approaching = True
-
             #Read voltage from just the DAC-ADC
             self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.generalSettings['step_z_output'] - 1)
 
@@ -1364,6 +1363,9 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             if self.voltageMultiplied and self.voltageMultiplier == 1:
                 #Withdraw fully. This zeros both the Zurich and DAC voltage.
                 yield self.withdraw(self.z_meters_max)
+
+            #start PID approach sequence
+            self.approaching = True
 
             if self.approaching:
                 #Make sure the PID is off
