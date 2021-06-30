@@ -1721,7 +1721,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         yield self.hf.set_pid_on(self.PID_Index, False)
 
         #Gets the current z extension
-        z_voltage = yield self.hf.get_aux_input_value(self.generalSettings['z_mon_input'])
+        z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
         #z_meters = z_voltage / self.z_volts_to_meters
 
         #Initializes all the PID settings
