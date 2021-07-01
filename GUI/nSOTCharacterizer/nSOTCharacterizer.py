@@ -965,7 +965,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             retrace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [v_max], [v_min], pnts, delay)
 
             #Flip the retrace data so that the ith point corresponds to the same voltage as the ith point of the trace data
-            retrace = retrace[::-1]
+            retrace = [data[::-1] for data in retrace]
 
         elif mode == 1: #This corresponds to zero to mix max
             #If sweeping from zero to min/max, find the appropriate number of points
