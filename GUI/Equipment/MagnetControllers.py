@@ -2,8 +2,9 @@
 A set of objects for the various magnet controllers
 '''
 from twisted import inlineCallbacks
+from Equipment import EquipmentController
 
-class MagnetControl():
+class MagnetControl(EquipmentController):
     def __init__(self, labrad_server, config, dimensions):
         '''
         A generic base class for a magnet controller, features a variety of functions that

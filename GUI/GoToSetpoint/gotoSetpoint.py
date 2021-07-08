@@ -58,9 +58,9 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.lockInterface()
 
     @inlineCallbacks
-    def connectLabRAD(self, dict):
+    def connectLabRAD(self, equip):
         try:
-            self.cxn = dict['servers']['local']['cxn']
+            self.cxn = equip.cxn
 
             '''
             Create another connection to labrad in order to have a set of servers opened up in a context
@@ -71,22 +71,38 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             from labrad.wrappers import connectAsync
             self.cxn_nsot = yield connectAsync(host = '127.0.0.1', password = 'pass')
 
-            self.dac = yield self.cxn_nsot.dac_adc
-            yield self.dac.select_device(dict['devices']['nsot']['dac_adc'])
+            if 'nSOT DAC' in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers['nSOT DAC']
+                #Connected to the appropriate DACADC
+                self.dac = yield self.cxn_nsot.dac_adc
+                yield self.dac.select_device(device_info)
 
-            if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
-                self.blink_server = yield self.cxn_nsot.ad5764_dcbox
-                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
-            elif dict['devices']['system']['blink device'].startswith('DA'):
-                self.blink_server = yield self.cxn_nsot.dac_adc
-                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
+                self.biasChan = config['nSOT Bias'] - 1
+                self.biasRefChan = config['Bias Reference'] - 1
+                self.gateChan = config['nSOT Gate'] - 1
+                self.gateRefChan = config['Gate Reference'] - 1
+                self.feedbackChan = config['DC Readout'] - 1
+            else:
+                print("'nSOT DAC' not found, LabRAD connection of goToSetpoint Failed.")
+                return
 
-            self.blinkChan = dict['channels']['system']['blink channel'] - 1
-            self.biasChan = dict['channels']['nsot']['nSOT Bias'] - 1
-            self.biasRefChan = dict['channels']['nsot']['Bias Reference'] - 1
-            self.gateChan = dict['channels']['nsot']['nSOT Gate'] - 1
-            self.gateRefChan = dict['channels']['nsot']['Gate Reference'] - 1
-            self.feedbackChan = dict['channels']['nsot']['DC Readout'] - 1
+            if "Blink Device" in equip.servers:
+                svr, labrad_name, device_info, cnt, config = equip.servers["Blink Device"]
+
+                #Create a connection to the proper device for blinking
+                if labrad_name.startswith('ad5764_dcbox'):
+                    self.blink_server = yield self.cxn_scan.ad5764_dcbox
+                    yield self.blink_server.select_device(device_info)
+                    print('DC BOX Blink Device')
+                elif labrad_name.startswith('DA'):
+                    self.blink_server = yield self.cxn_scan.dac_adc
+                    yield self.blink_server.select_device(device_info)
+                    print('DAC ADC Blink Device')
+
+                self.blinkChan = config['blink channel']
+            else:
+                print("'Blink Device' not found, LabRAD connection of goToSetpoint Failed.")
+                return
 
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -97,6 +113,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
+            printErrorInfo()
 
     def disconnectLabRAD(self):
         self.lockInterface()

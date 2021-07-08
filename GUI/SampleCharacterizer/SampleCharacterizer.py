@@ -1,6 +1,6 @@
 
 import sys
-from PyQt5 import QtCore, QtGui, QtWidgets, uic #, QtTest
+from PyQt5 import QtCore, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 import pyqtgraph as pg
@@ -196,10 +196,10 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
     """ The following section has standard server connection and GUI functions"""
 
     @inlineCallbacks
-    def connectLabRAD(self, dict):
+    def connectLabRAD(self, equip):
         try:
-            self.cxn = dict['servers']['local']['cxn']
-            self.gen_dv = dict['servers']['local']['dv']
+            self.cxn = equip.cxn
+            self.gen_dv = equip.dv
 
             #Create another connection for the connection to data vault to prevent
             #problems of multiple windows trying to write the data vault at the same
@@ -210,24 +210,42 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             curr_folder = yield self.gen_dv.cd()
             yield self.dv.cd(curr_folder)
 
-            self.dac = yield self.cxn_sample.dac_adc
-            yield self.dac.select_device(dict['devices']['sample']['dac_adc'])
-
-            #Eventually make this module compatible with Toellner, for now it is not
-            if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
-                self.dac_toe = dict['servers']['local']['dac_adc']
-                self.ips = None
-                self.ami = None
-            elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
-                self.dac_toe = None
-                self.ips = dict['servers']['remote']['ips120']
-                self.ami = None
-            elif dict['devices']['system']['magnet supply'] == 'AMI 430 Power Supply':
-                self.dac_toe = None
-                self.ips = None
-                self.ami = dict['servers']['local']['ami_430']
+            if "Sample DAC" in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers["Scan DAC"]
+                self.dac = yield self.cxn_sample.dac_adc
+                yield self.dac.select_device(device_info)
             else:
-                raise Exception
+                print("'Sample DAC' not found, LabRAD connection to Sample Characterizer Failed.")
+                return
+
+            # self.dac = yield self.cxn_sample.dac_adc
+            # yield self.dac.select_device(dict['devices']['sample']['dac_adc'])
+
+            #Select the appropriate magnet power supply
+            '''
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            FUTURE: Need to integrate magnet power supply controllers
+            '''
+            if 'Magnet Supply' in equip.servers:
+                #Eventually make this module compatible with Toellner, for now it is not
+                if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
+                    self.dac_toe = dict['servers']['local']['dac_adc']
+                    self.ips = None
+                    self.ami = None
+                elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
+                    self.dac_toe = None
+                    self.ips = dict['servers']['remote']['ips120']
+                    self.ami = None
+                elif dict['devices']['system']['magnet supply'] == 'AMI 430 Power Supply':
+                    self.dac_toe = None
+                    self.ips = None
+                    self.ami = dict['servers']['local']['ami_430']
+                else:
+                    raise Exception
+            else:
+                print("WARNING: Temporarily proceeding without magnet power supply")
+                # print("'Magnet Supply' not found, LabRAD connection to nSOT Characterizer Failed.")
+                # return
 
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -236,6 +254,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         except Exception:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
+            printErrorInfo()
 
     def disconnectLabRAD(self):
         self.cxn = False

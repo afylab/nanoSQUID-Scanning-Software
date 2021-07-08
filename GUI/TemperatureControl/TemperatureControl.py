@@ -83,9 +83,15 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.resize(800,500)
 
     @inlineCallbacks
-    def connectLabRAD(self,dict):
+    def connectLabRAD(self, equip):
         try:
-            self.ls = dict['servers']['remote']['ls350']
+            # self.ls = dict['servers']['remote']['ls350']
+            if "LS 350" in equip.servers:
+                self.ls = equip.servers['LS 350'][0]
+            else:
+                print("Lakeshore 350 not found, no LabRAD connections made.")
+                return
+
             if not self.ls:
                 self.push_Servers.setStyleSheet("#push_Servers{" +
                 "background: rgb(161, 0, 0);border-radius: 4px;border: 0px;}")

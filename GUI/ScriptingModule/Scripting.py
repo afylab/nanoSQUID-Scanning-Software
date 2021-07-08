@@ -49,16 +49,16 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.resize(700,510)
 
     @inlineCallbacks
-    def connectLabRAD(self, dict):
+    def connectLabRAD(self, equip):
         try:
             from labrad.wrappers import connectAsync
-            if dict['servers']['local']['cxn'] is not False:
-                self.cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            if equip.cxn is not False:
+                self.cxn = yield connectAsync(host='127.0.0.1', password='pass')
 
-            if dict['servers']['remote']['cxn'] is not False:
-                self.cxnr = yield connectAsync(host = '4KMonitor', password = 'pass')
-        except Exception:
-            pass
+            if equip.cxnr is not False:
+                self.cxnr = yield connectAsync(host=self.equip.remote_ip, password='pass')
+        except Exception as inst:
+            printErrorInfo()
 
     def disconnectLabRAD(self):
         self.cxn = None

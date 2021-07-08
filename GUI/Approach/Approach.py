@@ -97,7 +97,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.anc = False
         self.dac = False
         self.hf = False
-        self.dcbox = False
+        #self.dcbox = False
 
         #Initialization of various booleans used to keep track of the module status
         self.measuring = False         #Is the PLL measuring
@@ -216,7 +216,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.move(10,170)
 
     @inlineCallbacks
-    def connectLabRAD(self, dic):
+    def connectLabRAD(self, equip):
         '''
         Receives a dictionary from the DeviceSelect module instructing which hardware to use for what and which outputs to use on
         the specified hardware.
@@ -226,31 +226,50 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             from labrad.wrappers import connectAsync
             cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
 
-            #Connect to coarse positioning server
-            if dic['devices']['system']['coarse positioner'] == 'Attocube ANC350':
-                self.generalSettings['coarse_positioner'] = dic['devices']['system']['coarse positioner']
+            if "ANC350" in equip.servers:
+                self.generalSettings['coarse_positioner'] = 'Attocube ANC350'
                 self.anc = yield cxn.anc350_server
-                print('Using ANC350 for Coarse Position Control')
+            else:
+                print("'ANC350' not found, LabRAD connection to Appraoch Module Failed.")
+                return
 
             #Connect to the Zurich HF2LI lock in
-            self.hf = yield cxn.hf2li_server
-            yield self.hf.select_device(dic['devices']['approach and TF']['hf2li'])
+            if "HF2LI Lockin" in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers["HF2LI Lockin"]
+                self.hf = yield cxn.hf2li_server
+                yield self.hf.select_device(device_info)
+
+                self.generalSettings['pid_z_output'] = config['pid z out']
+                self.generalSettings['sumboard_toggle'] = config['sum board toggle']
+                self.generalSettings['z_mon_input'] = config['z monitor']
+                self.measurementSettings['pll_input'] = config['pll input']
+                self.measurementSettings['pll_output'] = config['pll output']
+            else:
+                print("'HF2LI Lockin' not found, LabRAD connection to Approach Module Failed.")
+                return
 
             #Connect to the scanning DAC-ADC for z control
-            self.dac = yield cxn.dac_adc
-            yield self.dac.select_device(dic['devices']['scan']['dac_adc'])
+            if "Scan DAC" in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers["Scan DAC"]
 
+                #Similarly uses that extra connection so that we can talk to the scan dac at the same time as other dacs
+                self.dac = yield cxn.dac_adc
+                yield self.dac.select_device(device_info)
+
+                self.generalSettings['step_z_output'] = config['z out']
+            else:
+                print("'Scan DAC' not found, LabRAD connection to Approach Module Failed.")
+                return
+
+            '''
+            DC Box used to be used in some cases in conjunction with a summing amplifier.
+            All references to it have been commented out pending proof that it is
+            a necessary thing to do. Will likely use a DAC-ADC if it becomes useful
+            again in the future.
+            '''
             #Connect to the DC box to toggle the voltage multiplier board
-            self.dcbox = yield cxn.ad5764_dcbox
-            yield self.dcbox.select_device(dic['devices']['approach and TF']['dc_box'])
-
-            #Set the output settings selected in the Device Select module
-            self.generalSettings['step_z_output'] = dic['channels']['scan']['z out']
-            self.generalSettings['pid_z_output'] = dic['channels']['approach and TF']['pid z out']
-            self.generalSettings['sumboard_toggle'] = dic['channels']['approach and TF']['sum board toggle']
-            self.generalSettings['z_mon_input'] = dic['channels']['approach and TF']['z monitor']
-            self.measurementSettings['pll_input'] = dic['channels']['approach and TF']['pll input']
-            self.measurementSettings['pll_output'] = dic['channels']['approach and TF']['pll output']
+            # self.dcbox = yield cxn.ad5764_dcbox
+            # yield self.dcbox.select_device(dic['devices']['approach and TF']['dc_box'])
 
             #If we get here properly, make the servers connected square green indicating successfully connecting to LabRAD
             self.push_Servers.setStyleSheet("#push_Servers{" +
@@ -271,6 +290,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             #Set the connected square to be red indicating that we failed to connect to LabRAD
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
+            printErrorInfo()
 
     @inlineCallbacks
     def loadCurrentState(self):
@@ -405,7 +425,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         #Set all the servers to false since they are disconnected
         self.anc = False
         self.dac = False
-        self.dcbox = False
+        #self.dcbox = False
         self.hf = False
 
         #lock the interface when disconnected
@@ -1323,7 +1343,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         if self.voltageMultiplied == True:
             #Withdraw completely before switching to multiplier of 1
             yield self.withdraw(self.z_meters_max)
-            yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
+            #yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
             self.voltageMultiplied = False
 
     @inlineCallbacks
@@ -1371,14 +1391,18 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 #Make sure the PID is off
                 yield self.hf.set_pid_on(self.PID_Index, False)
 
+                '''
+                Note all references to the DC Box commented out below, until we
+                know if the summing amplifier is needed.
+                '''
                 #If the multiplier is less than one, toggle the sum board
                 if self.voltageMultiplier < 1 and not self.voltageMultiplied:
                     #The choice between 0.4 and 0.1 is done through selecting a different sum box. Make sure
                     #the selected option matches the hardware
-                    yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 2.5)
+                    # yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 2.5)
                     self.voltageMultiplied = True
                 elif self.voltageMultiplier == 1 and self.voltageMultiplied:
-                    yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
+                    #yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
                     self.voltageMultiplied = False
 
                 #Scale up the output voltage range. This voltage should be multiplied by 0.4 or 0.1.
@@ -1455,7 +1479,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                             #Set mode to 1 to 1 again, so that if Approach for Feedback is reinitiated, it does a
                             #surface approach first -- This might be outdated. Check at some point
-                            yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
+                            # yield self.dcbox.set_voltage(self.generalSettings['sumboard_toggle']-1, 0)
                             self.voltageMultiplied = False
 
                             self.approaching = False

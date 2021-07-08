@@ -51,10 +51,10 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
     """ The following section has standard server connection and GUI functions"""
 
     @inlineCallbacks
-    def connectLabRAD(self, dict):
+    def connectLabRAD(self, equip):
         try:
-            self.gen_cxn = dict['servers']['local']['cxn']
-            self.gen_dv = dict['servers']['local']['dv']
+            # self.gen_cxn = dict['servers']['local']['cxn']
+            # self.gen_dv = dict['servers']['local']['dv']
 
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
@@ -69,8 +69,8 @@ class CommandCenter(QtWidgets.QMainWindow, Ui_CommandCenter):
 
     def disconnectLabRAD(self):
         self.gen_cxn = False
-        self.cxn = False
-        self.gen_dv = False
+        # self.cxn = False
+        # self.gen_dv = False
         self.dv = False
 
         self.lockInterface()

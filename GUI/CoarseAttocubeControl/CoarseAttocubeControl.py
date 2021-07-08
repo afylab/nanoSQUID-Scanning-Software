@@ -111,15 +111,21 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         self.pushButton_Debug.clicked.connect(self.OpenDebugWindow)
 
     @inlineCallbacks
-    def connectLabRAD(self, dict):
+    def connectLabRAD(self, equip):
         try:
-            self.anc350 = dict['servers']['local']['anc350']
+            # self.anc350 = dict['servers']['local']['anc350']
+            '''
+            FUTURE:
+            A lot of this would be abstracted into the controller object, not directly
+            from the labRAD server.
+            '''
+            self.anc350 = equip.servers['ANC350'][0]
 
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             self.serversConnected = True
 
-            if self.anc350 != False:
+            if self.anc350 != None:
                 yield self.loadParameters()
                 self.MonitorStatus()
             else:
@@ -127,6 +133,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         except:
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
+            printErrorInfo()
 
     @inlineCallbacks
     def loadParameters(self):
@@ -171,6 +178,8 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
 
     @inlineCallbacks
     def RefreshAttocubeStatus(self):
+        if not self.serversConnected:
+            return
         try:
             for i in range(3):
                 self.CurrentPosition[i] = yield self.anc350.get_position(i)
@@ -213,7 +222,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 #Change the Pushbutton
                 stylesheet = '#pushButton_Status_Axis' + str(i+1) + '{\nimage:url(' + self.IconPath[self.Status[i]] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
                 self.pushButton_Status[i].setStyleSheet(stylesheet)
-        except:
+        except Exception as inst:
             printErrorInfo()
 
     def SetIndicatorMoving(self, AxisNo):

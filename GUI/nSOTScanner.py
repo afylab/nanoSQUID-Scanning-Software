@@ -1,7 +1,9 @@
 import sys
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtCore, QtWidgets, uic
 import ctypes
-from twisted.internet.defer import inlineCallbacks, Deferred
+import os
+import datetime
+from twisted.internet.defer import Deferred, inlineCallbacks
 myappid = 'YoungLab.nSOTScannerSoftware'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
@@ -11,7 +13,7 @@ MainWindowUI, QtBaseClass = uic.loadUiType(path + r"\MainWindow.ui")
 
 #import all windows for GUI
 from ScanControl import ScanControl
-from LabRADConnect import LabRADConnect
+# from LabRADConnect import LabRADConnect
 from nSOTCharacterizer import nSOTCharacterizer
 from PlottingModule import PlottingModule
 from TFCharacterizer import TFCharacterizer
@@ -23,40 +25,50 @@ from ScriptingModule import Scripting, Simulation
 from TemperatureControl import TemperatureControl
 from QRreader import QRreader
 from GoToSetpoint import gotoSetpoint
-from DeviceSelect import DeviceSelect
+# from DeviceSelect import DeviceSelect
 from SampleCharacterizer import SampleCharacterizer
 
 from nSOTScannerFormat import printErrorInfo
 from Equipment.Equipment import EquipmentHandler
 
 class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
+    system_name = 'generic'
     """ The following section initializes, or defines the initialization of the GUI and
     connecting to servers."""
-    def __init__(self, reactor, parent = None):
+    def __init__(self, reactor, parent = None, computer=''):
         """ nSOT Scanner GUI """
 
         super(nanoSQUIDSystem, self).__init__(parent)
         self.reactor = reactor
+        self.computer = computer
 
         ''' Setup the GUI '''
         self.setupUi(self)
-        self.setupWindows() # Setup the various Windows
         self.setupAdditionalUi()
+        self.setupWindows() # Setup the various Windows
+
+        # Configure the equipment and session
+        self.equip = EquipmentHandler(self.equipmentFrame, self.remoteFrame, self.computer)
+        self.configureEquipment()
+        self.configureSession()
+
         self.moveDefault() #Move to default position
 
-        self.equip = EquipmentHandler()
-        self.configureEquipment()
+        self.push_ConnectHardware.clicked.connect(self.connectLabRADConnections)
+        self.push_DisconnectHardware.clicked.connect(self.disconnectLabRADConnections)
 
         #Make sure default calibration is emitted
         self.PosCalibration.emitCalibration()
 
+
+        # Connect buttons
+        self.push_Campaign.clicked.connect(self.chooseCampaign)
+
         #Make sure default session flder is emitted
-        self.LabRAD.newSessionFolder.emit(self.LabRAD.session_2)
+        #self.LabRAD.newSessionFolder.emit(self.LabRAD.session_2)
 
         #Open by default the LabRAD Connect Module and Device Select
-        self.openWindow(self.LabRAD)
-        #self.openWindow(self.DeviceSelect)
-        #self.openWindow(self.Simulate)
+        #self.openWindow(self.LabRAD)
 
     def setupAdditionalUi(self):
         """Some UI elements would not set properly from Qt Designer. These initializations are done here."""
@@ -78,14 +90,10 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.actionSample_Characterizer.triggered.connect(lambda : self.openWindow(self.SampleCharacterizer))
         self.actionAttocube_Coarse_Position_Control.triggered.connect(lambda : self.openWindow(self.AttocubeCoarseControl))
 
-        #Connectors all layout buttons
-        self.push_Layout1.clicked.connect(self.setLayout1)
-
         self.push_Logo.clicked.connect(self.toggleLogo)
         self.isRedEyes = False
 
     #----------------------------------------------------------------------------------------------#
-
     """ The following section connects actions related to default opening windows."""
 
     def moveDefault(self):
@@ -107,8 +115,8 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         Setup all the Windows and put them in self.windows
         '''
         self.ScanControl = ScanControl.Window(self.reactor, None)
-        self.LabRAD = LabRADConnect.Window(self.reactor, None)
-        self.DeviceSelect = DeviceSelect.Window(self.reactor, None)
+        # self.LabRAD = LabRADConnect.Window(self.reactor, None)
+        # self.DeviceSelect = DeviceSelect.Window(self.reactor, None)
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor, None)
         self.PlottingModule = PlottingModule.CommandCenter(self.reactor, None)
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
@@ -122,7 +130,9 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.SampleCharacterizer = SampleCharacterizer.Window(self.reactor,None)
         self.AttocubeCoarseControl = CoarseAttocubeControl.Window(self.reactor,None)
 
-        self.windows = [self.LabRAD, self.DeviceSelect, self.ScanControl, self.nSOTChar, self.PlottingModule, self.TFChar, self.Approach, self.ApproachMonitor,
+        # self.windows = [self.LabRAD, self.DeviceSelect, self.ScanControl, self.nSOTChar, self.PlottingModule, self.TFChar, self.Approach, self.ApproachMonitor,
+        #     self.PosCalibration, self.FieldControl, self.TempControl, self.QRreader, self.GoToSetpoint, self.SampleCharacterizer, self.AttocubeCoarseControl]
+        self.windows = [self.ScanControl, self.nSOTChar, self.PlottingModule, self.TFChar, self.Approach, self.ApproachMonitor,
             self.PosCalibration, self.FieldControl, self.TempControl, self.QRreader, self.GoToSetpoint, self.SampleCharacterizer, self.AttocubeCoarseControl]
 
         #This module should always be initialized last, and have the modules
@@ -138,11 +148,12 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         #When LabRAD Connect module emits all the local and remote labRAD connections, it goes to the device
         #select module. This module selects appropriate devices for things. That is then emitted and is distributed
         #among all the other modules
-        self.LabRAD.cxnLocal.connect(self.DeviceSelect.connectLabRAD)
-        self.LabRAD.cxnRemote.connect(self.DeviceSelect.connectRemoteLabRAD)
-        self.DeviceSelect.newDeviceInfo.connect(self.distributeDeviceInfo)
-        self.LabRAD.cxnDisconnected.connect(self.disconnectLabRADConnections)
-        self.LabRAD.newSessionFolder.connect(self.distributeSessionFolder)
+        # self.LabRAD.cxnLocal.connect(self.DeviceSelect.connectLabRAD)
+        # self.LabRAD.cxnRemote.connect(self.DeviceSelect.connectRemoteLabRAD)
+        # self.DeviceSelect.newDeviceInfo.connect(self.distributeDeviceInfo)
+        # self.LabRAD.cxnDisconnected.connect(self.disconnectLabRADConnections)
+        # self.LabRAD.newSessionFolder.connect(self.distributeSessionFolder)
+
         self.TFChar.workingPointSelected.connect(self.distributeWorkingPoint)
         self.nSOTChar.newToeField.connect(self.FieldControl.updateToeField)
         self.Approach.newPLLData.connect(self.ApproachMonitor.updatePLLPlots)
@@ -158,21 +169,90 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         Configure the specific equipment for the system by connecting things to the
         EquipmentHandler object, self.equip.
         '''
-        pass
+        self.equip.add_server("LabRAD", None, display_frame=self.genericFrame)
+        self.equip.add_server("Data Vault", "data_vault", display_frame=self.genericFrame)
+        self.equip.add_server("Serial Server", 'serial_server', display_frame=self.genericFrame)
+        self.equip.add_server("GPIB Man.", "gpib_device_manager", display_frame=self.genericFrame)
+        self.equip.add_server("GPIB Server", "gpib_bus", display_frame=self.genericFrame)
+
+        '''
+        Example of how to add remote connections
+        '''
+        # self.equip.configure_remote_host("REMOTEHOST", "computer_name_for_serial_server")
+        # self.equip.add_remote_server("Remote LabRAD", None)
+        # self.equip.add_remote_server("SR830", "sr_830", "0")
+    #
+
+    def configureSession(self, newCampaign=None):
+        '''
+        Configure the session information. With the system and campaign name
+        '''
+        if newCampaign is None: # Get the last campaign name used, if not call it general
+            if os.path.exists('../lastcampaign.txt'):
+                with open('../lastcampaign.txt', 'r') as fl:
+                    lines = fl.readlines()
+                    l1 = lines[0].split(":")
+                    if l1[0] == "campaign":
+                        self.campaign_name = l1[1].strip()
+                    else:
+                        self.campaign_name = 'general'
+            else:
+                self.campaign_name = 'general'
+        else:
+            self.campaign_name = newCampaign
+        self.label_Campaign.setText(self.campaign_name)
+        with open('../lastcampaign.txt', 'w') as fl:
+            fl.write("campaign" + ":" + self.campaign_name)
+
+        #Data vault session info
+        self.lineEdit_Session.setReadOnly(True)
+        self.session = os.path.join(str(self.system_name), self.campaign_name)
+        self.lineEdit_Session.setText(self.session)
+        self.equip.setSession(self.session)
+
+        #Saving images of all data taken info
+        self.lineEdit_Session_2.setReadOnly(True)
+        home = os.path.expanduser("~")
+        screenshotdir = os.path.join(home, 'Young Lab Dropbox','NanoSQUID Battle Station','Data','Software Screenshots')
+        self.screenshots = os.path.join(screenshotdir, str(self.system_name), self.campaign_name,  str(datetime.date.today()))
+        self.lineEdit_Session_2.setText(self.screenshots)
+        if not os.path.exists(self.screenshots):
+            os.makedirs(self.screenshots)
+        self.distributeSessionFolder(self.screenshots)
+
+    def chooseCampaign(self):
+        campaign, done = QtWidgets.QInputDialog.getText(self, "Set Campaign", "Enter the name of the campaign:")
+        if done:
+            self.configureSession(campaign)
     #
 
 #----------------------------------------------------------------------------------------------#
     """ The following section connects actions related to passing LabRAD connections."""
 
-    def distributeDeviceInfo(self, dic):
-        #Call connectLabRAD functions for relevant modules.
-        #Note that self.windows[0] corresponds to the LabRADConnect and DeviceSelect module
-        #LabRAD connections are not sent to them module to prevent recursion errors
-        for window in self.windows[2:]:
-            if hasattr(window, "connectLabRAD"):
-                window.connectLabRAD(dic)
+    # def distributeDeviceInfo(self, dic):
+    #     #Call connectLabRAD functions for relevant modules.
+    #     #Note that self.windows[0] corresponds to the LabRADConnect and DeviceSelect module
+    #     #LabRAD connections are not sent to them module to prevent recursion errors
+    #     for window in self.windows[2:]: # For now
+    #         if hasattr(window, "connectLabRAD"):
+    #             window.connectLabRAD(dic)
 
-    def disconnectLabRADConnections(self):
+    @inlineCallbacks
+    def connectLabRADConnections(self, c=None):
+        yield self.equip.connect_all_servers()
+        for window in self.windows:
+            if hasattr(window, "connectLabRAD"):
+                print(window)
+                window.connectLabRAD(self.equip)
+
+        # Still need work
+        # self.nSOTChar.connectLabRAD(self.equip)
+        # self.FieldControl.connectLabRAD(self.equip)
+    #
+
+    @inlineCallbacks
+    def disconnectLabRADConnections(self, c=None):
+        yield self.equip.disconnect_servers()
         for window in self.windows:
             if hasattr(window, "disconnectLabRAD"):
                 window.disconnectLabRAD()
@@ -183,14 +263,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.nSOTChar.setSessionFolder(folder)
         self.SampleCharacterizer.setSessionFolder(folder)
 
-    def updateDataVaultFolder(self):
-        self.ScanControl.updateDataVaultDirectory()
-        self.TFChar.updateDataVaultDirectory()
-        self.nSOTChar.updateDataVaultDirectory()
-        self.SampleCharacterizer.updateDataVaultDirectory()
-
 #----------------------------------------------------------------------------------------------#
-
     """ The following section connects signals between various modules."""
     def distributeWorkingPoint(self,freq, phase, channel, amplitude):
         self.Approach.setWorkingPoint(freq, phase, channel, amplitude)
@@ -200,14 +273,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.ScanControl.set_voltage_calibration(data)
 
 #----------------------------------------------------------------------------------------------#
-
-    """ The following section connects actions related to setting the default layouts."""
-
-    def setLayout1(self):
-        self.moveDefault()
-        self.hideAllWindows()
-        self.openWindow(self.ScanControl)
-        self.openWindow(self.Approach)
+    """ The following section connects actions related to basic interface functions"""
 
     def toggleLogo(self):
         if self.isRedEyes == False:
@@ -244,6 +310,38 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         d = Deferred()
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
+
+    def keyPressEvent(self, event):
+        self.key_list.append(event.key())
+        if len(self.key_list) > 10:
+            self.key_list = self.key_list[-10:]
+        if len(self.key_list) == 10:
+            if self.key_list == [QtCore.Qt.Key_Up,QtCore.Qt.Key_Up,QtCore.Qt.Key_Down,QtCore.Qt.Key_Down,QtCore.Qt.Key_Left,QtCore.Qt.Key_Right,QtCore.Qt.Key_Left,QtCore.Qt.Key_Right,QtCore.Qt.Key_B,QtCore.Qt.Key_A]:
+                self.flashSQUID()
+
+    @inlineCallbacks
+    def flashSQUID(self):
+        style = '''QLabel{
+                color:rgb(168,168,168);
+                qproperty-alignment: 'AlignVCenter | AlignRight';
+                }
+
+                #centralwidget{
+                background: url(:/nSOTScanner/Pictures/SQUID.png);
+                }'''
+        self.centralwidget.setStyleSheet(style)
+
+        yield self.sleep(1)
+
+        style = '''QLabel{
+                color:rgb(168,168,168);
+                qproperty-alignment: 'AlignVCenter | AlignRight';
+                }
+
+                #centralwidget{
+                background: black;
+                }'''
+        self.centralwidget.setStyleSheet(style)
 
 #----------------------------------------------------------------------------------------------#
 """ The following runs the GUI"""

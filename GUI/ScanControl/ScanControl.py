@@ -255,37 +255,49 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.resize(0,0)
 
     @inlineCallbacks
-    def connectLabRAD(self, dict):
+    def connectLabRAD(self, equip):
         try:
-            self.cxn = dict['servers']['local']['cxn']
-            self.gen_dv = dict['servers']['local']['dv']
+            self.cxn = equip.cxn
+            self.gen_dv = equip.dv
 
             #Create another connection for the connection to data vault to prevent
             #problems of multiple windows trying to write the data vault at the same
             #time
             from labrad.wrappers import connectAsync
             self.cxn_scan = yield connectAsync(host = '127.0.0.1', password = 'pass')
-            self.dv = yield self.cxn_scan.data_vault
+            self.dv = self.cxn_scan.data_vault
             curr_folder = yield self.gen_dv.cd()
             yield self.dv.cd(curr_folder)
 
-            #Similarly uses that extra connection so that we can talk to the scan dac at the same time as other dacs
-            self.dac = yield self.cxn_scan.dac_adc
-            yield self.dac.select_device(dict['devices']['scan']['dac_adc'])
+            if "Scan DAC" in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers["Scan DAC"]
 
-            self.outputs['z out'] = dict['channels']['scan']['z out']
-            self.outputs['x out'] = dict['channels']['scan']['x out']
-            self.outputs['y out'] = dict['channels']['scan']['y out']
+                #Similarly uses that extra connection so that we can talk to the scan dac at the same time as other dacs
+                self.dac = yield self.cxn_scan.dac_adc
+                yield self.dac.select_device(device_info)
 
-            #Create a connection to the proper device for blinking
-            if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
-                self.blink_server = yield self.cxn_scan.ad5764_dcbox
-                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
-            elif dict['devices']['system']['blink device'].startswith('DA'):
-                self.blink_server = yield self.cxn_scan.dac_adc
-                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
+                self.outputs['z out'] = config['z out']
+                self.outputs['x out'] = config['x out']
+                self.outputs['y out'] = config['y out']
+            else:
+                print("'Scan DAC' not found, LabRAD connection to Scan Control Failed.")
+                return
 
-            self.outputs['blink out'] = dict['channels']['system']['blink channel']
+            if "Blink Device" in equip.servers:
+                svr, labrad_name, device_info, cnt, config = equip.servers["DC Box"]
+
+                #Create a connection to the proper device for blinking
+                if labrad_name.startswith('ad5764_dcbox'):
+                    self.blink_server = yield self.cxn_scan.ad5764_dcbox
+                    yield self.blink_server.select_device(device_info)
+                elif labrad_name.startswith('DA'):
+                    self.blink_server = yield self.cxn_scan.dac_adc
+                    yield self.blink_server.select_device(device_info)
+
+                self.outputs['blink out'] = config['blink channel']
+            else:
+                print("'DC Box' not found, LabRAD connection to Scan Control Failed.")
+                return
 
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")

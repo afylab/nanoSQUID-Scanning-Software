@@ -1,13 +1,13 @@
 '''
-A module defining the 1.5K system specifically
+A module defining the mobile racks dipper/vector magnet specifically
 '''
 import sys
 from PyQt5 import QtWidgets
 from nSOTScanner import nanoSQUIDSystem
 
 
-class nanoSQUID_1p5K(nanoSQUIDSystem):
-    system_name = '1p5K'
+class nanoSQUID_mobile(nanoSQUIDSystem):
+    system_name = 'mobile'
 #
 
 #----------------------------------------------------------------------------------------------#
@@ -17,7 +17,7 @@ if __name__=="__main__":
     app = QtWidgets.QApplication(sys.argv)
     qt5reactor.install()
     from twisted.internet import reactor
-    window = nanoSQUID_1p5K(reactor)
+    window = nanoSQUID_mobile(reactor)
     window.show()
     reactor.runReturn()
     sys.exit(app.exec_())

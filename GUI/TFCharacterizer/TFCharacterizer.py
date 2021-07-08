@@ -1,5 +1,5 @@
 import sys
-from PyQt5 import QtGui, QtWidgets, QtCore, uic
+from PyQt5 import QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 import pyqtgraph as pg
 import pyqtgraph.exporters
@@ -106,10 +106,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.resize(100,600)
 
     @inlineCallbacks
-    def connectLabRAD(self, dict):
+    def connectLabRAD(self, equip):
         try:
-            self.cxn = dict['servers']['local']['cxn']
-            self.gen_dv = dict['servers']['local']['dv']
+            self.cxn = equip.cxn
+            self.gen_dv = equip.dv
 
             #Create another connection for the connection to data vault to prevent
             #problems of multiple windows trying to write the data vault at the same
@@ -121,8 +121,13 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             curr_folder = yield self.gen_dv.cd()
             yield self.dv.cd(curr_folder)
 
-            self.hf = yield self.cxn_tf.hf2li_server
-            yield self.hf.select_device(dict['devices']['approach and TF']['hf2li'])
+            if "HF2LI Lockin" in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers["HF2LI Lockin"]
+                self.hf = yield self.cxn_tf.hf2li_server
+                yield self.hf.select_device(device_info)
+            else:
+                print("'HF2LI Lockin' not found, LabRAD connection to TF Characterizer Failed.")
+                return
 
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")

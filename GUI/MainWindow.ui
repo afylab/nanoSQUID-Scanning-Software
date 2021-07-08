@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>110</height>
+    <height>561</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -62,7 +62,7 @@ background: black;
      <rect>
       <x>0</x>
       <y>-1</y>
-      <width>501</width>
+      <width>500</width>
       <height>91</height>
      </rect>
     </property>
@@ -77,63 +77,22 @@ background: black
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QPushButton" name="push_Layout5">
+    <widget class="QLabel" name="label_Campaign_static">
      <property name="geometry">
       <rect>
-       <x>460</x>
+       <x>256</x>
        <y>30</y>
-       <width>23</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>5</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="push_Layout3">
-     <property name="geometry">
-      <rect>
-       <x>400</x>
-       <y>30</y>
-       <width>23</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>3</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="push_Layout2">
-     <property name="geometry">
-      <rect>
-       <x>370</x>
-       <y>30</y>
-       <width>23</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Test?&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="text">
-      <string>2</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_Layout">
-     <property name="geometry">
-      <rect>
-       <x>280</x>
-       <y>30</y>
-       <width>47</width>
-       <height>23</height>
+       <width>71</width>
+       <height>24</height>
       </rect>
      </property>
      <property name="font">
       <font>
+       <family>MS Shell Dlg 2</family>
        <pointsize>10</pointsize>
+       <weight>50</weight>
+       <italic>false</italic>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -145,48 +104,7 @@ qproperty-wordWrap: true;
 }</string>
      </property>
      <property name="text">
-      <string>Layout: </string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="push_Layout1">
-     <property name="geometry">
-      <rect>
-       <x>340</x>
-       <y>30</y>
-       <width>23</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="toolTip">
-      <string/>
-     </property>
-     <property name="statusTip">
-      <string/>
-     </property>
-     <property name="whatsThis">
-      <string extracomment="Testing"/>
-     </property>
-     <property name="accessibleName">
-      <string/>
-     </property>
-     <property name="accessibleDescription">
-      <string/>
-     </property>
-     <property name="text">
-      <string>1</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="push_Layout4">
-     <property name="geometry">
-      <rect>
-       <x>430</x>
-       <y>30</y>
-       <width>23</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>4</string>
+      <string>Campaign: </string>
      </property>
     </widget>
     <widget class="QPushButton" name="push_Logo">
@@ -208,13 +126,336 @@ background: black;
       <string>PushButton</string>
      </property>
     </widget>
+    <widget class="QLabel" name="label_Campaign">
+     <property name="geometry">
+      <rect>
+       <x>330</x>
+       <y>30</y>
+       <width>101</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>MS Shell Dlg 2</family>
+       <pointsize>10</pointsize>
+       <weight>50</weight>
+       <italic>false</italic>
+       <bold>false</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_Layout{
+color: rgb(168, 168, 168);
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+qproperty-alignment: 'AlignVCenter | AlignRight';
+qproperty-wordWrap: true;
+}</string>
+     </property>
+     <property name="text">
+      <string>   -</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="push_Campaign">
+     <property name="geometry">
+      <rect>
+       <x>460</x>
+       <y>24</y>
+       <width>36</width>
+       <height>36</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_Campaign{
+image:url(:/nSOTScanner/Pictures/SessionSelect.png);
+background: black;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
     <zorder>push_Logo</zorder>
-    <zorder>push_Layout5</zorder>
-    <zorder>push_Layout3</zorder>
-    <zorder>push_Layout2</zorder>
-    <zorder>label_Layout</zorder>
-    <zorder>push_Layout1</zorder>
-    <zorder>push_Layout4</zorder>
+    <zorder>label_Campaign_static</zorder>
+    <zorder>label_Campaign</zorder>
+    <zorder>push_Campaign</zorder>
+   </widget>
+   <widget class="QFrame" name="frame_Session">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>90</y>
+      <width>500</width>
+      <height>70</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="label_Session">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>10</y>
+       <width>100</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_Session{
+color: rgb(168, 168, 168);
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+qproperty-alignment: 'AlignVCenter | AlignRight';
+qproperty-wordWrap: true;
+}</string>
+     </property>
+     <property name="text">
+      <string>Datavault Folder:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_Session">
+     <property name="geometry">
+      <rect>
+       <x>125</x>
+       <y>10</y>
+       <width>350</width>
+       <height>20</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_Session_2">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>40</y>
+       <width>100</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#label_Session{
+color: rgb(168, 168, 168);
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+qproperty-alignment: 'AlignVCenter | AlignRight';
+qproperty-wordWrap: true;
+}</string>
+     </property>
+     <property name="text">
+      <string>Session Folder:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_Session_2">
+     <property name="geometry">
+      <rect>
+       <x>125</x>
+       <y>40</y>
+       <width>350</width>
+       <height>20</height>
+      </rect>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="frame">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>150</y>
+      <width>500</width>
+      <height>400</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QPushButton" name="push_ConnectHardware">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>10</y>
+       <width>150</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_ConnectHardware{
+color: rgb(168,168,168);
+background: rgb(60, 60, 60);
+border-radius: 4px;
+}
+
+QPushButton:pressed#push_ConnectHardwarel{
+color: rgb(168,168,168);
+background-color:rgb(100,100,100);
+border-radius: 4px
+}</string>
+     </property>
+     <property name="text">
+      <string>Connect Hardware Servers</string>
+     </property>
+    </widget>
+    <widget class="QFrame" name="genericFrame">
+     <property name="geometry">
+      <rect>
+       <x>5</x>
+       <y>40</y>
+       <width>490</width>
+       <height>80</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#genericFrame{
+border: 1px solid rgb(168,168,168);
+border-radius: 5px
+}</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <widget class="QLabel" name="label_generic_frame">
+      <property name="geometry">
+       <rect>
+        <x>200</x>
+        <y>0</y>
+        <width>100</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Generic Servers</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QPushButton" name="push_DisconnectHardware">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>10</y>
+       <width>150</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#push_DisconnectHardware{
+color: rgb(168,168,168);
+background: rgb(60, 60, 60);
+border-radius: 4px;
+}
+
+QPushButton:pressed#push_DisconnectHardware{
+color: rgb(168,168,168);
+background-color:rgb(100,100,100);
+border-radius: 4px
+}</string>
+     </property>
+     <property name="text">
+      <string>Disconnect Hardware Servers</string>
+     </property>
+    </widget>
+    <widget class="QFrame" name="equipmentFrame">
+     <property name="geometry">
+      <rect>
+       <x>5</x>
+       <y>130</y>
+       <width>490</width>
+       <height>160</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#equipmentFrame{
+border: 1px solid rgb(168,168,168);
+border-radius: 5px
+}</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <widget class="QLabel" name="label_equipment_frame">
+      <property name="geometry">
+       <rect>
+        <x>190</x>
+        <y>0</y>
+        <width>120</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Equipment Servers</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QFrame" name="remoteFrame">
+     <property name="geometry">
+      <rect>
+       <x>5</x>
+       <y>300</y>
+       <width>490</width>
+       <height>80</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">#remoteFrame{
+border: 1px solid rgb(168,168,168);
+border-radius: 5px
+}</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <widget class="QLabel" name="label_remote_frame">
+      <property name="geometry">
+       <rect>
+        <x>200</x>
+        <y>0</y>
+        <width>100</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Remote Servers</string>
+      </property>
+     </widget>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -387,11 +628,6 @@ background: black;
   </action>
  </widget>
  <tabstops>
-  <tabstop>push_Layout1</tabstop>
-  <tabstop>push_Layout2</tabstop>
-  <tabstop>push_Layout3</tabstop>
-  <tabstop>push_Layout4</tabstop>
-  <tabstop>push_Layout5</tabstop>
   <tabstop>push_Logo</tabstop>
  </tabstops>
  <resources>

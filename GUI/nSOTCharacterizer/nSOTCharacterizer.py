@@ -1,5 +1,5 @@
 import sys
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtCore, QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 import pyqtgraph as pg
@@ -306,11 +306,11 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         self.move(550,10)
 
     @inlineCallbacks
-    def connectLabRAD(self, dict):
+    def connectLabRAD(self, equip):
         try:
             #Keep a copy of the dataVault server initialized by the LabRADConnect module
             #to synchronize data save folders
-            self.gen_dv = dict['servers']['local']['dv']
+            self.gen_dv = equip.dv
 
             '''
             Create another connection to labrad in order to have a set of servers opened up in a context
@@ -325,43 +325,61 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             curr_folder = yield self.gen_dv.cd()
             yield self.dv.cd(curr_folder)
 
-            #Connected to the appropriate DACADC
-            self.dac = yield cxn.dac_adc
-            yield self.dac.select_device(dict['devices']['nsot']['dac_adc'])
+            if 'nSOT DAC' in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers['nSOT DAC']
+                #Connected to the appropriate DACADC
+                self.dac = yield cxn.dac_adc
+                yield self.dac.select_device(device_info)
+
+                self.settingsDict['nsot bias output'] = config['nSOT Bias']
+                self.settingsDict['nsot bias input'] = config['Bias Reference']
+                self.settingsDict['feedback DC input'] = config['DC Readout']
+                self.settingsDict['noise input'] = config['Noise Readout']
+            else:
+                print("'nSOT DAC' not found, LabRAD connection to nSOT Characterizer Failed.")
+                return
 
             #Select the appropriate magnet power supply
-            if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
-                self.dac_toe = dict['servers']['local']['dac_adc']
-                self.settingsDict['Magnet device'] = 'Toellner 8851'
-                self.settingsDict['toellner volts'] = dict['channels']['system']['toellner dac voltage']
-                self.settingsDict['toellner current'] = dict['channels']['system']['toellner dac current']
-                self.comboBox_magnetPower.addItem('Toellner 8851')
-            elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
-                self.ips = dict['servers']['remote']['ips120']
-                self.settingsDict['Magnet device'] = 'IPS 120-10'
-                self.comboBox_magnetPower.addItem('IPS 120-10')
+            '''
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            FUTURE: Need to integrate magnet power supply controllers
+            '''
+            if 'Magnet Supply' in equip.servers:
+                if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
+                    self.dac_toe = dict['servers']['local']['dac_adc']
+                    self.settingsDict['Magnet device'] = 'Toellner 8851'
+                    self.settingsDict['toellner volts'] = dict['channels']['system']['toellner dac voltage']
+                    self.settingsDict['toellner current'] = dict['channels']['system']['toellner dac current']
+                    self.comboBox_magnetPower.addItem('Toellner 8851')
+                elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
+                    self.ips = dict['servers']['remote']['ips120']
+                    self.settingsDict['Magnet device'] = 'IPS 120-10'
+                    self.comboBox_magnetPower.addItem('IPS 120-10')
+                else:
+                    raise Exception #Raise error if no magnet power supply is connected
             else:
-                raise Exception #Raise error if no magnet power supply is connected
+                print("WARNING: Temporarily proceeding without magnet power supply")
+                # print("'Magnet Supply' not found, LabRAD connection to nSOT Characterizer Failed.")
+                # return
 
-            #select the appropriate blink device
-            if dict['devices']['system']['blink device'].startswith('ad5764_dcbox'):
-                self.blink_server = yield cxn.ad5764_dcbox
-                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
-                print('DC BOX Blink Device')
-            elif dict['devices']['system']['blink device'].startswith('DA'):
-                self.blink_server = yield cxn.dac_adc
-                yield self.blink_server.select_device(dict['devices']['system']['blink device'])
-                print('DAC ADC Blink Device')
+            if "Blink Device" in equip.servers:
+                svr, labrad_name, device_info, cnt, config = equip.servers["Blink Device"]
+
+                #Create a connection to the proper device for blinking
+                if labrad_name.startswith('ad5764_dcbox'):
+                    self.blink_server = yield self.cxn_scan.ad5764_dcbox
+                    yield self.blink_server.select_device(device_info)
+                    print('DC BOX Blink Device')
+                elif labrad_name.startswith('DA'):
+                    self.blink_server = yield self.cxn_scan.dac_adc
+                    yield self.blink_server.select_device(device_info)
+                    print('DAC ADC Blink Device')
+
+                self.blinkDevice = device_info
+                self.settingsDict['blink'] = config['blink channel']
             else:
-                raise Exception #Raise error if no blink device is selected
-
-            #Set all the channels as specified by the DeviceSelect module
-            self.blinkDevice = dict['devices']['system']['blink device']
-            self.settingsDict['blink'] = dict['channels']['system']['blink channel']
-            self.settingsDict['nsot bias output'] = dict['channels']['nsot']['nSOT Bias']
-            self.settingsDict['nsot bias input'] = dict['channels']['nsot']['Bias Reference']
-            self.settingsDict['feedback DC input'] = dict['channels']['nsot']['DC Readout']
-            self.settingsDict['noise input'] = dict['channels']['nsot']['Noise Readout']
+                print("'Blink Device' not found, LabRAD connection to nSOT Characterizer Failed.")
+                return
 
             #Set the server pushbutton to green to show servers were connected
             self.push_Servers.setStyleSheet("#push_Servers{" +
@@ -372,6 +390,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
+            printErrorInfo()
 
     def disconnectLabRAD(self):
         try:
