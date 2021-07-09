@@ -218,34 +218,13 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 print("'Sample DAC' not found, LabRAD connection to Sample Characterizer Failed.")
                 return
 
-            # self.dac = yield self.cxn_sample.dac_adc
-            # yield self.dac.select_device(dict['devices']['sample']['dac_adc'])
-
             #Select the appropriate magnet power supply
-            '''
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            FUTURE: Need to integrate magnet power supply controllers
-            '''
             if 'Magnet Supply' in equip.servers:
-                #Eventually make this module compatible with Toellner, for now it is not
-                if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
-                    self.dac_toe = dict['servers']['local']['dac_adc']
-                    self.ips = None
-                    self.ami = None
-                elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
-                    self.dac_toe = None
-                    self.ips = dict['servers']['remote']['ips120']
-                    self.ami = None
-                elif dict['devices']['system']['magnet supply'] == 'AMI 430 Power Supply':
-                    self.dac_toe = None
-                    self.ips = None
-                    self.ami = dict['servers']['local']['ami_430']
-                else:
-                    raise Exception
+                svr, ln, device_info, cnt, config = equip.servers['Magnet Supply']
+                self.magnet = cnt
             else:
-                print("WARNING: Temporarily proceeding without magnet power supply")
-                # print("'Magnet Supply' not found, LabRAD connection to nSOT Characterizer Failed.")
-                # return
+                print("'Magnet Supply' not found, LabRAD connection to nSOT Characterizer Failed.")
+                return
 
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -263,8 +242,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.cxn_sample = False
         self.dv = False
         self.dac = False
-        self.dac_toe = False
-        self.ips = False
+        self.magnet = False
 
         self.lockInterface()
 
@@ -1169,10 +1147,8 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
     @inlineCallbacks
     def rampMagneticField(self, end, rate):
-        '''Ramp the magnetic field to 'end' in units of Tesla, at a rate of 'rate' in T/minute
-        This function is only compatible with the ips120 power supply. Eventually, specific magnet power supplies should
-        be abstracted into a magnetPowerSupply object since the software is likely to operate with different power supplies
-        on different set ups.
+        '''
+        Ramp the magnetic field to 'end' in units of Tesla, at a rate of 'rate' in T/minute
         '''
         try:
             yield self.goToSetpointIPS(end, rate) #Set the setpoint and update the IPS mode to sweep to field
@@ -1186,25 +1162,22 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 #Sometimes communication is buggy and repeated attempts helps
                 if time.time() - t0 > 1:
                     print('restarting loop')
-                    yield self.goToSetpointIPS(end, rate)
+                    self.magnet.setSetpoint(end)
+                    self.magnet.setRampRate(rate)
+                    yield self.magnet.goToSetpoint()
+                    # yield self.goToSetpointIPS(end, rate)
                     t0 = time.time()
                 yield self.sleep(0.25)
-                curr_field = yield self.ips.read_parameter(7)
+                # curr_field = yield self.ips.read_parameter(7)
+                yield self.magnet.poll()
+                curr_field = self.magnet.Bz
                 #if within 10 uT of the desired field, break out of the loop
-                if float(curr_field[1:]) <= end + 0.00001 and float(curr_field[1:]) >= end - 0.00001:
+                if curr_field <= end + 0.00001 and curr_field >= end - 0.00001:
                     break
                 elif self.abortMagneticFieldSweep_Flag:
                     break
         except:
             printErrorInfo()
-
-    @inlineCallbacks
-    def goToSetpointIPS(self, B, rate):
-        yield self.ips.set_control(3) #Set IPS to remote communication (prevents user from using the front panel)
-        yield self.ips.set_fieldsweep_rate(rate) #Set IPS ramp rate in T/min
-        yield self.ips.set_targetfield(B) #Set targetfield to desired field in T
-        yield self.ips.set_activity(1) #Set IPS mode to ramping instead of hold
-        yield self.ips.set_control(2) #Set IPS to local control (allows user to edit IPS from the front panel)
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions for setting the DAC-ADC voltage at the same time as the UI"""
@@ -1242,6 +1215,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             self.label_DACOout_list[DAC_Out_Channels[0]].setText(formatNum(stop[0], 6))
             returnValue(data)
         except Exception as inst:
+            print(inst)
             printErrorInfo()
 
     def calculateRealVoltage(self, reading):

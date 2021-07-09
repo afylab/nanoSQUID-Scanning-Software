@@ -17,7 +17,7 @@
 ### BEGIN NODE INFO
 [info]
 name = DAC-ADC
-version = 1.2.1
+version = 1.2.0
 description = DAC-ADC Box server: AD5764-AD7734, AD5780-AD7734, AD5791-AD7734
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -33,12 +33,13 @@ from labrad.server import setting, Signal
 from labrad.devices import DeviceServer,DeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import reactor, defer
-#import labrad.units as units
+# import labrad.units as units
 from labrad.types import Value
-#import numpy as np
+import numpy as np
 import time
+from exceptions import IndexError
 
-TIMEOUT = Value(1,'s')
+TIMEOUT = Value(5,'s')
 BAUD    = 115200
 
 def twoByteToInt(DB1,DB2): # This gives a 16 bit integer (between +/- 2^16)
@@ -127,6 +128,8 @@ class DAC_ADCWrapper(DeviceWrapper):
         ans = yield p.send()
         returnValue(ans.read_line)
 
+
+
 class DAC_ADCServer(DeviceServer):
     name = 'DAC-ADC'
     deviceName = 'Arduino DAC-ADC'
@@ -181,27 +184,12 @@ class DAC_ADCServer(DeviceServer):
             print(ports)
             if port not in ports:
                 continue
-            devName = '%s (%s)' % (name, port)
+            devName = '%s (%s)' % (serServer, port)
             devs += [(devName, (server, port))]
 
+       # devs += [(0,(3,4))]
         returnValue(devs)
 
-    @inlineCallbacks
-    def BufferError(self , dev):
-        """Reads the first couple of bytes and determines if it is an error message. Return the message either once the full error
-           is received, or it is determined that an error is not being thrown."""
-        error =  'VOLTAGE_OVERRANGE'
-        message= ''
-        count = 0
-        while count < 17:
-            bytestoread = yield dev.in_waiting()
-            if bytestoread > 0:
-                byte = yield dev.readByte(1)
-                message = message + byte
-                if byte != error[count]:
-                    returnValue(message)
-                count += 1
-        returnValue(message)
 
     @setting(100)
     def connect(self,c,server,port):
@@ -226,10 +214,11 @@ class DAC_ADCServer(DeviceServer):
         self.sigOutputSet([str(port),voltage])
         returnValue(ans)
 
+
     @setting(104,port='i',returns='v[]')
     def read_voltage(self,c,port):
         """
-        GET_ADC returns the voltage read by an input channel. Not to be confused with read_dac_voltage, which returns the DAC voltage
+        GET_ADC returns the voltage read by an input channel. Do not confuse with GET_DAC; GET_DAC has not been implemented yet.
         """
         dev=self.selectedDevice(c)
         if not (port in range(8)):
@@ -238,19 +227,6 @@ class DAC_ADCServer(DeviceServer):
         yield dev.write("GET_ADC,%i\r"%port)
         ans = yield dev.read()
         self.sigInputRead([str(port),str(ans)])
-        returnValue(float(ans))
-
-    @setting(1040,port='i',returns='v[]')
-    def read_dac_voltage(self,c,port):
-        """
-        GET_DAC returns the voltage set on an output channel. Not to be confused with read_voltage, which returns the ADC voltage
-        """
-        dev=self.selectedDevice(c)
-        if not (port in range(4)):
-            returnValue("Error: invalid port number.")
-            return
-        yield dev.write("GET_DAC,%i\r"%port)
-        ans = yield dev.read()
         returnValue(float(ans))
 
     @setting(105,port='i',ivoltage='v',fvoltage='v',steps='i',delay='i',returns='s')
@@ -263,11 +239,6 @@ class DAC_ADCServer(DeviceServer):
         yield dev.write("RAMP1,%i,%f,%f,%i,%i\r"%(port,ivoltage,fvoltage,steps,delay))
         self.sigRamp1Started([str(port),str(ivoltage),str(fvoltage),str(steps),str(delay)])
         ans = yield dev.read()
-        if "VOLTAGE_OVERRANGE" in ans:
-            v = yield dev.read()
-            while v != "":
-                v = yield dev.read()
-            returnValue(ans)
         returnValue(ans)
 
     @setting(106,port1='i',port2='i',ivoltage1='v',ivoltage2='v',fvoltage1='v',fvoltage2='v',steps='i',delay='i',returns='s')
@@ -280,11 +251,6 @@ class DAC_ADCServer(DeviceServer):
         yield dev.write("RAMP2,%i,%i,%f,%f,%f,%f,%i,%i\r"%(port1,port2,ivoltage1,ivoltage2,fvoltage1,fvoltage2,steps,delay))
         self.sigRamp2Started([str(port1),str(port2),str(ivoltage1),str(ivoltage2),str(fvoltage1),str(fvoltage2),str(steps),str(delay)])
         ans = yield dev.read()
-        if "VOLTAGE_OVERRANGE" in ans:
-            v = yield dev.read()
-            while v != "":
-                v = yield dev.read()
-            returnValue(ans)
         returnValue(ans)
 
     @setting(107,dacPorts='*i', adcPorts='*i', ivoltages='*v[]', fvoltages='*v[]', steps='i',delay='v[]',nReadings='i',returns='**v[]')#(*v[],*v[])')
@@ -320,14 +286,9 @@ class DAC_ADCServer(DeviceServer):
         channels = []
         data = ''
 
-        data = yield self.BufferError(dev)
-        if 'VOLTAGE_OVERRANGE' in data:
-            #v = dev.read()
-            returnValue('DACOverrange')
-
         dev.setramping(True)
         try:
-            nbytes = len(data)
+            nbytes = 0
             totalbytes = steps * adcN * 2
             while dev.isramping() and (nbytes < totalbytes):
                 bytestoread = yield dev.in_waiting()
@@ -405,17 +366,9 @@ class DAC_ADCServer(DeviceServer):
         voltages = []
         channels = []
         data = ''
-
-        data = yield self.BufferError(dev)
-        if 'VOLTAGE_OVERRANGE' in data:
-            # v = dev.read()
-            # while v != '':
-                # v=dev.read()
-            returnValue('DACOverrange')
-
         dev.setramping(True)
         try:
-            nbytes = len(data)
+            nbytes = 0
             totalbytes = adcSteps * adcN * 2
             while dev.isramping() and (nbytes < totalbytes):
                 bytestoread = yield dev.in_waiting()
@@ -527,7 +480,6 @@ class DAC_ADCServer(DeviceServer):
     def dac_ch_calibration(self,c):
         """
         Calibrates each DAC channel.
-
         Connect each DAC to each ADC channel.
         """
         dev=self.selectedDevice(c)
@@ -539,7 +491,6 @@ class DAC_ADCServer(DeviceServer):
     def adc_zero_sc_calibration(self,c):
         """
         Calibrates each DAC channel.
-
         Connect each DAC to each ADC channel.
         """
         dev=self.selectedDevice(c)
@@ -551,7 +502,6 @@ class DAC_ADCServer(DeviceServer):
     def adc_ch_zero_sc_calibration(self,c):
         """
         Calibrates ADC Zero scale for each channel.
-
         Connect a zero scale voltage to each channel.
         """
         dev=self.selectedDevice(c)
@@ -563,7 +513,6 @@ class DAC_ADCServer(DeviceServer):
     def adc_ch_full_sc_calibration(self,c):
         """
         Calibrates ADC Full scale for each channel.
-
         Connect a full scale voltage to each channel.
         """
         dev=self.selectedDevice(c)
@@ -599,6 +548,62 @@ class DAC_ADCServer(DeviceServer):
         dev=self.selectedDevice(c)
         yield dev.write("FULL_SCALE,%f\r"%(voltage))
         ans = yield dev.read()
+        returnValue(ans)
+
+    @setting(121)
+    def set_offset_and_gain(self,c,offset_and_gain):
+        """
+        Set the offset and gain for all DAC channels.
+        """
+        dev=self.selectedDevice(c)
+        message = "SET_OSG" + ",%f"*8 + "\r"
+        yield dev.write(message%(tuple(offset_and_gain)))
+        ans = [0]*8
+        for i in range(8):
+            ans[i] = yield dev.read()
+
+        returnValue(ans)
+
+    @setting(122)
+    def inquiry_offset_and_gain(self,c):
+        """
+        Print the current offset and gain values for all DAC channels.
+        """
+        dev=self.selectedDevice(c)
+        yield dev.write("INQUIRY_OSG\r")
+        ans = [0]*8
+        for i in range(8):
+            ans[i] = yield dev.read()
+
+        returnValue(ans)
+
+
+    @setting(123)
+    def sn(self,c):
+        """
+        Returns the serial number of the box.
+        """
+        dev = self.selectedDevice(c)
+        yield dev.write("SERIAL_NUMBER\r")
+        ans = yield dev.read()
+        returnValue(ans)
+
+    @setting(124,channel='i',code='i')
+    def set_dac_code(self,c,channel,code):
+        """
+        SET_DAC_CODE writes a code between 0 and 1048576 to a channel and returns the channel and the code written to that DAC's register.
+        """
+        if not (channel in range(4)):
+            returnValue("Error: invalid port number.")
+            return
+        if (code > 1048576) or (code < 0):
+            returnValue("Error: invalid code. Must be between 0 and 1048576.")
+            return
+        dev=self.selectedDevice(c)
+        yield dev.write("SET_DAC_CODE,%i,%i\r"%(channel,code))
+        ans = yield dev.read()
+        code = ans.lower().partition(' to ')[2][:-1]
+        self.sigOutputSet([str(channel),code])
         returnValue(ans)
 
     @setting(9002)
@@ -638,6 +643,12 @@ class DAC_ADCServer(DeviceServer):
         d = defer.Deferred()
         reactor.callLater(secs,d.callback,'Sleeping')
         return d
+
+    # GET_DAC hasn't been added to the DAC ADC code yet
+    # @setting(9101)
+    # def send_get_dac_requests(self,c):
+    #     yield
+
 
 __server__ = DAC_ADCServer()
 
