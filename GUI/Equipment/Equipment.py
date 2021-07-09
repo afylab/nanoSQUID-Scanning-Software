@@ -41,6 +41,7 @@ class EquipmentController():
             print(str(inst))
             printErrorInfo()
             self.widget.error()
+    #
 
     def disconnect(self):
         '''
@@ -117,7 +118,7 @@ class EquipmentHandler():
             self.servers[name] = (False, self.compname.lower() + "_" + labrad_name, None, None, None)
         elif name != "LabRAD":
             if controller is not None:
-                controller = controller(self.widgets[name])
+                controller = controller(self.widgets[name], device_info, config)
             self.servers[name] = (False, labrad_name, device_info, controller, config)
     #
 
@@ -161,7 +162,7 @@ class EquipmentHandler():
             self.servers[name] = (False, self.remote_compname.lower() + "_" + labrad_name, None, None, None)
         elif name != "Remote LabRAD":
             if controller is not None:
-                controller = controller(self.widgets[name])
+                controller = controller(self.widgets[name], device_info, config)
             self.servers[name] = (False, labrad_name, device_info, controller, config)
         self.remote_servers.append(name)
     #
