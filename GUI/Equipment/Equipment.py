@@ -17,12 +17,14 @@ class EquipmentController():
     Args:
         widget : The GUI widget for displaying the status
     '''
-    def __init__(self, widget):
+    def __init__(self, widget, device_info, config):
         self.server = None # When not connected the server is None
         self.widget = widget
+        self.device_info = device_info
+        self.config = config
     #
 
-    def connect(self, server, device_info):
+    def connect(self, server):
         '''
         Connect to the device for the given server by calling select_device
         with the given selection info (if present). Override for more complex
@@ -31,11 +33,11 @@ class EquipmentController():
         self.server = server
         try:
             if hasattr(server, 'select_device'):
-                if device_info is None:
+                if self.device_info is None:
                     server.select_device()
                 else:
-                    server.select_device(device_info)
-            self.widget.connect(device_info)
+                    server.select_device(self.device_info)
+            self.widget.connect(self.device_info)
         except Exception as inst:
             print("Error connecting labrad servers")
             print(str(inst))
@@ -208,7 +210,7 @@ class EquipmentHandler():
                 # Configure the device, either through a controller or the
                 # select_device function in most servers.
                 if cnt is not None:
-                    yield cnt.connect(server, device_info)
+                    yield cnt.connect(server)
                 elif hasattr(server, 'select_device'):
                     if device_info is None:
                         server.select_device()

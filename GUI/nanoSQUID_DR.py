@@ -11,6 +11,9 @@ class nanoSQUID_DR(nanoSQUIDSystem):
     def configureEquipment(self):
         super().configureEquipment()
 
+        '''
+        Testing configuration
+        '''
         dict = {'pll input':1, 'pll output':1, 'pid z out':1, 'z monitor':1, 'sum board toggle':1}
         self.equip.add_server("HF2LI Lockin", "hf2li_server", controller=CoreEquipment.HF2LI_Controller, config=dict)
 

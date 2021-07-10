@@ -354,24 +354,6 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 print("'Magnet Supply' not found, LabRAD connection to nSOT Characterizer Failed.")
                 return
 
-            # if 'Magnet Supply' in equip.servers:
-            #     if dict['devices']['system']['magnet supply'] == 'Toellner Power Supply':
-            #         self.dac_toe = dict['servers']['local']['dac_adc']
-            #         self.settingsDict['Magnet device'] = 'Toellner 8851'
-            #         self.settingsDict['toellner volts'] = dict['channels']['system']['toellner dac voltage']
-            #         self.settingsDict['toellner current'] = dict['channels']['system']['toellner dac current']
-            #         self.comboBox_magnetPower.addItem('Toellner 8851')
-            #     elif dict['devices']['system']['magnet supply'] == 'IPS 120 Power Supply':
-            #         self.ips = dict['servers']['remote']['ips120']
-            #         self.settingsDict['Magnet device'] = 'IPS 120-10'
-            #         self.comboBox_magnetPower.addItem('IPS 120-10')
-            #     else:
-            #         raise Exception #Raise error if no magnet power supply is connected
-            # else:
-            #     print("WARNING: Temporarily proceeding without magnet power supply")
-            #     # print("'Magnet Supply' not found, LabRAD connection to nSOT Characterizer Failed.")
-            #     # return
-
             if "Blink Device" in equip.servers:
                 svr, labrad_name, device_info, cnt, config = equip.servers["Blink Device"]
 

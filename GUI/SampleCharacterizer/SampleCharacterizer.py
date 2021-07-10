@@ -223,7 +223,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 svr, ln, device_info, cnt, config = equip.servers['Magnet Supply']
                 self.magnet = cnt
             else:
-                print("'Magnet Supply' not found, LabRAD connection to nSOT Characterizer Failed.")
+                print("'Magnet Supply' not found, LabRAD connection to Sample Characterizer Failed.")
                 return
 
             self.push_Servers.setStyleSheet("#push_Servers{" +

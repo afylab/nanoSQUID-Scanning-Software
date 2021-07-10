@@ -49,7 +49,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             svr, ln, device_info, cnt, config = equip.servers['Magnet Supply']
             self.controller = cnt
         else:
-            print("'Sample DAC' not found, LabRAD connection to Sample Characterizer Failed.")
+            print("'Magnet Supply' not found, LabRAD connection to FieldControl Failed.")
             return
 
         try:

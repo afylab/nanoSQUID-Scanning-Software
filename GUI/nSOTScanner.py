@@ -155,7 +155,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         # self.LabRAD.newSessionFolder.connect(self.distributeSessionFolder)
 
         self.TFChar.workingPointSelected.connect(self.distributeWorkingPoint)
-        self.nSOTChar.newToeField.connect(self.FieldControl.updateToeField)
+        #self.nSOTChar.newToeField.connect(self.FieldControl.updateToeField)
         self.Approach.newPLLData.connect(self.ApproachMonitor.updatePLLPlots)
         self.Approach.newAux2Data.connect(self.ApproachMonitor.updateAux2Plot)
         self.Approach.newZData.connect(self.ApproachMonitor.updateZPlot)
@@ -229,25 +229,13 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
 #----------------------------------------------------------------------------------------------#
     """ The following section connects actions related to passing LabRAD connections."""
 
-    # def distributeDeviceInfo(self, dic):
-    #     #Call connectLabRAD functions for relevant modules.
-    #     #Note that self.windows[0] corresponds to the LabRADConnect and DeviceSelect module
-    #     #LabRAD connections are not sent to them module to prevent recursion errors
-    #     for window in self.windows[2:]: # For now
-    #         if hasattr(window, "connectLabRAD"):
-    #             window.connectLabRAD(dic)
-
     @inlineCallbacks
     def connectLabRADConnections(self, c=None):
         yield self.equip.connect_all_servers()
         for window in self.windows:
             if hasattr(window, "connectLabRAD"):
-                print(window)
+                # print(window)
                 window.connectLabRAD(self.equip)
-
-        # Still need work
-        # self.nSOTChar.connectLabRAD(self.equip)
-        # self.FieldControl.connectLabRAD(self.equip)
     #
 
     @inlineCallbacks

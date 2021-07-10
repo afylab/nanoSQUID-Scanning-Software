@@ -37,7 +37,7 @@ from twisted.internet import reactor, defer
 from labrad.types import Value
 import numpy as np
 import time
-from exceptions import IndexError
+#from exceptions import IndexError
 
 TIMEOUT = Value(5,'s')
 BAUD    = 115200
@@ -178,15 +178,15 @@ class DAC_ADCServer(DeviceServer):
             if serServer not in self.client.servers:
                 continue
             server = self.client[serServer]
-            print(server)
-            print(port)
+            #print(server)
+            # print(port)
             ports = yield server.list_serial_ports()
-            print(ports)
+            #print(ports)
             if port not in ports:
                 continue
-            devName = '%s (%s)' % (serServer, port)
+            devName = '%s (%s)' % (name, port)
             devs += [(devName, (server, port))]
-
+        print(devs)
        # devs += [(0,(3,4))]
         returnValue(devs)
 

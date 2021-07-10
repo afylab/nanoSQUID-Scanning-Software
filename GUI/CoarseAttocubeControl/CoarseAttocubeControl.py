@@ -116,10 +116,15 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             # self.anc350 = dict['servers']['local']['anc350']
             '''
             FUTURE:
-            A lot of this would be abstracted into the controller object, not directly
+            A lot of this could be abstracted into the controller object, not directly
             from the labRAD server.
             '''
-            self.anc350 = equip.servers['ANC350'][0]
+            if "ANC350" in equip.servers:
+                self.anc350 = equip.servers['ANC350'][0]
+            else:
+                print("'ANC350' not found, LabRAD connection to Appraoch Module Failed.")
+                return
+
 
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
