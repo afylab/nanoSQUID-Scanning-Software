@@ -329,7 +329,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 svr, ln, device_info, cnt, config = equip.servers['nSOT DAC']
                 #Connected to the appropriate DACADC
                 self.dac = yield self.cxn.dac_adc
-                print(device_info)
+
                 yield self.dac.select_device(device_info)
 
                 self.settingsDict['nsot bias output'] = config['nSOT Bias']
@@ -357,11 +357,11 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 if labrad_name.startswith('ad5764_dcbox'):
                     self.blink_server = yield self.cxn.ad5764_dcbox
                     yield self.blink_server.select_device(device_info)
-                    print('DC BOX Blink Device')
+                    # print('DC BOX Blink Device')
                 elif labrad_name.startswith('DA'):
                     self.blink_server = yield self.cxn.dac_adc
                     yield self.blink_server.select_device(device_info)
-                    print('DAC ADC Blink Device')
+                    # print('DAC ADC Blink Device')
 
                 self.blinkDevice = device_info
                 self.settingsDict['blink'] = config['blink channel']

@@ -145,12 +145,15 @@ class IPS120_MagnetController(MagnetControl):
             self.status = "Error"
 
         try:
-            # Persistent field and current
-            val = yield self.server.read_parameter(18)
-            self.persist_Bz = float(val[1:])
+            if self.persist: # Persistent field and current
+                val = yield self.server.read_parameter(18)
+                self.persist_Bz = float(val[1:])
 
-            val = yield self.server.read_parameter(16)
-            self.persist_current = float(val[1:])
+                val = yield self.server.read_parameter(16)
+                self.persist_current = float(val[1:])
+            else:
+                self.persist_Bz = 0
+                self.persist_current = 0
 
             # The "Demand Field" during charging
             val = yield self.server.read_parameter(7)

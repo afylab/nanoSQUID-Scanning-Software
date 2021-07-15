@@ -107,9 +107,9 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
 
     def disconnectLabRAD(self):
+        self.monitoring = False
         self.cxn = False
         self.ls = False
-        self.monitoring = False
         self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(144, 140, 9);border-radius: 4px;border: 0px;}")
 

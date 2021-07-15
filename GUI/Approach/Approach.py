@@ -255,7 +255,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 #Similarly uses that extra connection so that we can talk to the scan dac at the same time as other dacs
                 self.dac = yield cxn.dac_adc
                 yield self.dac.select_device(device_info)
-                print(self.dac) # For Debugging
 
                 self.generalSettings['step_z_output'] = config['z out']
             else:
@@ -418,11 +417,11 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.constantHeight = True
             self.label_pidApproachStatus.setText('Constant Height')
 
-        print(self.dac) # For Debugging
         self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.generalSettings['step_z_output'] - 1)
 
     def disconnectLabRAD(self):
         self.monitorZ = False #Makes sure to stop monitoring the Z voltage
+        self.measuring = False # Stop measuring the PLL signal
 
         #Set all the servers to false since they are disconnected
         self.anc = False
@@ -743,6 +742,9 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
     @inlineCallbacks
     def setHF2LI_PLL_Settings(self):
         '''Sets all the required settings for the PLL on the HF2LI without turning on the PLL'''
+        if self.hf is None:
+            print("HF2LI server not connected")
+            return
         try:
             #first disable autoSettings
             yield self.hf.set_pll_autocenter(self.measurementSettings['pll_output'],False)

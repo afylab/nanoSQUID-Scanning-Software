@@ -51,6 +51,8 @@ class EquipmentController():
         before a general disconnect on the equipment handler, so overide this to
         add more complex shutdown behavior if needed.
         '''
+        if self.server is None:
+            return
         if hasattr(self.server, 'deselect_device'):
             self.server.deselect_device()
         self.server = None

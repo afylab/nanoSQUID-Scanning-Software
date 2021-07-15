@@ -2,6 +2,8 @@ from Equipment.Equipment import EquipmentController
 from twisted.internet.defer import inlineCallbacks
 from nSOTScannerFormat import printErrorInfo
 
+from traceback import format_exc
+
 class HF2LI_Controller(EquipmentController):
     @inlineCallbacks
     def connect(self, server):
@@ -27,16 +29,20 @@ class ANC350_Controller(EquipmentController):
             yield self.server.connect()
             self.widget.connected(self.device_info)
         else:
+            print("Got Here")
             self.widget.error()
     #
 
     @inlineCallbacks
     def disconnect(self):
+        if self.server is None:
+            return
         try:
             yield self.server.disconnect()
             print('Disconnected ANC350')
         except:
             print('Error disconnecting the ANC350 server.')
             printErrorInfo()
+            print(format_exc())
         super().disconnect()
 #

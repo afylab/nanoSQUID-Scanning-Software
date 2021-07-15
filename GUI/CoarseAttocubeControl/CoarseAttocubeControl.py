@@ -183,10 +183,10 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
 
     @inlineCallbacks
     def RefreshAttocubeStatus(self):
-        if not self.serversConnected:
-            return
         try:
             for i in range(3):
+                if not self.serversConnected:
+                    return
                 self.CurrentPosition[i] = yield self.anc350.get_position(i)
                 self.lcddisplay[i].display('{0:<09}'.format(self.CurrentPosition[i]*10**6))
                 statusarray = yield self.anc350.get_axis_status(i)# [0]connected, [1]enabled, [2]moving, [3]target, [4]eotFwd, [5]eotBwd , [6]error
