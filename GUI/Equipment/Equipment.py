@@ -290,6 +290,7 @@ class EquipmentHandler():
                 sess = self.session.split('\\')
                 yield self.dv.cd(sess, True)
             except Exception as inst:
+                print(inst)
                 printErrorInfo()
     #
 #

@@ -30,6 +30,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
         self.currField = 0
         self.currCurrent = 0
+        self.persistField = 0
+        self.persistCurrent = 0
         self.currVoltage = 0
 
         self.setting_value = False
@@ -97,9 +99,13 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     yield self.controller.poll()
                     self.currField = self.controller.Bz
                     self.currCurrent = self.controller.current
+                    self.persistField = self.controller.persist_Bz
+                    self.persistCurrent = self.controller.persist_current
                     self.currVoltage = self.controller.output_voltage
                     self.updateSwitchStatus()
                 try:
+                    self.label_persist_fieldval.setText(formatNum(self.persistField,3))
+                    self.label_persist_currentval.setText(formatNum(self.persistCurrent,3))
                     self.label_fieldval.setText(formatNum(self.currField,3))
                     self.label_currentval.setText(formatNum(self.currCurrent,3))
                     self.label_outputvoltage.setText(formatNum(self.currVoltage,3))

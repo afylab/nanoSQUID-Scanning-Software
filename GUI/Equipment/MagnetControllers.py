@@ -25,9 +25,11 @@ class MagnetControl(EquipmentController):
         self.max_field = self.config['max_field']
 
         # Status parameters
-        self.Bz = 0.0 # The field from the magnet
+        self.Bz = 0.0 # The field from the magnet power supply output
+        self.persist_Bz = 0.0 # The persistent field of the magnet
         self.setpoint_Bz = 0.0 # The field setpoint
-        self.current = 0.0 # The current on the magnet
+        self.current = 0.0 # The current on the magnet power supply output
+        self.persist_current = 0.0 # The persistent current of the magnet
         self.output_voltage = 0.0 # the output voltage when charging
         self.ramprate = 0 # T/min
 
@@ -143,25 +145,24 @@ class IPS120_MagnetController(MagnetControl):
             self.status = "Error"
 
         try:
-            if self.persist:
-                # Persistent field and current
-                val = yield self.server.read_parameter(18)
-                self.Bz = float(val[1:])
+            # Persistent field and current
+            val = yield self.server.read_parameter(18)
+            self.persist_Bz = float(val[1:])
 
-                val = yield self.server.read_parameter(16)
-                self.current = float(val[1:])
+            val = yield self.server.read_parameter(16)
+            self.persist_current = float(val[1:])
 
-                self.output_voltage = 0
-            else:
-                # The "Demand Field" during charging
-                val = yield self.server.read_parameter(7)
-                self.Bz = float(val[1:])
+            # The "Demand Field" during charging
+            val = yield self.server.read_parameter(7)
+            self.Bz = float(val[1:])
 
-                # The demand "Output" current and voltage
-                val = yield self.server.read_parameter(0)
-                self.current = float(val[1:])
-                val = yield self.server.read_parameter(1)
-                self.output_voltage = float(val[1:])
+            # The demand "Output" current
+            val = yield self.server.read_parameter(0)
+            self.current = float(val[1:])
+
+            # The charging voltage
+            val = yield self.server.read_parameter(1)
+            self.output_voltage = float(val[1:])
         except Exception as inst:
             print(inst)
             printErrorInfo()

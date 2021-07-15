@@ -35,7 +35,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import reactor, defer
 # import labrad.units as units
 from labrad.types import Value
-import numpy as np
+# import numpy as np
 import time
 #from exceptions import IndexError
 

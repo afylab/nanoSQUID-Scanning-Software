@@ -1035,6 +1035,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             returnValue(plot_data)
 
         except Exception as inst:
+            print(inst)
             printErrorInfo()
 
     @inlineCallbacks
