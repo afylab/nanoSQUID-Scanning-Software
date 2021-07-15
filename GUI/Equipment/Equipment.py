@@ -91,7 +91,7 @@ class EquipmentHandler():
         self.cxnr = False
         self.remote_ip = None
         self.remote_compname = None
-        self.remote_servers = dict()
+        self.remote_servers = []
 
         # Disply the widgets
         self.widgets = dict()
@@ -134,7 +134,7 @@ class EquipmentHandler():
         '''
         self.remote_ip = remote_ip
         self.remote_compname = remote_computer_name
-        self.remote_servers = dict()
+        self.remote_servers = []
     #
 
     def add_remote_server(self, name, labrad_name, device_info=None, controller=None, config=None, display_frame=None):

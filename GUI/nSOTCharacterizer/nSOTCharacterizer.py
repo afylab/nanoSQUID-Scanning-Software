@@ -318,8 +318,8 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             time, or communication with multiple DACs / other devices
             '''
             from labrad.wrappers import connectAsync
-            cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
-            self.dv = yield cxn.data_vault
+            self.cxn = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            self.dv = yield self.cxn.data_vault
             #Set the directory of the local datavault connection to be the same as the one
             #selected in the LabRAD Connect module
             curr_folder = yield self.gen_dv.cd()
@@ -328,7 +328,8 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             if 'nSOT DAC' in equip.servers:
                 svr, ln, device_info, cnt, config = equip.servers['nSOT DAC']
                 #Connected to the appropriate DACADC
-                self.dac = yield cxn.dac_adc
+                self.dac = yield self.cxn.dac_adc
+                print(device_info)
                 yield self.dac.select_device(device_info)
 
                 self.settingsDict['nsot bias output'] = config['nSOT Bias']
@@ -339,11 +340,6 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 print("'nSOT DAC' not found, LabRAD connection to nSOT Characterizer Failed.")
                 return
 
-            #Select the appropriate magnet power supply
-            '''
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            FUTURE: Need to integrate magnet power supply controllers
-            '''
 
             #Select the appropriate magnet power supply
             if 'Magnet Supply' in equip.servers:
@@ -359,11 +355,11 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
                 #Create a connection to the proper device for blinking
                 if labrad_name.startswith('ad5764_dcbox'):
-                    self.blink_server = yield self.cxn_scan.ad5764_dcbox
+                    self.blink_server = yield self.cxn.ad5764_dcbox
                     yield self.blink_server.select_device(device_info)
                     print('DC BOX Blink Device')
                 elif labrad_name.startswith('DA'):
-                    self.blink_server = yield self.cxn_scan.dac_adc
+                    self.blink_server = yield self.cxn.dac_adc
                     yield self.blink_server.select_device(device_info)
                     print('DAC ADC Blink Device')
 
@@ -389,6 +385,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             self.comboBox_magnetPower.removeItem(0)
         except:
             pass
+        self.cxn = False
         self.gen_dv = False
         self.dv = False
         self.dac = False

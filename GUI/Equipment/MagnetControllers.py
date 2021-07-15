@@ -1,30 +1,28 @@
 '''
 A set of objects for the various magnet controllers
 '''
-from twisted import inlineCallbacks
-from Equipment import EquipmentController
+from twisted.internet.defer import inlineCallbacks
+from Equipment.Equipment import EquipmentController
 from nSOTScannerFormat import printErrorInfo
 import numpy as np
 
 class MagnetControl(EquipmentController):
-    def __init__(self, labrad_server, device_info, config):
+    def __init__(self, widget, device_info, config):
         '''
         A generic base class for a magnet controller, features a variety of functions that
         are meant to be overwritten for a specific controller. The arugments will generally
         be defined in an inheriting subclass.
 
         Args:
-            labrad_server : The labrad server to use, if None will need to be initialized
-                via the labradConnect function before anything can be done.
+            widget : The widget to display the status of the server.
             device_info (dict) : information to connect to the proper hardware.
             config (dict) : A dictionary of configurations settings, passed from equipment handler
             dimensions (int) : The number of dimensions of controllable field. 1 is assumed a simple
                 Z-axis magnet, 2 is a X-Z vector magnet and 3 is an X-Y-Z vector magnet.
         '''
-        self.server = labrad_server
-        self.max_field = config['max_field']
+        super().__init__(widget, device_info, config)
 
-        self.device_info = device_info
+        self.max_field = self.config['max_field']
 
         # Status parameters
         self.Bz = 0.0 # The field from the magnet
@@ -35,11 +33,9 @@ class MagnetControl(EquipmentController):
 
         self.status = ''
         self.persist = False # If the supply is in persistent field mode
-
-        self.readInitialValues() # Load in any information that needs to be there
     #
 
-    def connect(self, server, device_info):
+    def connect(self, server):
         '''
         Connect to the device for the given server by calling select_device
         with the given selection info (if present). Override for more complex
@@ -47,12 +43,19 @@ class MagnetControl(EquipmentController):
         '''
         self.server = server
         try:
-            if hasattr(server, 'select_device'):
-                if device_info is None:
-                    server.select_device()
-            self.widget.connect(device_info)
+            if hasattr(self.server, 'select_device'):
+                self.server.select_device()
+            self.widget.connected(self.device_info)
         except Exception as inst:
             print("Error connecting labrad servers")
+            print(str(inst))
+            printErrorInfo()
+            self.widget.error()
+
+        try:
+            self.readInitialValues() # Load in any information that needs to be there
+        except Exception as inst:
+            print("Error reading magnet initial parameters")
             print(str(inst))
             printErrorInfo()
             self.widget.error()
@@ -120,7 +123,7 @@ class MagnetControl(EquipmentController):
     #
 #
 
-def IPS120_MagnetController(MagnetControl):
+class IPS120_MagnetController(MagnetControl):
     @inlineCallbacks
     def poll(self):
         '''
@@ -236,7 +239,8 @@ def IPS120_MagnetController(MagnetControl):
 #
 
 def Toeller_Power_Supply(MagnetControl):
-    def __init__(self, labrad_server, device_info, config):
+    def __init__(self, widget, device_info, config):
+        super().__init__(widget, device_info, config)
         self.toeCurChan = config['toeCurChan']
         self.toeVoltsChan = config['toeVoltsChan']
         self.status = "Charging"
@@ -249,8 +253,6 @@ def Toeller_Power_Supply(MagnetControl):
 
         #Field / Current ratio on the dipper magnet (0.132 [Tesla / Amp])
         self.IB_conv = 0.132
-
-        super().__init__(self, labrad_server, device_info, config)
 
     @inlineCallbacks
     def poll(self):

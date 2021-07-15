@@ -52,25 +52,27 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             print("'Magnet Supply' not found, LabRAD connection to FieldControl Failed.")
             return
 
+        if hasattr(self.controller, "clamp"):
+            self.push_clamp.clicked.connect(lambda: self.controller.clamp())
+            self.push_clamp.show()
+
+        if hasattr(self.controller, "hold"):
+            self.push_hold.clicked.connect(lambda: self.controller.hold())
+            self.push_hold.show()
+
+        if hasattr(self.controller, "togglePersist"):
+            self.push_persistSwitch.clicked.connect(lambda: self.togglePersist())
+
         try:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             yield self.loadInitialValues()
             self.unlockInterface()
             self.monitor = True #modified temporarily
-            yield self.monitorField()
+            yield self.monitorField() # Loops to monitor field
         except:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
-
-        if hasattr(self.controller, "clamp"):
-            self.push_clamp.clicked.connect(lambda: self.clamp())
-
-        if hasattr(self.controller, "hold"):
-            self.push_hold.clicked.connect(lambda: self.hold())
-
-        # if hasattr(self.controller, "togglePersist"):
-        #     self.push_persistSwitch.clicked.connect(lambda: self.togglePersist())
 
     def disconnectLabRAD(self):
         self.monitor = False
@@ -110,14 +112,12 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def loadInitialValues(self):
         try:
-            yield self.controller.loadInitialValues()
+            yield self.controller.readInitialValues()
             yield self.controller.poll()
             self.updateSwitchStatus()
 
-            self.label_setpoint.setText(formatNum(self.controller.setpoint_Bz))
-            self.label_ramprate.setText(formatNum(self.ramprate))
             self.lineEdit_setpoint.setText(formatNum(self.controller.setpoint_Bz))
-            self.lineEdit_ramprate.setText(formatNum(self.ramprate))
+            self.lineEdit_ramprate.setText(formatNum(self.controller.ramprate))
         except Exception as inst:
             print(inst)
             printErrorInfo()
@@ -172,6 +172,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.setting_value = True
             yield self.controller.goToSetpoint()
             self.setting_value = False
+            self.updateSwitchStatus()
             # if self.magDevice == 'IPS 120-10':
             #     yield self.goToSetpointIPS()
             # else:
@@ -186,6 +187,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.setting_value = True
             yield self.controller.goToZero()
             self.setting_value = False
+            self.updateSwitchStatus()
             # if self.magDevice == 'IPS 120-10':
             #     yield self.gotoZeroIPS()
             # else:
@@ -217,59 +219,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         yield self.controller.clamp()
         self.setting_value = False
     #
-
-    # @inlineCallbacks
-    # def toeSweepField(self, B_i, B_f, B_speed):
-    #     try:
-    #         #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
-    #         VV_conv = 3.20
-    #         #Toellner current set point / DAC voltage out conversion [I_Toellner / V_DAC]
-    #         IV_conv = 1.0
-    #
-    #         #Field / Current ratio on the dipper magnet (0.132 [Tesla / Amp])
-    #         IB_conv = 0.132
-    #
-    #         #Starting and ending field values in Tesla, use positive field values for now
-    #         B_range = np.absolute(B_f - B_i)
-    #
-    #         #Delay between DAC steps in microseconds
-    #         magnet_delay = 1000
-    #         #Converts between microseconds and minutes [us / minute]
-    #         t_conv = 6e07
-    #
-    #         #Sets the appropriate DAC buffer ramp parameters
-    #         sweep_steps = int((t_conv * B_range) / (B_speed * magnet_delay))  + 1
-    #         v_start = B_i / (IB_conv * IV_conv)
-    #         v_end = B_f / (IB_conv * IV_conv)
-    #
-    #         #Sets an appropraite voltage set point to ensure that the Toellner power supply stays in constant current mode
-    #         # assuming a parasitic resistance of R_p between the power supply and magnet
-    #         R_p = 1
-    #         V_setpoint =  (R_p * B_f) / (VV_conv * IB_conv)
-    #         V_initial = (R_p * B_i) / (VV_conv * IB_conv)
-    #         if V_setpoint*VV_conv > 5.0:
-    #             V_setpoint = 5.0/VV_conv
-    #         else:
-    #             pass
-    #         if V_initial*VV_conv > 5.0:
-    #             V_initial = 5.0/VV_conv
-    #         else:
-    #             pass
-    #
-    #         #Sweeps field from B_i to B_f
-    #         print('Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.')
-    #         yield self.dac_toe.buffer_ramp([self.toeCurChan, self.toeVoltsChan],[0],[v_start, V_initial],[v_end, V_setpoint], sweep_steps, magnet_delay)
-    #
-    #         self.currVoltage = V_setpoint
-    #         self.currCurrent = B_f/IB_conv
-    #         self.currField = B_f
-    #     except:
-    #         printErrorInfo()
-
-    # def updateToeField(self, field, curr, volt):
-    #     self.currField = field
-    #     self.currVoltage = volt
-    #     self.currCurrent = curr
 
     # Below function is not necessary, but is often useful. Yielding it will provide an asynchronous
     # delay that allows other labrad / pyqt methods to run

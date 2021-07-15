@@ -28,6 +28,8 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         dict = {'blink channel':0}
         self.equip.add_server("Blink Device", "dac_adc", "DA20_16_05 (COM3)", config=dict)
 
+        self.equip.add_server("LS 350", "lakeshore_350")
+
 #
 
 #----------------------------------------------------------------------------------------------#

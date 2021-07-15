@@ -255,6 +255,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 #Similarly uses that extra connection so that we can talk to the scan dac at the same time as other dacs
                 self.dac = yield cxn.dac_adc
                 yield self.dac.select_device(device_info)
+                print(self.dac) # For Debugging
 
                 self.generalSettings['step_z_output'] = config['z out']
             else:
@@ -417,6 +418,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.constantHeight = True
             self.label_pidApproachStatus.setText('Constant Height')
 
+        print(self.dac) # For Debugging
         self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.generalSettings['step_z_output'] - 1)
 
     def disconnectLabRAD(self):

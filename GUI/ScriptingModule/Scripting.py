@@ -56,7 +56,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.cxn = yield connectAsync(host='127.0.0.1', password='pass')
 
             if equip.cxnr is not False:
-                self.cxnr = yield connectAsync(host=self.equip.remote_ip, password='pass')
+                self.cxnr = yield connectAsync(host=equip.remote_ip, password='pass')
         except Exception as inst:
             printErrorInfo()
 

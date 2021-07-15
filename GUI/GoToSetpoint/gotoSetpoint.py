@@ -91,11 +91,11 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
                 #Create a connection to the proper device for blinking
                 if labrad_name.startswith('ad5764_dcbox'):
-                    self.blink_server = yield self.cxn_scan.ad5764_dcbox
+                    self.blink_server = yield self.cxn_nsot.ad5764_dcbox
                     yield self.blink_server.select_device(device_info)
                     print('DC BOX Blink Device')
                 elif labrad_name.startswith('DA'):
-                    self.blink_server = yield self.cxn_scan.dac_adc
+                    self.blink_server = yield self.cxn_nsot.dac_adc
                     yield self.blink_server.select_device(device_info)
                     print('DAC ADC Blink Device')
 
