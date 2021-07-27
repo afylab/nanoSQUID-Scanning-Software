@@ -242,7 +242,7 @@ class IPS120_MagnetController(MagnetControl):
     #
 #
 
-def Toeller_Power_Supply(MagnetControl):
+class Toeller_Power_Supply(MagnetControl):
     def __init__(self, widget, device_info, config):
         super().__init__(widget, device_info, config)
         self.toeCurChan = config['toeCurChan']

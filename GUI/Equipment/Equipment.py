@@ -199,11 +199,15 @@ class EquipmentHandler():
                 continue
             try:
                 svr, labrad_name, device_info, cnt, config = self.servers[name]
-
+                # Need to get each server with an individual connection, otherwise
+                # a server will switch between the same type of device when select_device
+                # is called. I.e. you couldn't use references to two DAC_ADCs at the same time
                 if name in self.remote_servers:
-                    server = getattr(self.cxnr, labrad_name)
+                    cxnr = yield connectAsync(host=self.remote_ip, password='pass')
+                    server = getattr(cxnr, labrad_name)
                 else:
-                    server = getattr(self.cxn, labrad_name)
+                    cxn = yield connectAsync(host=self.ip, password='pass')
+                    server = getattr(cxn, labrad_name)
 
                 if name == "Data Vault":
                     self.dv = server
@@ -260,6 +264,31 @@ class EquipmentHandler():
                 print(str(inst))
                 printErrorInfo()
     #
+
+    def get(self, name):
+        '''
+        Returns the controller or labrad server corresponding to a certain name.
+        If a controller is present, will return it, otherwise it will return a
+        labrad server.
+        '''
+        svr, labrad_name, device_info, cnt, config = self.servers[name]
+        if cnt is None:
+            return svr
+        else:
+            return cnt
+
+    @inlineCallbacks
+    def get_datavault(self):
+        '''
+        Gets a new connection to the datavault that matches the directory of the
+        equipment handler vault.
+        '''
+        from labrad.wrappers import connectAsync
+        cxn_dv = yield connectAsync(host = '127.0.0.1', password = 'pass')
+        dv = yield cxn_dv.data_vault
+        curr_folder = yield self.dv.cd()
+        yield self.dv.cd(curr_folder)
+        return dv
 
     def add_server_widget(self, name, display_frame=None):
         if display_frame is None:
