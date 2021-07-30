@@ -106,6 +106,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.runningScript = False
             self.label_status.setText('Script aborted on line ' + str(self.current_line))
             self.unlockInterface()
+        except TabError:
+            self.runningScript = False
+            self.label_status.setText('TabError: check your whitespace')
+            self.unlockInterface()
         except SyntaxError:
             '''Because by default many lines of code are added, if a syntax error is thrown it
             doesn't point to the offending line in the raw code. Try to rerun code without
@@ -115,6 +119,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             except SyntaxError as inst:
                 self.runningScript = False
                 self.label_status.setText("Syntax error thrown on line " +  str(inst.lineno))
+                from traceback import format_exc
+                print(format_exc())
                 self.unlockInterface()
         except Exception as inst:
             printErrorInfo()

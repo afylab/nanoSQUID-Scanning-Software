@@ -211,7 +211,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             yield self.dv.cd(curr_folder)
 
             if "Sample DAC" in equip.servers:
-                svr, ln, device_info, cnt, config = equip.servers["Scan DAC"]
+                svr, ln, device_info, cnt, config = equip.servers["Sample DAC"]
                 self.dac = yield self.cxn_sample.dac_adc
                 yield self.dac.select_device(device_info)
             else:
@@ -805,18 +805,24 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             session = session + '\\' + folder
         self.lineEdit_ImageDir.setText(r'\.datavault' + session)
 
-        yield self.dv.add_parameter('Voltage Lock in Sensitivity (V)', self.lockinVoltageMultiplier)
-        yield self.dv.add_parameter('Voltage Lock in Expand', str(self.comboBox_Voltage_LI_Expand.currentText()))
-        yield self.dv.add_parameter('Current Lock in Sensitivity (A)', self.lockinCurrentMultiplier)
-        yield self.dv.add_parameter('Current Lock in Expand', str(self.comboBox_Current_LI_Expand.currentText()))
-        yield self.dv.add_parameter('Voltage Lock in Time Constant(s)', self.sweepParameters['Voltage_tc'])
-        yield self.dv.add_parameter('Current Lock in Time Constant(s)', self.sweepParameters['Current_tc'])
-        yield self.dv.add_parameter('Lock in Frequency(Hz)', float(self.sweepParameters['Frequency']))
-        if sweep_type == "MagneticField1D":
-            yield self.dv.add_parameter('DAC Voltage 1',str(self.lineEdit_DACOut1.text()))
-            yield self.dv.add_parameter('DAC Voltage 2',str(self.lineEdit_DACOut2.text()))
-            yield self.dv.add_parameter('DAC Voltage 3',str(self.lineEdit_DACOut3.text()))
-            yield self.dv.add_parameter('DAC Voltage 4',str(self.lineEdit_DACOut4.text()))
+        try:
+            yield self.dv.add_parameter('Voltage Lock in Sensitivity (V)', self.lockinVoltageMultiplier)
+            yield self.dv.add_parameter('Voltage Lock in Expand', str(self.comboBox_Voltage_LI_Expand.currentText()))
+            yield self.dv.add_parameter('Current Lock in Sensitivity (A)', self.lockinCurrentMultiplier)
+            yield self.dv.add_parameter('Current Lock in Expand', str(self.comboBox_Current_LI_Expand.currentText()))
+            yield self.dv.add_parameter('Voltage Lock in Time Constant(s)', self.sweepParameters['Voltage_tc'])
+            yield self.dv.add_parameter('Current Lock in Time Constant(s)', self.sweepParameters['Current_tc'])
+            yield self.dv.add_parameter('Lock in Frequency(Hz)', float(self.sweepParameters['Frequency']))
+            if sweep_type == "MagneticField1D":
+                yield self.dv.add_parameter('DAC Voltage 1',str(self.lineEdit_DACOut1.text()))
+                yield self.dv.add_parameter('DAC Voltage 2',str(self.lineEdit_DACOut2.text()))
+                yield self.dv.add_parameter('DAC Voltage 3',str(self.lineEdit_DACOut3.text()))
+                yield self.dv.add_parameter('DAC Voltage 4',str(self.lineEdit_DACOut4.text()))
+        except:
+            from traceback import format_exc
+            print("MY TRACEBACK:")
+            print(format_exc())
+            print("GO AWAY DATAVAULT TRACEBACKS!")
 
     def formatData(self, min, max, points, data, fieldIndex = None, sweep_type = "FourTerminal"):
         """
@@ -912,6 +918,8 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             #Ramp the output gate voltage back down to zero after the sweep is done
             yield self.ramp1_display(self.FourTerminal_ChannelOutput[0],self.sweepParameters['FourTerminal_MaxVoltage'],0.0,10000,100)
         except:
+            from traceback import format_exc
+            print(format_exc())
             printErrorInfo()
 
         self.unlockInterface()
@@ -946,6 +954,8 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 yield self.rampMagneticField(0, self.sweepParameters['FieldSweep1D_SweepSpeed'])
 
         except:
+            from traceback import format_exc
+            print(format_exc())
             printErrorInfo()
 
         self.unlockInterface() #unlock the interface when done
@@ -1036,6 +1046,8 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
         except Exception as inst:
             print(inst)
+            from traceback import format_exc
+            print(format_exc())
             printErrorInfo()
 
     @inlineCallbacks
@@ -1152,31 +1164,43 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         Ramp the magnetic field to 'end' in units of Tesla, at a rate of 'rate' in T/minute
         '''
         try:
-            yield self.goToSetpointIPS(end, rate) #Set the setpoint and update the IPS mode to sweep to field
+            # yield self.goToSetpointIPS(end, rate) #Set the setpoint and update the IPS mode to sweep to field
+            self.magnet.setSetpoint(end)
+            self.magnet.setRampRate(rate)
+            yield self.magnet.goToSetpoint(wait=False)
 
             print('Setting field to ' + str(end))
-
-            #Only finish running the gotoField function when the field is reached
-            t0 = time.time() #Keep track of starting time for setting the field
             while True:
-                #if after one second we still haven't reached the desired field, then reset the field setpoint
-                #Sometimes communication is buggy and repeated attempts helps
-                if time.time() - t0 > 1:
-                    print('restarting loop')
-                    self.magnet.setSetpoint(end)
-                    self.magnet.setRampRate(rate)
-                    yield self.magnet.goToSetpoint()
-                    # yield self.goToSetpointIPS(end, rate)
-                    t0 = time.time()
-                yield self.sleep(0.25)
-                # curr_field = yield self.ips.read_parameter(7)
                 yield self.magnet.poll()
-                curr_field = self.magnet.Bz
-                #if within 10 uT of the desired field, break out of the loop
-                if curr_field <= end + 0.00001 and curr_field >= end - 0.00001:
+                if self.magnet.Bz <= end+0.0005 and self.magnet.Bz >= end-0.0005:
                     break
                 elif self.abortMagneticFieldSweep_Flag:
                     break
+                yield self.sleep(0.25)
+            yield self.sleep(0.25)
+
+            # #Only finish running the gotoField function when the field is reached
+            # t0 = time.process_time() #Keep track of starting time for setting the field
+            # while True:
+            #     #if after one second we still haven't reached the desired field, then reset the field setpoint
+            #     #Sometimes communication is buggy and repeated attempts helps
+            #     if time.process_time() - t0 > 1:
+            #         print('restarting loop')
+            #         self.magnet.setSetpoint(end)
+            #         self.magnet.setRampRate(rate)
+            #         yield self.magnet.goToSetpoint(wait=False)
+            #         # yield self.goToSetpointIPS(end, rate)
+            #         t0 = time.process_time()
+            #     yield self.sleep(0.25)
+            #     # curr_field = yield self.ips.read_parameter(7)
+            #     yield self.magnet.poll()
+            #     curr_field = self.magnet.Bz
+            #     #if within 10 uT of the desired field, break out of the loop
+            #     if curr_field <= end + 0.00001 and curr_field >= end - 0.00001:
+            #         break
+            #     elif self.abortMagneticFieldSweep_Flag:
+            #         break
+            print("Got To end")
         except:
             printErrorInfo()
 

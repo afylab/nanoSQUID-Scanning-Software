@@ -48,7 +48,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.setupWindows() # Setup the various Windows
 
         # Configure the equipment and session
-        self.equip = EquipmentHandler(self.equipmentFrame, self.remoteFrame, self.computer)
+        self.equip = EquipmentHandler(self.equipmentFrame, self.remoteFrame, self.computer, self.reactor)
         self.configureEquipment()
         self.configureSession()
 

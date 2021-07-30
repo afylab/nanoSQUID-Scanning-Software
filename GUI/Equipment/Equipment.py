@@ -17,11 +17,12 @@ class EquipmentController():
     Args:
         widget : The GUI widget for displaying the status
     '''
-    def __init__(self, widget, device_info, config):
+    def __init__(self, widget, device_info, config, reactor):
         self.server = None # When not connected the server is None
         self.widget = widget
         self.device_info = device_info
         self.config = config
+        self.reactor = reactor
     #
 
     def connect(self, server):
@@ -60,7 +61,7 @@ class EquipmentController():
     #
 
 class EquipmentHandler():
-    def __init__(self, default_frame, remote_frame, computer):
+    def __init__(self, default_frame, remote_frame, computer, reactor):
         '''
         Handels the various system specific equipment and the configuration.
 
@@ -89,6 +90,7 @@ class EquipmentHandler():
         self.dv = False
         self.ip = '127.0.0.1'
         self.compname = computer
+        self.reactor = reactor
 
         self.cxnr = False
         self.remote_ip = None
@@ -122,7 +124,7 @@ class EquipmentHandler():
             self.servers[name] = (False, self.compname.lower() + "_" + labrad_name, None, None, None)
         elif name != "LabRAD":
             if controller is not None:
-                controller = controller(self.widgets[name], device_info, config)
+                controller = controller(self.widgets[name], device_info, config, self.reactor)
             self.servers[name] = (False, labrad_name, device_info, controller, config)
     #
 
@@ -166,7 +168,7 @@ class EquipmentHandler():
             self.servers[name] = (False, self.remote_compname.lower() + "_" + labrad_name, None, None, None)
         elif name != "Remote LabRAD":
             if controller is not None:
-                controller = controller(self.widgets[name], device_info, config)
+                controller = controller(self.widgets[name], device_info, config, self.reactor)
             self.servers[name] = (False, labrad_name, device_info, controller, config)
         self.remote_servers.append(name)
     #

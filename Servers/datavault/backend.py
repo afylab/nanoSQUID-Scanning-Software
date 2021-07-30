@@ -48,7 +48,7 @@ def labrad_urlencode(data):
     else:
         data_bytes, t = T.flatten(data)
         all_bytes, _ = T.flatten((str(t), data_bytes), 'ss')
-    data_url = DATA_URL_PREFIX + base64.urlsafe_b64encode(all_bytes)
+    data_url = DATA_URL_PREFIX + str(base64.urlsafe_b64encode(all_bytes))
     return data_url
 
 def labrad_urldecode(data_url):

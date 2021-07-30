@@ -176,7 +176,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     def goToSetpoint(self):
         try:
             self.setting_value = True
-            yield self.controller.goToSetpoint()
+            yield self.controller.goToSetpoint(wait=False)
             self.setting_value = False
             self.updateSwitchStatus()
             # if self.magDevice == 'IPS 120-10':
@@ -191,7 +191,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     def gotoZero(self):
         try:
             self.setting_value = True
-            yield self.controller.goToZero()
+            yield self.controller.goToZero(wait=False)
             self.setting_value = False
             self.updateSwitchStatus()
             # if self.magDevice == 'IPS 120-10':
@@ -251,15 +251,16 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         #     yield self.goToSetpointIPS(B) #Set the setpoint and update the IPS mode to sweep to field
 
         yield self.setSetpoint(B)
-        yield self.controller.goToSetpoint()
+        yield self.controller.goToSetpoint(wait=True)
 
-        #Only finish running the gotoField function when the field is reached
-        while True:
-            yield self.controller.poll()
-            if self.controller.Bz <= B+0.00001 and self.controller.Bz >= B-0.00001:
-                break
-            yield self.sleep(0.25)
-        yield self.sleep(0.25)
+        # Waiting has been moved into the controller
+        # #Only finish running the gotoField function when the field is reached
+        # while True:
+        #     yield self.controller.poll()
+        #     if self.controller.Bz <= B+0.00001 and self.controller.Bz >= B-0.00001:
+        #         break
+        #     yield self.sleep(0.25)
+        # yield self.sleep(0.25)
 
     def readField(self):
         '''

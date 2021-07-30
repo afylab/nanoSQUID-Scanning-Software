@@ -1,13 +1,13 @@
 '''
 A set of objects for the various magnet controllers
 '''
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, Deferred
 from Equipment.Equipment import EquipmentController
 from nSOTScannerFormat import printErrorInfo
 import numpy as np
 
 class MagnetControl(EquipmentController):
-    def __init__(self, widget, device_info, config):
+    def __init__(self, widget, device_info, config, reactor):
         '''
         A generic base class for a magnet controller, features a variety of functions that
         are meant to be overwritten for a specific controller. The arugments will generally
@@ -20,7 +20,7 @@ class MagnetControl(EquipmentController):
             dimensions (int) : The number of dimensions of controllable field. 1 is assumed a simple
                 Z-axis magnet, 2 is a X-Z vector magnet and 3 is an X-Y-Z vector magnet.
         '''
-        super().__init__(widget, device_info, config)
+        super().__init__(widget, device_info, config, reactor)
 
         self.max_field = self.config['max_field']
 
@@ -123,6 +123,13 @@ class MagnetControl(EquipmentController):
         '''
         pass
     #
+
+    def sleep(self,secs):
+        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
+        other operations to be done elsewhere while paused."""
+        d = Deferred()
+        self.reactor.callLater(secs,d.callback,'Sleeping')
+        return d
 #
 
 class IPS120_MagnetController(MagnetControl):
@@ -183,26 +190,50 @@ class IPS120_MagnetController(MagnetControl):
     #
 
     @inlineCallbacks
-    def goToZero(self):
+    def goToZero(self, wait=True):
         '''
         Zero the current through the magnet.
+
+        Args:
+            wait (bool) : Will wait for the controller to reach the setpoint.
         '''
         yield self.server.set_control(3) #Set IPS to remote communication (prevents user from using the front panel)
         yield self.server.set_activity(2)
         yield self.server.set_control(2) #Set IPS to local control (allows user to edit IPS from the front panel)
+
+        if wait:
+            #Only finish running the gotoZero function once the field is zero
+            while True:
+                yield self.poll()
+                if self.Bz <= 0.00001 and self.Bz >= -0.00001:
+                    break
+                yield self.sleep(0.25)
+            yield self.sleep(0.25)
     #
 
     @inlineCallbacks
-    def goToSetpoint(self):
+    def goToSetpoint(self, wait=True):
         '''
         Ramps to the setpoint. setSetpoint and setRampRate should be called first
         to configure this ramp.
+
+        Args:
+            wait (bool) : Will wait for the controller to reach the setpoint
         '''
         yield self.server.set_control(3) #Set IPS to remote communication (prevents user from using the front panel)
         yield self.server.set_fieldsweep_rate(self.ramprate)
         yield self.server.set_targetfield(self.setpoint_Bz) #Set targetfield to desired field
         yield self.server.set_activity(1) #Set IPS mode to ramping instead of hold
         yield self.server.set_control(2) #Set IPS to local control (allows user to edit IPS from the front panel)
+
+        if wait:
+            #Only finish running the gotoField function when the field is reached
+            while True:
+                yield self.poll()
+                if self.Bz <= self.setpoint_Bz+0.00001 and self.Bz >= self.setpoint_Bz-0.00001:
+                    break
+                yield self.sleep(0.25)
+            yield self.sleep(0.25)
     #
 
     @inlineCallbacks

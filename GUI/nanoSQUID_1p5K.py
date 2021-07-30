@@ -45,7 +45,6 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         self.equip.add_remote_server("LS 350", "lakeshore_350")
 
         # self.equip.add_remote_server("LM 510", "lm_510")
-
 #
 
 #----------------------------------------------------------------------------------------------#
