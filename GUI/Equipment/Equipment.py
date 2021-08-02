@@ -320,8 +320,9 @@ class EquipmentHandler():
         if self.dv is not False:
             try:
                 yield self.dv.cd('')
-                sess = self.session.split('\\')
+                sess = self.session
                 yield self.dv.cd(sess, True)
+                curr = yield self.dv.cd()
             except Exception as inst:
                 print(inst)
                 printErrorInfo()

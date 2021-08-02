@@ -54,7 +54,7 @@ if __name__=="__main__":
     app = QtWidgets.QApplication(sys.argv)
     qt5reactor.install()
     from twisted.internet import reactor
-    window = nanoSQUID_1p5K(reactor, computer='cthulu')
+    window = nanoSQUID_1p5K(reactor, computer='cthulu', folderName='NanoSQUID 1p5K')
     window.show()
     reactor.runReturn()
     sys.exit(app.exec_())

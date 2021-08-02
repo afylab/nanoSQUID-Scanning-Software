@@ -35,12 +35,13 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
     system_name = 'generic'
     """ The following section initializes, or defines the initialization of the GUI and
     connecting to servers."""
-    def __init__(self, reactor, parent = None, computer=''):
+    def __init__(self, reactor, parent = None, computer='', folderName=''):
         """ nSOT Scanner GUI """
 
         super(nanoSQUIDSystem, self).__init__(parent)
         self.reactor = reactor
         self.computer = computer
+        self.sessionFolderName = folderName
 
         ''' Setup the GUI '''
         self.setupUi(self)
@@ -203,27 +204,33 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.label_Campaign.setText(self.campaign_name)
         with open('../lastcampaign.txt', 'w') as fl:
             fl.write("campaign" + ":" + self.campaign_name)
+            fl.flush()
 
         #Data vault session info
         self.lineEdit_Session.setReadOnly(True)
-        self.session = os.path.join(str(self.system_name), self.campaign_name)
+        self.session = os.path.join(self.campaign_name)
         self.lineEdit_Session.setText(self.session)
         self.equip.setSession(self.session)
 
         #Saving images of all data taken info
         self.lineEdit_Session_2.setReadOnly(True)
         home = os.path.expanduser("~")
-        screenshotdir = os.path.join(home, 'Young Lab Dropbox','NanoSQUID Battle Station','Data','Software Screenshots')
-        self.screenshots = os.path.join(screenshotdir, str(self.system_name), self.campaign_name,  str(datetime.date.today()))
+        screenshotdir = os.path.join(home, 'Young Lab Dropbox',self.sessionFolderName,'Data','Software Screenshots')
+        self.screenshots = os.path.join(screenshotdir, self.campaign_name,  str(datetime.date.today()))
         self.lineEdit_Session_2.setText(self.screenshots)
         if not os.path.exists(self.screenshots):
             os.makedirs(self.screenshots)
         self.distributeSessionFolder(self.screenshots)
 
-    def chooseCampaign(self):
+    @inlineCallbacks
+    def chooseCampaign(self, c=None):
         campaign, done = QtWidgets.QInputDialog.getText(self, "Set Campaign", "Enter the name of the campaign:")
         if done:
             self.configureSession(campaign)
+        yield self.sleep(2)
+        for window in self.windows:
+            if hasattr(window, "updateDataVaultDirectory"):
+                window.updateDataVaultDirectory()
     #
 
 #----------------------------------------------------------------------------------------------#
