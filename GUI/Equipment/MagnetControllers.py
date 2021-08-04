@@ -95,6 +95,20 @@ class MagnetControl(EquipmentController):
             self.setpoint_Bz = setpoint
     #
 
+    def checkFieldRange(self, field):
+        '''
+        Checks that the given field is withinin the max/min field for the magnet.
+        IF the field is outside the range will return the maximum or minimum, if
+        the field is within the range will resturn the field.
+
+        For compatability with older parts of software
+        '''
+        if field > self.max_field:
+            field = self.max_field
+        elif field < -1.0*self.max_field:
+            field = -1.0*self.max_field
+        return field
+
     def setRampRate(self, ramprate):
         '''
         Change the setpoint of the power supply. Does not change the value in the magnet

@@ -46,7 +46,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 'nsot bias input':      4, #1 indexed input on the DAC ADC to read the nsot bias voltage
                 'feedback DC input':    3, #1 indexed input on the DAC ADC to read the DC feedback signal
                 'noise input':          2, #1 indexed input on the DAC ADC to read the noise
-                'Magnet device':        'Toellner 8851', #Device used to control the magnetic field
+                #'Magnet device':        'Toellner 8851', #Device used to control the magnetic field
         }
 
         #Dictionary of parameters defining the nSOT sweep
@@ -402,6 +402,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         self.blink_server = False
         self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(144, 140, 9);border-radius: 4px;}")
+        self.lockInterface()
 
 #----------------------------------------------------------------------------------------------#
     """ The following section connects actions related to updating parameters from
@@ -416,7 +417,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         #If the val retrieved from the lineedit is a float
         if isinstance(val,float):
             #Update the parameters dictionary with the new value
-            self.sweepParamDict['B_min'] = self.checkFieldRange(val)
+            self.sweepParamDict['B_min'] = self.magnet.checkFieldRange(val)
         #Set the text in the lineEdit to the value in the dictionary. If an
         #improperly formatted number was read that didn't result in the
         #dictionary being updated, this will set the text to the previous
@@ -427,23 +428,23 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         if val is None:
             val = readNum(str(self.lineEdit_fieldMax.text()))
         if isinstance(val,float):
-            self.sweepParamDict['B_max'] = self.checkFieldRange(val)
+            self.sweepParamDict['B_max'] = self.magnet.checkFieldRange(val)
         self.lineEdit_fieldMax.setText(formatNum(self.sweepParamDict['B_max']))
 
-    def checkFieldRange(self, val):
-        #Keeps the field value within 1.25T for the dipper magnet
-        if self.settingsDict['Magnet device'] == 'Toellner 8851':
-            if val < -1.25:
-                val = -1.25
-            elif val > 1.25:
-                val = 1.25
-        #Keeps the field value within 5T for the 1K system magnet
-        elif self.settingsDict['Magnet device'] == 'IPS 120-10':
-            if val < -5:
-                val = -5
-            elif val > 5:
-                val = 5
-        return val
+    # def checkFieldRange(self, val):
+    #     #Keeps the field value within 1.25T for the dipper magnet
+    #     if self.settingsDict['Magnet device'] == 'Toellner 8851':
+    #         if val < -1.25:
+    #             val = -1.25
+    #         elif val > 1.25:
+    #             val = 1.25
+    #     #Keeps the field value within 5T for the 1K system magnet
+    #     elif self.settingsDict['Magnet device'] == 'IPS 120-10':
+    #         if val < -5:
+    #             val = -5
+    #         elif val > 5:
+    #             val = 5
+    #     return val
 
     def updateFieldSpeed(self, val = None):
         if val is None:
@@ -695,15 +696,16 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         yield self.updateSweepTime()
 
         #Throw a reminder to check that the output of the Toellner is on if it's being used
-        if self.settingsDict['Magnet device'] == 'Toellner 8851':
-            checkToe = toellnerReminder()
-            if not checkToe.exec_():
-                #If not, abort the sweep
-                self.abortFlag = True
+        # if self.settingsDict['Magnet device'] == 'Toellner 8851':
+        #     checkToe = toellnerReminder()
+        #     if not checkToe.exec_():
+        #         #If not, abort the sweep
+        #         self.abortFlag = True
 
         #Have user review the sweep parameters before starting
         if not self.abortFlag:
-            checkSweepParams = DialogBox(self.settingsDict['Magnet device'], self.sweepParamDict, self)
+            #checkSweepParams = DialogBox(self.settingsDict['Magnet device'], self.sweepParamDict, self)
+            checkSweepParams = DialogBox('Magnet Supply', self.sweepParamDict, self)
             #If the user does not like the sweep parameters, abort the sweep
             if not checkSweepParams.exec_():
                 self.abortFlag = True
@@ -1596,12 +1598,12 @@ class DialogBox(QtWidgets.QDialog, Ui_DialogBox):
         self.biasSpeedValue.setText(str(self.sweepParamDict['delay']))
         self.biasSpeedValue.setStyleSheet("QLabel#biasSpeedValue {color: rgb(168,168,168); font-size: 10pt}")
 
-        if self.magnetDevice == 'IPS 120-10':
-            self.magnetPowerSupply.setText('Oxford IPS 120-10 Magnet Power Supply')
-            self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168); font-size: 10pt}")
-        elif self.magnetDevice == 'Toellner 8851':
-            self.magnetPowerSupply.setText('Toellner 8851 Power Supply')
-            self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168); font-size: 10pt}")
+        # if self.magnetDevice == 'IPS 120-10':
+        #     self.magnetPowerSupply.setText('Oxford IPS 120-10 Magnet Power Supply')
+        #     self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168); font-size: 10pt}")
+        # elif self.magnetDevice == 'Toellner 8851':
+        #     self.magnetPowerSupply.setText('Toellner 8851 Power Supply')
+        #     self.magnetPowerSupply.setStyleSheet("QLabel#magnetPowerSupply {color: rgb(168,168,168); font-size: 10pt}")
 
         if self.sweepParamDict['sweep mode'] == 0:
             self.sweepModeSetting.setText('Min to Max')
