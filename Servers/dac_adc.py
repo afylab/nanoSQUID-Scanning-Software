@@ -620,7 +620,7 @@ class DAC_ADCServer(DeviceServer):
         dev = self.selectedDevice(c)
         yield dev.write("GET_DAC,%i\r"%(channel))
         ans = yield dev.read()
-        returnValue(ans)
+        returnValue(float(ans))
 
     @setting(9002)
     def read(self,c):

@@ -759,91 +759,95 @@ class ScriptSimulator(QtWidgets.QMainWindow, SimulatorWindowUI):
         '''
         Takes all the data from the virtual modules
         '''
-        # print(VirtualModule.eventList)
+        try:
+            # print(VirtualModule.eventList) # For Debugging
 
-        # Define the various outputs
-        self.outputs = dict()
-        self.outputs_units = dict()
-        self.timing = [0.0]
+            # Define the various outputs
+            self.outputs = dict()
+            self.outputs_units = dict()
+            self.timing = [0.0]
 
-        # Get starting values for the virtual modules
-        for mod in self.virtual_mods:
-            mod.get_initial_state()
+            # Get starting values for the virtual modules
+            for mod in self.virtual_mods:
+                mod.get_initial_state()
 
-        # Scanning outputs
-        start = self.ScanControl.get_stating_outputs()
-        for k in ['X', 'Y']:
-            self.outputs[k] = [start[k]]
-            self.outputs_units[k] = "m"
+            # Scanning outputs
+            start = self.ScanControl.get_stating_outputs()
+            for k in ['X', 'Y']:
+                self.outputs[k] = [start[k]]
+                self.outputs_units[k] = "m"
 
-        # Z height from approach module
-        start = self.Approach.get_stating_outputs()
-        self.outputs['Z'] = start["Z"]
-        self.outputs_units['Z'] = "m"
+            # Z height from approach module
+            start = self.Approach.get_stating_outputs()
+            self.outputs['Z'] = start["Z"]
+            self.outputs_units['Z'] = "m"
 
-        # Sample DAC Outputs
-        start = self.SampleChar.get_starting_outputs()
-        for k in list(start.keys()):
-            self.outputs[k] = [start[k]]
-            self.outputs_units[k] = "V"
+            # Sample DAC Outputs
+            start = self.SampleChar.get_starting_outputs()
+            for k in list(start.keys()):
+                self.outputs[k] = [start[k]]
+                self.outputs_units[k] = "V"
 
-        # Magnetic Field
-        # self.outputs['Magnetic Field'] = []
-        # self.outputs_units['Magnetic Field'] = "T"
+            # Magnetic Field
+            # self.outputs['Magnetic Field'] = []
+            # self.outputs_units['Magnetic Field'] = "T"
 
 
-        # Loop through the event list and handel functions that affect the defined outputs
-        N = len(VirtualModule.eventList)
-        for i in range(N):
-            event = VirtualModule.eventList[i]
-            if event[0] in ["setPosition", "startScan"]:
-                # Things that update the X, Y, Z output from the ScanControl Module
-                dt, points = getattr(self.ScanControl, "_"+event[0])(*event[1], **event[2])
-                self.addPoints(dt, points) # Update outputs, all other outputs are assumed to be constant
-            elif event[0] in ["setTilt", "setXc", "setYc", "setH", "setW", "setAngle", "setPixels", "setLines", "setSpeed", "setDelay"]:
-                # Things that affect the virtual state of the ScanControl but don't change outputs
-                getattr(self.ScanControl, "_"+event[0])(*event[1], **event[2])
-            elif event[0] in ["approachConstHeight", "withdraw"]:
-                # Things that affect the outputs, from the Approach module
-                dt, points = getattr(self.Approach, "_"+event[0])(*event[1], **event[2])
-                self.addPoints(dt, points) # Update outputs, all other outputs are assumed to be constant
-            elif event[0] in ["setHeight"]:
-                # Things that affect the virtual state of the Approach module but don't change outputs
-                getattr(self.Approach, "_"+event[0])(*event[1], **event[2])
-            elif event[0] in ["FourTerminalSweep", "rampOutputVoltage"]:
-                # Things that affect the sample voltage outputs
-                dt, points = getattr(self.SampleChar, "_"+event[0])(*event[1], **event[2])
-                self.addPoints(dt, points) # Update outputs, all other outputs are assumed to be constant
-            elif event[0] in ["setFourTermMinVoltage", "setFourTermMaxVoltage", "setFourTermOutput", "setFourTermVoltageInput", "setFourTermCurrentInput", "setFourTermDelay", "setFourTermVoltageStepSize", "setFourTermVoltagePoints"]:
-                # Things that affect the state of the SampleChar virtual module but do not change the outputs
-                getattr(self.SampleChar, "_"+event[0])(*event[1], **event[2])
-            # elif event[0] in ["setField"]:
-            #     # Things that affect the magnetic field
-            #     dt, points = getattr(self.FieldControl, "_"+event[0])(*event[1], **event[2])
-            #     self.addPoints(dt, points) # Update outputs, all other outputs are assumed to be constant
-            # elif event[0] in ["setSetpoint", "hold", "setPersist", "setRamprate"]:
-            #     # Things that affect the state of the FieldControl virtual but do not change the outputs
-            #     getattr(self.FieldControl, "_"+event[0])(*event[1], **event[2])
+            # Loop through the event list and handel functions that affect the defined outputs
+            N = len(VirtualModule.eventList)
+            for i in range(N):
+                event = VirtualModule.eventList[i]
+                if event[0] in ["setPosition", "startScan"]:
+                    # Things that update the X, Y, Z output from the ScanControl Module
+                    dt, points = getattr(self.ScanControl, "_"+event[0])(*event[1], **event[2])
+                    self.addPoints(dt, points) # Update outputs, all other outputs are assumed to be constant
+                elif event[0] in ["setTilt", "setXc", "setYc", "setH", "setW", "setAngle", "setPixels", "setLines", "setSpeed", "setDelay"]:
+                    # Things that affect the virtual state of the ScanControl but don't change outputs
+                    getattr(self.ScanControl, "_"+event[0])(*event[1], **event[2])
+                elif event[0] in ["approachConstHeight", "withdraw"]:
+                    # Things that affect the outputs, from the Approach module
+                    dt, points = getattr(self.Approach, "_"+event[0])(*event[1], **event[2])
+                    self.addPoints(dt, points) # Update outputs, all other outputs are assumed to be constant
+                elif event[0] in ["setHeight"]:
+                    # Things that affect the virtual state of the Approach module but don't change outputs
+                    getattr(self.Approach, "_"+event[0])(*event[1], **event[2])
+                elif event[0] in ["FourTerminalSweep", "rampOutputVoltage"]:
+                    # Things that affect the sample voltage outputs
+                    dt, points = getattr(self.SampleChar, "_"+event[0])(*event[1], **event[2])
+                    self.addPoints(dt, points) # Update outputs, all other outputs are assumed to be constant
+                elif event[0] in ["setFourTermMinVoltage", "setFourTermMaxVoltage", "setFourTermOutput", "setFourTermVoltageInput", "setFourTermCurrentInput", "setFourTermDelay", "setFourTermVoltageStepSize", "setFourTermVoltagePoints"]:
+                    # Things that affect the state of the SampleChar virtual module but do not change the outputs
+                    getattr(self.SampleChar, "_"+event[0])(*event[1], **event[2])
+                # elif event[0] in ["setField"]:
+                #     # Things that affect the magnetic field
+                #     dt, points = getattr(self.FieldControl, "_"+event[0])(*event[1], **event[2])
+                #     self.addPoints(dt, points) # Update outputs, all other outputs are assumed to be constant
+                # elif event[0] in ["setSetpoint", "hold", "setPersist", "setRamprate"]:
+                #     # Things that affect the state of the FieldControl virtual but do not change the outputs
+                #     getattr(self.FieldControl, "_"+event[0])(*event[1], **event[2])
 
-        # Put everything in numpy format
-        N = -1
-        for k in list(self.outputs.keys()):
-            self.outputs[k] = np.array(self.outputs[k]) # convert to numpy
-            if N < 0:
-                N = len(self.outputs[k])
-            else:
-                if len(self.outputs[k]) != N:
-                    raise ValueError("Outputs have an inconsistent number of points.")
+            # Put everything in numpy format
+            N = -1
+            for k in list(self.outputs.keys()):
+                self.outputs[k] = np.array(self.outputs[k]) # convert to numpy
+                if N < 0:
+                    N = len(self.outputs[k])
+                else:
+                    if len(self.outputs[k]) != N:
+                        raise ValueError("Outputs have an inconsistent number of points.")
 
-        # Integrate to get the time basis
-        if len(self.timing) > 1:
-            for i in range(1, len(self.timing)):
-                self.timing[i] = self.timing[i] + self.timing[i-1]
-        self.time = np.array(self.timing)
+            # Integrate to get the time basis
+            if len(self.timing) > 1:
+                for i in range(1, len(self.timing)):
+                    self.timing[i] = self.timing[i] + self.timing[i-1]
+            self.time = np.array(self.timing)
 
-        # Clear the event list for the next simulation
-        # There is a better way to do this in python 3
-        del VirtualModule.eventList[:]
+            # Clear the event list for the next simulation
+            # There is a better way to do this in python 3
+            del VirtualModule.eventList[:]
+        except:
+            from traceback import format_exc
+            print(format_exc())
     #
 
 
