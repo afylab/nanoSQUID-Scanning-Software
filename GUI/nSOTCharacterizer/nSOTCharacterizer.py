@@ -344,11 +344,18 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             #Select the appropriate magnet power supply
             if 'Magnet Supply' in equip.servers:
                 svr, ln, device_info, cnt, config = equip.servers['Magnet Supply']
-                self.magnet = cnt
-                self.comboBox_magnetPower.addItem(device_info)
+                if svr:
+                    self.magnet = cnt
+                    self.comboBox_magnetPower.addItem(device_info)
+                    self.warning_label.setStyleSheet("#warning_label{color:rgb(0, 0, 0)}")
+                else:
+                    print("'Magnet Supply' not found in  nSOT Characterizer.")
+                    self.magnet = False
+                    self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
             else:
-                print("'Magnet Supply' not found, LabRAD connection to nSOT Characterizer Failed.")
-                return
+                print("'Magnet Supply' not found in  nSOT Characterizer.")
+                self.magnet = False
+                self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
 
             if "Blink Device" in equip.servers:
                 svr, labrad_name, device_info, cnt, config = equip.servers["Blink Device"]
@@ -675,6 +682,10 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @inlineCallbacks
     def startSweep(self):
+        if self.magnet == False:
+            print("nSOT Characterizer: No Magnet aborting sweep")
+            return
+
         #Prevent user from starting multiple sweeps at the same time by disabling the button while sweeping
         self.push_startSweep.setEnabled(False)
         #By default, do not abort the sweep.
@@ -858,7 +869,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         #     yield self.ipsSetField(B_f, B_rate)
         self.magnet.setSetpoint(B_f)
         self.magnet.setRampRate(B_rate)
-        yield self.magnet.goToSetpoint()
+        yield self.magnet.goToSetpoint(wait=False)
 
         print('Setting field to ' + str(B_f))
 
@@ -871,7 +882,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             yield self.magnet.poll()
             curr_field = self.magnet.Bz
             #if within 10 uT of the desired field, break out of the loop
-            if curr_field <= B_f + 0.00001 and curr_field >= B_f - 0.00001:
+            if curr_field <= B_f + 0.0005 and curr_field >= B_f - 0.0005:
                 break
 
             #Break out of loop if the user aborts the sweep
@@ -883,7 +894,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             if time.time() - t0 > 1:
                 self.magnet.setSetpoint(B_f)
                 self.magnet.setRampRate(B_rate)
-                yield self.magnet.goToSetpoint()
+                yield self.magnet.goToSetpoint(wait=False)
                 t0 = time.time()
                 print('restarting loop')
 
@@ -1473,9 +1484,9 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         val = yield self.dac.read_voltage(fdbk_input)
         returnValue(val)
 
-    @inlineCallbacks
-    def runSweep(self):
-        yield self.initSweep() #Starts the sweep.
+    # @inlineCallbacks
+    # def runSweep(self):
+    #     yield self.initSweep() #Starts the sweep.
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""

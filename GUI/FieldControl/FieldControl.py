@@ -49,7 +49,11 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     def connectLabRAD(self, equip):
         if 'Magnet Supply' in equip.servers:
             svr, ln, device_info, cnt, config = equip.servers['Magnet Supply']
-            self.controller = cnt
+            if svr:
+                self.controller = cnt
+            else:
+                print("'Magnet Supply' not found, LabRAD connection to FieldControl Failed.")
+                return
         else:
             print("'Magnet Supply' not found, LabRAD connection to FieldControl Failed.")
             return

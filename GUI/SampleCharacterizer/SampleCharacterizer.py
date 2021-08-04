@@ -221,10 +221,17 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             #Select the appropriate magnet power supply
             if 'Magnet Supply' in equip.servers:
                 svr, ln, device_info, cnt, config = equip.servers['Magnet Supply']
-                self.magnet = cnt
+                if svr:
+                    self.magnet = cnt
+                    self.warning_label.setStyleSheet("#warning_label{color:rgb(0, 0, 0)}")
+                else:
+                    print("'Magnet Supply' connection not found, in Sample Characterizer")
+                    self.magnet = False
+                    self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
             else:
-                print("'Magnet Supply' not found, LabRAD connection to Sample Characterizer Failed.")
-                return
+                print("'Magnet Supply' connection not found, in Sample Characterizer")
+                self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
+                self.magnet = False
 
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -934,6 +941,10 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         #Performs a measurement of the lock ins with a varying magnetic field at constant gate voltage
         #If the 'loop' checkbox is checked, this sweeps in both directions investigating the presence of hysteresis
 
+        if self.magnet == False:
+            print("Sample Characterizer: No Magnet aborting startFieldSweep1D")
+            return
+
         self.lockInterface() #Lock the GUI while sweeping to prevent user from changing sweep parameters mid sweep
         self.abortMagneticFieldSweep_Flag = False #By default, the sweep is not aborted
 
@@ -966,6 +977,10 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
     def fieldSweep1D(self, direction):
         #Function both does a 1D field sweep and formats all the data as required for data vault
         #and plotting. The data is added directly to data vault, and the plotting data is returned
+
+        if self.magnet == False:
+            print("Sample Characterizer: No Magnet aborting fieldSweep1D")
+            return
 
         #If sweeping "up" go from mininum to maximum field
         if direction == 'Up':
@@ -1053,6 +1068,9 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
     @inlineCallbacks
     def startLandauFanSweep(self):
         #The FourTerminal Sweep with Magnetic Field. This is a Landau fan
+        if self.magnet == False:
+            print("Sample Characterizer: No Magnet aborting LandauFan")
+            return
 
         self.lockInterface() #Lock the GUI while sweeping to prevent user from changing sweep parameters mid sweep
 
@@ -1297,6 +1315,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
     def setFourTermOutput(self, output):
         self.comboBox_FourTerminal_Output.setCurrentIndex(output-1)
         self.FourTerminal_ChannelOutput[0] = output-1
+        print("setFourTermOutput", self.FourTerminal_ChannelOutput[0])
 
     def setFourTermVoltageInput(self, input):
         self.comboBox_FourTerminal_Input1.setCurrentIndex(input-1)

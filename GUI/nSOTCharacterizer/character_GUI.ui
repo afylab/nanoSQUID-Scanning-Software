@@ -2014,6 +2014,29 @@ border-radius: 5px
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
+   <widget class="QLabel" name="warning_label">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>150</y>
+      <width>291</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#warning_label{color:rgb(0, 0, 0)}</string>
+    </property>
+    <property name="text">
+     <string>Warning! No Magnet</string>
+    </property>
+   </widget>
    <zorder>push_showRetraceGrad</zorder>
    <zorder>push_showTraceGrad</zorder>
    <zorder>push_hideTraceGrad</zorder>
@@ -2111,6 +2134,7 @@ border-radius: 5px
    <zorder>pushButton_Show</zorder>
    <zorder>checkBox_ZeroField</zorder>
    <zorder>label_39</zorder>
+   <zorder>warning_label</zorder>
   </widget>
  </widget>
  <tabstops>

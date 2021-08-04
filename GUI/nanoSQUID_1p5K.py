@@ -36,16 +36,21 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         dict = {'blink channel':0}
         self.equip.add_server("Blink Device", "ad5764_dcbox", "ad5764_dcbox (COM5)", config=dict)
 
-        # Remote Servers
-        self.equip.configure_remote_host('4KMonitor', 'minint_o9n40pb')
-
         dict = {'max_field':5}
-        self.equip.add_remote_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=dict)
+        self.equip.add_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=dict)
 
-        self.equip.add_remote_server("LS 350", "lakeshore_350")
+        self.equip.add_server("LS 350", "lakeshore_350")
 
-        # self.equip.add_remote_server("LM 510", "lm_510")
-#
+        # # Remote Servers
+        # self.equip.configure_remote_host('4KMonitor', 'minint_o9n40pb')
+        #
+        # dict = {'max_field':5}
+        # self.equip.add_remote_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=dict)
+        #
+        # self.equip.add_remote_server("LS 350", "lakeshore_350")
+        #
+        # # self.equip.add_remote_server("LM 510", "lm_510")
+
 
 #----------------------------------------------------------------------------------------------#
 """ The following runs the GUI"""

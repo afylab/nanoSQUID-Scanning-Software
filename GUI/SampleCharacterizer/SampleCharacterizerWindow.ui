@@ -104,6 +104,20 @@ background: rgb(144, 140, 9);
             </widget>
            </item>
            <item>
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string> </string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string> </string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QLabel" name="label_ImageNum">
              <property name="minimumSize">
               <size>
@@ -143,6 +157,26 @@ color: rgb(168, 168, 168)
          </item>
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_Main_Basic2">
+           <item>
+            <widget class="QLabel" name="warning_label">
+             <property name="font">
+              <font>
+               <pointsize>16</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">#warning_label{color:rgb(0, 0, 0)}</string>
+             </property>
+             <property name="text">
+              <string>Warning! No Magnet!</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::PlainText</enum>
+             </property>
+            </widget>
+           </item>
            <item>
             <widget class="QLineEdit" name="lineEdit_Device_Name">
              <property name="minimumSize">
@@ -1546,8 +1580,11 @@ color: rgb(168, 168, 168)
                  <height>22</height>
                 </size>
                </property>
+               <property name="currentText">
+                <string>DAC 1</string>
+               </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <item>
                 <property name="text">

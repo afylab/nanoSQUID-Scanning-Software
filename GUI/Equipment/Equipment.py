@@ -233,11 +233,11 @@ class EquipmentHandler():
                 self.servers[name] = (server, labrad_name, device_info, cnt, config)
 
             except Exception as inst:
-                print("Error connecting labrad servers")
+                print("Error connecting labrad server", name)
                 print(str(inst))
-                printErrorInfo()
                 if name in self.widgets:
                     self.widgets[name].error()
+                self.servers[name] = (False, labrad_name, device_info, cnt, config) # Set the server to be false
     #
 
     @inlineCallbacks
