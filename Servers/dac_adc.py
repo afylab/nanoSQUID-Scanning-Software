@@ -328,7 +328,10 @@ class DAC_ADCServer(DeviceServer):
         except KeyboardInterrupt:
             print('Stopped')
 
-        yield dev.read()
+        try:
+            yield dev.read()
+        except:
+            print("Error clearing teh serial buffer after buffer_ramp")
 
         returnValue(channels)
 
