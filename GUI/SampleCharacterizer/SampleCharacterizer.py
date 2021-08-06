@@ -797,18 +797,18 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         #datavaultXaxis is the list of independent variables on the sweep
         if sweep_type == 'MagneticField1D': #1D field sweep sweep
             datavaultXaxis=['Magnetic Field index', 'Magnetic Field']
-            file = yield self.dv.new('1D Magnetic Field ' + self.Device_Name, datavaultXaxis, datavaultYaxis)
+            file_info = yield self.dv.new('1D Magnetic Field ' + self.Device_Name, datavaultXaxis, datavaultYaxis)
         elif sweep_type == "Landau Fan":
             datavaultXaxis=['Magnetic Field index', 'Gate Voltage index', 'Magnetic Field', 'Gate Voltage']
-            file = yield self.dv.new('FourTerminal MagneticField ' + self.Device_Name, datavaultXaxis, datavaultYaxis)
+            file_info = yield self.dv.new('FourTerminal MagneticField ' + self.Device_Name, datavaultXaxis, datavaultYaxis)
         else: #Four Terminal measurement
             datavaultXaxis=['Gate Voltage index', 'Gate Voltage']
-            file = yield self.dv.new('FourTerminal ' + self.Device_Name, datavaultXaxis, datavaultYaxis)
+            file_info = yield self.dv.new('FourTerminal ' + self.Device_Name, datavaultXaxis, datavaultYaxis)
 
-        self.dvFileName = file[1] #read the name
-        self.lineEdit_ImageNumber.setText(file[1][0:5])
+        self.dvFileName = file_info[1] #read the name
+        self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
         session  = ''
-        for folder in file[0][1:]:
+        for folder in file_info[0][1:]:
             session = session + '\\' + folder
         self.lineEdit_ImageDir.setText(r'\.datavault' + session)
 

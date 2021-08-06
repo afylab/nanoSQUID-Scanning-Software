@@ -49,7 +49,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.setupWindows() # Setup the various Windows
 
         # Configure the equipment and session
-        self.equip = EquipmentHandler(self.equipmentFrame, self.remoteFrame, self.computer, self.reactor)
+        self.equip = EquipmentHandler(self.equipmentFrame, self.remoteFrame, self.computer, self.reactor, self.system_name)
         self.configureEquipment()
         self.configureSession()
 
@@ -63,7 +63,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
 
 
         # Connect buttons
-        self.push_Campaign.clicked.connect(self.chooseCampaign)
+        #self.push_Campaign.clicked.connect(self.chooseCampaign)
 
         #Make sure default session flder is emitted
         #self.LabRAD.newSessionFolder.emit(self.LabRAD.session_2)
@@ -184,53 +184,53 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         # self.equip.add_remote_server("SR830", "sr_830", "0")
     #
 
-    def configureSession(self, newCampaign=None):
+    def configureSession(self):
         '''
-        Configure the session information. With the system and campaign name
+        Configure the session information.
         '''
-        if newCampaign is None: # Get the last campaign name used, if not call it general
-            if os.path.exists('../lastcampaign.txt'):
-                with open('../lastcampaign.txt', 'r') as fl:
-                    lines = fl.readlines()
-                    l1 = lines[0].split(":")
-                    if l1[0] == "campaign":
-                        self.campaign_name = l1[1].strip()
-                    else:
-                        self.campaign_name = 'general'
-            else:
-                self.campaign_name = 'general'
-        else:
-            self.campaign_name = newCampaign
-        self.label_Campaign.setText(self.campaign_name)
-        with open('../lastcampaign.txt', 'w') as fl:
-            fl.write("campaign" + ":" + self.campaign_name)
-            fl.flush()
+        # if newCampaign is None: # Get the last campaign name used, if not call it general
+        #     if os.path.exists('../lastcampaign.txt'):
+        #         with open('../lastcampaign.txt', 'r') as fl:
+        #             lines = fl.readlines()
+        #             l1 = lines[0].split(":")
+        #             if l1[0] == "campaign":
+        #                 self.campaign_name = l1[1].strip()
+        #             else:
+        #                 self.campaign_name = 'general'
+        #     else:
+        #         self.campaign_name = 'general'
+        # else:
+        #     self.campaign_name = newCampaign
+        # self.label_Campaign.setText(self.campaign_name)
+        # with open('../lastcampaign.txt', 'w') as fl:
+        #     fl.write("campaign" + ":" + self.campaign_name)
+        #     fl.flush()
 
-        #Data vault session info
-        self.lineEdit_Session.setReadOnly(True)
-        self.session = os.path.join(self.campaign_name)
-        self.lineEdit_Session.setText(self.session)
-        self.equip.setSession(self.session)
+        # #Data vault session info
+        # self.lineEdit_Session.setReadOnly(True)
+        # self.session = ''
+        # self.lineEdit_Session.setText(self.session)
+        # self.equip.setSession(self.session)
 
         #Saving images of all data taken info
         self.lineEdit_Session_2.setReadOnly(True)
         home = os.path.expanduser("~")
         screenshotdir = os.path.join(home, 'Young Lab Dropbox',self.sessionFolderName,'Data','Software Screenshots')
-        self.screenshots = os.path.join(screenshotdir, self.campaign_name,  str(datetime.date.today()))
+        self.screenshots = os.path.join(screenshotdir, str(datetime.date.today()))
         self.lineEdit_Session_2.setText(self.screenshots)
         if not os.path.exists(self.screenshots):
             os.makedirs(self.screenshots)
         self.distributeSessionFolder(self.screenshots)
 
-    @inlineCallbacks
-    def chooseCampaign(self, c=None):
-        campaign, done = QtWidgets.QInputDialog.getText(self, "Set Campaign", "Enter the name of the campaign:")
-        if done:
-            self.configureSession(campaign)
-        yield self.sleep(2)
-        for window in self.windows:
-            if hasattr(window, "updateDataVaultDirectory"):
-                window.updateDataVaultDirectory()
+    # @inlineCallbacks
+    # def chooseCampaign(self, c=None):
+    #     campaign, done = QtWidgets.QInputDialog.getText(self, "Set Campaign", "Enter the name of the campaign:")
+    #     if done:
+    #         self.configureSession(campaign)
+    #     yield self.sleep(2)
+    #     for window in self.windows:
+    #         if hasattr(window, "updateDataVaultDirectory"):
+    #             window.updateDataVaultDirectory()
     #
 
 #----------------------------------------------------------------------------------------------#

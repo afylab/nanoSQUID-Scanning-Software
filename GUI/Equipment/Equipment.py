@@ -61,7 +61,7 @@ class EquipmentController():
     #
 
 class EquipmentHandler():
-    def __init__(self, default_frame, remote_frame, computer, reactor):
+    def __init__(self, default_frame, remote_frame, computer, reactor, system_name):
         '''
         Handels the various system specific equipment and the configuration.
 
@@ -91,6 +91,8 @@ class EquipmentHandler():
         self.ip = '127.0.0.1'
         self.compname = computer
         self.reactor = reactor
+        self.system_name = system_name
+        self.session = ''
 
         self.cxnr = False
         self.remote_ip = None
@@ -213,6 +215,7 @@ class EquipmentHandler():
 
                 if name == "Data Vault":
                     self.dv = server
+                    self.dv.set_nanosquid_system(self.system_name) # For the nanosquid specific identifier
                     self.changeDVSession()
 
                 # Configure the device, either through a controller or the

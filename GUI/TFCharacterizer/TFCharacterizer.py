@@ -473,7 +473,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             yield self.hf.set_demod(self.demod,False)
             file_info = yield self.dv.new("Tuning Fork Voltage vs. Frequency " + self.fileName,['Frequency'],['Amplitude R', 'Phase Phi'])
             self.dvFileName = file_info[1]
-            self.lineEdit_ImageNum.setText(file_info[1][0:5])
+            self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
             session  = ''
             for folder in file_info[0][1:]:
                 session = session + '\\' + folder

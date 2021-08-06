@@ -10,7 +10,7 @@ from twisted.internet import reactor, task
 from labrad.server import LabradServer, Signal, setting
 from labrad import server
 
-from datavault import backend, errors, server, SessionStore
+from datavaultnsot import backend, errors, server, SessionStore
 
 
 def _unique_dir():

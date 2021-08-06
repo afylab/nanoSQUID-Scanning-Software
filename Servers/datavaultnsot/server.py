@@ -9,6 +9,10 @@ from labrad.server import LabradServer, Signal, setting
 
 from . import errors
 
+# nanoSQUID specific imports
+from datetime import datetime as date
+import glob
+from os.path import join
 
 class DataVault(LabradServer):
     name = 'Data Vault'
@@ -27,6 +31,10 @@ class DataVault(LabradServer):
         self.onDataAvailable = Signal(543619, 'signal: data available', '')
         self.onNewParameter = Signal(543620, 'signal: new parameter', '')
         self.onCommentsAvailable = Signal(543621, 'signal: comments available', '')
+
+        # nanosquid naming specific
+        self.system_name = 'generic' # a value to prevent crashing
+        self.last_index = -1
 
     def initServer(self):
         # create root session
@@ -65,6 +73,28 @@ class DataVault(LabradServer):
         if 'dataset' not in c:
             raise errors.NoDatasetError()
         return c['datasetObj']
+
+    def getNanosquidID(self, c):
+        '''
+        Generate a unique identifier for a nanosquid data set.
+        '''
+        session = self.getSession(c)
+        datadir = session.dir
+        now = date.now()
+        identifier = self.system_name + "-" + now.strftime("%Y%m%d") + "-"
+
+        # Search matching files to see if there is already a file with the name
+        fls = glob.glob(join(datadir,'*'+identifier+'*'))
+        if fls == []:
+            self.last_index = -1
+        else:
+            while True:
+                if any(identifier+str(self.last_index+1) in s for s in fls):
+                    self.last_index += 1
+                else:
+                    break
+
+        return identifier+str(self.last_index+1)
 
     @setting(5, returns=['*s'])
     def dump_existing_sessions(self, c):
@@ -161,7 +191,14 @@ class DataVault(LabradServer):
         Returns the path and name for this dataset.
         """
         session = self.getSession(c)
-        dataset = session.newDataset(name or 'untitled', independents, dependents)
+
+        # NanoSQUID specific naming function
+        # name from user gets prepended with a unique identifier
+        now = date.now()
+        identifier = self.getNanosquidID(c)
+        dataset = session.newDataset(identifier + ' - ' + name or 'untitled', independents, dependents)
+        self.last_index += 1 # Increment it bcause you have created a new data file
+
         c['dataset'] = dataset.name # not the same as name; has number prefixed
         c['datasetObj'] = dataset
         c['filepos'] = 0 # start at the beginning
@@ -169,7 +206,7 @@ class DataVault(LabradServer):
         c['writing'] = True
         return c['path'], c['dataset']
 
-    @setting(1009, name='s', 
+    @setting(1009, name='s',
              independents='*(s*iss)',
              dependents='*(ss*iss)',
              returns=['*ss'])
@@ -187,7 +224,7 @@ class DataVault(LabradServer):
             i:          32 bit integer
             v:          double precision floating point with unit.  Use v[] for scalar
             c:          double precision complex with unit.  Use c[] for scalar
-            s:          string.  The string must be plain ASCII or UTF-8 encoded 
+            s:          string.  The string must be plain ASCII or UTF-8 encoded
                         unicode (until labrad has native unicode support)
                         Arbitrary binary data is *not* supported.
             t:          Timestamp
@@ -488,6 +525,14 @@ class DataVault(LabradServer):
         if isinstance(datasets, str):
             datasets = [datasets]
         return sess.getTags(dirs, datasets)
+
+    @setting(401, 'set_nanosquid_system', system='s', returns='')
+    def set_nanosquid_system(self, c, system):
+        '''
+        Part of the nanosquid unique system, accepts the name of the system it is
+        working on.
+        '''
+        self.system_name = str(system)
 
 
 class DataVaultMultiHead(DataVault):

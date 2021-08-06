@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from datavault import util
+from datavaultnsot import util
 
 class Testutil(unittest.TestCase):
     @classmethod

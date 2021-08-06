@@ -1501,7 +1501,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             #Retrace index is 0 for trace, 1 for retrace
             file_info = yield self.dv.new("nSOT Scan Data " + self.fileName, ['Retrace Index','X Pos. Index','Y Pos. Index','X Pos. Voltage', 'Y Pos. Voltage'],in_name_list)
             self.dvFileName = file_info[1]
-            self.lineEdit_ImageNum.setText(file_info[1][0:5])
+            self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
             session  = ''
             for folder in file_info[0][1:]:
                 session = session + '\\' + folder

@@ -9,7 +9,7 @@ from labrad import types
 
 from twisted.internet import task
 
-from datavault import Session, Dataset, SessionStore
+from datavaultnsot import Session, Dataset, SessionStore
 
 
 def _unique_dir():

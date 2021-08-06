@@ -93,8 +93,8 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         self.biasSIStat = 'num pnts'
 
         #Adds/removes the ability to take line cuts in the displayed data
-        self.liveTracePlotStatus = False #By default, do not automatically update the trace linecuts
-        self.liveRetracePlotStatus = False #By default, do not automatically update the retrace linecuts
+        self.liveTracePlotStatus = True #By default, do not automatically update the trace linecuts
+        self.liveRetracePlotStatus = True #By default, do not automatically update the retrace linecuts
         self.push_liveTracePlot.clicked.connect(self.toggleTraceLineCut)
         self.push_liveRetracePlot.clicked.connect(self.toggleRetraceLineCut)
 
@@ -763,7 +763,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             #Create a data vault file for this sweep
             file_info = yield self.dv.new("nSOT vs. Bias Voltage and Field", ['Trace Index', 'B Field Index','Bias Voltage Index','B Field','Bias Voltage'],['DC SSAA Output','Noise'])
             self.dvFileName = file_info[1] #Get the name of the file
-            self.lineEdit_ImageNum.setText(file_info[1][0:5]) #Update the GUI element showing the dataset number
+            self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
             session = ''
             for folder in file_info[0][1:]:
                 session = session + '\\' + folder
@@ -1104,7 +1104,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             self.noiseRetraceData[i] = new_noiseData
             self.retracePlot.setImage(self.curRetraceData, autoRange = False, autoLevels = True, pos = self.plt_pos,scale = self.plt_scale)
             self.noiseRetracePlot.setImage(self.noiseRetraceData, autoRange = False, autoLevels = True, pos = self.plt_pos, scale = self.plt_scale)
-            if self.liveTracePlotStatus is True:
+            if self.liveRetracePlotStatus is True:
                 self.plotRetraceLinecut(i)
         elif new_line[0][0] == 0: #If first index of the new line is trace, update trace plots
             i = new_line[0][1]
@@ -1114,7 +1114,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             self.noiseTraceData[i] = new_noiseData
             self.tracePlot.setImage(self.curTraceData, autoRange = False, autoLevels = True, pos = self.plt_pos, scale = self.plt_scale)
             self.noiseTracePlot.setImage(self.noiseTraceData, autoRange = False, autoLevels = True, pos = self.plt_pos, scale = self.plt_scale)
-            if self.liveRetracePlotStatus is True:
+            if self.liveTracePlotStatus is True:
                 self.plotTraceLinecut(i)
 
     def toggleTraceLineCut(self):
@@ -1803,7 +1803,7 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
 
                 file_info = yield self.dv.new("nSOT Preliminary Sweep", ['Bias Voltage Index','Bias Voltage'],['DC SSAA Output','Noise'])
                 self.dvFileName = file_info[1]
-                self.lineEdit_ImageNum.setText(file_info[1][0:5])
+                self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
                 session     = ''
                 for folder in file_info[0][1:]:
                     session = session + '\\' + folder

@@ -39,8 +39,8 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 import labrad.util
 import labrad.wrappers
 
-from datavault import SessionStore
-from datavault.server import DataVault
+from datavaultnsot import SessionStore
+from datavaultnsot.server import DataVault
 
 
 @inlineCallbacks

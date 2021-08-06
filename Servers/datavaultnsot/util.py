@@ -44,4 +44,3 @@ def from_record_array(data):
 def braced(s):
     """Wrap the given string in braces, which is awkward with str.format"""
     return '{' + s + '}'
-

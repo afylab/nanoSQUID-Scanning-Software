@@ -13,9 +13,12 @@ def printErrorInfo():
 
 def saveDataToSessionFolder(window, folder, filename):
     try:
+        # The new nanosquid unique identifier is teh second string in the file name
+        num, identifier, name = filename.split(" - ")
+
         app = QtWidgets.QApplication.instance()
         pixmap = QtGui.QScreen.grabWindow(app.primaryScreen(), window.winId())
-        pixmap.save(folder + '\\' + filename + '.jpg','jpg')
+        pixmap.save(folder + '\\' + identifier + ' - ' + name  + '.jpg','jpg')
     except:
         printErrorInfo()
 
