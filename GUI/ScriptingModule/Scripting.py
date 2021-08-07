@@ -1,7 +1,7 @@
 import sys
 from PyQt5 import QtGui, QtWidgets, QtCore, uic
-from twisted.internet.defer import inlineCallbacks, Deferred #, returnValue
-from nSOTScannerFormat import printErrorInfo
+from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
+from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
 path = sys.path[0] + r"\ScriptingModule"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\Scripting.ui")

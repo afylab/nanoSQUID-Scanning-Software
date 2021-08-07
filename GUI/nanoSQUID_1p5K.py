@@ -18,34 +18,34 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         self.equip.add_server("Serial Server", 'serial_server', display_frame=self.genericFrame)
 
         # Local Servers
-        dict = {'pll input':1, 'pll output':1, 'pid z out':1, 'z monitor':1, 'sum board toggle':1}
-        self.equip.add_server("HF2LI Lockin", "hf2li_server", controller=CoreEquipment.HF2LI_Controller, config=dict)
+        conf = {'pll input':1, 'pll output':1, 'pid z out':1, 'z monitor':1, 'sum board toggle':1}
+        self.equip.add_server("HF2LI Lockin", "hf2li_server", controller=CoreEquipment.HF2LI_Controller, config=conf)
 
         self.equip.add_server("ANC350", "anc350_server", controller=CoreEquipment.ANC350_Controller)
 
-        dict = {'DC Readout':3, 'nSOT Bias':4, 'Noise Readout':2, 'nSOT Gate':1, 'Gate Reference':1, 'Bias Reference':4}
-        self.equip.add_server("nSOT DAC", "dac_adc", "DA16_16_03 (COM6)", config=dict)
+        conf = {'DC Readout':3, 'nSOT Bias':4, 'Noise Readout':2, 'nSOT Gate':1, 'Gate Reference':1, 'Bias Reference':4}
+        self.equip.add_server("nSOT DAC", "dac_adc", "DA16_16_03 (COM6)", config=conf)
 
-        dict = {'x out':2, 'y out':3, 'z out':1}
-        self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_03 (COM11)", config=dict)
+        conf = {'x out':2, 'y out':3, 'z out':1}
+        self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_03 (COM11)", config=conf)
 
         self.equip.add_server("Sample DAC", "dac_adc", "DA16_16_06 (COM3)")
 
         self.equip.add_server("DC Box", "ad5764_dcbox", "ad5764_dcbox (COM5)")
 
-        dict = {'blink channel':0}
-        self.equip.add_server("Blink Device", "ad5764_dcbox", "ad5764_dcbox (COM5)", config=dict)
+        conf = {'blink channel':1}
+        self.equip.add_server("Blink Device", "ad5764_dcbox", "ad5764_dcbox (COM5)", config=conf)
 
-        dict = {'max_field':5}
-        self.equip.add_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=dict)
+        conf = {'max_field':5}
+        self.equip.add_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=conf)
 
         self.equip.add_server("LS 350", "lakeshore_350")
 
         # # Remote Servers
         # self.equip.configure_remote_host('4KMonitor', 'minint_o9n40pb')
         #
-        # dict = {'max_field':5}
-        # self.equip.add_remote_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=dict)
+        # conf = {'max_field':5}
+        # self.equip.add_remote_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=conf)
         #
         # self.equip.add_remote_server("LS 350", "lakeshore_350")
         #

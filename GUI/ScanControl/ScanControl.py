@@ -130,7 +130,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 'z out'               : 1,         # 1 indexed DAC output that goes to constant gain on Z
                 'x out'               : 2,         # 1 indexed DAC output that goes to X
                 'y out'               : 3,         # 1 indexed DAC output that goes to Y
-                'blink out'           : 2,         # 1 indexed DC Box output that goes to blinking
+                'blink out'           : 1,         # 1 indexed DC Box output that goes to blinking
         }
 
         #Random number that is not real data. This lets us know when plotting which values are real data, and which can just be ignored.
@@ -284,7 +284,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 return
 
             if "Blink Device" in equip.servers:
-                svr, labrad_name, device_info, cnt, config = equip.servers["DC Box"]
+                svr, labrad_name, device_info, cnt, config = equip.servers["Blink Device"]
 
                 #Create a connection to the proper device for blinking
                 if labrad_name.startswith('ad5764_dcbox'):
@@ -298,7 +298,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             else:
                 print("'DC Box' not found, LabRAD connection to Scan Control Failed.")
                 return
-
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
 
@@ -308,6 +307,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         except Exception: # as inst:
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(161, 0, 0);border-radius: 4px;}")
+            printErrorInfo()
 
     def disconnectLabRAD(self):
         self.cxn = False
