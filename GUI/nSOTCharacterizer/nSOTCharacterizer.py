@@ -822,15 +822,24 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
                 #Do the voltage sweep. The function takes into account the sweep mode
                 trace, retrace = yield self.rampVoltage(v_min, v_max, v_pnts, delay, self.sweepParamDict['sweep mode'])
+                print("trace", len(trace[0]), len(trace[1]), len(trace[2]))
+                print("retrace", len(retrace[0]), len(retrace[1]), len(retrace[2]))
 
                 #Reform data and add to data vault
-                formated_trace = []
-                for j in range(0, v_pnts):
-                    formated_trace.append((0, i, j, b_vals[i], trace[0][j], trace[1][j], trace[2][j]))
+                try:
+                    formated_trace = []
+                    for j in range(0, v_pnts):
+                        formated_trace.append((0, i, j, b_vals[i], trace[0][j], trace[1][j], trace[2][j]))
 
-                formated_retrace = []
-                for j in range(0, v_pnts):
-                    formated_retrace.append((1, i, v_pnts - 1 - j, b_vals[i], retrace[0][j], retrace[1][j], retrace[2][j]))
+                    formated_retrace = []
+                    for j in range(0, v_pnts):
+                        formated_retrace.append((1, i, v_pnts - 1 - j, b_vals[i], retrace[0][j], retrace[1][j], retrace[2][j]))
+                except:
+                    from traceback import format_exc
+                    print(format_exc())
+                    yield self.abortSweepFunc(b_vals[i], v_min)
+                    break
+
 
                 yield self.dv.add(formated_trace)
                 yield self.dv.add(formated_retrace)
@@ -1032,6 +1041,11 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             v_range = v_max - v_min
             positive_points = int((pnts * v_max)/v_range) #Think about the +1 in rest of script
             negative_points = pnts - positive_points
+
+            print("pnts", pnts)
+            print("positive_points", positive_points)
+            print("negative_points", negative_points)
+            print(V_range, v_max, v_min)
 
             #If blink mode is enabled, blink before the voltage sweep step
             if self.sweepParamDict['blink mode'] == 0:
