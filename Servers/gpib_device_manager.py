@@ -48,7 +48,12 @@ UNKNOWN = '<unknown>'
 
 def parseIDNResponse(s):
     """Parse the response from *IDN? to get mfr and model info."""
-    mfr, model, ver, rev = s.split(',')
+    #mfr, model, ver, rev = s.split(',')
+    if "b'" in s:
+        s = s.replace("b'","")
+    response = s.split(',')
+    mfr = response[0]
+    model = response[1]
     return mfr.strip() + ' ' + model.strip()
 
 class GPIBDeviceManager(LabradServer):
@@ -162,8 +167,11 @@ class GPIBDeviceManager(LabradServer):
                 resp = 'ESP,300,Version,3.09'
 
             name = parseIDNResponse(resp)
+            print(name) # DEBUG
         except Exception as e:
             print('Error sending *IDN? to', server, channel + ':', e)
+            from traceback import format_exc
+            print(format_exc())
             name = UNKNOWN
         returnValue((name, resp))
 
@@ -206,6 +214,11 @@ class GPIBDeviceManager(LabradServer):
         """
         try:
             #yield self.client.refresh()
+
+            # Weird GPIB edge case
+            if "\\n" in idn:
+                idn = idn.replace("\\n","")
+
             s = self.client[identifier]
             setting, context = self.identFunctions[identifier]
             print('Trying to identify device', server, channel, end=' ')
@@ -220,7 +233,7 @@ class GPIBDeviceManager(LabradServer):
                 print('Server %s identified device %s %s as "%s"' % data)
                 returnValue(resp)
         except Exception as e:
-            from traceback import formant_exc
+            from traceback import format_exc
             print(format_exc())
             print('Error during ident:', str(e))
 
