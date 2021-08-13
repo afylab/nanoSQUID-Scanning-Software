@@ -266,7 +266,6 @@ class DAC_ADCServer(DeviceServer):
         sivoltages = ""
         sfvoltages = ""
 
-
         for x in range(dacN):
             sdacPorts = sdacPorts + str(dacPorts[x])
             sivoltages = sivoltages + str(ivoltages[x]) + ","
@@ -351,7 +350,6 @@ class DAC_ADCServer(DeviceServer):
         sadcPorts = ""
         sivoltages = ""
         sfvoltages = ""
-
 
         for x in range(dacN):
             sdacPorts = sdacPorts + str(dacPorts[x])
@@ -626,7 +624,12 @@ class DAC_ADCServer(DeviceServer):
         dev = self.selectedDevice(c)
         yield dev.write("GET_DAC,%i\r"%(channel))
         ans = yield dev.read()
-        returnValue(float(ans))
+        try:
+            ans = float(ans)
+            return ans
+        except ValueError:
+            print("failed to decode: " + ans)
+        #return ans
 
     @setting(9002)
     def read(self,c):

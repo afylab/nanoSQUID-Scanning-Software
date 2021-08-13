@@ -33,7 +33,7 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
 
         self.equip.add_server("DC Box", "ad5764_dcbox", "ad5764_dcbox (COM5)")
 
-        conf = {'blink channel':1}
+        conf = {'blink channel':3} #Output of DC box that corresponds on the frontpanel to Blink
         self.equip.add_server("Blink Device", "ad5764_dcbox", "ad5764_dcbox (COM5)", config=conf)
 
         conf = {'max_field':5}

@@ -822,8 +822,6 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
                 #Do the voltage sweep. The function takes into account the sweep mode
                 trace, retrace = yield self.rampVoltage(v_min, v_max, v_pnts, delay, self.sweepParamDict['sweep mode'])
-                print("trace", len(trace[0]), len(trace[1]), len(trace[2]))
-                print("retrace", len(retrace[0]), len(retrace[1]), len(retrace[2]))
 
                 #Reform data and add to data vault
                 try:
@@ -835,8 +833,9 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                     for j in range(0, v_pnts):
                         formated_retrace.append((1, i, v_pnts - 1 - j, b_vals[i], retrace[0][j], retrace[1][j], retrace[2][j]))
                 except:
-                    from traceback import format_exc
-                    print(format_exc())
+                    #from traceback import format_exc
+                    #print(format_exc())
+                    print('The bug is back')
                     yield self.abortSweepFunc(b_vals[i], v_min)
                     break
 
@@ -1041,11 +1040,12 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             v_range = v_max - v_min
             positive_points = int((pnts * v_max)/v_range) #Think about the +1 in rest of script
             negative_points = pnts - positive_points
-
+            trace = []
+            retrace = []
             print("pnts", pnts)
             print("positive_points", positive_points)
             print("negative_points", negative_points)
-            print(V_range, v_max, v_min)
+            print(v_range, v_max, v_min)
 
             #If blink mode is enabled, blink before the voltage sweep step
             if self.sweepParamDict['blink mode'] == 0:
@@ -1073,8 +1073,14 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             print('Ramping nSOT bias voltage up down from ' + str(v_min) + ' to zero.')
             down_retrace = yield self.dac.buffer_ramp([DAC_out], [DAC_in_ref, V_out, noise], [v_min], [0], negative_points, delay)
 
-            trace = down_trace[::-1] + up_trace
-            retrace = down_retrace + up_retrace[::-1]
+
+            down_trace = np.asarray(down_trace)
+            down_retrace = np.asarray(down_retrace)
+            up_trace = np.asarray(up_trace)
+            up_retrace = np.asarray(up_retrace)
+
+            trace = np.append(down_trace[::-1], up_trace, axis=1)
+            retrace = np.append(down_retrace, up_retrace[::-1], axis=1)
 
         returnValue([trace, retrace])
 
@@ -1096,9 +1102,9 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
     @inlineCallbacks
     def blink(self):
         #Blink, resetting the analog feedback control loop for the nSOT
-        yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 5)
+        yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 5)  #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         yield self.sleep(0.25)
-        yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 0)
+        yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 0)  #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         yield self.sleep(0.25)
 
 #----------------------------------------------------------------------------------------------#

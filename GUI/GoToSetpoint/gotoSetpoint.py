@@ -38,9 +38,9 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.lineEdit_biasSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSteps, 'bias steps'))
         self.lineEdit_biasDelay.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasDelay, 'bias delay'))
 
-        self.lineEdit_gateSetpoint.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'gate setpoint', [-10.0, 10.0]))
-        self.lineEdit_gateSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSteps, 'gate steps'))
-        self.lineEdit_gateDelay.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasDelay, 'gate delay'))
+        self.lineEdit_gateSetpoint.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_gateSetpoint, 'gate setpoint', [-10.0, 10.0]))
+        self.lineEdit_gateSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_gateSteps, 'gate steps'))
+        self.lineEdit_gateDelay.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_gateDelay, 'gate delay'))
 
         self.zeroBiasBtn.clicked.connect(lambda: self.zeroBiasFunc())
         self.gotoBiasBtn.clicked.connect(lambda: self.gotoBiasFunc())
@@ -196,9 +196,9 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
     @inlineCallbacks
     def setFeedback(self, on):
         if on:
-            yield self.blink_server.set_voltage(self.blinkChan, 0)
+            yield self.blink_server.set_voltage(self.blinkChan-1, 0) #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         else:
-            yield self.blink_server.set_voltage(self.blinkChan, 5)
+            yield self.blink_server.set_voltage(self.blinkChan-1, 5) #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         self.feedbackButtonColors(on)
 
     def updateSweepParameter(self, lineEdit, key, range = None):
@@ -243,7 +243,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         steps = int(np.absolute(curr_gate) * 1000 + 5)
         delay = 2000
 
-        yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [curr_gate], [0], steps, delay)
+        yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [curr_gate], [0.0], steps, delay)
         self.settingsDict['gate curent'] = 0.0
         new_gate = yield self.dac.read_voltage(self.gateRefChan)
         self.currGateLbl.setText('Current Gate: ' + str(new_gate) + 'V')
@@ -262,10 +262,10 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
     @inlineCallbacks
     def blink(self):
-        yield self.blink_server.set_voltage(self.blinkChan, 5)
+        yield self.blink_server.set_voltage(self.blinkChan - 1, 5) #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         self.feedbackButtonColors(False)
         yield self.sleep(0.25)
-        yield self.blink_server.set_voltage(self.blinkChan, 0)
+        yield self.blink_server.set_voltage(self.blinkChan - 1, 0) #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         self.feedbackButtonColors(True)
 
 #----------------------------------------------------------------------------------------------#
@@ -305,7 +305,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
     def readFeedback(self):
         feedback = False;
         try:
-            curr_fdbk = yield self.blink_server.get_voltage(self.blinkChan)
+            curr_fdbk = yield self.blink_server.get_voltage(self.blinkChan-1) #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
             if curr_fdbk < 0.2:
                 self.feedbackButtonColors(True)
                 feedback = True

@@ -1553,8 +1553,11 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
             #Get Zurich voltage output
             z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+
             #Get the Z voltage on the attocubes
-            self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.generalSettings['step_z_output'] - 1)
+            # dac_z_value = yield self.dac.read_dac_voltage(self.generalSettings['step_z_output'] - 1)
+            # if isinstance(dac_z_value,float):
+            #     self.Atto_Z_Voltage = dac_z_value
 
             #update labels on the GUI
             self.label_pidApproachStatus.setText('Withdrawing')
@@ -1591,6 +1594,9 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed, curr_val = z_voltage)
 
             #If there's a voltage from the scanning DAC-ADC and we still need to withdraw to reach the withdraw distance goal
+            print('WithdrawDistance and Atto_Z_Voltage are:') #ADDED FOR DEBUGGING
+            print(withdrawDistance) #ADDED FOR DEBUGGING
+            print(self.Atto_Z_Voltage) #ADDED FOR DEBUGGING
             if self.Atto_Z_Voltage > 0 and withdrawDistance > 0:
                 start_voltage = self.Atto_Z_Voltage
                 end_voltage = self.Atto_Z_Voltage - withdrawDistance * self.z_volts_to_meters
@@ -1620,6 +1626,104 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.label_pidApproachStatus.setText('Idle')
         except:
             printErrorInfo()
+
+    @inlineCallbacks
+    def emergency_withdraw(self, dist):
+        '''
+        The z extension on the scanner piezos comes from a sum of an output voltage
+        of the zurich HF2LI and the DAC-ADC. The withdraw function starts by
+        withdrawing by ramping down the Zurich voltage, then, if the required
+        distance has not been withdrawn, continues by ramping down the DAC-ADCs
+        voltage
+        '''
+        try:
+            #Signal that we are no longer approaching
+            self.approaching = False
+
+            #Signal that no longer in constant height or in feedback
+            self.updateConstantHeightStatus.emit(False)
+            self.constantHeight = False
+            self.updateFeedbackStatus.emit(False)
+
+            #Disable buttons for insane button clickers like Charles Tschirhart <3
+            self.push_Withdraw.setEnabled(False)
+            self.push_ApproachForFeedback.setEnabled(False)
+            self.push_PIDApproachForConstant.setEnabled(False)
+
+            #Get Zurich voltage output
+            z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+
+            #Get the Z voltage on the attocubes
+            # self.Atto_Z_Voltage = dac_z_value
+
+            #update labels on the GUI
+            self.label_pidApproachStatus.setText('Withdrawing')
+
+            #Keep track of how much distance still needs to be withdrawn after each step
+            withdrawDistance = dist
+
+            #if the zurich voltage is non zero
+            if z_voltage >= 0.001:
+                #Find desired end voltage of the zurich
+                end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters
+                if self.voltageMultiplied:
+                    end_voltage = z_voltage - withdrawDistance * self.z_volts_to_meters/self.voltageMultiplier
+
+                #If we need to withdraw by more than just the voltage from the Zurich, keep track of how much
+                if end_voltage < 0:
+                    end_voltage = 0
+                    #Remaining withdraw distance
+                    if self.voltageMultiplied:
+                        withdrawDistance = withdrawDistance - z_voltage / (self.z_volts_to_meters/self.voltageMultiplier)
+                    else:
+                        withdrawDistance = withdrawDistance - z_voltage / self.z_volts_to_meters
+                else:
+                    #Remaining withdraw distance
+                    withdrawDistance = 0
+
+                #Get the desired retract speed in volts per second
+                retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+
+                #If output voltage is being multiplied down, divide the speed by the down multiplication factor
+                if self.voltageMultiplied:
+                    retract_speed = retract_speed/self.voltageMultiplier
+
+                yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed, curr_val = z_voltage)
+
+            #If there's a voltage from the scanning DAC-ADC and we still need to withdraw to reach the withdraw distance goal
+            print('WithdrawDistance and Atto_Z_Voltage are:') #ADDED FOR DEBUGGING
+            print(withdrawDistance) #ADDED FOR DEBUGGING
+            print(self.Atto_Z_Voltage) #ADDED FOR DEBUGGING
+            if self.Atto_Z_Voltage > 0 and withdrawDistance > 0:
+                start_voltage = self.Atto_Z_Voltage
+                end_voltage = self.Atto_Z_Voltage - withdrawDistance * self.z_volts_to_meters
+
+                if end_voltage < 0:
+                    end_voltage = 0
+                    #distance being withdrawn by DAC
+                    withdrawDistance = start_voltage / self.z_volts_to_meters
+
+                #speed in volts / second
+                speed = self.generalSettings['step_retract_speed']*self.z_volts_to_meters
+                yield self.setDAC_Voltage(start_voltage, end_voltage, speed)
+
+            #The voltage from the DAC-ADC can be negative resulting from tilt corrections on the scan module.
+            #If the overall voltage on the piezos is negative for an extended period of time, this can damage them.
+            #If there's an overall negative voltage bias on the piezos, zero it.
+            z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+            if z_voltage + self.Atto_Z_Voltage < 0:
+                #speed in volts / second
+                speed = self.generalSettings['step_retract_speed']*self.z_volts_to_meters
+                yield self.setDAC_Voltage(self.Atto_Z_Voltage, -z_voltage, speed)
+
+            self.push_Withdraw.setEnabled(True)
+            self.push_ApproachForFeedback.setEnabled(True)
+            self.push_PIDApproachForConstant.setEnabled(True)
+
+            self.label_pidApproachStatus.setText('Idle')
+        except:
+            printErrorInfo()
+
 
     @inlineCallbacks
     def initializePID(self):

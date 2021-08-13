@@ -348,9 +348,14 @@ class SerialServer(LabradServer):
             if r != skip:
                 recd += r
         if not isinstance(recd, str):
-            recd = recd.decode("utf-8")
+            try:
+                recd = recd.decode("utf-8")
+            except UnicodeDecodeError:
+                print("Error: Unicode decoding error: ",recd)
+                print("Byte ignored to not crash the process.")
+                recd = recd.decode("utf-8","ignore")
         returnValue(recd)
-    
+
     @setting(53, 'In Waiting',
              returns=['w: Bytes in input buffer'])
     def in_waiting(self, c):

@@ -1352,9 +1352,9 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     @inlineCallbacks
     def blink(self):
-        yield self.blink_server.set_voltage(self.outputs['blink out']-1, 5)
+        yield self.blink_server.set_voltage(self.outputs['blink out']-1, 5)  #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         yield self.sleep(0.25)
-        yield self.blink_server.set_voltage(self.outputs['blink out']-1, 0)
+        yield self.blink_server.set_voltage(self.outputs['blink out']-1, 0)  #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         yield self.sleep(0.25)
 
     @inlineCallbacks
