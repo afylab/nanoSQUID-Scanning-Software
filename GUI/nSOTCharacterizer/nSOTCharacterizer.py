@@ -1079,8 +1079,8 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             up_trace = np.asarray(up_trace)
             up_retrace = np.asarray(up_retrace)
 
-            trace = np.append(down_trace[::-1], up_trace, axis=1)
-            retrace = np.append(down_retrace, up_retrace[::-1], axis=1)
+            trace = np.append(np.flip(down_trace,axis=1), up_trace, axis=1)
+            retrace = np.append(down_retrace, np.flip(up_retrace,axis=1), axis=1)
 
         returnValue([trace, retrace])
 

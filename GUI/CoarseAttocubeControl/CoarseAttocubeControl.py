@@ -2,7 +2,7 @@ import sys
 from PyQt5 import QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
-
+from PyQt5.QtCore import QTimer
 path = sys.path[0] + r"\CoarseAttocubeControl"
 sys.path.append(path + r'\Status')
 sys.path.append(path + r'\Debug Panel')
@@ -19,7 +19,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
 
         self.reactor = reactor
         self.setupUi(self)
-
+        self.timer = QTimer()
         self.pushButton_Servers.clicked.connect(self.showServersList)
 
         self.pushButton_CapacitorAxis1.clicked.connect(lambda: self.RefreshCapacitance(0, self.label_CapacitanceAxis1))
@@ -71,6 +71,28 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         self.pushButton_ManualStepMinus_Axis3.clicked.connect(lambda: self.StartSingleStep(2, 1))
         self.pushButton_ManualStepPlus_Axis3.clicked.connect(lambda: self.StartSingleStep(2, 0))
 
+        self.timer = [QTimer() for i in range(6)]
+        self.pushButton_ManualStepMinus_Axis1.pressed.connect(lambda: self.manualstep_on_press(0))
+        self.pushButton_ManualStepPlus_Axis1.pressed.connect(lambda: self.manualstep_on_press(1))
+        self.pushButton_ManualStepMinus_Axis2.pressed.connect(lambda: self.manualstep_on_press(2))
+        self.pushButton_ManualStepPlus_Axis2.pressed.connect(lambda: self.manualstep_on_press(3))
+        self.pushButton_ManualStepMinus_Axis3.pressed.connect(lambda: self.manualstep_on_press(4))
+        self.pushButton_ManualStepPlus_Axis3.pressed.connect(lambda: self.manualstep_on_press(5))
+
+        self.pushButton_ManualStepMinus_Axis1.released.connect(lambda: self.manualstep_on_release(0))
+        self.pushButton_ManualStepPlus_Axis1.released.connect(lambda: self.manualstep_on_release(1))
+        self.pushButton_ManualStepMinus_Axis2.released.connect(lambda: self.manualstep_on_release(2))
+        self.pushButton_ManualStepPlus_Axis2.released.connect(lambda: self.manualstep_on_release(3))
+        self.pushButton_ManualStepMinus_Axis3.released.connect(lambda: self.manualstep_on_release(4))
+        self.pushButton_ManualStepPlus_Axis3.released.connect(lambda: self.manualstep_on_release(5))
+
+        self.timer[0].timeout.connect(lambda: self.manualstep_on_hold(0,1))
+        self.timer[1].timeout.connect(lambda: self.manualstep_on_hold(0,0))
+        self.timer[2].timeout.connect(lambda: self.manualstep_on_hold(1,1))
+        self.timer[3].timeout.connect(lambda: self.manualstep_on_hold(1,0))
+        self.timer[4].timeout.connect(lambda: self.manualstep_on_hold(2,1))
+        self.timer[5].timeout.connect(lambda: self.manualstep_on_hold(2,0))
+
         self.IconPath = {
             'Still': ':/nSOTScanner/Pictures/ManStill.png',
             'Moving Negative': ':/nSOTScanner/Pictures/ManRunningLeft.png',
@@ -109,6 +131,20 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         self.pushButton_StatusMonitor.clicked.connect(self.OpenStatusWindow)
         self.DebugWindow = DebugPy.DebugWindow(self.reactor, self)
         self.pushButton_Debug.clicked.connect(self.OpenDebugWindow)
+
+    def manualstep_on_press(self, i):
+        if i ==0 or i==1:
+            self.timer(i).start(1/manual_Frequency[0]*1000)
+        elif i==2 or i==3:
+            self.timer(i).start(1/manual_Frequency[1]*1000)
+        elif i==4 or i==5:
+            self.timer(i).start(1/manual_Frequency[2]*1000)
+
+    def manualstep_on_hold(self, i, j):
+            self.StartSingleStep(i, j)
+
+    def manualstep_on_release(self, i):
+        self.timer(i).stop()
 
     @inlineCallbacks
     def connectLabRAD(self, equip):
