@@ -342,18 +342,18 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
             #Select the appropriate magnet power supply
-            if 'Magnet Supply' in equip.servers:
-                svr, ln, device_info, cnt, config = equip.servers['Magnet Supply']
+            if 'Magnet Z' in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers['Magnet Z']
                 if svr:
                     self.magnet = cnt
                     self.comboBox_magnetPower.addItem(device_info)
                     self.warning_label.setStyleSheet("#warning_label{color:rgb(0, 0, 0)}")
                 else:
-                    print("'Magnet Supply' not found in  nSOT Characterizer.")
+                    print("'Magnet Z' not found in  nSOT Characterizer.")
                     self.magnet = False
                     self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
             else:
-                print("'Magnet Supply' not found in  nSOT Characterizer.")
+                print("'Magnet Z' not found in  nSOT Characterizer.")
                 self.magnet = False
                 self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
 
@@ -705,7 +705,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         #Have user review the sweep parameters before starting
         if not self.abortFlag:
             #checkSweepParams = DialogBox(self.settingsDict['Magnet device'], self.sweepParamDict, self)
-            checkSweepParams = DialogBox('Magnet Supply', self.sweepParamDict, self)
+            checkSweepParams = DialogBox('Magnet Z', self.sweepParamDict, self)
             #If the user does not like the sweep parameters, abort the sweep
             if not checkSweepParams.exec_():
                 self.abortFlag = True

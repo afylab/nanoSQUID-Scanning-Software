@@ -42,9 +42,6 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
         Check if the supply is configured for dual channels by trying the CHAN command which
         only returns if there are two channels.
         '''
-        self.configured = False
-        self.gauss_to_amps = 0
-        self.maxrate = 0
 
         try:
             ans = yield self.query("CHAN?")
@@ -53,20 +50,6 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
         except:
             print("Single Channel Mode")
             self.dual_channel = False
-
-    def configure_magnet(self, gauss_to_amps, maxrate):
-        '''
-        Configuration required in order to change the field (except zeroing the magnet).
-
-        Units:
-        gauss_to_amps in G/A
-        maxrate in T/min
-        '''
-        self.gauss_to_amps = float(gauss_to_amps)
-
-        # The magnet needs rate in A/s, need to convert
-        self.maxrate = maxrate*166.667/self.gauss_to_amps
-        self.configured = True
 
     @inlineCallbacks
     def get_chan(self):
@@ -83,31 +66,41 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
                 ans = yield self.write("CHAN "+str(chan))
                 returnValue(chan)
             else:
-                returnValue(1)
+                returnValue('1')
         else:
-            returnValue("INVALID CHANNEL")
+            returnValue("INVALID CHANNEL (need 1 or 2)")
 
     @inlineCallbacks
-    def get_units(self):
+    def get_units(self, chan):
         '''
         Get the output units (Amps or gauss). Units will often switch between field and current.
 
         Units on the 4G are weird, it can only communicate in kG or A remotly, but can display tesla
-        on the fron panel. If you set the units to tesla using the from panel you can't get connect
+        on the front panel. If you set the units to tesla using the from panel you can't get connect
         units using remote commands. If you set units to tesla using the remote commands it will display
         Tesla but immediatly switch to gauss when using remote commands. It's best to just leave it
         in Guass and not touch it on the from panel.
         '''
+        if self.dual_channel:
+            if chan == 1 or chan == 2:
+                yield self.write("CHAN "+str(chan))
+            else:
+                returnValue("INVALID CHANNEL (need 1 or 2)")
         ans = yield self.query("UNITS?")
         if ans == "T":
             print("Warning! Units of Tesla may cause communications problems.")
         returnValue(ans)
 
     @inlineCallbacks
-    def get_ouput_current(self):
+    def get_output_current(self, chan):
         '''
         Get the power supply output current in units of Amps
         '''
+        if self.dual_channel:
+            if chan == 1 or chan == 2:
+                yield self.write("CHAN "+str(chan))
+            else:
+                returnValue("INVALID CHANNEL (need 1 or 2)")
         yield self.write("UNITS A")
         ans = yield self.query("IOUT?")
         if "A" in ans:
@@ -119,10 +112,34 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
             returnValue(ans)
 
     @inlineCallbacks
-    def get_current(self):
+    def get_output_voltage(self, chan):
+        '''
+        Get the power supply output current in units of Amps
+        '''
+        if self.dual_channel:
+            if chan == 1 or chan == 2:
+                yield self.write("CHAN "+str(chan))
+            else:
+                returnValue("INVALID CHANNEL (need 1 or 2)")
+        ans = yield self.query("VOUT?")
+        if "V" in ans:
+            ans = ans.replace("V","")
+            ans = float(ans)
+            returnValue(ans)
+        else: # Changing the units can do weird things, see comment on get_units
+            print("Warning! Remote communication units problem, wrong units for output current.")
+            returnValue(ans)
+
+    @inlineCallbacks
+    def get_current(self, chan):
         '''
         Get the magnet current in units of Amps
         '''
+        if self.dual_channel:
+            if chan == 1 or chan == 2:
+                yield self.write("CHAN "+str(chan))
+            else:
+                returnValue("INVALID CHANNEL (need 1 or 2)")
         yield self.write("UNITS A")
         ans = yield self.query("IMAG?")
         if "A" in ans:
@@ -134,7 +151,7 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
             returnValue(ans)
 
     @inlineCallbacks
-    def get_field(self):
+    def get_field(self, chan):
         '''
         Get the magnet field in units of Tesla.
 
@@ -143,6 +160,11 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
         magnet current will be the value of the power supply output current when the persistent
         switch heater was last turned off.
         '''
+        if self.dual_channel:
+            if chan == 1 or chan == 2:
+                yield self.write("CHAN "+str(chan))
+            else:
+                returnValue("INVALID CHANNEL (need 1 or 2)")
         yield self.write("UNITS G") # For some reason it will not read out inits in tesla
         ans = yield self.query("IMAG?")
         if "kG" in ans:
@@ -154,24 +176,44 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
             returnValue(ans)
 
     @inlineCallbacks
-    def sweep_to_field(self, field, rate):
-        '''
-        Sweep to a given field (in Telsa) at a given rate (Tela/Minute). Requires the device be
-        configured (using configure_magnet).
-        '''
-        if not self.configured:
-            print("Attempting to change the field before calling configure_magnet")
-            returnValue("MAGNET NOT CONFIGURED")
+    def get_persist(self, chan):
+        if self.dual_channel:
+            if chan == 1 or chan == 2:
+                yield self.write("CHAN "+str(chan))
+            else:
+                returnValue("INVALID CHANNEL (need 1 or 2)")
+        ans = yield self.query("PSHTR?")
+        if ans == '0':
+            returnValue(True)
+        else:
+            returnValue(False)
 
-        rate = rate*166.667/self.gauss_to_amps
-        if rate > self.maxrate:
-            print("Attempting to change the field before calling configure_magnet")
-            returnValue("RATE EXCEEDS MAXIMUM SWEEP RATE")
+    @inlineCallbacks
+    def set_persist(self, chan, persist):
+        if self.dual_channel:
+            if chan == 1 or chan == 2:
+                yield self.write("CHAN "+str(chan))
+            else:
+                returnValue("INVALID CHANNEL (need 1 or 2)")
+        if persist:
+            yield self.write("PSHTR OFF")
+        else:
+            yield self.write("PSHTR ON")
+        returnValue(persist)
 
-        current = field*10000/self.gauss_to_amps
+    @inlineCallbacks
+    def sweep_current(self, chan, current, rate):
+        '''
+        Sweep to a given current (in A) at a given rate (in A/s)
+        '''
+        if self.dual_channel:
+            if chan == 1 or chan == 2:
+                yield self.write("CHAN "+str(chan))
+            else:
+                returnValue("INVALID CHANNEL (need 1 or 2)")
 
         # Get the current field to determine if you need to go up or down
-        magnet_current = yield self.get_field()
+        magnet_current = yield self.get_current(chan)
 
         yield self.write("UNITS A") # Make sure everything is set and returned as current
         yield self.write("RATE 0 " + str(rate))
@@ -201,27 +243,21 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
 
             yield self.write("ULIM " + str(current))
             yield self.write("SWEEP UP")
-
-
-        #yield self.write("IMAG "+str(10*field)) # Convert to kG
         returnValue("SWEEPING")
 
     @inlineCallbacks
-    def zero_output(self):
+    def zero_output(self, chan):
         '''
         Brings the magnet output to zero. Equivalent to presseing the "Zero" button on the front panel.
         This may not zero out the persistent current if the magnet is in persistent mode.
         '''
+        if self.dual_channel:
+            if chan == 1 or chan == 2:
+                yield self.write("CHAN "+str(chan))
+            else:
+                returnValue("INVALID CHANNEL (need 1 or 2)")
         yield self.write("SWEEP ZERO")
-
-    @inlineCallbacks
-    def manual_query(self, comm):
-        ans = yield self.query(comm)
-        returnValue(ans)
-
-    @inlineCallbacks
-    def manual_write(self, comm):
-        yield self.write(comm)
+        returnValue("ZEROING MAGNET")
 
 
 class Cryomagnetics_4G_Server(GPIBManagedServer):
@@ -230,27 +266,14 @@ class Cryomagnetics_4G_Server(GPIBManagedServer):
     deviceIdentFunc = 'identify_device'
     deviceWrapper = Cryo4GWrapper
 
-    @setting(100, gauss_to_amps='v', maxrate='v', returns='?')
-    def configure_magnet(self,c, gauss_to_amps, maxrate):
+    @setting(100, channel='i', returns='?')
+    def get_units(self,c, channel):
         '''
-        Enters the configuration parameters for the selected magnet. These are required in order to
-        change the field (aside from zeroing the output).
-
-        Args:
-            gauss_to_amps : The field to current conversion in units of G/A
-            maxrate : The maximum sweep rate for the field in Tesla/min (usually less than 1 T/min).
-                We use the lowest rate specified by the manufactuer, see note below.
-
-        Note about Max Rate:
-        The 4G supply specifies multiple rates for different ranges of current to protect the magnet.
-        The manufacturer of the magnet will give multiple rated ramp rates (e.g. 0-50A @0.2 A/s and
-        50-60 A @ 0.1 A/s etc.). We want to be able to smoothly ramp the field for experiments so we
-        set first range (range 0 on the controller) to the max field and then use the lowest rating
-        specified by the manufacturer. This trades a small amount of time at low fields for a smooth
-        ramp rate and safety. Most of the time we will not be operating near the maximum ramp rate.
+        Get the units of the given output channel.
         '''
         dev=self.selectedDevice(c)
-        yield dev.configure_magnet(gauss_to_amps, maxrate)
+        ans = yield dev.get_units(channel)
+        returnValue(ans)
 
     @setting(101, returns='?')
     def get_mode(self,c):
@@ -264,7 +287,7 @@ class Cryomagnetics_4G_Server(GPIBManagedServer):
     @setting(102, returns='?')
     def get_channel(self,c):
         '''
-        Get the current output channel. Dual Ouput mode will return 1 or 2,
+        Get the currently selected output channel. Dual Output mode will return 1 or 2,
         otherwise returns 1 always.
         '''
         dev=self.selectedDevice(c)
@@ -274,14 +297,14 @@ class Cryomagnetics_4G_Server(GPIBManagedServer):
     @setting(103, channel='i', returns='?')
     def set_channel(self,c, channel):
         '''
-        Get the current output channel. Dual Ouput mode only. Returns the selected channel.
+        Get the currently selected output channel. Dual Output mode only.
         '''
         dev=self.selectedDevice(c)
         ans = yield dev.set_chan(channel)
         returnValue(ans)
 
-    @setting(104, returns='?')
-    def get_field(self, c):
+    @setting(104, channel='i', returns='?')
+    def get_field(self, c, channel):
         '''
         Get the field of the magnet.
 
@@ -292,11 +315,11 @@ class Cryomagnetics_4G_Server(GPIBManagedServer):
         magnet current will be set to zero if the power supply detects a quench.
         '''
         dev=self.selectedDevice(c)
-        ans = yield dev.get_field()
+        ans = yield dev.get_field(channel)
         returnValue(ans)
 
-    @setting(105, returns='?')
-    def get_current(self, c):
+    @setting(105, channel='i', returns='?')
+    def get_current(self, c, channel):
         '''
         Get the current of the magnet.
 
@@ -307,80 +330,73 @@ class Cryomagnetics_4G_Server(GPIBManagedServer):
         magnet current will be set to zero if the power supply detects a quench.
         '''
         dev=self.selectedDevice(c)
-        ans = yield dev.get_current()
+        ans = yield dev.get_current(channel)
         returnValue(ans)
 
-    @setting(106, returns='?')
-    def get_output_current(self, c):
+    @setting(106, channel='i', returns='?')
+    def get_output_current(self, c, channel):
         '''
         Get the output of the power supply.
         '''
         dev=self.selectedDevice(c)
-        ans = yield dev.get_ouput_current()
+        ans = yield dev.get_output_current(channel)
         returnValue(ans)
 
-    @setting(107, returns='?')
-    def get_persist(self, c):
+    @setting(107, channel='i', returns='b')
+    def get_persist(self, c, channel):
         '''
         Get the persistent mode. Returns True if the switch heater is off and the magnet is
         in persistent mode, returns False if the switch heater is on and the magnet is not
         in persistent mode.
         '''
         dev=self.selectedDevice(c)
-        ans = yield dev.query("PSHTR?")
-        if ans == '0':
-            returnValue(True)
-        else:
-            returnValue(False)
+        ans = yield dev.get_persist(channel)
+        returnValue(ans)
 
-    @setting(108, persist='b', returns='?')
-    def set_persist(self, c, persist):
+    @setting(108, channel='i', persist='b', returns='?')
+    def set_persist(self, c, channel, persist):
         '''
         Set the persistent mode. If persist is True will turn the heater off and go into persistent
         mode. If persist is False will turn the heater on.
         '''
         dev=self.selectedDevice(c)
-        if persist:
-            yield dev.write("PSHTR OFF")
-        else:
-            yield dev.write("PSHTR ON")
-        returnValue(persist)
-
-    @setting(109, field='v', rate='v', returns='s')
-    def sweep_to_field(self, c, field, rate):
-        '''
-        Sweep to a given field (in Telsa) at a given rate (Tela/Minute). Requires the device be
-        configured (using configure_magnet).
-        '''
-        dev=self.selectedDevice(c)
-        ans = yield dev.sweep_to_field(field, rate)
+        ans = yield dev.set_persist(channel, persist)
         returnValue(ans)
 
-    @setting(110, returns='?')
-    def zero_output(self, c, current):
+    @setting(109, channel='i', current='v', rate='v', returns='s')
+    def sweep_magnet(self, c, channel, current, rate):
+        '''
+        Sweep the magnet current to the given current setpoint.
+
+        Note about Maximum Rates:
+            The 4G supply specifies multiple rates for different ranges of current to protect the magnet.
+            The manufacturer of the magnet will give multiple rated ramp rates (e.g. 0-50A @0.2 A/s and
+            50-60 A @ 0.1 A/s etc.). We want to be able to smoothly ramp the field for experiments so we
+            set first range (range 0 on the controller) to the max field and then use the lowest rating
+            specified by the manufacturer. This trades a small amount of time at low fields for a smooth
+            ramp rate and safety. Most of the time we will not be operating near the maximum ramp rate.
+        '''
+        dev=self.selectedDevice(c)
+        ans = yield dev.sweep_current(channel, current, rate)
+        returnValue(ans)
+
+    @setting(110, channel='i', returns='?')
+    def zero_output(self, c, channel):
         '''
         Brings the magnet output to zero. Equivalent to pressing the "Zero" button on the front panel.
         This may not zero out the persistent current if the magnet is in persistent mode.
         '''
         dev=self.selectedDevice(c)
-        yield dev.zero_output()
-
-    @setting(200, comm='s', returns='?')
-    def manual_query(self, c, comm):
-        '''
-        Manually query the controller
-        '''
-        dev=self.selectedDevice(c)
-        ans = yield dev.manual_query(comm)
+        ans = yield dev.zero_output(channel)
         returnValue(ans)
 
-    @setting(201, comm='s', returns='?')
-    def manual_write(self, c, comm):
+    @setting(111, returns='?')
+    def get_output_voltage(self,c, channel):
         '''
-        Manually write a command to the controller
+        Get the output voltage of the currently selected channel.
         '''
         dev=self.selectedDevice(c)
-        ans = yield dev.manual_write(comm)
+        ans = yield dev.get_output_voltage(channel)
         returnValue(ans)
 
 

@@ -23,11 +23,12 @@ class MagnetControl(EquipmentController):
         super().__init__(widget, device_info, config, reactor)
 
         self.max_field = self.config['max_field']
+        self.max_ramp = self.config["max_ramp"]
 
         # Status parameters
-        self.Bz = 0.0 # The field from the magnet power supply output
-        self.persist_Bz = 0.0 # The persistent field of the magnet
-        self.setpoint_Bz = 0.0 # The field setpoint
+        self.B = 0.0 # The field from the magnet power supply output
+        self.persist_B = 0.0 # The persistent field of the magnet
+        self.setpoint_B = 0.0 # The field setpoint
         self.current = 0.0 # The current on the magnet power supply output
         self.persist_current = 0.0 # The persistent current of the magnet
         self.output_voltage = 0.0 # the output voltage when charging
@@ -46,7 +47,10 @@ class MagnetControl(EquipmentController):
         self.server = server
         try:
             if hasattr(self.server, 'select_device'):
-                self.server.select_device()
+                if self.device_info is None:
+                    server.select_device()
+                else:
+                    server.select_device(self.device_info)
             self.widget.connected(self.device_info)
         except Exception as inst:
             print("Error connecting labrad servers")
@@ -88,11 +92,11 @@ class MagnetControl(EquipmentController):
         until goToSetpoint is called.
         '''
         if setpoint > self.max_field:
-            self.setpoint_Bz = self.max_field
+            self.setpoint_B = self.max_field
         elif setpoint < -1.0*self.max_field:
-            self.setpoint_Bz = -1.0*self.max_field
+            self.setpoint_B = -1.0*self.max_field
         else:
-            self.setpoint_Bz = setpoint
+            self.setpoint_B = setpoint
     #
 
     def checkFieldRange(self, field):
@@ -111,10 +115,14 @@ class MagnetControl(EquipmentController):
 
     def setRampRate(self, ramprate):
         '''
-        Change the setpoint of the power supply. Does not change the value in the magnet
-        supply until goToSetpoint is called.
+        Change the field ramp rate (in T/min) of the power supply. Does not change the value in the magnet
+        supply until goToSetpoint is called. If the ramprate is greater than the maximum possible ramprate
+        then the rate will be set to the maximum.
         '''
-        self.ramprate = ramprate
+        if ramprate > self.max_ramp:
+            self.ramprate = self.max_ramp
+        else:
+            self.ramprate = ramprate
     #
 
     @inlineCallbacks
@@ -162,23 +170,24 @@ class IPS120_MagnetController(MagnetControl):
             self.persist = True
         elif int(status[8]) == 1:
             self.status = "Charging"
+            self.persist = False
         else:
             self.status = "Error"
 
         try:
             if self.persist: # Persistent field and current
                 val = yield self.server.read_parameter(18)
-                self.persist_Bz = float(val[1:])
+                self.persist_B = float(val[1:])
 
                 val = yield self.server.read_parameter(16)
                 self.persist_current = float(val[1:])
             else:
-                self.persist_Bz = 0
+                self.persist_B = 0
                 self.persist_current = 0
 
             # The "Demand Field" during charging
             val = yield self.server.read_parameter(7)
-            self.Bz = float(val[1:])
+            self.B = float(val[1:])
 
             # The demand "Output" current
             val = yield self.server.read_parameter(0)
@@ -199,8 +208,19 @@ class IPS120_MagnetController(MagnetControl):
         '''
         setpoint = yield self.server.read_parameter(8)
         ramprate = yield self.server.read_parameter(9)
-        self.setpoint_Bz = float(setpoint[1:])
+        self.setpoint_B = float(setpoint[1:])
         self.ramprate = float(ramprate[1:])
+
+        status = yield self.server.examine()
+        #The 9th (index 8) character of the status string encodes whether or not
+        #the persistent switch is currently on
+        if int(status[8]) == 0 or int(status[8]) == 2:
+            self.status = "Persist"
+            self.persist = True
+        elif int(status[8]) == 1:
+            self.status = "Charging"
+        else:
+            self.status = "Error"
     #
 
     @inlineCallbacks
@@ -219,7 +239,7 @@ class IPS120_MagnetController(MagnetControl):
             #Only finish running the gotoZero function once the field is zero
             while True:
                 yield self.poll()
-                if self.Bz <= 0.00001 and self.Bz >= -0.00001:
+                if self.B <= 0.00001 and self.B >= -0.00001:
                     break
                 yield self.sleep(0.25)
             yield self.sleep(0.25)
@@ -236,7 +256,7 @@ class IPS120_MagnetController(MagnetControl):
         '''
         yield self.server.set_control(3) #Set IPS to remote communication (prevents user from using the front panel)
         yield self.server.set_fieldsweep_rate(self.ramprate)
-        yield self.server.set_targetfield(self.setpoint_Bz) #Set targetfield to desired field
+        yield self.server.set_targetfield(self.setpoint_B) #Set targetfield to desired field
         yield self.server.set_activity(1) #Set IPS mode to ramping instead of hold
         yield self.server.set_control(2) #Set IPS to local control (allows user to edit IPS from the front panel)
 
@@ -244,7 +264,7 @@ class IPS120_MagnetController(MagnetControl):
             #Only finish running the gotoField function when the field is reached
             while True:
                 yield self.poll()
-                if self.Bz <= self.setpoint_Bz+0.00001 and self.Bz >= self.setpoint_Bz-0.00001:
+                if self.B <= self.setpoint_B+0.00001 and self.B >= self.setpoint_B-0.00001:
                     break
                 yield self.sleep(0.25)
             yield self.sleep(0.25)
@@ -316,7 +336,7 @@ class Toeller_Power_Supply(MagnetControl):
             val = yield self.server.read_dac_voltage(self.toeVoltsChan)
             self.output_voltage = float(val*self.VV_conv)
 
-            self.Bz = self.current*self.IB_conv
+            self.B = self.current*self.IB_conv
         except Exception as inst:
             print(inst)
             printErrorInfo()
@@ -324,12 +344,12 @@ class Toeller_Power_Supply(MagnetControl):
 
     @inlineCallbacks
     def goToSetpoint(self):
-        yield self.toeSweepField(self.Bz, self.setpoint_Bz, self.ramprate)
+        yield self.toeSweepField(self.B, self.setpoint_B, self.ramprate)
     #
 
     @inlineCallbacks
     def goToZero(self):
-        yield self.toeSweepField(self.Bz, 0.0, self.ramprate)
+        yield self.toeSweepField(self.B, 0.0, self.ramprate)
     #
 
 
@@ -369,11 +389,119 @@ class Toeller_Power_Supply(MagnetControl):
 
             self.output_voltage = V_setpoint
             self.current = B_f/self.IB_conv
-            self.Bz = B_f
+            self.B = B_f
         except:
             printErrorInfo()
 #
 
-def Cryomag4G_Power_Supply(MagnetControl):
-    pass
+class Cryomag4G_Power_Supply(MagnetControl):
+    def __init__(self, widget, device_info, config, reactor):
+        self.channel = config['channel']
+        self.gauss_to_amps = config['gauss_to_amps']
+
+        super().__init__(widget, device_info, config, reactor)
+
+    @inlineCallbacks
+    def readInitialValues(self):
+        '''
+        Read the starting configuration of a magnet power supply.
+        '''
+        yield self.poll()
+    #
+
+    @inlineCallbacks
+    def poll(self):
+        '''
+        Read out the current values from the equipment: field, current and voltage. Will update the output
+        values if self.persist is False and the magnet values if self.persist is True.
+        '''
+        if self.server is None or isinstance(self.server, bool):
+            return
+
+        try:
+            self.persist = yield self.server.get_persist(self.channel)
+            if self.persist:
+                self.status = "Persist"
+            else:
+                self.status = "Charging"
+
+            if self.persist:
+                if self.server is not None: # Sometimes these functions are slow to update and close out on disconnect
+                    curr = yield self.server.get_current(self.channel)
+                    self.persist_current = float(curr)
+                    self.persist_B = self.persist_current*self.gauss_to_amps*1e-4
+            else:
+                self.persist_B = 0
+                self.persist_current = 0
+
+            # The Ouput current and voltage
+            if self.server is not None:
+                val = yield self.server.get_output_current(self.channel)
+                self.current = float(val)
+                self.B = self.current*self.gauss_to_amps*1e-4
+            if self.server is not None:
+                val = yield self.server.get_output_voltage(self.channel)
+                self.output_voltage = float(val)
+        except Exception as inst:
+            print(str(inst))
+            printErrorInfo()
+            self.status = "Error"
+    #
+
+    @inlineCallbacks
+    def goToSetpoint(self, wait=True):
+        '''
+        Ramps to the setpoint. setSetpoint and setRampRate should be called first
+        to configure this ramp.
+
+        Args:
+            wait (bool) : Will wait for the controller to reach the setpoint
+        '''
+
+        # The Cryomag 4G has weired unit issues for field, so we set the current
+        # Convert the setpoint (in T) and ramp rate (in T/min) to A and A/s
+        current = self.setpoint_B*1e4/self.gauss_to_amps
+        ramprate = self.ramprate*166.6667/self.gauss_to_amps
+        yield self.server.sweep_magnet(self.channel, current, ramprate)
+        if wait:
+            #Only finish running the goToSetpoint function when the field is reached
+            while True:
+                yield self.poll()
+                if self.B <= self.setpoint_B+0.00001 and self.B >= self.setpoint_B-0.00001:
+                    break
+                yield self.sleep(0.25)
+            yield self.sleep(0.25)
+    #
+
+    @inlineCallbacks
+    def togglePersist(self):
+        try:
+            self.persist = yield self.server.get_persist(self.channel)
+            if self.persist:
+                yield self.server.set_persist(self.channel, False)
+                self.persist = False
+            else:
+                yield self.server.set_persist(self.channel, True)
+                self.persist = True
+        except:
+            printErrorInfo()
+
+    @inlineCallbacks
+    def goToZero(self, wait=True):
+        '''
+        Zero the current through the magnet.
+
+        Args:
+            wait (bool) : Will wait for the controller to reach zero.
+        '''
+        yield self.server.zero_output(self.channel)
+        if wait:
+            #Only finish running the gotoZero function once the field is zero
+            while True:
+                yield self.poll()
+                if self.B <= 0.00001 and self.B >= -0.00001:
+                    break
+                yield self.sleep(0.25)
+            yield self.sleep(0.25)
+    #
 #

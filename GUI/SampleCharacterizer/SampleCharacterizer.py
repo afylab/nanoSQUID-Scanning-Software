@@ -219,17 +219,17 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 return
 
             #Select the appropriate magnet power supply
-            if 'Magnet Supply' in equip.servers:
-                svr, ln, device_info, cnt, config = equip.servers['Magnet Supply']
+            if 'Magnet Z' in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers['Magnet Z']
                 if svr:
                     self.magnet = cnt
                     self.warning_label.setStyleSheet("#warning_label{color:rgb(0, 0, 0)}")
                 else:
-                    print("'Magnet Supply' connection not found, in Sample Characterizer")
+                    print("'Magnet Z' connection not found, in Sample Characterizer")
                     self.magnet = False
                     self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
             else:
-                print("'Magnet Supply' connection not found, in Sample Characterizer")
+                print("'Magnet Z' connection not found, in Sample Characterizer")
                 self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
                 self.magnet = False
 

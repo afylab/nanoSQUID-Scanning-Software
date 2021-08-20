@@ -36,7 +36,7 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         conf = {'blink channel':3} #Output of DC box that corresponds on the frontpanel to Blink
         self.equip.add_server("Blink Device", "ad5764_dcbox", "ad5764_dcbox (COM5)", config=conf)
 
-        conf = {'max_field':5}
+        conf = {'max_field':5, "max_ramp":1}
         self.equip.add_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=conf)
 
         self.equip.add_server("LS 350", "lakeshore_350")

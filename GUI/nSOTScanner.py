@@ -53,6 +53,9 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.configureEquipment()
         self.configureSession()
 
+        # Make sure the right number of magnets are displayed
+        self.FieldControl.configureMagnetUi(self.equip)
+
         self.moveDefault() #Move to default position
 
         self.push_ConnectHardware.clicked.connect(self.connectLabRADConnections)
@@ -188,30 +191,6 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         '''
         Configure the session information.
         '''
-        # if newCampaign is None: # Get the last campaign name used, if not call it general
-        #     if os.path.exists('../lastcampaign.txt'):
-        #         with open('../lastcampaign.txt', 'r') as fl:
-        #             lines = fl.readlines()
-        #             l1 = lines[0].split(":")
-        #             if l1[0] == "campaign":
-        #                 self.campaign_name = l1[1].strip()
-        #             else:
-        #                 self.campaign_name = 'general'
-        #     else:
-        #         self.campaign_name = 'general'
-        # else:
-        #     self.campaign_name = newCampaign
-        # self.label_Campaign.setText(self.campaign_name)
-        # with open('../lastcampaign.txt', 'w') as fl:
-        #     fl.write("campaign" + ":" + self.campaign_name)
-        #     fl.flush()
-
-        # #Data vault session info
-        # self.lineEdit_Session.setReadOnly(True)
-        # self.session = ''
-        # self.lineEdit_Session.setText(self.session)
-        # self.equip.setSession(self.session)
-
         #Saving images of all data taken info
         self.lineEdit_Session_2.setReadOnly(True)
         home = os.path.expanduser("~")
@@ -221,17 +200,6 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         if not os.path.exists(self.screenshots):
             os.makedirs(self.screenshots)
         self.distributeSessionFolder(self.screenshots)
-
-    # @inlineCallbacks
-    # def chooseCampaign(self, c=None):
-    #     campaign, done = QtWidgets.QInputDialog.getText(self, "Set Campaign", "Enter the name of the campaign:")
-    #     if done:
-    #         self.configureSession(campaign)
-    #     yield self.sleep(2)
-    #     for window in self.windows:
-    #         if hasattr(window, "updateDataVaultDirectory"):
-    #             window.updateDataVaultDirectory()
-    #
 
 #----------------------------------------------------------------------------------------------#
     """ The following section connects actions related to passing LabRAD connections."""
@@ -247,10 +215,11 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
 
     @inlineCallbacks
     def disconnectLabRADConnections(self, c=None):
-        yield self.equip.disconnect_servers()
         for window in self.windows:
             if hasattr(window, "disconnectLabRAD"):
                 window.disconnectLabRAD()
+        yield self.sleep(0.25) # give the update loops a little time to complete
+        yield self.equip.disconnect_servers()
 
     def distributeSessionFolder(self, folder):
         self.TFChar.setSessionFolder(folder)
