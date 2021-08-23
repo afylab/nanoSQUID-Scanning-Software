@@ -64,7 +64,7 @@ class LakeShore350Wrapper(DeviceWrapper):
         p.timeout(TIMEOUT)
         print(" CONNECTED ")
         yield p.send()
-        
+
     def packet(self):
         """Create a packet in our private context."""
         return self.server.packet(context=self.ctx)
@@ -93,7 +93,43 @@ class LakeShore350Wrapper(DeviceWrapper):
         p.read_line()
         ans = yield p.send()
         returnValue(ans.read_line)
-        
+
+    @inlineCallbacks
+    def range_set(self, output, range):
+        yield self.write("RANGE%i,%i" %(output, range))
+
+    @inlineCallbacks
+    def range_read(self, output):
+        ans = yield self.query("RANGE?%i" %output)
+        returnValue(ans)
+
+    @inlineCallbacks
+    def setpoint(self, output, setp):
+        yield self.write('SETP%i,%f'%(output, setp))
+
+    @inlineCallbacks
+    def setpoint_read(self, output):
+        ans = yield self.query("SETP?%i" %output)
+        returnValue(ans)
+
+    @inlineCallbacks
+    def PID_set(self, output, prop, integ, deriv):
+        yield self.write("PID%i,%f,%f,%f" %(output, prop, integ, deriv))
+
+    @inlineCallbacks
+    def PID_read(self, output):
+        ans = yield self.query("PID?%i" %output)
+        returnValue(ans)
+
+    @inlineCallbacks
+    def out_mode_set(self, output, mode, input, powerup_enable):
+        yield self.write("OUTMODE%i,%i,%i,%i" %(output, mode, input, powerup_enable))
+
+    @inlineCallbacks
+    def out_mode_read(self, output):
+        ans = yield self.query("OUTMODE?%i" %output)
+        returnValue(ans)
+
 
 class LakeShore350Server(DeviceServer):
     name = 'lakeshore_350'
@@ -127,7 +163,7 @@ class LakeShore350Server(DeviceServer):
         for k in keys:
             print("k=",k)
             p.get(k, key=k)
-            
+
         ans = yield p.send()
         print("ans=",ans)
         self.serialLinks = dict((k, ans[k]) for k in keys)
@@ -162,7 +198,7 @@ class LakeShore350Server(DeviceServer):
 
        # devs += [(0,(3,4))]
         returnValue(devs)
-    
+
     @setting(100)
     def connect(self,c,server,port):
         dev=self.selectedDevice(c)
@@ -225,6 +261,76 @@ class LakeShore350Server(DeviceServer):
         ans = yield dev.read()
         returnValue(ans)
 
+    @setting(111, output = 'i', prop = 'v[]', integ = 'v[]', deriv = 'v[]')
+    def pid_set(self, c, output, prop, integ, deriv):
+        """
+        Set the PID parameters for a specified output. 0.1 < P < 1000, 0.1 < I < 1000, 0 < D < 200.
+        """
+        dev=self.selectedDevice(c)
+        yield dev.PID_set(output, prop, integ, deriv)
+
+    @setting(112, output = 'i', returns='s')
+    def pid_read(self, c, output):
+        """
+        Reads the PID parameters for a specified output.
+        """
+        dev=self.selectedDevice(c)
+        ans = yield dev.PID_read(output)
+        returnValue(ans)
+
+    @setting(117, output = 'i', returns='i')
+    def range_read(self, c, output):
+        """
+        Reads the range for a specified output. Refer to the documentation for range_set for a description of the return value.
+        """
+        dev=self.selectedDevice(c)
+        ans = yield dev.range_read(output)
+        returnValue(int(ans))
+
+    @setting(118, output = 'i', setp = 'v[]')
+    def setpoint(self, c, output, setp):
+        """
+        Sets the temperature setpoint for a specified output.
+        """
+        dev=self.selectedDevice(c)
+        yield dev.setpoint(output, setp)
+
+    @setting(119, output = 'i', returns='s')
+    def setpoint_read(self, c, output):
+        """
+        Reads the temperature setpoint for a specified output.
+        """
+        dev=self.selectedDevice(c)
+        ans = yield dev.setpoint_read(output)
+        returnValue(ans)
+
+    @setting(120, output = 'i', mode = 'i', input = 'i', powerup_enable = 'i')
+    def out_mode_set(self, c, output, mode, input, powerup_enable):
+        """
+        Sets the output mode for a specified channel. User inputs which output to configure, the desired control mode (0 = Off,
+        1 = PID Control, 2 = Zone, 3 = Open Loop, 4 = Monitor Out, 5 = Warmup Supply), which input to use for the control (1 = A,
+        2 = B, 3 = C, 4 = D), and whether the output stays on or shuts off after a power cycle (0 = shuts off, 1 = remians on).
+        """
+        dev=self.selectedDevice(c)
+        yield dev.out_mode_set(output, mode, input, powerup_enable)
+
+    @setting(121, output = 'i', returns='s')
+    def out_mode_read(self, c, output):
+        """
+        Reads the output mode settings for a specified output (the meaning of the returned list is documented in out_mode_set).
+        """
+        dev=self.selectedDevice(c)
+        ans = yield dev.out_mode_read(output)
+        returnValue(ans)
+
+    @setting(122, output = 'i', range = 'i')
+    def range_set(self, c, output, range):
+        """
+        Sets the range for a specified output. Outputs 1 and 2 have 5 available ranges, and outputs 3 and 4 are either 0 = off or 1 = on.
+        """
+        dev=self.selectedDevice(c)
+        yield dev.range_set(output, range)
+
     @setting(9001,v='v')
     def do_nothing(self,c,v):
         pass
@@ -246,7 +352,7 @@ class LakeShore350Server(DeviceServer):
         ret = yield dev.read()
         returnValue(ret)
 
-    
+
 __server__ = LakeShore350Server()
 
 if __name__ == '__main__':

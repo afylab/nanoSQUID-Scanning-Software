@@ -39,6 +39,7 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         conf = {'max_field':5, "max_ramp":1}
         self.equip.add_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=conf)
 
+        conf = {'Input 2':'D5', 'Input 2 Label':'Sample'}
         self.equip.add_server("LS 350", "lakeshore_350")
 
         # # Remote Servers

@@ -177,7 +177,7 @@ color: rgb(168,168,168)
          </widget>
         </item>
         <item>
-         <widget class="QLCDNumber" name="lcdNumber_magTemp">
+         <widget class="QLCDNumber" name="lcdNumber_Temp1">
           <property name="minimumSize">
            <size>
             <width>247</width>
@@ -261,7 +261,7 @@ color: rgb(168,168,168)
          </widget>
         </item>
         <item>
-         <widget class="QLCDNumber" name="lcdNumber_sampleTemp">
+         <widget class="QLCDNumber" name="lcdNumber_Temp2">
           <property name="font">
            <font>
             <pointsize>14</pointsize>
@@ -379,7 +379,7 @@ color: rgb(168,168,168)
          </widget>
         </item>
         <item>
-         <widget class="QLCDNumber" name="lcdNumber_potTemp">
+         <widget class="QLCDNumber" name="lcdNumber_Temp3">
           <property name="minimumSize">
            <size>
             <width>247</width>
@@ -432,7 +432,7 @@ color: rgb(168,168,168)
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <widget class="QFrame" name="magTempFrame">
+       <widget class="QFrame" name="TempFrame1">
         <property name="styleSheet">
          <string notr="true">#magTempFrame{
 background: grey
@@ -447,7 +447,7 @@ background: grey
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="sampleTempFrame">
+       <widget class="QFrame" name="TempFrame2">
         <property name="styleSheet">
          <string notr="true">#sampleTempFrame{
 background: grey
@@ -462,7 +462,7 @@ background: grey
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="potTempFrame">
+       <widget class="QFrame" name="TempFrame3">
         <property name="styleSheet">
          <string notr="true">#potTempFrame{
 background: grey

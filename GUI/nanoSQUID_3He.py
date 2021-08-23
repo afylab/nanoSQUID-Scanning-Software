@@ -29,7 +29,11 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         conf = {'blink channel':0}
         self.equip.add_server("Blink Device", "dac_adc", "DA20_16_05 (COM3)", config=conf)
 
-        # self.equip.add_server("LS 350", "lakeshore_350")
+        conf = {'Input 1':'B', 'Input 1 Label':'1K POT',
+            'Input 2':'D', 'Input 2 Label':'Sample',
+            'Input 3':'C', 'Input 3 Label':'He3 POT'
+            }
+        self.equip.add_server("LS 336", "lakeshore_336", config=conf)
 
         conf = {'max_field':5, 'gauss_to_amps':870.827, "max_ramp":0.5, "channel":1}
         self.equip.add_server("Magnet Z", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::21::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)

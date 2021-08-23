@@ -250,8 +250,9 @@ class SerialServer(LabradServer):
     def write_line(self, c, data):
         """Sends data over the port appending CR LF."""
         ser = self.getPort(c)
+        data = data + '\r\n'
         data = data.encode("latin-1")
-        ser.write(data + '\r\n')
+        ser.write(data)
         return long(len(data)+2)
 
     @inlineCallbacks
