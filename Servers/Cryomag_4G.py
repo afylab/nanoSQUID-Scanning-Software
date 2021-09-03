@@ -35,12 +35,16 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 import labrad.units as units
 from labrad.types import Value
 
+import time
+
 class Cryo4GWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def initialize(self):
         '''
         Check if the supply is configured for dual channels by trying the CHAN command which
         only returns if there are two channels.
+        
+        Also sets the output units to Amps, DO NOT CHANGE THE UNITS AFTER THIS! It will cause headaches!
         '''
 
         try:
@@ -50,9 +54,14 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
         except:
             print("Single Channel Mode")
             self.dual_channel = False
+        
+        ans = yield self.write("UNITS A;")
 
     @inlineCallbacks
     def get_chan(self):
+        '''
+        Get the active channel.
+        '''
         if self.dual_channel:
             ans = yield self.query("CHAN?")
             returnValue(ans)
@@ -61,6 +70,9 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def set_chan(self, chan):
+        '''
+        Set the active channel
+        '''
         if chan == 1 or chan == 2:
             if self.dual_channel:
                 ans = yield self.write("CHAN "+str(chan))
@@ -83,10 +95,12 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
         '''
         if self.dual_channel:
             if chan == 1 or chan == 2:
-                yield self.write("CHAN "+str(chan))
+                channel = "CHAN "+str(chan)+";"
             else:
                 returnValue("INVALID CHANNEL (need 1 or 2)")
-        ans = yield self.query("UNITS?")
+        else:
+            channel = ""
+        ans = yield self.query(channel+"UNITS?")
         if ans == "T":
             print("Warning! Units of Tesla may cause communications problems.")
         returnValue(ans)
@@ -98,11 +112,13 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
         '''
         if self.dual_channel:
             if chan == 1 or chan == 2:
-                yield self.write("CHAN "+str(chan))
+                channel = "CHAN "+str(chan)+";"
             else:
                 returnValue("INVALID CHANNEL (need 1 or 2)")
-        yield self.write("UNITS A")
-        ans = yield self.query("IOUT?")
+        else:
+            channel = ""
+        # units = "UNITS A;" # Changing the units is slow!
+        ans = yield self.query(channel+"IOUT?")
         if "A" in ans:
             ans = ans.replace("A","")
             ans = float(ans)
@@ -118,10 +134,12 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
         '''
         if self.dual_channel:
             if chan == 1 or chan == 2:
-                yield self.write("CHAN "+str(chan))
+                channel = "CHAN "+str(chan)+";"
             else:
                 returnValue("INVALID CHANNEL (need 1 or 2)")
-        ans = yield self.query("VOUT?")
+        else:
+            channel = ""
+        ans = yield self.query(channel+"VOUT?")
         if "V" in ans:
             ans = ans.replace("V","")
             ans = float(ans)
@@ -137,11 +155,13 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
         '''
         if self.dual_channel:
             if chan == 1 or chan == 2:
-                yield self.write("CHAN "+str(chan))
+                channel = "CHAN "+str(chan)+";"
             else:
                 returnValue("INVALID CHANNEL (need 1 or 2)")
-        yield self.write("UNITS A")
-        ans = yield self.query("IMAG?")
+        else:
+            channel = ""
+        #units = "UNITS A;" # Changing the units is slow!
+        ans = yield self.query(channel+"IMAG?")
         if "A" in ans:
             ans = ans.replace("A","")
             ans = float(ans)
@@ -150,39 +170,43 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
             print("Warning! Remote communication units problem, wrong units for current.")
             returnValue(ans)
 
-    @inlineCallbacks
-    def get_field(self, chan):
-        '''
-        Get the magnet field in units of Tesla.
-
-        If the persistent switch heater is ON the magnet current returned will be the same
-        as the power supply output current. If the persistent switch heater is off, the
-        magnet current will be the value of the power supply output current when the persistent
-        switch heater was last turned off.
-        '''
-        if self.dual_channel:
-            if chan == 1 or chan == 2:
-                yield self.write("CHAN "+str(chan))
-            else:
-                returnValue("INVALID CHANNEL (need 1 or 2)")
-        yield self.write("UNITS G") # For some reason it will not read out inits in tesla
-        ans = yield self.query("IMAG?")
-        if "kG" in ans:
-            ans = ans.replace("kG","")
-            ans = 0.1*float(ans)
-            returnValue(ans)
-        else: # Changing the units can do weird things, see comment on get_units
-            print("Warning! Remote communication units problem, wrong units for field.")
-            returnValue(ans)
+    # @inlineCallbacks
+    # def get_field(self, chan):
+    #     '''
+    #     Get the magnet field in units of Tesla.
+    # 
+    #     If the persistent switch heater is ON the magnet current returned will be the same
+    #     as the power supply output current. If the persistent switch heater is off, the
+    #     magnet current will be the value of the power supply output current when the persistent
+    #     switch heater was last turned off.
+    #     '''
+    #     if self.dual_channel:
+    #         if chan == 1 or chan == 2:
+    #             channel = "CHAN "+str(chan)+";"
+    #         else:
+    #             returnValue("INVALID CHANNEL (need 1 or 2)")
+    #     else:
+    #         channel = ""
+    #     units = "UNITS G;" # For some reason it will not read out inits in tesla
+    #     ans = yield self.query(channel+units+"IMAG?")
+    #     if "kG" in ans:
+    #         ans = ans.replace("kG","")
+    #         ans = 0.1*float(ans)
+    #         returnValue(ans)
+    #     else: # Changing the units can do weird things, see comment on get_units
+    #         print("Warning! Remote communication units problem, wrong units for field.")
+    #         returnValue(ans)
 
     @inlineCallbacks
     def get_persist(self, chan):
         if self.dual_channel:
             if chan == 1 or chan == 2:
-                yield self.write("CHAN "+str(chan))
+                channel = "CHAN "+str(chan)+";"
             else:
                 returnValue("INVALID CHANNEL (need 1 or 2)")
-        ans = yield self.query("PSHTR?")
+        else:
+            channel = ""
+        ans = yield self.query(channel+"PSHTR?")
         if ans == '0':
             returnValue(True)
         else:
@@ -192,13 +216,15 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
     def set_persist(self, chan, persist):
         if self.dual_channel:
             if chan == 1 or chan == 2:
-                yield self.write("CHAN "+str(chan))
+                channel = "CHAN "+str(chan)+";"
             else:
                 returnValue("INVALID CHANNEL (need 1 or 2)")
-        if persist:
-            yield self.write("PSHTR OFF")
         else:
-            yield self.write("PSHTR ON")
+            channel = ""
+        if persist:
+            yield self.write(channel+"PSHTR OFF")
+        else:
+            yield self.write(channel+"PSHTR ON")
         returnValue(persist)
 
     @inlineCallbacks
@@ -208,42 +234,98 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
         '''
         if self.dual_channel:
             if chan == 1 or chan == 2:
-                yield self.write("CHAN "+str(chan))
+                channel = "CHAN "+str(chan)+";"
             else:
                 returnValue("INVALID CHANNEL (need 1 or 2)")
+        else:
+            channel = ""
+
+        #units = "UNITS A;" # Make sure everything is set and returned as current
+        rate_set = "RATE 0 " + str(rate) + ";"
 
         # Get the current field to determine if you need to go up or down
-        magnet_current = yield self.get_current(chan)
-
-        yield self.write("UNITS A") # Make sure everything is set and returned as current
-        yield self.write("RATE 0 " + str(rate))
-
+        magnet_current = yield self.get_output_current(chan)
         if magnet_current > current: # Need to sweep down to the setpoint
             # Prevent an error thrown if LLIM is greater than ULIM
-            ulim = yield self.query("ULIM?")
+            ulim = yield self.query(channel+"ULIM?")
             ulim = float(ulim.replace("A",""))
             if ulim < current:
                 if current < 0:
-                    yield self.write("ULIM 0.0")
+                    yield self.write(channel+"ULIM 0.0")
                 else:
-                    yield self.write("ULIM " + str(current+0.001))
+                    yield self.write(channel+"ULIM " + str(current+0.001))
 
-            yield self.write("LLIM " + str(current))
-            yield self.write("SWEEP DOWN")
+            yield self.write(channel+"LLIM " + str(current))
+            yield self.write(channel+rate_set+"SWEEP DOWN")
 
         else: # Need to sweep up to the setpoint
             # Prevent an error thrown if ULIM is lower than LLIM
-            llim = yield self.query("LLIM?")
+            llim = yield self.query(channel+"LLIM?")
             llim = float(llim.replace("A",""))
             if llim > current:
                 if current > 0:
-                    yield self.write("LLIM 0.0")
+                    yield self.write(channel+"LLIM 0.0")
                 else:
-                    yield self.write("LLIM " + str(current-0.001))
+                    yield self.write(channel+"LLIM " + str(current-0.001))
 
-            yield self.write("ULIM " + str(current))
-            yield self.write("SWEEP UP")
+            yield self.write(channel+"ULIM " + str(current))
+            yield self.write(channel+rate_set+"SWEEP UP")
         returnValue("SWEEPING")
+    
+    # @inlineCallbacks
+    # def fast_sweep_current(self, chan, current, rate, overshoot):
+    #     '''
+    #     Fast mode of sweeping the current. Attempts to avoid a delay due to the 4G by initially
+    #     setting the sweep to overshoot the setpoint, then when the sweep approaches the setpoint,
+    #     setting it back to the intended setpoint.
+    # 
+    #     Using this function there is a risk of overshooting the setpoint by the overshoot amount.
+    # 
+    #     Sweep to a given current (in A) at a given rate (in A/s)
+    #     '''
+    #     if self.dual_channel:
+    #         if chan == 1 or chan == 2:
+    #             channel = "CHAN "+str(chan)+";"
+    #         else:
+    #             returnValue("INVALID CHANNEL (need 1 or 2)")
+    #     else:
+    #         channel = ""
+    # 
+    #     rate_set = "RATE 0 " + str(rate) + ";"
+    # 
+    #     # Get the current field to determine if you need to go up or down
+    #     t0 = time.time()
+    #     magnet_current = yield self.get_output_current(chan)
+    #     t1 = time.time()
+    #     print(t1-t0)
+    # 
+    # 
+    #     if magnet_current > current: # Need to sweep down to the setpoint
+    #         # Prevent an error thrown if LLIM is greater than ULIM
+    #         ulim = yield self.query(channel+"ULIM?")
+    #         ulim = float(ulim.replace("A",""))
+    #         if ulim < current:
+    #             if current < 0:
+    #                 yield self.write(channel+"ULIM 0.0")
+    #             else:
+    #                 yield self.write(channel+"ULIM " + str(current+0.001))
+    # 
+    #         yield self.write(channel+"LLIM " + str(current))
+    #         yield self.write(channel+rate_set+"SWEEP DOWN")
+    # 
+    #     else: # Need to sweep up to the setpoint
+    #         # Prevent an error thrown if ULIM is lower than LLIM
+    #         llim = yield self.query(channel+"LLIM?")
+    #         llim = float(llim.replace("A",""))
+    #         if llim > current:
+    #             if current > 0:
+    #                 yield self.write(channel+"LLIM 0.0")
+    #             else:
+    #                 yield self.write(channel+"LLIM " + str(current-0.001))
+    # 
+    #         yield self.write(channel+"ULIM " + str(current))
+    #         yield self.write(channel+rate_set+"SWEEP UP")
+    #     returnValue("SWEEPING")
 
     @inlineCallbacks
     def zero_output(self, chan):
@@ -253,10 +335,12 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
         '''
         if self.dual_channel:
             if chan == 1 or chan == 2:
-                yield self.write("CHAN "+str(chan))
+                channel = "CHAN "+str(chan)+";"
             else:
                 returnValue("INVALID CHANNEL (need 1 or 2)")
-        yield self.write("SWEEP ZERO")
+        else:
+            channel = ""
+        yield self.write(channel+"SWEEP ZERO")
         returnValue("ZEROING MAGNET")
 
 
@@ -397,6 +481,45 @@ class Cryomagnetics_4G_Server(GPIBManagedServer):
         '''
         dev=self.selectedDevice(c)
         ans = yield dev.get_output_voltage(channel)
+        returnValue(ans)
+    
+    # @setting(112, channel='i', current='v', rate='v', overshoot='v', returns='s')
+    # def fast_sweep_magnet(self, c, channel, current, rate, overshoot):
+    #     '''
+    #     Sweep the magnet current to the given current setpoint in fast mode to avoid the PID 
+    #     stabalization time.
+    # 
+    #     Note about Maximum Rates:
+    #         The 4G supply specifies multiple rates for different ranges of current to protect the magnet.
+    #         The manufacturer of the magnet will give multiple rated ramp rates (e.g. 0-50A @0.2 A/s and
+    #         50-60 A @ 0.1 A/s etc.). We want to be able to smoothly ramp the field for experiments so we
+    #         set first range (range 0 on the controller) to the max field and then use the lowest rating
+    #         specified by the manufacturer. This trades a small amount of time at low fields for a smooth
+    #         ramp rate and safety. Most of the time we will not be operating near the maximum ramp rate.
+    #     '''
+    #     dev=self.selectedDevice(c)
+    #     ans = yield dev.fast_sweep_current(channel, current, rate, overshoot)
+    #     returnValue(ans)
+
+    @setting(998, returns='?')
+    def manual_write(self,c, command):
+        '''
+        Get the output voltage of the currently selected channel.
+        '''
+        dev=self.selectedDevice(c)
+        ans = yield dev.write(command)
+        returnValue(command)
+
+    @setting(999, returns='?')
+    def manual_query(self,c, command):
+        '''
+        Get the output voltage of the currently selected channel.
+        '''
+        dev=self.selectedDevice(c)
+        t0 = time.time()
+        ans = yield dev.query(command)
+        t1 = time.time()
+        print(t1-t0)
         returnValue(ans)
 
 

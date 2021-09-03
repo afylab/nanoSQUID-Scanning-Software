@@ -1116,7 +1116,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 print('Starting sweep with magnetic field set to: ' + str(self.landauFanFieldPoints[i]))
 
                 #Go to the next field
-                yield self.rampMagneticField(self.landauFanFieldPoints[i], bspeed)
+                yield self.rampMagneticField(self.landauFanFieldPoints[i], bspeed, fast=True)
 
                 #If abort sweep flag is raised, break out of the loop
                 if self.abortMagneticFieldSweep_Flag:
@@ -1177,7 +1177,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.abortMagneticFieldSweep_Flag = True
 
     @inlineCallbacks
-    def rampMagneticField(self, end, rate):
+    def rampMagneticField(self, end, rate, fast=False):
         '''
         Ramp the magnetic field to 'end' in units of Tesla, at a rate of 'rate' in T/minute
         '''
@@ -1185,12 +1185,16 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             # yield self.goToSetpointIPS(end, rate) #Set the setpoint and update the IPS mode to sweep to field
             self.magnet.setSetpoint(end)
             self.magnet.setRampRate(rate)
-            yield self.magnet.goToSetpoint(wait=False)
+            if hasattr(self.magnet, "fastToSetpoint") and fast:
+                yield self.magnet.fastToSetpoint(wait=False)
+            else:
+                yield self.magnet.goToSetpoint(wait=False)
+            #yield self.magnet.goToSetpoint(wait=False)
 
             print('Setting field to ' + str(end))
             while True:
                 yield self.magnet.poll()
-                if self.magnet.Bz <= end+0.0005 and self.magnet.Bz >= end-0.0005:
+                if self.magnet.B <= end+0.0005 and self.magnet.B >= end-0.0005:
                     break
                 elif self.abortMagneticFieldSweep_Flag:
                     break
@@ -1212,7 +1216,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             #     yield self.sleep(0.25)
             #     # curr_field = yield self.ips.read_parameter(7)
             #     yield self.magnet.poll()
-            #     curr_field = self.magnet.Bz
+            #     curr_field = self.magnet.B
             #     #if within 10 uT of the desired field, break out of the loop
             #     if curr_field <= end + 0.00001 and curr_field >= end - 0.00001:
             #         break

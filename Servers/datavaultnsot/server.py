@@ -534,6 +534,18 @@ class DataVault(LabradServer):
         '''
         self.system_name = str(system)
 
+    @setting(402, 'current_identifier', returns='s')
+    def current_identifier(self, c):
+        '''
+        Returns the nanoSquid Identifier for the dataset being currently saved to or empty
+        string if there is not a current set.
+        '''
+        try:
+            s = c['dataset'].split(" - ")
+            return s[1]
+        except:
+            return ""
+
 
 class DataVaultMultiHead(DataVault):
     """Data Vault server with additional settings for running multi-headed.

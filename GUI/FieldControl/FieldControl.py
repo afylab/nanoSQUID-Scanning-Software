@@ -220,8 +220,9 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
         self.lineEdit_setpoint.setText(formatNum(self.setpoint, 4))
 
     @inlineCallbacks
-    def setRamprate(self):
-        val = readNum(str(self.lineEdit_ramprate.text()))
+    def setRamprate(self, val=None):
+        if val is None:
+            val = readNum(str(self.lineEdit_ramprate.text()))
         if isinstance(val,float):
             self.ramprate = val
             self.setting_value = True
@@ -234,7 +235,11 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
     def goToSetpoint(self):
         try:
             self.setting_value = True
+            #yield self.controller.goToSetpoint(wait=False)
+
+            # FOR DEBUGGING
             yield self.controller.goToSetpoint(wait=False)
+
             self.setting_value = False
             self.updateSwitchStatus()
             # if self.magDevice == 'IPS 120-10':
