@@ -1,22 +1,74 @@
 import sys
 from PyQt5 import QtWidgets, uic
+from PyQt5.QtCore import QRect
 from twisted.internet.defer import inlineCallbacks, Deferred
-# import numpy as np
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
+# path = sys.path[0] + r"\FieldControl"
+# ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\FieldControl.ui")
+
 path = sys.path[0] + r"\FieldControl"
-ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\FieldControl.ui")
+ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\FieldControl-multiple.ui")
+MagnetWidget, QtBaseClass = uic.loadUiType(path + r"\magnet-widget.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 
 class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
+        self.reactor = reactor
+        self.setupUi(self)
+        self.moveDefault()
+
+    def configureMagnetUi(self, equip):
+        n = 1
+        if 'Magnet Z' in equip.servers:
+
+            self.Z = MagnetUI(self.reactor, 'Magnet Z', self.magnet_frame)
+            self.Z.move(0, (n-1)*200)
+
+
+        if 'Magnet X' in equip.servers:
+            self.X = MagnetUI(self.reactor, 'Magnet X', self.magnet_frame)
+            self.X.magnet_label.setText('X')
+            n += 1
+            self.X.move(0, (n-1)*200)
+
+        if 'Magnet Y' in equip.servers:
+            self.Y = MagnetUI(self.reactor, 'Magnet Y', self.magnet_frame)
+            self.Y.magnet_label.setText('Y')
+            n += 1
+            self.Y.move(0, (n-1)*200)
+        self.setGeometry(QRect(0, 0, 690, n*200+25))
+
+    def moveDefault(self):
+        self.move(550,10)
+
+    #@inlineCallbacks
+    def connectLabRAD(self, equip):
+        if hasattr(self, "Z"):
+            self.Z.connectLabRAD(equip)
+        if hasattr(self, "X"):
+            self.X.connectLabRAD(equip)
+        if hasattr(self, "Y"):
+            self.Y.connectLabRAD(equip)
+
+    #@inlineCallbacks
+    def disconnectLabRAD(self):
+        if hasattr(self, "Z"):
+            self.Z.disconnectLabRAD()
+        if hasattr(self, "X"):
+            self.X.disconnectLabRAD()
+        if hasattr(self, "Y"):
+            self.Y.disconnectLabRAD()
+
+class MagnetUI(QtWidgets.QWidget, MagnetWidget):
+    def __init__(self, reactor, magnetref, parent=None):
+        super(MagnetUI, self).__init__(parent)
+        self.magnetref = magnetref
 
         self.reactor = reactor
         self.setupUi(self)
         self.setupAdditionalUi()
-
-        self.moveDefault()
 
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
@@ -42,20 +94,17 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.push_clamp.hide()
         self.lockInterface()
 
-    def moveDefault(self):
-        self.move(550,10)
-
     @inlineCallbacks
     def connectLabRAD(self, equip):
-        if 'Magnet Supply' in equip.servers:
-            svr, ln, device_info, cnt, config = equip.servers['Magnet Supply']
+        if self.magnetref in equip.servers:
+            svr, ln, device_info, cnt, config = equip.servers[self.magnetref]
             if svr:
                 self.controller = cnt
             else:
-                print("'Magnet Supply' not found, LabRAD connection to FieldControl Failed.")
+                print(str(self.magnetref)+" not found, LabRAD connection to FieldControl Failed.")
                 return
         else:
-            print("'Magnet Supply' not found, LabRAD connection to FieldControl Failed.")
+            print(str(self.magnetref)+" not found, LabRAD connection to FieldControl Failed.")
             return
 
         if hasattr(self.controller, "clamp"):
@@ -82,7 +131,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def disconnectLabRAD(self):
         self.monitor = False
-        self.controller = False
+        # Since updaitng is slow turn the controller to false after it exits loop
+        #self.controller = False
         self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(144, 140, 9);border-radius: 4px;}")
         self.lockInterface()
@@ -101,9 +151,9 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             while self.monitor:
                 if not self.setting_value:
                     yield self.controller.poll()
-                    self.currField = self.controller.Bz
+                    self.currField = self.controller.B
                     self.currCurrent = self.controller.current
-                    self.persistField = self.controller.persist_Bz
+                    self.persistField = self.controller.persist_B
                     self.persistCurrent = self.controller.persist_current
                     self.currVoltage = self.controller.output_voltage
                     self.updateSwitchStatus()
@@ -116,8 +166,12 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 except:
                     printErrorInfo()
                 yield self.sleep(0.5)
+
+            if not self.monitor:
+                self.controller = False
         except:
-            printErrorInfo()
+            if self.monitor: # Sometimes there are issues setting things to None when disconnecting labRAD, don't worry about those
+                printErrorInfo()
 
     @inlineCallbacks
     def loadInitialValues(self):
@@ -126,7 +180,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             yield self.controller.poll()
             self.updateSwitchStatus()
 
-            self.lineEdit_setpoint.setText(formatNum(self.controller.setpoint_Bz))
+            self.lineEdit_setpoint.setText(formatNum(self.controller.setpoint_B))
             self.lineEdit_ramprate.setText(formatNum(self.controller.ramprate))
         except Exception as inst:
             print(inst)
@@ -162,12 +216,13 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             val = readNum(str(self.lineEdit_setpoint.text()))
         if isinstance(val,float):
             yield self.controller.setSetpoint(val)
-            self.setpoint = self.controller.setpoint_Bz
+            self.setpoint = self.controller.setpoint_B
         self.lineEdit_setpoint.setText(formatNum(self.setpoint, 4))
 
     @inlineCallbacks
-    def setRamprate(self):
-        val = readNum(str(self.lineEdit_ramprate.text()))
+    def setRamprate(self, val=None):
+        if val is None:
+            val = readNum(str(self.lineEdit_ramprate.text()))
         if isinstance(val,float):
             self.ramprate = val
             self.setting_value = True
@@ -180,7 +235,11 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     def goToSetpoint(self):
         try:
             self.setting_value = True
+            #yield self.controller.goToSetpoint(wait=False)
+
+            # FOR DEBUGGING
             yield self.controller.goToSetpoint(wait=False)
+
             self.setting_value = False
             self.updateSwitchStatus()
             # if self.magDevice == 'IPS 120-10':
@@ -261,7 +320,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         # #Only finish running the gotoField function when the field is reached
         # while True:
         #     yield self.controller.poll()
-        #     if self.controller.Bz <= B+0.00001 and self.controller.Bz >= B-0.00001:
+        #     if self.controller.B <= B+0.00001 and self.controller.B >= B-0.00001:
         #         break
         #     yield self.sleep(0.25)
         # yield self.sleep(0.25)
@@ -270,14 +329,14 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         '''
         Returns either the output or the persistent field, depending on the mode.
         '''
-        return self.controller.Bz
+        return self.controller.B
 
     def readPersistField(self):
         '''
         Equivalent to readField in persitent mode, returns a warning if not in persistent mode.
         '''
         if self.controller.persist:
-            return self.controller.Bz
+            return self.controller.B
         else:
             return "Field not persistent"
     #

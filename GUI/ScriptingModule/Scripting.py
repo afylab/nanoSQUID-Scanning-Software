@@ -144,9 +144,12 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         code_to_run = code_to_run + "yield sleep(0.1)\n "
         i = 1
         prev_line = 'None'
+        prev_spaces = ''
         for line in code_lines:
             #detect number of space on next line
             spaces = self.detectSpaces(line)
+            if len(line) == 0 and prev_spaces != '': # Handels blank lines in a loop, otherwise inserted linear would throw indentation errors.
+                spaces = prev_spaces
             #inlineCallbacks header is special and needs to be right before the next line in the code,
             if '@inlineCallbacks' not in prev_line:
                 #Add code that updates which line of code is being run
@@ -157,6 +160,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 code_to_run = code_to_run + spaces + "if not self.runningScript:\n" + spaces + "  raise ScriptAborted(" + str(i) + ")\n "
             code_to_run = code_to_run + line + "\n "
             prev_line = line
+            prev_spaces = spaces
             i = i + 1
         code_to_run = code_to_run + "\n"
         return code_to_run

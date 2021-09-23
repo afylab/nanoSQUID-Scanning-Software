@@ -17,7 +17,14 @@ if __name__=="__main__":
     app = QtWidgets.QApplication(sys.argv)
     qt5reactor.install()
     from twisted.internet import reactor
-    window = nanoSQUID_mobile(reactor, folderName='NanoSQUID Mobile')
-    window.show()
+    try:
+        window = nanoSQUID_mobile(reactor, folderName='NanoSQUID Mobile')
+        window.show()
+    except:
+        from traceback import format_exc
+        print("-------------------")
+        print("Main loop crashed")
+        print(format_exc())
+        print("-------------------")
     reactor.runReturn()
     sys.exit(app.exec_())

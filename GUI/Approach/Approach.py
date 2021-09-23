@@ -1441,6 +1441,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 #Set conditions to know when we're done approaching with the PID
                 while self.approaching:
                     z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+
                     #if we've maxed out the PID voltage, we're done approaching with the PID (100 uV offset to deal with minor fringe errors)
                     if z_voltage >= max_zurich_voltage-0.0001:
                         break

@@ -19,7 +19,6 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
 
         self.reactor = reactor
         self.setupUi(self)
-        self.timer = QTimer()
         self.pushButton_Servers.clicked.connect(self.showServersList)
 
         self.pushButton_CapacitorAxis1.clicked.connect(lambda: self.RefreshCapacitance(0, self.label_CapacitanceAxis1))
@@ -64,6 +63,9 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         self.pushButton_AutomaticMoveRelative_Axis3.clicked.connect(lambda: self.MovingRelative(2))
         self.pushButton_AutomaticMoveAbsolute_Axis3.clicked.connect(lambda: self.MovingAbsolute(2))
 
+
+        self.ManualPushButtonsPlus = [self.pushButton_ManualStepPlus_Axis1, self.pushButton_ManualStepPlus_Axis2, self.pushButton_ManualStepPlus_Axis3]
+        self.ManualPushButtonsMinus = [self.pushButton_ManualStepMinus_Axis1, self.pushButton_ManualStepMinus_Axis2, self.pushButton_ManualStepMinus_Axis3]
         self.pushButton_ManualStepMinus_Axis1.clicked.connect(lambda: self.StartSingleStep(0, 1))
         self.pushButton_ManualStepPlus_Axis1.clicked.connect(lambda: self.StartSingleStep(0, 0))
         self.pushButton_ManualStepMinus_Axis2.clicked.connect(lambda: self.StartSingleStep(1, 1))
@@ -85,7 +87,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         # self.pushButton_ManualStepPlus_Axis2.released.connect(lambda: self.manualstep_on_release(3))
         # self.pushButton_ManualStepMinus_Axis3.released.connect(lambda: self.manualstep_on_release(4))
         # self.pushButton_ManualStepPlus_Axis3.released.connect(lambda: self.manualstep_on_release(5))
-        #
+
         # self.timer[0].timeout.connect(lambda: self.manualstep_on_hold(0,1))
         # self.timer[1].timeout.connect(lambda: self.manualstep_on_hold(0,0))
         # self.timer[2].timeout.connect(lambda: self.manualstep_on_hold(1,1))
@@ -122,29 +124,33 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         self.RelativePosition = [0.0, 0.0, 0.0]
         self.AbsolutePosition = [0.0, 0.0, 0.0]
         self.manual_Amplitude = [30.0, 30.0, 40.0]
-        self.manual_Frequency = [1000, 1000, 1000]
+        self.manual_Frequency = [30, 30, 30]
         self.TargetRange = [500*10**-9, 500*10**-9, 1000*10**-9]
         self.TargetGround = [True, True, True]
         self.OutputEnabled = [True, True, True]
+
+        for i in range(3):
+            self.ManualPushButtonsPlus[i].setAutoRepeatInterval(1000/self.manual_Frequency[i])
+            self.ManualPushButtonsMinus[i].setAutoRepeatInterval(1000/self.manual_Frequency[i])
 
         self.StatusWindow = Status.StatusWindow(self.reactor)
         self.pushButton_StatusMonitor.clicked.connect(self.OpenStatusWindow)
         self.DebugWindow = DebugPy.DebugWindow(self.reactor, self)
         self.pushButton_Debug.clicked.connect(self.OpenDebugWindow)
 
-    # def manualstep_on_press(self, i):
-    #     if i ==0 or i==1:
-    #         self.timer(i).start(1/manual_Frequency[0]*1000)
-    #     elif i==2 or i==3:
-    #         self.timer(i).start(1/manual_Frequency[1]*1000)
-    #     elif i==4 or i==5:
-    #         self.timer(i).start(1/manual_Frequency[2]*1000)
-    #
-    # def manualstep_on_hold(self, i, j):
-    #         self.StartSingleStep(i, j)
-    #
-    # def manualstep_on_release(self, i):
-    #     self.timer(i).stop()
+    def manualstep_on_press(self, i):
+        if i ==0 or i==1:
+            self.timer[i].start(1/self.manual_Frequency[0]*1000)
+        elif i==2 or i==3:
+            self.timer[i].start(1/self.manual_Frequency[1]*1000)
+        elif i==4 or i==5:
+            self.timer[i].start(1/self.manual_Frequency[2]*1000)
+
+    def manualstep_on_hold(self, i, j):
+        self.StartSingleStep(i, j)
+
+    def manualstep_on_release(self, i):
+        self.timer[i].stop()
 
     @inlineCallbacks
     def connectLabRAD(self, equip):
@@ -224,7 +230,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 if not self.serversConnected:
                     return
                 self.CurrentPosition[i] = yield self.anc350.get_position(i)
-                self.lcddisplay[i].display('{0:<09}'.format(self.CurrentPosition[i]*10**6))
+                self.lcddisplay[i].display(round(self.CurrentPosition[i]*10**6, 4) )
                 statusarray = yield self.anc350.get_axis_status(i)# [0]connected, [1]enabled, [2]moving, [3]target, [4]eotFwd, [5]eotBwd , [6]error
                 self.StatusWindow.ChangeStatus(i, statusarray)
                 #Determine Status
@@ -319,7 +325,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             else:
                 flag = True
             yield self.anc350.start_single_step(AxisNo, flag)
-            yield self.sleep(0.1)
+            #yield self.sleep(0.1)
         except:
             printErrorInfo()
 
@@ -374,6 +380,8 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 elif val > 2000:
                     self.manual_Frequency[AxisNo] = 2000
             self.lineEdit_Frequency[AxisNo].setText(formatNum(self.manual_Frequency[AxisNo],6))
+            self.ManualPushButtonsPlus[AxisNo].setAutoRepeatInterval(1000/self.manual_Frequency[AxisNo])
+            self.ManualPushButtonsMinus[AxisNo].setAutoRepeatInterval(1000/self.manual_Frequency[AxisNo])
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_frequency(AxisNo, self.manual_Frequency[AxisNo])
         except:

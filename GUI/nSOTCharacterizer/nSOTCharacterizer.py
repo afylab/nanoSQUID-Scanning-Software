@@ -342,32 +342,34 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
             #Select the appropriate magnet power supply
-            if 'Magnet Supply' in equip.servers:
-                svr, ln, device_info, cnt, config = equip.servers['Magnet Supply']
+            if 'Magnet Z' in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers['Magnet Z']
                 if svr:
                     self.magnet = cnt
                     self.comboBox_magnetPower.addItem(device_info)
                     self.warning_label.setStyleSheet("#warning_label{color:rgb(0, 0, 0)}")
                 else:
-                    print("'Magnet Supply' not found in  nSOT Characterizer.")
+                    print("'Magnet Z' not found in  nSOT Characterizer.")
                     self.magnet = False
                     self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
             else:
-                print("'Magnet Supply' not found in  nSOT Characterizer.")
+                print("'Magnet Z' not found in  nSOT Characterizer.")
                 self.magnet = False
                 self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
 
             if "Blink Device" in equip.servers:
                 svr, labrad_name, device_info, cnt, config = equip.servers["Blink Device"]
-
                 #Create a connection to the proper device for blinking
-                if labrad_name.startswith('ad5764_dcbox'):
+                if device_info.startswith('ad5764_dcbox'):
                     self.blink_server = yield self.cxn.ad5764_dcbox
                     yield self.blink_server.select_device(device_info)
                     # print('DC BOX Blink Device')
-                elif labrad_name.startswith('DA'):
-                    self.blink_server = yield self.cxn.dac_adc
+                elif device_info.startswith('DA'):
+                    cxn2 = yield connectAsync(host = '127.0.0.1', password = 'pass')
+                    self.blink_server = yield cxn2.dac_adc
                     yield self.blink_server.select_device(device_info)
+                else:
+                    print("Error Invalid blink device")
                     # print('DAC ADC Blink Device')
 
                 self.blinkDevice = device_info
@@ -705,7 +707,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         #Have user review the sweep parameters before starting
         if not self.abortFlag:
             #checkSweepParams = DialogBox(self.settingsDict['Magnet device'], self.sweepParamDict, self)
-            checkSweepParams = DialogBox('Magnet Supply', self.sweepParamDict, self)
+            checkSweepParams = DialogBox('Magnet Z', self.sweepParamDict, self)
             #If the user does not like the sweep parameters, abort the sweep
             if not checkSweepParams.exec_():
                 self.abortFlag = True
@@ -879,7 +881,10 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         #     yield self.ipsSetField(B_f, B_rate)
         self.magnet.setSetpoint(B_f)
         self.magnet.setRampRate(B_rate)
-        yield self.magnet.goToSetpoint(wait=False)
+        if hasattr(self.magnet, "fastToSetpoint"):
+            yield self.magnet.fastToSetpoint(wait=False)
+        else:
+            yield self.magnet.goToSetpoint(wait=False)
 
         print('Setting field to ' + str(B_f))
 
@@ -890,9 +895,9 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         while True:
             #Read the current field
             yield self.magnet.poll()
-            curr_field = self.magnet.Bz
+            curr_field = self.magnet.B
             #if within 10 uT of the desired field, break out of the loop
-            if curr_field <= B_f + 0.0005 and curr_field >= B_f - 0.0005:
+            if curr_field <= B_f + 0.001 and curr_field >= B_f - 0.001:
                 break
 
             #Break out of loop if the user aborts the sweep
@@ -902,11 +907,12 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             #If it's taking a long time to get to the next point, sometimes reseting them
             #setpoint and activity helps
             if time.time() - t0 > 1:
-                self.magnet.setSetpoint(B_f)
-                self.magnet.setRampRate(B_rate)
-                yield self.magnet.goToSetpoint(wait=False)
+                print("Ramping", B_f, curr_field, B_f-curr_field)
+                # self.magnet.setSetpoint(B_f)
+                # self.magnet.setRampRate(B_rate)
+                # yield self.magnet.goToSetpoint(wait=False)
                 t0 = time.time()
-                print('restarting loop')
+                # print('restarting loop')
 
             yield self.sleep(0.25)
 
@@ -1102,6 +1108,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
     @inlineCallbacks
     def blink(self):
         #Blink, resetting the analog feedback control loop for the nSOT
+        print(self.blink_server)
         yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 5)  #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         yield self.sleep(0.25)
         yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 0)  #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
