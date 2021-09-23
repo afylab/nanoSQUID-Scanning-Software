@@ -169,7 +169,7 @@ class GPIBDeviceManager(LabradServer):
             name = parseIDNResponse(resp)
             print(name) # DEBUG
         except Exception as e:
-            print('Error sending *IDN? to', server, channel + ':', e)
+            print('Error sending *IDN? to', server, ' ' + channel + ':', e)
             from traceback import format_exc
             print(format_exc())
             name = UNKNOWN
@@ -216,7 +216,7 @@ class GPIBDeviceManager(LabradServer):
             #yield self.client.refresh()
 
             # Weird GPIB edge case
-            if "\\n" in idn:
+            if idn is not None and "\\n" in idn:
                 idn = idn.replace("\\n","")
 
             s = self.client[identifier]
