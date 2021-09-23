@@ -498,6 +498,8 @@ class Cryomag4G_Power_Supply(MagnetControl):
                 there is a risk of overshooting the setpoint by this amount.
             backoff (float) : The amount of time in seconds to reset the setpoint before it reaches
                 the setpoint, in order to prevent overshoot.
+            wait (bool) : Will wait for the controller to reach the setpoint.
+            wait_tolerance (float) : If waiting, the tolerance of the field around the setpoint.
         '''
         
         # to prevent potential overshooting don't use near the maximum field, just
@@ -574,7 +576,7 @@ class Cryomag4G_Power_Supply(MagnetControl):
             #Only finish running the gotoZero function once the field is zero
             while True:
                 yield self.poll()
-                if self.B <= 0.00001 and self.B >= -0.00001:
+                if self.B <= 0.0001 and self.B >= -0.0001:
                     break
                 yield self.sleep(0.25)
             yield self.sleep(0.25)

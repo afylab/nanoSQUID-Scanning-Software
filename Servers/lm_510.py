@@ -95,9 +95,6 @@ class lm_510Wrapper(DeviceWrapper):
         p = self.packet()
         yield p.write_line(code).send()
         yield p.read_line().send()
-        #returnValue(ans.read_line)
-
-
 
 
 class lm_510Server(DeviceServer):
@@ -165,7 +162,7 @@ class lm_510Server(DeviceServer):
     def select_device(self, c, key=0):
         """Select a device for the current context."""
         dev = self.selectDevice(c, key=key)
-        yield self.remote()
+        yield self.remote(c)
         return dev.name
 
     @setting(201, mode = 's')
