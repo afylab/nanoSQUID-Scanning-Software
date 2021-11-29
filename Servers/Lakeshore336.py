@@ -144,6 +144,7 @@ class LakeShore336Server(DeviceServer):
         print('done.')
         print(self.serialLinks)
         yield DeviceServer.initServer(self)
+        self.lastTemps = dict()
 
     @inlineCallbacks
     def loadConfigInfo(self):
@@ -218,6 +219,7 @@ class LakeShore336Server(DeviceServer):
         dev=self.selectedDevice(c)
         yield dev.write("KRDG? %s\n"%channel)
         ans = yield dev.read()
+        self.lastTemps[channel] = ans
         returnValue(ans)
 
     @setting(103, channel='i',p='v')
@@ -287,7 +289,11 @@ class LakeShore336Server(DeviceServer):
         """
         dev=self.selectedDevice(c)
         ans = yield dev.range_read(output)
-        returnValue(int(ans))
+        try:
+            returnValue(int(ans))
+        except:
+            print("Error invalid response to range_read")
+            returnValue(0)
 
     @setting(118, output = 'i', setp = 'v[]')
     def setpoint(self, c, output, setp):
@@ -332,6 +338,18 @@ class LakeShore336Server(DeviceServer):
         """
         dev=self.selectedDevice(c)
         yield dev.range_set(output, range)
+    
+    @setting(123, channel='s',returns='s')
+    def read_last_temp(self,c,channel):
+        '''
+        Return the last temperature reading (i.e. don't read again). Helps with asynchronous timing issues
+        when multiple programs are requesting data. For synchronour functions, while an asychronous monitoring is occuring.
+        '''
+        dev=self.selectedDevice(c)
+        if channel in self.lastTemps:
+            return self.lastTemps[channel]
+        else:
+            return 0
 
     @setting(9001,v='v')
     def do_nothing(self,c,v):

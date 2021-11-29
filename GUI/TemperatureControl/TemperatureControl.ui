@@ -157,6 +157,12 @@ border: 0px;
        <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1,0">
         <item>
          <widget class="QLineEdit" name="lineEdit_therm1">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>14</pointsize>
@@ -184,6 +190,12 @@ color: rgb(168,168,168)
             <height>101</height>
            </size>
           </property>
+          <property name="maximumSize">
+           <size>
+            <width>247</width>
+            <height>101</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>14</pointsize>
@@ -194,33 +206,41 @@ color: rgb(168,168,168)
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QPushButton" name="push_Settings">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>23</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>121</width>
-              <height>23</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Measurement Settings</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         <widget class="QFrame" name="">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>24</height>
+           </size>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <widget class="QPushButton" name="push_Settings">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>121</width>
+               <height>23</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>121</width>
+               <height>23</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Measurement Settings</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </item>
        </layout>
       </item>
@@ -241,6 +261,12 @@ color: rgb(168,168,168)
        <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1,0">
         <item>
          <widget class="QLineEdit" name="lineEdit_therm2">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>14</pointsize>
@@ -262,6 +288,12 @@ color: rgb(168,168,168)
         </item>
         <item>
          <widget class="QLCDNumber" name="lcdNumber_Temp2">
+          <property name="maximumSize">
+           <size>
+            <width>247</width>
+            <height>101</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>14</pointsize>
@@ -359,6 +391,12 @@ color: rgb(168,168,168)
        <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,1,0">
         <item>
          <widget class="QLineEdit" name="lineEdit_therm3">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>14</pointsize>
@@ -386,6 +424,12 @@ color: rgb(168,168,168)
             <height>101</height>
            </size>
           </property>
+          <property name="maximumSize">
+           <size>
+            <width>247</width>
+            <height>101</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>14</pointsize>
@@ -396,21 +440,20 @@ color: rgb(168,168,168)
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
-          <item>
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>23</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
+         <widget class="QFrame" name="Image_Num_Frame">
+          <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Temperature Log:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="lineEdit_ImageNum"/>
+           </item>
+          </layout>
+         </widget>
         </item>
        </layout>
       </item>

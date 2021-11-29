@@ -166,6 +166,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             else:
                 print("'ANC350' not found, LabRAD connection to Appraoch Module Failed.")
                 return
+            self.anc_err_count = 0
 
 
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" +
@@ -184,28 +185,31 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
 
     @inlineCallbacks
     def loadParameters(self):
-        for i in range(3):
-            #Load parameters in the GUI that can be read
-            amp = yield self.anc350.get_amplitude(i)
-            freq = yield self.anc350.get_frequency(i)
-            self.lineEdit_Amplitude[i].setText(formatNum(amp))
-            self.lineEdit_Frequency[i].setText(formatNum(freq))
-            statusarray = yield self.anc350.get_axis_status(i)
-            if statusarray[1] == 1:
-                self.OutputEnabled[i] = True
+        try:
+            for i in range(3):
+                #Load parameters in the GUI that can be read
+                amp = yield self.anc350.get_amplitude(i)
+                freq = yield self.anc350.get_frequency(i)
+                self.lineEdit_Amplitude[i].setText(formatNum(amp))
+                self.lineEdit_Frequency[i].setText(formatNum(freq))
+                statusarray = yield self.anc350.get_axis_status(i)
+                if statusarray[1] == 1:
+                    self.OutputEnabled[i] = True
 
-            else:
-                self.OutputEnabled[i] = False
-            self.checkBox_OutputEnabled[i].setChecked(self.OutputEnabled[i])
+                else:
+                    self.OutputEnabled[i] = False
+                self.checkBox_OutputEnabled[i].setChecked(self.OutputEnabled[i])
 
-            #Attocube doesn't provide the capability to read the following values from their hardware, so set these
-            #to our chosen default values
-            yield self.UpdateAutomaticPositioningRelativePosition(i)
-            yield self.UpdateAutomaticPositioningAbsolutePosition(i)
-            yield self.UpdateAmplitude(i)
-            yield self.UpdateFrequency(i)
-            yield self.UpdateTargetRange(i)
-            yield self.anc350.set_target_ground(i, self.TargetGround[i])
+                #Attocube doesn't provide the capability to read the following values from their hardware, so set these
+                #to our chosen default values
+                yield self.UpdateAutomaticPositioningRelativePosition(i)
+                yield self.UpdateAutomaticPositioningAbsolutePosition(i)
+                yield self.UpdateAmplitude(i)
+                yield self.UpdateFrequency(i)
+                yield self.UpdateTargetRange(i)
+                yield self.anc350.set_target_ground(i, self.TargetGround[i])
+        except:
+            print("Error reading Course Positioner Settings. Warning that they may be set to default values on the GUI.")
 
     def disconnectLabRAD(self):
         self.serversConnected = False
@@ -222,6 +226,11 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 yield self.sleep(0.1)
             except:
                 yield self.sleep(0.1)
+            if self.anc_err_count > 10:
+                print("===========================")
+                print("CoursePositionerControl: More than 10 errors, stopped monitoring course positioners.")
+                print("===========================")
+                break
 
     @inlineCallbacks
     def RefreshAttocubeStatus(self):
@@ -270,7 +279,8 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 stylesheet = '#pushButton_Status_Axis' + str(i+1) + '{\nimage:url(' + self.IconPath[self.Status[i]] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
                 self.pushButton_Status[i].setStyleSheet(stylesheet)
         except Exception as inst:
-            printErrorInfo()
+            self.anc_err_count += 1
+            #printErrorInfo()
 
     def SetIndicatorMoving(self, AxisNo):
         self.pushButton_Relative[AxisNo].setText('Moving')
@@ -366,7 +376,8 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_amplitude(AxisNo, self.manual_Amplitude[AxisNo])
         except:
-            printErrorInfo()
+            print("Error reading Course Positioner Amplitude. Warning that they may be set to default values on the GUI.")
+            #printErrorInfo()
 
     @inlineCallbacks
     def UpdateFrequency(self, AxisNo):
@@ -385,7 +396,8 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_frequency(AxisNo, self.manual_Frequency[AxisNo])
         except:
-            printErrorInfo()
+            print("Error reading Course Positioner Frequency. Warning that they may be set to default values on the GUI.")
+            #printErrorInfo()
 
     @inlineCallbacks
     def UpdateTargetRange(self, AxisNo):
@@ -402,7 +414,8 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_target_range(AxisNo, self.TargetRange[AxisNo])
         except:
-            printErrorInfo()
+            print("Error reading Course Positioner Range. Warning that they may be set to default values on the GUI.")
+            #printErrorInfo()
 
     @inlineCallbacks
     def toggleTargetGround(self, AxisNo):
