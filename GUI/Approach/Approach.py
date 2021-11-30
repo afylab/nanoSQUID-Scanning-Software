@@ -885,8 +885,8 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.approaching = False
         #Turn off PID (just does nothing if it's already off)
         yield self.hf.set_pid_on(self.PID_Index, False)
-
-        self.label_pidApproachStatus.setText('Idle')
+        print("Aborting the Approach")
+        self.label_pidApproachStatus.setText('Idle - Aborted')
 
     @inlineCallbacks
     def startPIDApproachSequence(self):
@@ -1624,7 +1624,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.push_ApproachForFeedback.setEnabled(True)
             self.push_PIDApproachForConstant.setEnabled(True)
 
-            self.label_pidApproachStatus.setText('Idle')
+            self.label_pidApproachStatus.setText('Idle - Withdrawn')
         except:
             printErrorInfo()
 
@@ -1721,7 +1721,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.push_ApproachForFeedback.setEnabled(True)
             self.push_PIDApproachForConstant.setEnabled(True)
 
-            self.label_pidApproachStatus.setText('Idle')
+            self.label_pidApproachStatus.setText('Idle - Withdrawn')
         except:
             printErrorInfo()
 
@@ -1992,7 +1992,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         if status:
             self.label_pidApproachStatus.setText('Scanning')
         else:
-            self.label_pidApproachStatus.setText('Idle')
+            self.label_pidApproachStatus.setText('Idle - Scan Ended')
 
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
