@@ -25,8 +25,8 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_05 (COM3)", config=conf)
 
         # TEMPORARILY REPLACING SAMPLE DAC AND SCAN DAC DUE TO CONNECITON ISSUE
-        #self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_06 (COM7)")
-        self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_05 (COM3)")
+        self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_06 (COM7)")
+        #self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_05 (COM3)")
 
         conf = {'blink channel':0}
         self.equip.add_server("Blink Device", "dac_adc", "DA20_16_05 (COM3)", config=conf)
@@ -40,13 +40,13 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         conf = {'max_field':6, 'gauss_to_amps':870.827, "max_ramp":0.5, "channel":1}
         self.equip.add_server("Magnet Z", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::21::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
 
-        conf = {'max_field':1, 'gauss_to_amps':160.539, "max_ramp":0.15, "channel":1}
-        self.equip.add_server("Magnet X", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
+        # conf = {'max_field':1, 'gauss_to_amps':160.539, "max_ramp":0.15, "channel":1}
+        # self.equip.add_server("Magnet X", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
+        # 
+        # conf = {'max_field':1, 'gauss_to_amps':159.591, "max_ramp":0.15, "channel":2}
+        # self.equip.add_server("Magnet Y", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
 
-        conf = {'max_field':1, 'gauss_to_amps':159.591, "max_ramp":0.15, "channel":2}
-        self.equip.add_server("Magnet Y", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
-
-        self.equip.add_server("LM 510", "lm_510")
+        #self.equip.add_server("LM 510", "lm_510")
 #
 
 #----------------------------------------------------------------------------------------------#

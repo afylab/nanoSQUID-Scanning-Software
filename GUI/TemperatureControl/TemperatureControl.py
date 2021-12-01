@@ -100,7 +100,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.ls = svr
                 self.measurementSettings['Input 2'] = config['Input 2'] # Use Input 2 until we have a better way of naming the inputs
             else:
-                print("Lakeshore 350 not found, no LabRAD connections made.")
+                print("Lakeshore not found, no LabRAD connections made.")
                 return
             
             self.dv = yield equip.get_datavault()

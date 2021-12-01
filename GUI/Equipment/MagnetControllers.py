@@ -7,7 +7,7 @@ from nSOTScannerFormat import printErrorInfo
 import numpy as np
 
 # FOR DEBUGGING
-import time
+# import time
 
 class MagnetControl(EquipmentController):
     def __init__(self, widget, device_info, config, reactor):
