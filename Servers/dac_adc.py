@@ -330,7 +330,7 @@ class DAC_ADCServer(DeviceServer):
         try:
             yield dev.read()
         except:
-            print("Error clearing teh serial buffer after buffer_ramp")
+            print("Error clearing the serial buffer after buffer_ramp")
 
         returnValue(channels)
 
