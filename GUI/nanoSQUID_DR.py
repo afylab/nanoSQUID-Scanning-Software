@@ -39,7 +39,7 @@ if __name__=="__main__":
     qt5reactor.install()
     from twisted.internet import reactor
     try:
-        window = nanoSQUID_DR(reactor, computer='kraken', , folderName='NanoSQUID DR')
+        window = nanoSQUID_DR(reactor, computer='kraken', folderName='NanoSQUID DR')
         window.show()
     except:
         from traceback import format_exc
