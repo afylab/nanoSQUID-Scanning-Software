@@ -122,10 +122,12 @@ class SerialServer(LabradServer):
             try:
                 c['PortObject'] = Serial(port, timeout=0) # Do not set dsrdtr=True, it will mess up the port
             except SerialException as e:
-                if e.message.find('cannot find') >= 0:
-                    raise Error(code=1, msg=e.message)
-                else:
-                    raise Error(code=2, msg=e.message)
+                from traceback import format_exc
+                print("--------------")
+                print("Cannot open port, Error:")
+                print(format_exc())
+                print("--------------")
+                raise Error(code=2, msg="Cannot Open")
         return c['PortObject'].portstr
 
     @setting(11, 'Close', returns=[''])

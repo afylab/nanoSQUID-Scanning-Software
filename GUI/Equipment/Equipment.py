@@ -224,9 +224,9 @@ class EquipmentHandler():
                     yield cnt.connect(server)
                 elif hasattr(server, 'select_device'):
                     if device_info is None:
-                        server.select_device()
+                        yield server.select_device()
                     else:
-                        server.select_device(device_info)
+                        yield server.select_device(device_info)
                     if name in self.widgets:
                         self.widgets[name].connected(device_info)
                 else:
