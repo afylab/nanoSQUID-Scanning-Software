@@ -1,7 +1,3 @@
-
-
-import collections
-
 from twisted.internet.defer import inlineCallbacks
 import twisted.internet.task
 import numpy as np
@@ -36,9 +32,20 @@ class DataVault(LabradServer):
         self.system_name = 'generic' # a value to prevent crashing
         self.last_index = -1
 
+    @inlineCallbacks
     def initServer(self):
         # create root session
         _root = self.session_store.get([''])
+
+        self.reg = self.client.registry()
+        reg = self.reg
+        print("Got Here")
+        yield reg.cd(['', 'Servers', 'Data Vault'])
+        dirs, keys = yield reg.dir()
+        if 'System' in keys:
+            self.system_name = yield reg.get('System')
+        print("nSOT System:",self.system_name)
+
 
     def contextKey(self, c):
         """The key used to identify a given context for notifications"""
@@ -530,7 +537,8 @@ class DataVault(LabradServer):
     def set_nanosquid_system(self, c, system):
         '''
         Part of the nanosquid unique system, accepts the name of the system it is
-        working on.
+        working on. This will override the default, which takes the identifier
+        from the registry.
         '''
         self.system_name = str(system)
 
