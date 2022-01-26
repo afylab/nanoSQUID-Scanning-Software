@@ -7,7 +7,7 @@ from nSOTScanner import nanoSQUIDSystem
 from Equipment import CoreEquipment
 
 class nanoSQUID_DR(nanoSQUIDSystem):
-    system_name = 'DR'
+    system_name = 'DRnsot'
     def configureEquipment(self):
         super().configureEquipment()
 
