@@ -2,6 +2,8 @@ import sys
 from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
+from Resources.customwidgets import LoopTimer
+from traceback import format_exc
 
 path = sys.path[0] + r"\ScriptingModule"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\Scripting.ui")
@@ -41,6 +43,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.cxnr = None
 
         self.runningScript = False
+        
+        self.looptimer = LoopTimer(self.label_timing)
 
         self.push_abort.setEnabled(False)
 
@@ -102,6 +106,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.runningScript = False
             self.label_status.setText('Script is in editing mode')
             self.unlockInterface()
+            self.looptimer.reset()
         except ScriptAborted:
             self.runningScript = False
             self.label_status.setText('Script aborted on line ' + str(self.current_line))

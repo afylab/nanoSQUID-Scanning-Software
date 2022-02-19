@@ -39,7 +39,6 @@ class DataVault(LabradServer):
 
         self.reg = self.client.registry()
         reg = self.reg
-        print("Got Here")
         yield reg.cd(['', 'Servers', 'Data Vault'])
         dirs, keys = yield reg.dir()
         if 'System' in keys:

@@ -190,10 +190,10 @@ class LakeShore336Server(DeviceServer):
             if serServer not in self.client.servers:
                 continue
             server = self.client[serServer]
-            print(server)
-            print(port)
+            # print(server)
+            # print(port)
             ports = yield server.list_serial_ports()
-            print(ports)
+            # print(ports)
             if port not in ports:
                 continue
             devName = '%s - %s' % (serServer, port)

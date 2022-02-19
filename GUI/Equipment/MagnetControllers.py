@@ -485,26 +485,31 @@ class Cryomag4G_Power_Supply(MagnetControl):
     #
 
     @inlineCallbacks
-    def fastToSetpoint(self, overshoot=0.015, backoff=0.15, wait=False, wait_tolerance=0.0005):
+    def fastToSetpoint(self, overshoot=0.015, ramprate=0.2, cutback=0.030, wait=False, wait_tolerance=0.0002):        
         '''
         Ramps to the setpoint in a manner to make the ramping faster by avoiding the
         PID stabalization. First it sets the server to sweep to a value that slightly overshoots the setpoint, 
         then when approaching the setpoint switching to the original setpoint.
+        
+        OVERRIDES the default ramprate, since the overshoot algorithm is very sensitive to ramprate.
         
         setSetpoint and setRampRate should be called first to configure this ramp.
 
         Args:
             overshoot (float) : The theoretical overshoot used to fool the 4G PID loop. Using this mode
                 there is a risk of overshooting the setpoint by this amount.
-            backoff (float) : The amount of time in seconds to reset the setpoint before it reaches
-                the setpoint, in order to prevent overshoot.
+            ramprate (float): The sweep rate of the magnetic field, overrides the normal ramprate set
+                by the user.
+            cutback (float) : How close (in units of A) the power supply gets to the setpoint before
+                turning off the overshooting. If this is too small it will result in overshooting due
+                to latency, and if it is too large it will result in undershooting.
             wait (bool) : Will wait for the controller to reach the setpoint.
             wait_tolerance (float) : If waiting, the tolerance of the field around the setpoint.
         '''
         
         # to prevent potential overshooting don't use near the maximum field, just
         # do a normal goToSetpoint
-        if self.setpoint_B + overshoot >= self.max_field:
+        if np.abs(self.setpoint_B) + overshoot >= self.max_field:
             yield self.goToSetpoint(wait=wait)
 
         try:
@@ -517,33 +522,18 @@ class Cryomag4G_Power_Supply(MagnetControl):
             else:
                 Iover = (self.setpoint_B-overshoot)*1e4/self.gauss_to_amps
             
-            ramprate = self.ramprate*166.666667/self.gauss_to_amps
+            ramprate = ramprate*166.666667/self.gauss_to_amps # Convert ramprate to correct units
             
-            deltat = 60*np.abs(self.setpoint_B - self.B)/self.ramprate # Calculate wait time in seconds
-            
-            if deltat > backoff: # backoff a little early to prevent overshoot
-                deltat = deltat - backoff
-            
-            if self.B == 0.0: # Takes almost two seconds for the power supply to start from idle
-                deltat = deltat + 1.25
-            
-            # Do the simplest possible version, send the command then wait the amount of time
-            # required and send the correction.
-            # print("Overshooting", Iover)
-            yield self.server.sweep_magnet(self.channel, Iover, ramprate)
-            yield self.sleep(deltat)
-            # print("Correcting", current)
-            yield self.server.sweep_magnet(self.channel, current, ramprate)
-            
-            
-            if wait:
-                #Only finish running the goToSetpoint function when the field is reached
+            if wait: # Only finish running the goToSetpoint function when the field is reached
+                yield self.server.fast_sweep_magnet(self.channel, current, ramprate, Iover, cutback)
                 while True:
                     yield self.poll(outputonly=True)
                     if self.B <= self.setpoint_B+wait_tolerance and self.B >= self.setpoint_B-wait_tolerance:
                         break
                     yield self.sleep(0.25)
                 yield self.sleep(0.1)
+            else: # don't wait for it to finish, just send the command.
+                self.server.fast_sweep_magnet(self.channel, current, ramprate, Iover, cutback)
         except:
             from traceback import format_exc
             print("Error encounter in fastToSetpoint")

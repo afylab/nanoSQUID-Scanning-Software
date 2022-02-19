@@ -46,7 +46,10 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 'nsot bias input':      4, #1 indexed input on the DAC ADC to read the nsot bias voltage
                 'feedback DC input':    3, #1 indexed input on the DAC ADC to read the DC feedback signal
                 'noise input':          2, #1 indexed input on the DAC ADC to read the noise
-                #'Magnet device':        'Toellner 8851', #Device used to control the magnetic field
+                'Bias Res':             15.0, # Bias resistance, in units of kOhms
+                'Feedback Res':         1.018, # Feedback resistance, in units of kOhms
+                'Shunt Res':            2.6, # Shunt resistance, in units of Ohms
+                'Winding Ratio':        13.78 # Array Winding Ratio
         }
 
         #Dictionary of parameters defining the nSOT sweep
@@ -336,12 +339,21 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.settingsDict['nsot bias input'] = config['Bias Reference']
                 self.settingsDict['feedback DC input'] = config['DC Readout']
                 self.settingsDict['noise input'] = config['Noise Readout']
+                
+                if 'Bias Res' in self.settingsDict:
+                    self.settingsDict['Bias Res'] = config['Bias Res']
+                if 'Feedback Res' in self.settingsDict:
+                    self.settingsDict['Feedback Res'] = config['Feedback Res']
+                if 'Shunt Res' in self.settingsDict:
+                    self.settingsDict['Shunt Res'] = config['Shunt Res']
+                if 'Winding Ratio' in self.settingsDict:
+                    self.settingsDict['Winding Ratio'] = config['Winding Ratio']
+                
             else:
                 print("'nSOT DAC' not found, LabRAD connection to nSOT Characterizer Failed.")
                 return
 
 
-            #Select the appropriate magnet power supply
             if 'Magnet Z' in equip.servers:
                 svr, ln, device_info, cnt, config = equip.servers['Magnet Z']
                 if svr:
@@ -432,21 +444,6 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         if isinstance(val,float):
             self.sweepParamDict['B_max'] = self.magnet.checkFieldRange(val)
         self.lineEdit_fieldMax.setText(formatNum(self.sweepParamDict['B_max']))
-
-    # def checkFieldRange(self, val):
-    #     #Keeps the field value within 1.25T for the dipper magnet
-    #     if self.settingsDict['Magnet device'] == 'Toellner 8851':
-    #         if val < -1.25:
-    #             val = -1.25
-    #         elif val > 1.25:
-    #             val = 1.25
-    #     #Keeps the field value within 5T for the 1K system magnet
-    #     elif self.settingsDict['Magnet device'] == 'IPS 120-10':
-    #         if val < -5:
-    #             val = -5
-    #         elif val > 5:
-    #             val = 5
-    #     return val
 
     def updateFieldSpeed(self, val = None):
         if val is None:
@@ -697,13 +694,6 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         #Update the estimated sweep time
         yield self.updateSweepTime()
 
-        #Throw a reminder to check that the output of the Toellner is on if it's being used
-        # if self.settingsDict['Magnet device'] == 'Toellner 8851':
-        #     checkToe = toellnerReminder()
-        #     if not checkToe.exec_():
-        #         #If not, abort the sweep
-        #         self.abortFlag = True
-
         #Have user review the sweep parameters before starting
         if not self.abortFlag:
             #checkSweepParams = DialogBox(self.settingsDict['Magnet device'], self.sweepParamDict, self)
@@ -861,7 +851,8 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             #Zero the magnetic field if the checkBox is checked
             if self.checkBox_ZeroField.isChecked() and not self.abortFlag:
                 #Go to zero field and set power supply voltage setpoint to zero.
-                yield self.setMagneticField(b_vals[-1], 0, b_rate)
+                #yield self.setMagneticField(b_vals[-1], 0, b_rate, fast=False)
+                yield self.magnet.goToZero(wait=True)
 
             print('Sweep complete')
             #unlock the GUI elements now that the sweep is complete
@@ -873,14 +864,9 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             printErrorInfo()
 
     @inlineCallbacks
-    def setMagneticField(self, B_i, B_f, B_rate):
-        # #Set the magnetic field with either the Toellner or the IPS
-        # if self.settingsDict['Magnet device'] == 'Toellner 8851':
-        #     yield self.toeSetField(B_i, B_f, B_rate)
-        # elif self.settingsDict['Magnet device'] == 'IPS 120-10':
-        #     yield self.ipsSetField(B_f, B_rate)
+    def setMagneticField(self, B_i, B_f, B_rate, fast=True):
         self.magnet.setSetpoint(B_f)
-        self.magnet.setRampRate(B_rate)
+        self.magnet.setRampRate(B_rate) # Will be overridden if using fastToSetpoint
         if hasattr(self.magnet, "fastToSetpoint"):
             yield self.magnet.fastToSetpoint(wait=False)
         else:
@@ -897,7 +883,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             yield self.magnet.poll()
             curr_field = self.magnet.B
             #if within 10 uT of the desired field, break out of the loop
-            if curr_field <= B_f + 0.001 and curr_field >= B_f - 0.001:
+            if curr_field <= B_f + 0.0001 and curr_field >= B_f - 0.0001:
                 break
 
             #Break out of loop if the user aborts the sweep
@@ -906,111 +892,15 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
             #If it's taking a long time to get to the next point, sometimes reseting them
             #setpoint and activity helps
-            if time.time() - t0 > 1:
-                print("Ramping", B_f, curr_field, B_f-curr_field)
-                # self.magnet.setSetpoint(B_f)
-                # self.magnet.setRampRate(B_rate)
-                # yield self.magnet.goToSetpoint(wait=False)
-                t0 = time.time()
-                # print('restarting loop')
+            # if time.time() - t0 > 1:
+            #     print("Ramping", B_f, curr_field, B_f-curr_field)
+            #     # self.magnet.setSetpoint(B_f)
+            #     # self.magnet.setRampRate(B_rate)
+            #     # yield self.magnet.goToSetpoint(wait=False)
+            #     t0 = time.time()
+            #     # print('restarting loop')
 
             yield self.sleep(0.25)
-
-        #Once the field is reached, set the IPS to no longer change field
-        # yield self.ips.set_control(3)
-        # yield self.ips.set_activity(0)
-        # yield self.ips.set_control(2)
-
-    # @inlineCallbacks
-    # def toeSetField(self, B_i, B_f, B_rate):
-    #     try:
-    #         #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
-    #         VV_conv = 3.20
-    #         #Toellner current set point / DAC voltage out conversion [I_Toellner / V_DAC]
-    #         IV_conv = 1.0
-    #         #Field / Current ratio on the dipper magnet (0.132 [Tesla / Amp])
-    #         IB_conv = 0.132
-    #
-    #         #Starting and ending field values in Tesla, use positive field values for now
-    #         B_range = np.absolute(B_f - B_i)
-    #
-    #         #Delay between DAC steps in microseconds
-    #         magnet_delay = 1000
-    #         #Converts between microseconds and minutes [us / minute]
-    #         t_conv = 6e07
-    #
-    #         #Sets the appropriate DAC buffer ramp parameters
-    #         sweep_steps = int((t_conv * B_range) / (B_rate * magnet_delay))  + 1
-    #         v_start = B_i / (IB_conv * IV_conv)
-    #         v_end = B_f / (IB_conv * IV_conv)
-    #
-    #         #Sets an appropraite voltage set point to ensure that the Toellner power supply stays in constant current mode
-    #         # assuming a parasitic resistance of R_p between the power supply and magnet
-    #         R_p = 1
-    #         V_setpoint =  (R_p * B_f) / (VV_conv * IB_conv)
-    #         V_initial = (R_p * B_i) / (VV_conv * IB_conv)
-    #         if V_setpoint*VV_conv > 5.0:
-    #             V_setpoint = 5.0/VV_conv
-    #         else:
-    #             pass
-    #         if V_initial*VV_conv > 5.0:
-    #             V_initial = 5.0/VV_conv
-    #         else:
-    #             pass
-    #
-    #         #Sweeps field from B_i to B_f
-    #         print('Sweeping field from ' + str(B_i) + ' to ' + str(B_f)+'.')
-    #         yield self.dac_toe.buffer_ramp([self.settingsDict['toellner current']-1, self.settingsDict['toellner current']-1],[0],[v_start, V_initial],[v_end, V_setpoint], sweep_steps, magnet_delay)
-    #
-    #         self.newToeField.emit(B_f, B_f/IB_conv, V_setpoint)
-    #     except:
-    #         printErrorInfo()
-
-    # @inlineCallbacks
-    # def ipsSetField(self, B_f, B_rate):
-    #     yield self.ips.set_control(3) #Set the IPS120 to remote communication
-    #     yield self.ips.set_comm_protocol(6) #Set the IPS120 to the proper communication protocol
-    #     yield self.ips.set_fieldsweep_rate(B_rate) #Set the sweep rate
-    #     yield self.ips.set_targetfield(B_f) #Set the target field
-    #     yield self.ips.set_activity(1) #Set the IPS to sweep field if it is not yet at the target field
-    #     yield self.ips.set_control(2) #Set the IPS120 to local communication so that it can be used IRL
-    #
-    #     print('Setting field to ' + str(B_f))
-    #
-    #     #Keep track of time since the field started changing
-    #     t0 = time.time()
-    #
-    #     #wait for field to be reached
-    #     while True:
-    #         #Read the current field
-    #         yield self.ips.set_control(3)
-    #         curr_field = yield self.ips.read_parameter(7)
-    #         yield self.ips.set_control(2)
-    #
-    #         #Break out of loop if the field is at the desired field
-    #         if float(curr_field[1:]) <= B_f+0.00001 and float(curr_field[1:]) >= B_f-0.00001:
-    #             break
-    #
-    #         #Break out of loop if the user aborts the sweep
-    #         if self.abortFlag == True:
-    #             break
-    #
-    #         #If it's taking a long time to get to the next point, sometimes reseting them
-    #         #setpoint and activity helps
-    #         if time.time() - t0 > 1:
-    #             yield self.ips.set_control(3)
-    #             yield self.ips.set_targetfield(B_f)
-    #             yield self.ips.set_activity(1)
-    #             yield self.ips.set_control(2)
-    #             t0 = time.time()
-    #             print('restarting loop')
-    #
-    #         yield self.sleep(0.25)
-    #
-    #     #Once the field is reached, set the IPS to no longer change field
-    #     yield self.ips.set_control(3)
-    #     yield self.ips.set_activity(0)
-    #     yield self.ips.set_control(2)
 
     @inlineCallbacks
     def rampVoltage(self, v_min, v_max, pnts, delay, mode):
@@ -1101,14 +991,14 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         #if the zero field checkbox is checked zero the field
         if self.checkBox_ZeroField.isChecked():
             print('Sweeping magnetic field back to zero')
-            yield self.setMagneticField(bVal, 0, self.sweepParamDict['B_rate'])
+            yield self.setMagneticField(bVal, 0, self.sweepParamDict['B_rate'], fast=False)
 
         self.unlockSweepParameters()
 
     @inlineCallbacks
     def blink(self):
         #Blink, resetting the analog feedback control loop for the nSOT
-        print(self.blink_server)
+        # print(self.blink_server) # For debugging
         yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 5)  #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         yield self.sleep(0.25)
         yield self.blink_server.set_voltage(self.settingsDict['blink']-1, 0)  #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
@@ -1676,6 +1566,10 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
         self.dac = dac
 
         self.settingsDict = settings
+        self.biasRes.setValue(self.settingsDict['Bias Res'])
+        self.ssaaRes.setValue(self.settingsDict['Feedback Res'])
+        self.shuntRes.setValue(self.settingsDict['Shunt Res'])
+        self.ssaaWinding.setValue(self.settingsDict['Winding Ratio'])
 
         self.data = None
         self.fitPoints = 1

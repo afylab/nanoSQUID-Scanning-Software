@@ -272,60 +272,80 @@ class Cryo4GWrapper(GPIBDeviceWrapper):
             yield self.write(channel+rate_set+"SWEEP UP")
         returnValue("SWEEPING")
     
-    # @inlineCallbacks
-    # def fast_sweep_current(self, chan, current, rate, overshoot):
-    #     '''
-    #     Fast mode of sweeping the current. Attempts to avoid a delay due to the 4G by initially
-    #     setting the sweep to overshoot the setpoint, then when the sweep approaches the setpoint,
-    #     setting it back to the intended setpoint.
-    # 
-    #     Using this function there is a risk of overshooting the setpoint by the overshoot amount.
-    # 
-    #     Sweep to a given current (in A) at a given rate (in A/s)
-    #     '''
-    #     if self.dual_channel:
-    #         if chan == 1 or chan == 2:
-    #             channel = "CHAN "+str(chan)+";"
-    #         else:
-    #             returnValue("INVALID CHANNEL (need 1 or 2)")
-    #     else:
-    #         channel = ""
-    # 
-    #     rate_set = "RATE 0 " + str(rate) + ";"
-    # 
-    #     # Get the current field to determine if you need to go up or down
-    #     t0 = time.time()
-    #     magnet_current = yield self.get_output_current(chan)
-    #     t1 = time.time()
-    #     print(t1-t0)
-    # 
-    # 
-    #     if magnet_current > current: # Need to sweep down to the setpoint
-    #         # Prevent an error thrown if LLIM is greater than ULIM
-    #         ulim = yield self.query(channel+"ULIM?")
-    #         ulim = float(ulim.replace("A",""))
-    #         if ulim < current:
-    #             if current < 0:
-    #                 yield self.write(channel+"ULIM 0.0")
-    #             else:
-    #                 yield self.write(channel+"ULIM " + str(current+0.001))
-    # 
-    #         yield self.write(channel+"LLIM " + str(current))
-    #         yield self.write(channel+rate_set+"SWEEP DOWN")
-    # 
-    #     else: # Need to sweep up to the setpoint
-    #         # Prevent an error thrown if ULIM is lower than LLIM
-    #         llim = yield self.query(channel+"LLIM?")
-    #         llim = float(llim.replace("A",""))
-    #         if llim > current:
-    #             if current > 0:
-    #                 yield self.write(channel+"LLIM 0.0")
-    #             else:
-    #                 yield self.write(channel+"LLIM " + str(current-0.001))
-    # 
-    #         yield self.write(channel+"ULIM " + str(current))
-    #         yield self.write(channel+rate_set+"SWEEP UP")
-    #     returnValue("SWEEPING")
+    @inlineCallbacks
+    def fast_sweep_current(self, chan, current, rate, overshoot, cutback):
+        '''
+        Fast mode of sweeping the current. Attempts to avoid a delay due to the 4G by initially
+        setting the sweep to overshoot the setpoint, then when the sweep approaches the setpoint,
+        setting it back to the intended setpoint. The overshooting is set externally, will sweep
+        to the overshoot value then switch the sweep setpoint back when it gets close to the actual
+        setpoint. The cutback parameter is how close the current gets to the actual setpoint before
+        turning off the overshoot.
+    
+        Using this function there is a risk of overshooting the setpoint by the overshoot amount.
+    
+        Sweep to a given current (in A) at a given rate (in A/s)
+        '''
+        if self.dual_channel:
+            if chan == 1 or chan == 2:
+                channel = "CHAN "+str(chan)+";"
+            else:
+                returnValue("INVALID CHANNEL (need 1 or 2)")
+        else:
+            channel = ""
+    
+        rate_set = "RATE 0 " + str(rate) + ";"
+    
+        # Get the current field to determine if you need to go up or down
+        # t0 = time.time()
+        magnet_current = yield self.get_output_current(chan)
+        # t1 = time.time()
+        # print("Latency:", t1-t0) # For debugging
+    
+        if magnet_current > current: # Need to sweep down to the setpoint
+            # Prevent an error thrown if LLIM is greater than ULIM
+            ulim = yield self.query(channel+"ULIM?")
+            ulim = float(ulim.replace("A",""))
+            if ulim < overshoot:
+                if overshoot < 0:
+                    yield self.write(channel+"ULIM 0.0")
+                else:
+                    yield self.write(channel+"ULIM " + str(overshoot+0.001))
+    
+            yield self.write(channel+"LLIM " + str(overshoot))
+            yield self.write(channel+rate_set+"SWEEP DOWN")
+            
+            # Wait for the current to get close then set the correct setpoint, 
+            # don't wait for more than 60 seconds
+            t0 = time.time()
+            magnet_current = yield self.get_output_current(chan)
+            while magnet_current > current+cutback and time.time()-t0 <= 60.0:
+                magnet_current = yield self.get_output_current(chan)
+            yield self.write(channel+"LLIM " + str(current))
+            yield self.write(channel+rate_set+"SWEEP DOWN")
+        else: # Need to sweep up to the setpoint
+            # Prevent an error thrown if ULIM is lower than LLIM
+            llim = yield self.query(channel+"LLIM?")
+            llim = float(llim.replace("A",""))
+            if llim > overshoot:
+                if overshoot > 0:
+                    yield self.write(channel+"LLIM 0.0")
+                else:
+                    yield self.write(channel+"LLIM " + str(overshoot-0.001))
+    
+            yield self.write(channel+"ULIM " + str(overshoot))
+            yield self.write(channel+rate_set+"SWEEP UP")
+            
+            # Wait for the current to get close then set the correct setpoint, 
+            # don't wait for more than 60 seconds
+            t0 = time.time()
+            magnet_current = yield self.get_output_current(chan)
+            while magnet_current < current-cutback and time.time()-t0 <= 60.0:
+                magnet_current = yield self.get_output_current(chan)
+            # print("Finished at", magnet_current, current, magnet_current - current) # For Debugging
+            yield self.write(channel+"ULIM " + str(current))
+            yield self.write(channel+rate_set+"SWEEP UP")
+        returnValue("SWEEPING")
 
     @inlineCallbacks
     def zero_output(self, chan):
@@ -387,20 +407,20 @@ class Cryomagnetics_4G_Server(GPIBManagedServer):
         ans = yield dev.set_chan(channel)
         returnValue(ans)
 
-    @setting(104, channel='i', returns='?')
-    def get_field(self, c, channel):
-        '''
-        Get the field of the magnet.
-
-        If the persistent switch heater is ON the magnet current (or field) returned will
-        be the same as the power supply output current. If the persistent switch
-        heater is off, the magnet current will be the value of the power supply
-        output current when the persistent switch heater was last turned off. The
-        magnet current will be set to zero if the power supply detects a quench.
-        '''
-        dev=self.selectedDevice(c)
-        ans = yield dev.get_field(channel)
-        returnValue(ans)
+    # @setting(104, channel='i', returns='?')
+    # def get_field(self, c, channel):
+    #     '''
+    #     Get the field of the magnet.
+    # 
+    #     If the persistent switch heater is ON the magnet current (or field) returned will
+    #     be the same as the power supply output current. If the persistent switch
+    #     heater is off, the magnet current will be the value of the power supply
+    #     output current when the persistent switch heater was last turned off. The
+    #     magnet current will be set to zero if the power supply detects a quench.
+    #     '''
+    #     dev=self.selectedDevice(c)
+    #     ans = yield dev.get_field(channel)
+    #     returnValue(ans)
 
     @setting(105, channel='i', returns='?')
     def get_current(self, c, channel):
@@ -483,23 +503,23 @@ class Cryomagnetics_4G_Server(GPIBManagedServer):
         ans = yield dev.get_output_voltage(channel)
         returnValue(ans)
     
-    # @setting(112, channel='i', current='v', rate='v', overshoot='v', returns='s')
-    # def fast_sweep_magnet(self, c, channel, current, rate, overshoot):
-    #     '''
-    #     Sweep the magnet current to the given current setpoint in fast mode to avoid the PID 
-    #     stabalization time.
-    # 
-    #     Note about Maximum Rates:
-    #         The 4G supply specifies multiple rates for different ranges of current to protect the magnet.
-    #         The manufacturer of the magnet will give multiple rated ramp rates (e.g. 0-50A @0.2 A/s and
-    #         50-60 A @ 0.1 A/s etc.). We want to be able to smoothly ramp the field for experiments so we
-    #         set first range (range 0 on the controller) to the max field and then use the lowest rating
-    #         specified by the manufacturer. This trades a small amount of time at low fields for a smooth
-    #         ramp rate and safety. Most of the time we will not be operating near the maximum ramp rate.
-    #     '''
-    #     dev=self.selectedDevice(c)
-    #     ans = yield dev.fast_sweep_current(channel, current, rate, overshoot)
-    #     returnValue(ans)
+    @setting(112, channel='i', current='v', rate='v', overshoot='v', cutback='v', returns='s')
+    def fast_sweep_magnet(self, c, channel, current, rate, overshoot, cutback):
+        '''
+        Sweep the magnet current to the given current setpoint in fast mode to avoid the PID 
+        stabalization time using the overshoot technique.
+    
+        Note about Maximum Rates:
+            The 4G supply specifies multiple rates for different ranges of current to protect the magnet.
+            The manufacturer of the magnet will give multiple rated ramp rates (e.g. 0-50A @0.2 A/s and
+            50-60 A @ 0.1 A/s etc.). We want to be able to smoothly ramp the field for experiments so we
+            set first range (range 0 on the controller) to the max field and then use the lowest rating
+            specified by the manufacturer. This trades a small amount of time at low fields for a smooth
+            ramp rate and safety. Most of the time we will not be operating near the maximum ramp rate.
+        '''
+        dev=self.selectedDevice(c)
+        ans = yield dev.fast_sweep_current(channel, current, rate, overshoot, cutback)
+        returnValue(ans)
 
     @setting(998, returns='?')
     def manual_write(self,c, command):
