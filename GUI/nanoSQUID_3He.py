@@ -20,7 +20,7 @@ class nanoSQUID_3He(nanoSQUIDSystem):
 
         conf = {'DC Readout':3, 
             'nSOT Bias':4, 
-            'Noise Readout':8, 
+            'Noise Readout':2, 
             'nSOT Gate':1, 
             'Gate Reference':1, 
             'Bias Reference':4,

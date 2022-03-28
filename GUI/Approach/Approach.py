@@ -193,7 +193,8 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 'step_size'            : 10e-9,   #Step size for feedback approach in meters
                 'step_speed'           : 10e-9,   #Step speed for feedback approach in m/s
                 'height'               : 5e-6,    #Height for constant height scanning
-                'man z extension'            : 0, #Step size for manual approach in meters
+                'man z extension'      : 0, #Step size for manual approach in meters
+                'zigzag safety'        : 200e-9, #Safety margin for the Zig Zag retraction
         }
 
         #Update GUI elements with the default values for the PID and approach settings
@@ -1338,6 +1339,213 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                     self.label_pidApproachStatus.setText('Could not extend to desired height')
                     self.approaching = False
 
+        except:
+            printErrorInfo()
+
+    @inlineCallbacks
+    def LimitedApproachSequence(self, max_extension_volts):
+        '''
+        Starts a PID approach sequence to advance a limited distance given by max_extension_volts. 
+        If surface contact has been made function returns 0.
+        If the function reaches max_extension it returns 1.
+        If the function reaches the maximum possible extension and does not find the surface, it retracts
+        completely and returns -1, indicating the Approach failed. Does not advance the course positioners.
+        '''
+        try:
+            if self.measuring: #If measuring the PLL
+
+                #Set PID off for initialization
+                yield self.hf.set_pid_on(self.PID_Index, False)
+
+                #Update status label
+                self.label_pidApproachStatus.setText('Approaching with Zurich')
+
+                #Initializes all the PID settings
+                yield self.setHF2LI_PID_Settings()
+
+                #Set the output range to be 0 to the max z voltage, which is specified by the temperature of operation from the PositionCalibration module
+                yield self.setPIDOutputRange(self.z_volts_max)
+                
+                z_volts_max_extend = min([max_extension_volts, self.z_volts_max]) # Don't extend past the maximum.
+
+                #Reset the zData and deltaFdata arrays. This prevents the software from thinking it hit the surface because of
+                #the approach prior before extension.
+                self.zData = deque([-50e-9]*self.z_track_length)
+                self.deltafData = deque([-200]*self.deltaf_track_length)
+
+                #Disable to setPLL threshold button until the queue of deltafdata has been replenished. Spamming the set threshhold
+                #button after starting an approach will yield spurradic results until the initalized values are gone
+                self.disableSetThreshold(30)
+
+                if not self.approaching: # For safety
+                    return -1 
+
+                #Turn on PID to start the approach
+                yield self.hf.set_pid_on(self.PID_Index, True)
+
+                while self.approaching:
+                    #Check if the surface has been contacted.
+                    if self.madeSurfaceContact():
+                        #If so, update the status and break from the loop
+                        self.label_pidApproachStatus.setText('Surface contacted')
+                        return 0
+
+                    #Check if we maxed out the output voltage
+
+                    #Get the output voltage of the HF2LI (this is JUST the HF2LI voltage output not, not the sum with the DAC-ADC z voltage contribution)
+                    z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+
+                    #If the voltage is at the maximum possible (or within a milliVolt)
+                    if z_voltage >= (self.z_volts_max - 0.001) and self.approaching:
+                        print("Surface not found, retracting attocubes.")
+                        #Stop the PID
+                        yield self.hf.set_pid_on(self.PID_Index, False)
+
+                        #Retract the sensor by setting the value of the PID's integrator to 0
+                        self.label_pidApproachStatus.setText('Retracting Attocubes')
+                        #Find desired retract speed in volts per second
+                        retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                        yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
+
+                        
+                        #Reset the zData and deltaFdata arrays. This prevents the software from thinking it hit the surface because of
+                        #the approach prior to retraction
+                        self.zData = deque([-50e-9]*self.z_track_length)
+                        self.deltafData = deque([-200]*self.deltaf_track_length)
+                        return -1
+                    elif z_voltage >= z_volts_max_extend and self.approaching:
+                        #Reset the zData and deltaFdata arrays. This prevents the software from thinking it hit the surface because of
+                        #the approach prior to retraction
+                        self.zData = deque([-50e-9]*self.z_track_length)
+                        self.deltafData = deque([-200]*self.deltaf_track_length)
+                        
+                        return 1
+            else: #If not measuring the PLL, throw a warning
+                msgBox = QtWidgets.QMessageBox(self)
+                msgBox.setIcon(QtWidgets.QMessageBox.Information)
+                msgBox.setWindowTitle('Start PLL to Approach')
+                msgBox.setText("\r\n You cannot approach until the PLL has been started.")
+                msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+                msgBox.exec_()
+            return -1 # Error
+        except:
+            print("Gen PID Approach Error:")
+            printErrorInfo()
+            return -1 # Error
+
+    @inlineCallbacks
+    def startZigZagApproach(self, advance_dist, pullback_dist):
+        '''
+        Move towards the surface using a "zig-zag" pattern where you advance a short amount, then retract
+        in series with a positive trend, until you hit the surface. 
+        
+        Once surface contact is made the tip will pull back 100nm quickly as a safety measure. It will
+        then reverse the Zig Zag pattern, pulling back by advance_dist then approaching by pullback_dist
+        until the desired height is reached.
+        
+        pullback_dist should be less than advance_dist, won't exxecute otherwise.
+        '''
+        try:
+            if pullback_dist >= advance_dist:
+                print("Error pullback distance needs to be less than advance distance. Cannot ZigZag.")
+                return
+            #First emit signal saying we are no longer in contact with the surface, either at constant height
+            #for feedback
+            self.updateConstantHeightStatus.emit(False)
+            self.constantHeight = False
+            self.updateFeedbackStatus.emit(False)
+
+            #Makes sure we're not in a divded voltage mode
+            yield self.resetVoltageMultiplier()
+            
+            #Bring us to the surface
+            self.approaching = True
+            while self.approaching:
+                # Advance a step
+                z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+                state = yield self.LimitedApproachSequence(z_voltage + advance_dist * self.z_volts_to_meters)
+                if state == 0 and self.approaching: # Hit the surface, zigzag back then enter constant heigh mode
+                    #Read the voltage being output by the PID
+                    z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+
+                    self.contactHeight = z_voltage / self.z_volts_to_meters
+
+                    #Determine voltage to which we want to retract to be at the provided constant height
+                    zzretract_done = False
+                    final_voltage = z_voltage - self.PIDApproachSettings['height'] * self.z_volts_to_meters
+                    if self.PIDApproachSettings['height'] < self.PIDApproachSettings['zigzag safety']:
+                        end_voltage = final_voltage
+                        zzretract_done = True
+                    else:
+                        end_voltage = z_voltage - self.PIDApproachSettings['zigzag safety'] * self.z_volts_to_meters
+                    
+                    #Find desired retract speed in volts per second
+                    retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                    #Go to the position. The PID will be turned off by calling the set integrator command
+                    yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
+
+                    # Do a Zig-Zag retraction
+                    retract_speed = 0.1*self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                    while not zzretract_done:
+                        z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+                        end_voltage = z_voltage - advance_dist * self.z_volts_to_meters
+                        if end_voltage <= final_voltage:
+                            end_voltage = final_voltage
+                            zzretract_done = True
+                            print("Zig Zag Finished, retracting to desired height")
+                        
+                        #Go to the position. The PID will be turned off by calling the set integrator command
+                        yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
+                        
+                        # Move foreward by pullback_dist
+                        if not zzretract_done:
+                            z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+                            state = yield self.LimitedApproachSequence(z_voltage + pullback_dist * self.z_volts_to_meters)
+                            if state != 1:
+                                self.approaching = False
+                                print("Error in zigzag retract. LimitedApproachSequence returned with state", state)
+                                print("Retracting to desired height for safety.")
+                                retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                                yield self.setHF2LI_PID_Integrator(val = final_voltage, speed = retract_speed)
+                                zzretract_done = True
+
+                    #Set range such that maximally extended is at the proper distance from the surface.
+                    #result is true if we successfully set the range.
+                    #returns false otherwise, meaning that we made contact with the sample
+                    #too close to be able to set the range properly
+                    result = yield self.setPIDOutputRange(end_voltage)
+
+                    if result:
+                        #Turn PID back on so that if there's drift or the sample is taller than expected,
+                        #the PID will retract the tip
+                        yield self.hf.set_pid_on(self.PID_Index, True)
+
+                        #Reset the deltaFdata arrays. This prevents the software from interpreting the surface contact from approach
+                        #as an accidental contact resulting in autowithdrawl in the zmonitoring loop.
+                        self.deltafData = deque([-200]*self.deltaf_track_length)
+
+                        #Emit that we can now scan in constant height mode
+                        self.updateConstantHeightStatus.emit(True)
+                        self.constantHeight = True
+                        self.label_pidApproachStatus.setText('Constant Height')
+                    else:
+                        self.label_pidApproachStatus.setText('Could not extend to desired height')
+                    self.approaching = False
+                elif state == 1 and self.approaching: # Advanced, didn't hit surface. Pullback the given amount.
+                    #Read the voltage being output by the PID
+                    z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+
+                    #Determine voltage to which we want to retract to be at the provided constant height
+                    end_voltage = z_voltage - pullback_dist * self.z_volts_to_meters
+                    end_voltage = max(end_voltage, 0) # Don't try and go negative
+                    #Retract at 1/10th the normal speed.
+                    retract_speed = 0.1*self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                    #Go to the position. The PID will be turned off by calling the set integrator command
+                    yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
+                else: # Otherwise something went wrong, stop appraoching
+                    self.label_pidApproachStatus.setText('Could not ZigZag to surface.')
+                    self.approaching = False
         except:
             printErrorInfo()
 

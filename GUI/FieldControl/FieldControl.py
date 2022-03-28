@@ -235,17 +235,11 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
     def goToSetpoint(self):
         try:
             self.setting_value = True
-            #yield self.controller.goToSetpoint(wait=False)
-
-            # FOR DEBUGGING
+            self.setSetpoint()
             yield self.controller.goToSetpoint(wait=False)
 
             self.setting_value = False
             self.updateSwitchStatus()
-            # if self.magDevice == 'IPS 120-10':
-            #     yield self.goToSetpointIPS()
-            # else:
-            #     yield self.toeSweepField(self.currField, self.setpoint, self.ramprate)
         except:
             printErrorInfo()
     #
