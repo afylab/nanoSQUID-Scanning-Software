@@ -194,7 +194,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         #Saving images of all data taken info
         self.lineEdit_Session_2.setReadOnly(True)
         home = os.path.expanduser("~")
-        screenshotdir = os.path.join(home, 'Young Lab Dropbox',self.sessionFolderName,'Data','Software Screenshots')
+        screenshotdir = os.path.join(home, 'Young Lab Dropbox','Young Group', self.sessionFolderName,'Data','Software Screenshots')
         self.screenshots = os.path.join(screenshotdir, str(datetime.date.today()))
         self.lineEdit_Session_2.setText(self.screenshots)
         if not os.path.exists(self.screenshots):
