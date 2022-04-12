@@ -34,6 +34,7 @@ class MagnetControl(EquipmentController):
         self.output_voltage = 0.0 # the output voltage when charging
         self.ramprate = 0 # T/min
         self.sweeping = False
+        self.abort_wait = False
 
         self.status = ''
         self.persist = False # If the supply is in persistent field mode
@@ -367,6 +368,9 @@ class IPS120_MagnetController(MagnetControl):
                 yield self.poll()
                 if self.B <= 0.00001 and self.B >= -0.00001:
                     break
+                elif self.abort_wait:
+                    self.abort_wait = False
+                    break
                 yield self.sleep(0.25)
             yield self.sleep(0.25)
     #
@@ -391,6 +395,9 @@ class IPS120_MagnetController(MagnetControl):
             while True:
                 yield self.poll()
                 if self.B <= self.setpoint_B+0.00001 and self.B >= self.setpoint_B-0.00001:
+                    break
+                elif self.abort_wait:
+                    self.abort_wait = False
                     break
                 yield self.sleep(0.25)
             yield self.sleep(0.25)
@@ -602,6 +609,9 @@ class Cryomag4G_Power_Supply(MagnetControl):
                 yield self.poll()
                 if self.B <= self.setpoint_B+wait_tolerance and self.B >= self.setpoint_B-wait_tolerance:
                     break
+                elif self.abort_wait:
+                    self.abort_wait = False
+                    break
                 yield self.sleep(0.25)
             yield self.sleep(0.1)
     #
@@ -651,6 +661,9 @@ class Cryomag4G_Power_Supply(MagnetControl):
                 while True:
                     yield self.poll(outputonly=True)
                     if self.B <= self.setpoint_B+wait_tolerance and self.B >= self.setpoint_B-wait_tolerance:
+                        break
+                    elif self.abort_wait:
+                        self.abort_wait = False
                         break
                     yield self.sleep(0.25)
                 yield self.sleep(0.1)
@@ -707,6 +720,9 @@ class Cryomag4G_Power_Supply(MagnetControl):
             while True:
                 yield self.poll()
                 if self.B <= 0.00001 and self.B >= -0.00001:
+                    break
+                elif self.abort_wait:
+                    self.abort_wait = False
                     break
                 yield self.sleep(0.25)
             yield self.sleep(1)

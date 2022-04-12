@@ -85,6 +85,8 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
         self.persistField = 0
         self.persistCurrent = 0
         self.currVoltage = 0
+        self.setpoint = 0
+        self.ramprate = 0 
 
         self.setting_value = False
         #By default, the switch is off, which corresponds to being in persist mode
@@ -218,6 +220,8 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
                 self.label_switchStatus.setText('Error')
 
     def setSetpoint(self, val = None):
+        if str(self.lineEdit_setpoint.text()).lower() == 'abort':
+            return
         if val is None:
             val = readNum(str(self.lineEdit_setpoint.text()))
         if isinstance(val,float):
@@ -241,6 +245,12 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
         try:
             if self.controller.sweeping and self.controller.autopersist:
                 print("Error cannot goToSetpoint: Magnet is already sweeping")
+                return
+            if str(self.lineEdit_setpoint.text()).lower() == 'abort': # Hack to prevent softlocking
+                print("Breaking out of sweep loop and going into manual mode. Magnet may still keep sweeping but you can now enter commands.")
+                self.autopersist_checkBox.setCheckState(False)
+                self.controller.autopersist = False
+                self.controller.abort_wait = True
                 return
             self.setSetpoint()
             self.setRamprate()
