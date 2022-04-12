@@ -74,7 +74,7 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
 
         self.lineEdit_setpoint.editingFinished.connect(self.setSetpoint)
         self.lineEdit_ramprate.editingFinished.connect(self.setRamprate)
-        
+
         self.autopersist_checkBox.clicked.connect(self.toggleAutoPersist)
         self.push_magReset.clicked.connect(lambda: self.resetMagnet())
 
@@ -86,7 +86,7 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
         self.persistCurrent = 0
         self.currVoltage = 0
         self.setpoint = 0
-        self.ramprate = 0 
+        self.ramprate = 0
 
         self.setting_value = False
         #By default, the switch is off, which corresponds to being in persist mode
@@ -248,7 +248,7 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
                 return
             if str(self.lineEdit_setpoint.text()).lower() == 'abort': # Hack to prevent softlocking
                 print("Breaking out of sweep loop and going into manual mode. Magnet may still keep sweeping but you can now enter commands.")
-                self.autopersist_checkBox.setCheckState(False)
+                self.autopersist_checkBox.setChecked(False)
                 self.controller.autopersist = False
                 self.controller.abort_wait = True
                 return
@@ -278,7 +278,7 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
             if self.controller.sweeping:
                 print("Warning: Magnet is already sweeping. Zeroing may cause issues for other processes.")
             print("Zeroing the magnet supply.")
-            self.setting_value = True        
+            self.setting_value = True
             if self.controller.autopersist:
                 yield self.controller.startSweeping()
                 self.setRamprate()
@@ -295,32 +295,52 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
     #
 
     @inlineCallbacks
-    def togglePersist(self):
+    def togglePersist(self, state=None):
+        '''
+        If state is none, just toggle. If True or false will turn persistent mode on or off (On means heater is off).
+        '''
         try:
             if not self.setting_value:
                 self.setting_value = True
-                yield self.controller.togglePersist()
+                if isinstance(state, bool):
+                    if state and not self.controller.persist:
+                        yield self.controller.togglePersist()
+                    elif not state and self.controller.persist:
+                        yield self.controller.togglePersist()
+                else:
+                    yield self.controller.togglePersist()
                 self.setting_value = False
                 self.updateSwitchStatus()
         except:
             printErrorInfo()
 
-    def toggleAutoPersist(self):
+    def toggleAutoPersist(self, state=None):
+        '''
+        If state is none, just toggle. If True or false will turn autopersist on or off.
+        '''
         try:
             self.setting_value = True
-            autopersist = self.autopersist_checkBox.isChecked()
-            self.controller.autopersist = autopersist
-            self.setting_value = False            
+            if isinstance(state, bool):
+                if state and not self.controller.autopersist:
+                    self.autopersist_checkBox.setChecked(True)
+                    self.controller.autopersist = True
+                elif not state and self.controller.autopersist:
+                    self.autopersist_checkBox.setChecked(False)
+                    self.controller.autopersist = False
+            else:
+                autopersist = self.autopersist_checkBox.isChecked()
+                self.controller.autopersist = autopersist
+            self.setting_value = False
         except:
             printErrorInfo()
     #
-    
+
     @inlineCallbacks
     def resetMagnet(self):
         try:
             self.setting_value = True
             yield self.controller.resetPersistMagnet()
-            self.setting_value = False  
+            self.setting_value = False
         except:
             printErrorInfo()
     #

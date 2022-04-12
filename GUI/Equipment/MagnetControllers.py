@@ -108,7 +108,7 @@ class MagnetControl(EquipmentController):
         else:
             self.ramprate = ramprate
     #
-    
+
     @inlineCallbacks
     def autoPersistMagnet(self):
         '''
@@ -142,7 +142,7 @@ class MagnetControl(EquipmentController):
                 self.setRampRate(self.max_ramp)
                 yield self.goToZero()
     #
-    
+
     @inlineCallbacks
     def resetPersistMagnet(self):
         '''
@@ -176,7 +176,7 @@ class MagnetControl(EquipmentController):
     @inlineCallbacks
     def doneSweeping(self):
         '''
-        Tells the controller that whatever was sweeping is done. Will call autoPersistMagent if in 
+        Tells the controller that whatever was sweeping is done. Will call autoPersistMagent if in
         autopersist mode.
         '''
         if self.autopersist: # Does nothing if not in autopersist mode
@@ -187,7 +187,7 @@ class MagnetControl(EquipmentController):
             self.sweeping = False
             yield self.queryPersist()
     #
-    
+
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
         other operations to be done elsewhere while paused."""
@@ -195,7 +195,7 @@ class MagnetControl(EquipmentController):
         self.reactor.callLater(secs,d.callback,'Sleeping')
         return d
     #
-    
+
     @inlineCallbacks
     def sleep_still_poll(self, secs):
         '''
@@ -212,18 +212,18 @@ class MagnetControl(EquipmentController):
                 yield self.sleep(1)
                 yield self.poll()
     #
-    
+
     '''
     --------------------------------------
     BELOW FUNCTIONS SPECIFIC TO A GIVEN MAGNET POWER SUPPLY, OVERRIDE TO ADD FUNCTIONALITY
     --------------------------------------
     '''
-    
+
     @inlineCallbacks
     def readInitialValues(self):
         '''
-        Read the starting configuration of a magnet power supply. 
-        
+        Read the starting configuration of a magnet power supply.
+
         OVERRIDE for a specific magnet controller.
         '''
         pass
@@ -270,7 +270,7 @@ class MagnetControl(EquipmentController):
         '''
         pass
     #
-    
+
     @inlineCallbacks
     def togglePersist(self):
         '''
@@ -330,7 +330,7 @@ class IPS120_MagnetController(MagnetControl):
 
         yield self.queryPersist()
     #
-    
+
     @inlineCallbacks
     def queryPersist(self):
         '''
@@ -617,14 +617,14 @@ class Cryomag4G_Power_Supply(MagnetControl):
     #
 
     @inlineCallbacks
-    def fastToSetpoint(self, overshoot=0.015, ramprate=0.2, cutback=0.030, wait=False, wait_tolerance=0.0002):        
+    def fastToSetpoint(self, overshoot=0.015, ramprate=0.2, cutback=0.030, wait=False, wait_tolerance=0.0002):
         '''
         Ramps to the setpoint in a manner to make the ramping faster by avoiding the
-        PID stabalization. First it sets the server to sweep to a value that slightly overshoots the setpoint, 
+        PID stabalization. First it sets the server to sweep to a value that slightly overshoots the setpoint,
         then when approaching the setpoint switching to the original setpoint.
-        
+
         OVERRIDES the default ramprate, since the overshoot algorithm is very sensitive to ramprate.
-        
+
         setSetpoint and setRampRate should be called first to configure this ramp.
 
         Args:
@@ -638,7 +638,7 @@ class Cryomag4G_Power_Supply(MagnetControl):
             wait (bool) : Will wait for the controller to reach the setpoint.
             wait_tolerance (float) : If waiting, the tolerance of the field around the setpoint.
         '''
-        
+
         # to prevent potential overshooting don't use near the maximum field, just
         # do a normal goToSetpoint
         if np.abs(self.setpoint_B) + overshoot >= self.max_field:
@@ -648,14 +648,14 @@ class Cryomag4G_Power_Supply(MagnetControl):
             # The Cryomag 4G has weired unit issues for field, so we set the current
             # Convert the setpoint (in T) and ramp rate (in T/min) to A and A/s
             current = self.setpoint_B*1e4/self.gauss_to_amps
-            
+
             if self.setpoint_B > self.B:
                 Iover = (self.setpoint_B+overshoot)*1e4/self.gauss_to_amps
             else:
                 Iover = (self.setpoint_B-overshoot)*1e4/self.gauss_to_amps
-            
+
             ramprate = ramprate*166.666667/self.gauss_to_amps # Convert ramprate to correct units
-            
+
             if wait: # Only finish running the goToSetpoint function when the field is reached
                 yield self.server.fast_sweep_magnet(self.channel, current, ramprate, Iover, cutback)
                 while True:
@@ -677,7 +677,7 @@ class Cryomag4G_Power_Supply(MagnetControl):
 
     @inlineCallbacks
     def togglePersist(self):
-        try:            
+        try:
             self.persist = yield self.server.get_persist(self.channel)
             if self.persist:
                 yield self.server.set_persist(self.channel, False)
