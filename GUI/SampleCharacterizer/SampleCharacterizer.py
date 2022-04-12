@@ -949,6 +949,9 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.abortMagneticFieldSweep_Flag = False #By default, the sweep is not aborted
 
         try:
+            # Tell the controller that you are sweeping, for autopersist mode.
+            yield self.magnet.startSweeping()
+            
             self.clearFieldSweep1DPlots() #First remove previous data from 1D field sweep
             plot_data = yield self.fieldSweep1D('Up') #Do a field sweep from the minimum to maximum field. This saves the data to data vault
             self.plotFieldSweep1DData(plot_data, 'r') #Plot the hysteresis sweep results. Red line corresponds to sweeping "Up", from min to max
@@ -963,7 +966,9 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             if self.checkBox_FieldSweep1D_ZeroField.isChecked() and self.abortMagneticFieldSweep_Flag == False:
                 print('Set magnetic field  to: ' + str(0))
                 yield self.rampMagneticField(0, self.sweepParameters['FieldSweep1D_SweepSpeed'])
-
+            
+            # Tell the controller that you are sweeping, for autopersist mode.
+            yield self.magnet.doneSweeping()
         except:
             from traceback import format_exc
             print(format_exc())
@@ -1074,6 +1079,9 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
         self.lockInterface() #Lock the GUI while sweeping to prevent user from changing sweep parameters mid sweep
 
+        # Tell the controller that you are sweeping, for autopersist mode.
+        yield self.magnet.startSweeping()
+
         #Create shorter local variable names
         bmin = self.sweepParameters['landauFan_MinField']
         bmax = self.sweepParameters['landauFan_MaxField']
@@ -1165,7 +1173,9 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
             if self.checkBox_landauFan_ZeroField.isChecked():
                 print("Ramp Field Back to Zero")
                 yield self.rampMagneticField(0.0, self.sweepParameters['landauFan_SweepSeed'])
-
+            
+            # Tell the controller that you are sweeping, for autopersist mode.
+            yield self.magnet.doneSweeping()
         except:
             printErrorInfo()
 

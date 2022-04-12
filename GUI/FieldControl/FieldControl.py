@@ -4,9 +4,6 @@ from PyQt5.QtCore import QRect
 from twisted.internet.defer import inlineCallbacks, Deferred
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 
-# path = sys.path[0] + r"\FieldControl"
-# ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\FieldControl.ui")
-
 path = sys.path[0] + r"\FieldControl"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\FieldControl-multiple.ui")
 MagnetWidget, QtBaseClass = uic.loadUiType(path + r"\magnet-widget.ui")
@@ -77,6 +74,9 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
 
         self.lineEdit_setpoint.editingFinished.connect(self.setSetpoint)
         self.lineEdit_ramprate.editingFinished.connect(self.setRamprate)
+        
+        self.autopersist_checkBox.clicked.connect(self.toggleAutoPersist)
+        self.push_magReset.clicked.connect(lambda: self.resetMagnet())
 
         self.controller = False
 
@@ -149,14 +149,14 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
     def monitorField(self):
         try:
             while self.monitor:
-                if not self.setting_value:
+                if not self.setting_value and not self.controller.sweeping:
                     yield self.controller.poll()
-                    self.currField = self.controller.B
-                    self.currCurrent = self.controller.current
-                    self.persistField = self.controller.persist_B
-                    self.persistCurrent = self.controller.persist_current
-                    self.currVoltage = self.controller.output_voltage
-                    self.updateSwitchStatus()
+                self.currField = self.controller.B
+                self.currCurrent = self.controller.current
+                self.persistField = self.controller.persist_B
+                self.persistCurrent = self.controller.persist_current
+                self.currVoltage = self.controller.output_voltage
+                self.updateSwitchStatus()
                 try:
                     self.label_persist_fieldval.setText(formatNum(self.persistField,3))
                     self.label_persist_currentval.setText(formatNum(self.persistCurrent,3))
@@ -195,7 +195,14 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
             self.push_persistSwitch.setStyleSheet(style)
             self.label_switchStatus.setText('Persistent')
         else:
-            if self.controller.status == "Charging":
+            if self.controller.sweeping:
+                style = '''#push_persistSwitch{
+                            background: rgb(0, 0, 152);
+                            border-radius: 10px;
+                            }'''
+                self.push_persistSwitch.setStyleSheet(style)
+                self.label_switchStatus.setText('Sweeping')
+            elif self.controller.status == "Charging":
                 style = '''#push_persistSwitch{
                             background: rgb(0, 0, 152);
                             border-radius: 10px;
@@ -210,23 +217,21 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
                 self.push_persistSwitch.setStyleSheet(style)
                 self.label_switchStatus.setText('Error')
 
-    @inlineCallbacks
     def setSetpoint(self, val = None):
         if val is None:
             val = readNum(str(self.lineEdit_setpoint.text()))
         if isinstance(val,float):
-            yield self.controller.setSetpoint(val)
+            self.controller.setSetpoint(val)
             self.setpoint = self.controller.setpoint_B
         self.lineEdit_setpoint.setText(formatNum(self.setpoint, 4))
 
-    @inlineCallbacks
     def setRamprate(self, val=None):
         if val is None:
             val = readNum(str(self.lineEdit_ramprate.text()))
         if isinstance(val,float):
             self.ramprate = val
             self.setting_value = True
-            yield self.controller.setRampRate(self.ramprate)
+            self.controller.setRampRate(self.ramprate)
             self.setting_value = False
         self.lineEdit_ramprate.setText(formatNum(self.ramprate))
 
@@ -234,10 +239,23 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
     @inlineCallbacks
     def goToSetpoint(self):
         try:
-            self.setting_value = True
+            if self.controller.sweeping and self.controller.autopersist:
+                print("Error cannot goToSetpoint: Magnet is already sweeping")
+                return
             self.setSetpoint()
-            yield self.controller.goToSetpoint(wait=False)
-
+            self.setRamprate()
+            print("")
+            print("Setting magnet to", self.setpoint, "T at", self.ramprate, "T/min")
+            self.setting_value = True
+            if self.controller.autopersist:
+                yield self.controller.startSweeping()
+                self.setSetpoint()
+                self.setRamprate()
+                yield self.controller.goToSetpoint(wait=True)
+                yield self.controller.doneSweeping()
+                print("Done Sweeping to Setpoint")
+            else:
+                yield self.controller.goToSetpoint(wait=False)
             self.setting_value = False
             self.updateSwitchStatus()
         except:
@@ -247,14 +265,21 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
     @inlineCallbacks
     def gotoZero(self):
         try:
-            self.setting_value = True
-            yield self.controller.goToZero(wait=False)
+            if self.controller.sweeping:
+                print("Warning: Magnet is already sweeping. Zeroing may cause issues for other processes.")
+            print("Zeroing the magnet supply.")
+            self.setting_value = True        
+            if self.controller.autopersist:
+                yield self.controller.startSweeping()
+                self.setRamprate()
+                yield self.controller.goToZero(wait=True)
+                yield self.controller.doneSweeping()
+                print("Done Zeroing the magnet.")
+            else:
+                self.setRamprate()
+                yield self.controller.goToZero(wait=False)
             self.setting_value = False
             self.updateSwitchStatus()
-            # if self.magDevice == 'IPS 120-10':
-            #     yield self.gotoZeroIPS()
-            # else:
-            #     yield self.toeSweepField(self.currField, 0, self.ramprate)
         except:
             printErrorInfo()
     #
@@ -262,12 +287,33 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
     @inlineCallbacks
     def togglePersist(self):
         try:
-            self.setting_value = True
-            yield self.controller.togglePersist()
-            self.setting_value = False
-            self.updateSwitchStatus()
+            if not self.setting_value:
+                self.setting_value = True
+                yield self.controller.togglePersist()
+                self.setting_value = False
+                self.updateSwitchStatus()
         except:
             printErrorInfo()
+
+    def toggleAutoPersist(self):
+        try:
+            self.setting_value = True
+            autopersist = self.autopersist_checkBox.isChecked()
+            self.controller.autopersist = autopersist
+            self.setting_value = False            
+        except:
+            printErrorInfo()
+    #
+    
+    @inlineCallbacks
+    def resetMagnet(self):
+        try:
+            self.setting_value = True
+            yield self.controller.resetPersistMagnet()
+            self.setting_value = False  
+        except:
+            printErrorInfo()
+    #
 
     @inlineCallbacks
     def hold(self):

@@ -6,9 +6,6 @@ from Equipment.Equipment import EquipmentController
 from nSOTScannerFormat import printErrorInfo
 import numpy as np
 
-# FOR DEBUGGING
-# import time
-
 class MagnetControl(EquipmentController):
     def __init__(self, widget, device_info, config, reactor):
         '''
@@ -36,9 +33,11 @@ class MagnetControl(EquipmentController):
         self.persist_current = 0.0 # The persistent current of the magnet
         self.output_voltage = 0.0 # the output voltage when charging
         self.ramprate = 0 # T/min
+        self.sweeping = False
 
         self.status = ''
         self.persist = False # If the supply is in persistent field mode
+        self.autopersist = True # Automatically go into persistent mode when done ramping/scanning.
     #
 
     def connect(self, server):
@@ -70,25 +69,6 @@ class MagnetControl(EquipmentController):
             self.widget.error()
     #
 
-    @inlineCallbacks
-    def readInitialValues(self):
-        '''
-        Read the starting configuration of a magnet power supply. Override for a specific supply.
-        '''
-        pass
-    #
-
-    @inlineCallbacks
-    def poll(self):
-        '''
-        Read out the current values from the equipment: field, current and voltage. Will update the output
-        values if self.persist is False and the magnet values if self.persist is True.
-
-        OVERRIDE for a specific magnet controller.
-        '''
-        pass
-    #
-
     def setSetpoint(self, setpoint):
         '''
         Change the setpoint of the controller. Does not update to the actual power supply
@@ -105,7 +85,7 @@ class MagnetControl(EquipmentController):
     def checkFieldRange(self, field):
         '''
         Checks that the given field is withinin the max/min field for the magnet.
-        IF the field is outside the range will return the maximum or minimum, if
+        If the field is outside the range will return the maximum or minimum, if
         the field is within the range will resturn the field.
 
         For compatability with older parts of software
@@ -127,9 +107,140 @@ class MagnetControl(EquipmentController):
         else:
             self.ramprate = ramprate
     #
+    
+    @inlineCallbacks
+    def autoPersistMagnet(self):
+        '''
+        Called at the end of ramping the magnet, if self.autopersist is true will persist the field then ramp
+        down the supply.
+
+        Made to work the same for any magnet supply.
+        '''
+        if not self.autopersist:
+            print("Warning. Autopersist not enabled.")
+            return
+        yield self.poll()
+        if self.persist:
+            if self.B != self.persist_B:
+                print("Autopersist: ramping supply to last setpoint")
+                self.setSetpoint(self.persist_B)
+                self.setRampRate(self.max_ramp)
+                yield self.goToSetpoint()
+                yield self.sleep_still_poll(10)
+            print("Autopersist:, toggling persistent switch")
+            yield self.togglePersist() # Turn switch on, enter charging mode
+            print("Autopersist: Done, ready to sweep magnet")
+        else:
+            if self.sweeping: # Were sweeping, don't do anything
+                print("Warning, system is sweeping, autopersist failed.")
+                return
+            print("Autopersist: persisting magnet")
+            yield self.togglePersist() # Turn switch off, enter persistent mode
+            if self.B != 0:
+                print("Autopersist: ramping down magnet supply")
+                self.setRampRate(self.max_ramp)
+                yield self.goToZero()
+    #
+    
+    @inlineCallbacks
+    def resetPersistMagnet(self):
+        '''
+        If the magnet is persistent, reset it's field by ramping to the setpoint, toggling the field,
+        then ramping down.
+
+        Made to work the same for any magnet supply.
+        '''
+        yield self.poll()
+        yield self.sleep(2)
+        if self.persist and self.autopersist:
+            print("Resetting persistent magnet.")
+            yield self.startSweeping() # Will ramp up the supply then un-persist the magnet
+            yield self.sleep_still_poll(30)
+            yield self.doneSweeping() # Will autopersist the magnet
+        else:
+            print("Cannot reset field unless it is persistent and autopersist is on.")
+    #
+    @inlineCallbacks
+    def startSweeping(self):
+        '''
+        Prepares the controller for something to perform a sweep for any reason.
+        This only affects behavior if in autopersist mode. Otherwise you need to
+        take care of it manually.
+        '''
+        if self.autopersist: # Does nothing if not in autopersist mode
+            self.sweeping = True
+            print("Preparing for a magnetic field sweep.")
+            yield self.autoPersistMagnet()
+    #
+    @inlineCallbacks
+    def doneSweeping(self):
+        '''
+        Tells the controller that whatever was sweeping is done. Will call autoPersistMagent if in 
+        autopersist mode.
+        '''
+        if self.autopersist: # Does nothing if not in autopersist mode
+            self.sweeping = False
+            print("Done sweeping the magnetic field.")
+            yield self.autoPersistMagnet()
+        else: # In case autopersist is turned off during a sweep
+            self.sweeping = False
+            yield self.queryPersist()
+    #
+    
+    def sleep(self,secs):
+        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
+        other operations to be done elsewhere while paused."""
+        d = Deferred()
+        self.reactor.callLater(secs,d.callback,'Sleeping')
+        return d
+    #
+    
+    @inlineCallbacks
+    def sleep_still_poll(self, secs):
+        '''
+        Sleep the magnet but still poll so that the interface updates.
+        LESS PRECISE because polling takes a little time and will round to an
+        integer number of seconds if secs>1
+        '''
+        s = int(secs)
+        if s == 0:
+            yield self.sleep(secs)
+            yield self.poll()
+        else:
+            for i in range(s):
+                yield self.sleep(1)
+                yield self.poll()
+    #
+    
+    '''
+    --------------------------------------
+    BELOW FUNCTIONS SPECIFIC TO A GIVEN MAGNET POWER SUPPLY, OVERRIDE TO ADD FUNCTIONALITY
+    --------------------------------------
+    '''
+    
+    @inlineCallbacks
+    def readInitialValues(self):
+        '''
+        Read the starting configuration of a magnet power supply. 
+        
+        OVERRIDE for a specific magnet controller.
+        '''
+        pass
+    #
 
     @inlineCallbacks
-    def goToSetpoint(self):
+    def poll(self):
+        '''
+        Read out the current values from the equipment: field, current and voltage. Will update the output
+        values if self.persist is False and the magnet values if self.persist is True.
+
+        OVERRIDE for a specific magnet controller.
+        '''
+        pass
+    #
+
+    @inlineCallbacks
+    def goToSetpoint(self, wait=True):
         '''
         Ramps to the setpoint. setSetpoint and setRampRate should be called first
         to configure this ramp.
@@ -140,7 +251,7 @@ class MagnetControl(EquipmentController):
     #
 
     @inlineCallbacks
-    def goToZero(self):
+    def goToZero(self, wait=True):
         '''
         Zero the current through the magnet.
 
@@ -149,13 +260,25 @@ class MagnetControl(EquipmentController):
         pass
     #
 
-    def sleep(self,secs):
-        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
-        other operations to be done elsewhere while paused."""
-        d = Deferred()
-        self.reactor.callLater(secs,d.callback,'Sleeping')
-        return d
-#
+    @inlineCallbacks
+    def queryPersist(self):
+        '''
+        Read from the supply is the persistent switch heater is on.
+
+        OVERRIDE for a specific magnet controller.
+        '''
+        pass
+    #
+    
+    @inlineCallbacks
+    def togglePersist(self):
+        '''
+        Switches into or out of persistent mode.
+
+        OVERRIDE for a specific magnet controller.
+        '''
+        pass
+    #
 
 class IPS120_MagnetController(MagnetControl):
     @inlineCallbacks
@@ -165,17 +288,7 @@ class IPS120_MagnetController(MagnetControl):
         field, current and voltage if not the output voltage
         '''
 
-        status = yield self.server.examine()
-        #The 9th (index 8) character of the status string encodes whether or not
-        #the persistent switch is currently on
-        if int(status[8]) == 0 or int(status[8]) == 2:
-            self.status = "Persist"
-            self.persist = True
-        elif int(status[8]) == 1:
-            self.status = "Charging"
-            self.persist = False
-        else:
-            self.status = "Error"
+        yield self.queryPersist()
 
         try:
             if self.persist: # Persistent field and current
@@ -214,6 +327,14 @@ class IPS120_MagnetController(MagnetControl):
         self.setpoint_B = float(setpoint[1:])
         self.ramprate = float(ramprate[1:])
 
+        yield self.queryPersist()
+    #
+    
+    @inlineCallbacks
+    def queryPersist(self):
+        '''
+        Read from the supply is the persistent switch heater is on.
+        '''
         status = yield self.server.examine()
         #The 9th (index 8) character of the status string encodes whether or not
         #the persistent switch is currently on
@@ -222,14 +343,16 @@ class IPS120_MagnetController(MagnetControl):
             self.persist = True
         elif int(status[8]) == 1:
             self.status = "Charging"
+            self.persist = False
         else:
             self.status = "Error"
+            self.persist = False
     #
 
     @inlineCallbacks
     def goToZero(self, wait=True):
         '''
-        Zero the current through the magnet.
+        Zero the output of the magnet supply.
 
         Args:
             wait (bool) : Will wait for the controller to reach the setpoint.
@@ -251,7 +374,7 @@ class IPS120_MagnetController(MagnetControl):
     @inlineCallbacks
     def goToSetpoint(self, wait=True):
         '''
-        Ramps to the setpoint. setSetpoint and setRampRate should be called first
+        Ramps the supply to the setpoint. setSetpoint and setRampRate should be called first
         to configure this ramp.
 
         Args:
@@ -276,16 +399,19 @@ class IPS120_MagnetController(MagnetControl):
     @inlineCallbacks
     def togglePersist(self):
         try:
+            yield self.queryPersist()
             if self.persist:
                 yield self.server.set_control(3)
                 yield self.server.set_switchheater(1)
                 yield self.server.set_control(2)
                 self.persist = False
+                yield self.sleep_still_poll(15)
             else:
                 yield self.server.set_control(3)
                 yield self.server.set_switchheater(0)
                 yield self.server.set_control(2)
                 self.persist = True
+                yield self.sleep_still_poll(15)
         except:
             printErrorInfo()
 
@@ -429,11 +555,7 @@ class Cryomag4G_Power_Supply(MagnetControl):
                 self.B = self.current*self.gauss_to_amps*1e-4
                 return
 
-            self.persist = yield self.server.get_persist(self.channel)
-            if self.persist:
-                self.status = "Persist"
-            else:
-                self.status = "Charging"
+            yield self.queryPersist()
 
             if self.persist:
                 if self.server is not None: # Sometimes these functions are slow to update and close out on disconnect
@@ -459,7 +581,7 @@ class Cryomag4G_Power_Supply(MagnetControl):
     #
 
     @inlineCallbacks
-    def goToSetpoint(self, wait=False, wait_tolerance=0.0005):
+    def goToSetpoint(self, wait=True, wait_tolerance=0.00002):
         '''
         Ramps to the setpoint. setSetpoint and setRampRate should be called first
         to configure this ramp.
@@ -477,7 +599,7 @@ class Cryomag4G_Power_Supply(MagnetControl):
         if wait:
             #Only finish running the goToSetpoint function when the field is reached
             while True:
-                yield self.poll(outputonly=True)
+                yield self.poll()
                 if self.B <= self.setpoint_B+wait_tolerance and self.B >= self.setpoint_B-wait_tolerance:
                     break
                 yield self.sleep(0.25)
@@ -542,16 +664,34 @@ class Cryomag4G_Power_Supply(MagnetControl):
 
     @inlineCallbacks
     def togglePersist(self):
-        try:
+        try:            
             self.persist = yield self.server.get_persist(self.channel)
             if self.persist:
                 yield self.server.set_persist(self.channel, False)
-                self.persist = False
+                yield self.sleep_still_poll(15)
+                self.persist = yield self.server.get_persist(self.channel)
+                if self.persist:
+                    print("Warning: persistent switch didn't toggle. Probably output doesn't match persistent field.")
             else:
                 yield self.server.set_persist(self.channel, True)
-                self.persist = True
+                yield self.sleep_still_poll(15)
+                self.persist =  yield self.server.get_persist(self.channel)
+                if not self.persist:
+                    print("Warning: persistent switch didn't toggle. Probably output doesn't match persistent field.")
         except:
             printErrorInfo()
+
+    @inlineCallbacks
+    def queryPersist(self):
+        '''
+        Read from the supply is the persistent switch heater is on.
+        '''
+        self.persist = yield self.server.get_persist(self.channel)
+        if self.persist:
+            self.status = "Persist"
+        else:
+            self.status = "Charging"
+    #
 
     @inlineCallbacks
     def goToZero(self, wait=True):
@@ -566,9 +706,9 @@ class Cryomag4G_Power_Supply(MagnetControl):
             #Only finish running the gotoZero function once the field is zero
             while True:
                 yield self.poll()
-                if self.B <= 0.0001 and self.B >= -0.0001:
+                if self.B <= 0.00001 and self.B >= -0.00001:
                     break
                 yield self.sleep(0.25)
-            yield self.sleep(0.25)
+            yield self.sleep(1)
     #
 #

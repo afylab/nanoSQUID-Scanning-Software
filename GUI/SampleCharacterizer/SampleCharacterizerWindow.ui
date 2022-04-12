@@ -678,7 +678,7 @@ color: rgb(168,168,168);
 QTabBar::tab:selected {background: rgb(50,50,50);}</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="usesScrollButtons">
        <bool>false</bool>
@@ -2855,7 +2855,7 @@ border:1px solid rgb(168,168,168)
                 <string/>
                </property>
                <property name="checked">
-                <bool>true</bool>
+                <bool>false</bool>
                </property>
               </widget>
              </item>
