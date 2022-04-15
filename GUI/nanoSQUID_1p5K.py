@@ -23,7 +23,17 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
 
         self.equip.add_server("ANC350", "anc350_server", controller=CoreEquipment.ANC350_Controller)
 
-        conf = {'DC Readout':3, 'nSOT Bias':4, 'Noise Readout':2, 'nSOT Gate':1, 'Gate Reference':1, 'Bias Reference':4}
+        conf = {'DC Readout':3,
+            'nSOT Bias':4,
+            'Noise Readout':2,
+            'nSOT Gate':1,
+            'Gate Reference':1,
+            'Bias Reference':4,
+            'Bias Res':10.13, # Bias resistance, in units of kOhms
+            'Feedback Res':1.018, # Feedback resistance, in units of kOhms
+            'Shunt Res':2.9, # Shunt resistance, in units of Ohms
+            'Winding Ratio':13.78 # Turns ratio fo the array, for amplification.
+            }
         self.equip.add_server("nSOT DAC", "dac_adc", "DA16_16_03 (COM6)", config=conf)
 
         conf = {'x out':2, 'y out':3, 'z out':1}
@@ -36,11 +46,15 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         conf = {'blink channel':3} #Output of DC box that corresponds on the frontpanel to Blink
         self.equip.add_server("Blink Device", "ad5764_dcbox", "ad5764_dcbox (COM5)", config=conf)
 
+        # conf = {'max_field':5, "max_ramp":1}
+        # self.equip.add_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=conf)
         conf = {'max_field':5, "max_ramp":1}
-        self.equip.add_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=conf)
+        self.equip.add_server("Magnet Z", "ips120_power_supply", 'cthulu GPIB Bus - GPIB0::23::INSTR', controller=MagnetControllers.IPS120_MagnetController, config=conf)
+        # conf = {'max_field':6, 'gauss_to_amps':870.827, "max_ramp":0.5, "channel":1}
+        # self.equip.add_server("Magnet Z", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::21::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
 
-        conf = {'Input 1':'D5', 'Input 1 Label':'Sample'}
-        self.equip.add_server("LS 350", "lakeshore_350")
+        conf = {'Input 2':'D4', 'Input 2 Label':'Sample'}
+        self.equip.add_server("LS 350", "lakeshore_350", config=conf)
 
         # # Remote Servers
         # self.equip.configure_remote_host('4KMonitor', 'minint_o9n40pb')
