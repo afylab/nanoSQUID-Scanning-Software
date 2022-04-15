@@ -55,6 +55,9 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
 
         # Make sure the right number of magnets are displayed
         self.FieldControl.configureMagnetUi(self.equip)
+        
+        # Make sure the right number of thermometers are displayed
+        self.TempControl.setupTemperatureUi(self.equip)
 
         self.moveDefault() #Move to default position
 

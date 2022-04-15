@@ -19,10 +19,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     def configureMagnetUi(self, equip):
         n = 1
         if 'Magnet Z' in equip.servers:
-
             self.Z = MagnetUI(self.reactor, 'Magnet Z', self.magnet_frame)
             self.Z.move(0, (n-1)*200)
-
 
         if 'Magnet X' in equip.servers:
             self.X = MagnetUI(self.reactor, 'Magnet X', self.magnet_frame)

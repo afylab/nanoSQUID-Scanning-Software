@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>central_widget</class>
+ <widget class="QWidget" name="central_widget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>350</width>
+    <height>500</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget{
+background-color: rgb(0, 0, 0);
+}
+
+QCheckBox{
+color:rgb(168,168,168);
+font-size:12pt;
+}
+
+QLabel{
+color:rgb(168,168,168)
+}
+
+QLineEdit{
+border: 1px solid rgb(100,100,100);
+background-color:rgb(230,230,230);
+}
+
+QTextEdit{
+border: 1px solid black;
+background-color: black;
+color:rgb(168,168,168);
+}
+
+QRadioButton{
+color:rgb(168,168,168)
+}
+
+QLCDNumber{
+border: 2px solid rgb(230,230,230);
+}</string>
+  </property>
+  <widget class="QLCDNumber" name="lcdNumber_Temp">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>35</y>
+     <width>250</width>
+     <height>100</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>14</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
+   </property>
+  </widget>
+  <widget class="QFrame" name="display_frame">
+   <property name="geometry">
+    <rect>
+     <x>5</x>
+     <y>150</y>
+     <width>340</width>
+     <height>340</height>
+    </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>340</width>
+     <height>340</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>340</width>
+     <height>340</height>
+    </size>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::StyledPanel</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="title_label">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>10</y>
+     <width>251</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>14</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Themometer</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
