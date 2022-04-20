@@ -10,6 +10,7 @@ from Equipment import MagnetControllers
 
 class nanoSQUID_1p5K(nanoSQUIDSystem):
     system_name = '1p5K'
+    default_script_dir = "C:\\Users\\Cthulhu\\Software\\Scanning Scripts"
     def configureEquipment(self):
         # super().configureEquipment() # Not using superclass configuration because 1.5K
         # system has GPIB equipment on remote server

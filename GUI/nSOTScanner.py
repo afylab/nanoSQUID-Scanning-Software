@@ -33,6 +33,7 @@ from Equipment.Equipment import EquipmentHandler
 
 class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
     system_name = 'generic'
+    default_script_dir = "C:\\Users"
     """ The following section initializes, or defines the initialization of the GUI and
     connecting to servers."""
     def __init__(self, reactor, parent = None, computer='', folderName=''):
@@ -146,7 +147,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         #That are desired to be scriptable be input
         self.Simulate = Simulation.ScriptSimulator(self.reactor, self, None)
         self.Scripting = Scripting.Window(self.reactor, None, self.ScanControl, self.Approach, self.nSOTChar, self.FieldControl, self.TempControl,
-            self.SampleCharacterizer, self.GoToSetpoint, self.Simulate)
+            self.SampleCharacterizer, self.GoToSetpoint, self.Simulate, default_script_dir=self.default_script_dir)
 
         self.windows.append(self.Scripting)
         self.windows.append(self.Simulate)

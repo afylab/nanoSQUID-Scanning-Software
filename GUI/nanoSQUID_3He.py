@@ -9,6 +9,7 @@ from Equipment import MagnetControllers
 
 class nanoSQUID_3He(nanoSQUIDSystem):
     system_name = '3He'
+    default_script_dir = "C:\\Users\\Leviathan\\Software\\Scanning Scripts"
 
     def configureEquipment(self):
         super().configureEquipment()
