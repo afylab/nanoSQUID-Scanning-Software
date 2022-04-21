@@ -140,6 +140,7 @@ class PythonHighlighter (QtGui.QSyntaxHighlighter):
             
             # Change the format of the space character
             (r"( )\1*",0 , STYLES['space']),
+            (r"(\t)\1*",0 , STYLES['space']),
         ]
 
         # Build a QRegExp for each pattern
