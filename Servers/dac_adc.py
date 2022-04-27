@@ -635,6 +635,8 @@ class DAC_ADCServer(DeviceServer):
         dev = self.selectedDevice(c)
         yield dev.write("GET_DAC,%i\r"%(channel))
         ans = yield dev.read()
+        if " V" in ans: # Older versions of firmwear return a unit
+            ans = ans.replace(" V","")
         try:
             ans = float(ans)
             return ans

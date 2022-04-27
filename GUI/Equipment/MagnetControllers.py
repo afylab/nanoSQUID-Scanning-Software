@@ -444,12 +444,13 @@ class IPS120_MagnetController(MagnetControl):
 #
 
 class Toeller_Power_Supply(MagnetControl):
-    def __init__(self, widget, device_info, config):
-        super().__init__(widget, device_info, config)
+    def __init__(self, widget, device_info, config, reactor):
+        super().__init__(widget, device_info, config, reactor)
         self.toeCurChan = config['toeCurChan']
         self.toeVoltsChan = config['toeVoltsChan']
         self.status = "Charging"
         self.persist = False
+        self.autopersist = False
 
         #Toellner voltage set point / DAC voltage out conversion [V_Toellner / V_DAC]
         self.VV_conv = 3.20
@@ -486,6 +487,35 @@ class Toeller_Power_Supply(MagnetControl):
     @inlineCallbacks
     def goToZero(self):
         yield self.toeSweepField(self.B, 0.0, self.ramprate)
+    #
+    
+    @inlineCallbacks
+    def readInitialValues(self):
+        '''
+        Just a DAC-ADC
+        '''
+        yield self.poll()
+    #
+    
+    @inlineCallbacks
+    def queryPersist(self):
+        '''
+        Read from the supply is the persistent switch heater is on.
+
+        OVERRIDE for a specific magnet controller.
+        '''
+        yield self.sleep(0)
+        return False
+    #
+
+    @inlineCallbacks
+    def togglePersist(self):
+        '''
+        Switches into or out of persistent mode.
+
+        OVERRIDE for a specific magnet controller.
+        '''
+        yield self.sleep(0)
     #
 
 
