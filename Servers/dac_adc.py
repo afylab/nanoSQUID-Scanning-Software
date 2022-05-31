@@ -85,13 +85,17 @@ class DAC_ADCWrapper(DeviceWrapper):
     @inlineCallbacks
     def write(self, code):
         """Write a data value to the heat switch."""
+        print("Writing:", code) # DEBUG
         yield self.packet().write(code).send()
+        print("Write Complete") # DEBUG
 
     @inlineCallbacks
     def read(self):
+        print("Reading") # DEBUG
         p=self.packet()
         p.read_line()
         ans=yield p.send()
+        print("Read Complete") # DEBUG
         returnValue(ans.read_line)
 
     @inlineCallbacks
@@ -189,7 +193,6 @@ class DAC_ADCServer(DeviceServer):
 
        # devs += [(0,(3,4))]
         returnValue(devs)
-
 
     @setting(100)
     def connect(self,c,server,port):
@@ -289,6 +292,7 @@ class DAC_ADCServer(DeviceServer):
         try:
             nbytes = 0
             totalbytes = steps * adcN * 2
+            print("Buffer Ramp Total Bytes:", totalbytes) # DEBUG
             while dev.isramping() and (nbytes < totalbytes):
                 bytestoread = yield dev.in_waiting()
                 if bytestoread > 0:
@@ -300,9 +304,12 @@ class DAC_ADCServer(DeviceServer):
                         tmp = yield dev.readByte(bytestoread)
                         data = data + tmp
                         nbytes = nbytes + bytestoread
+            print("Bytes Received", nbytes)
+            print("Last Readout Number Bytes", bytestoread) # DEBUG
+            print("Last Readout Bytes", tmp) # DEBUG
 
             dev.setramping(False)
-
+            print("Done Ramping") # DEBUG
             data = list(data)
 
             for x in range(adcN):
@@ -373,6 +380,7 @@ class DAC_ADCServer(DeviceServer):
         try:
             nbytes = 0
             totalbytes = adcSteps * adcN * 2
+            print("Buffer Ramp Dis Total Bytes:", totalbytes) # DEBUG
             while dev.isramping() and (nbytes < totalbytes):
                 bytestoread = yield dev.in_waiting()
                 if bytestoread > 0:
@@ -384,8 +392,11 @@ class DAC_ADCServer(DeviceServer):
                         tmp = yield dev.readByte(bytestoread)
                         data = data + tmp
                         nbytes = nbytes + bytestoread
-
+            print("Bytes Received", nbytes)
+            print("Last Readout Bytes", bytestoread) # DEBUG
+            
             dev.setramping(False)
+            print("Done Ramping") # DEBUG
 
             data = list(data)
 
@@ -624,6 +635,8 @@ class DAC_ADCServer(DeviceServer):
         dev = self.selectedDevice(c)
         yield dev.write("GET_DAC,%i\r"%(channel))
         ans = yield dev.read()
+        if " V" in ans: # Older versions of firmwear return a unit
+            ans = ans.replace(" V","")
         try:
             ans = float(ans)
             return ans

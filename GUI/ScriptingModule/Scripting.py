@@ -2,6 +2,7 @@ import sys
 from PyQt5 import QtGui, QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
+from ScriptingModule import syntax
 from Resources.customwidgets import LoopTimer
 from traceback import format_exc
 
@@ -10,7 +11,7 @@ ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\Scripting.ui")
 
 class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
-    def __init__(self, reactor, parent=None, *args):
+    def __init__(self, reactor, parent=None, *args, **kwargs):
         super(Window, self).__init__(parent)
 
         self.reactor = reactor
@@ -23,6 +24,11 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.SampleChar = args[5]
         self.nSOTBias = args[6]
         self.simulate = args[7]
+
+        if "default_script_dir" in kwargs:
+            self.default_script_dir = kwargs["default_script_dir"]
+        else:
+            self.default_script_dir = "C:\\Users"
 
         self.setupUi(self)
         self.setupAdditionalUi()
@@ -180,7 +186,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         return line[0:num]
 
     def loadFile(self):
-        file, file1 = QtWidgets.QFileDialog.getOpenFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts')
+        file, file1 = QtWidgets.QFileDialog.getOpenFileName(self, directory=self.default_script_dir)
         if file:
             f = open(file,'r')
             message = f.read()
@@ -188,7 +194,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             f.close()
 
     def saveFile(self):
-        file, file1 = QtWidgets.QFileDialog.getSaveFileName(self, directory = 'C:\\Users\\cltschirhart\\Software\\Scanning Scripts')
+        file, file1 = QtWidgets.QFileDialog.getSaveFileName(self, directory=self.default_script_dir)
         if file:
             f = open(file,'w')
             message = self.codeEditor.toPlainText()
@@ -247,6 +253,15 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
         self.updateLineNumberAreaWidth(0)
 
         self.setTabStopWidth(20)
+        
+        # For syntax highlighting
+        self.highlight = syntax.PythonHighlighter(self.document())
+        
+        opts = self.document().defaultTextOption()
+        opts.setFlags(opts.flags() | QtGui.QTextOption.ShowTabsAndSpaces)
+        self.document().setDefaultTextOption(opts)
+        tab_format = QtGui.QTextCharFormat()
+        tab_format.setBackground(QtGui.QColor("lightgray"))
 
     def lineNumberAreaWidth(self):
         digits = 1

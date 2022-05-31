@@ -55,6 +55,11 @@ QLabel{
 color:rgb(168,168,168)
 }
 
+QCheckBox{
+color:rgb(168,168,168);
+font-size:12pt;
+}
+
 QLineEdit{
 border: 1px solid rgb(100,100,100);
 background-color:rgb(230,230,230);
@@ -502,7 +507,7 @@ border-radius: 5px
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="text">
-     <string>Persistant</string>
+     <string>Persistent</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

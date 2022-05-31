@@ -9,6 +9,7 @@ from Equipment import MagnetControllers
 
 class nanoSQUID_3He(nanoSQUIDSystem):
     system_name = '3He'
+    default_script_dir = "C:\\Users\\Leviathan\\Software\\Scanning Scripts"
 
     def configureEquipment(self):
         super().configureEquipment()
@@ -39,9 +40,11 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         conf = {'blink channel':4}
         self.equip.add_server("Blink Device", "dac_adc", "DA20_16_05 (COM3)", config=conf)
 
-        conf = {'Input 1':'B', 'Input 1 Label':'1K POT',
-            'Input 2':'D', 'Input 2 Label':'Sample',
-            'Input 3':'C', 'Input 3 Label':'He3 POT'
+        conf = {
+            'Input 1':'A', 'Input 1 Label':'Charcoal',
+            'Input 2':'B', 'Input 2 Label':'1K POT',
+            'Input 3':'C', 'Input 3 Label':'He3 POT',
+            'Input 4':'D', 'Input 4 Label':'Sample',
             }
         self.equip.add_server("LS 336", "lakeshore_336", config=conf)
 

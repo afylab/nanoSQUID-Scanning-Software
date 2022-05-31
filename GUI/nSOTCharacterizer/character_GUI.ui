@@ -1995,7 +1995,7 @@ border-radius: 5px
      <string/>
     </property>
     <property name="checked">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QLabel" name="label_39">

@@ -28,6 +28,10 @@ background-color: rgb(0, 0, 0);
 border: 2px solid white;
 }
 
+QCheckBox{
+color:rgb(168,168,168);
+font-size:12pt;
+}
 
 QLabel{
 color:rgb(168,168,168)
@@ -614,6 +618,50 @@ background: rgb(144, 140, 9);
     </property>
     <property name="text">
      <string/>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="autopersist_checkBox">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>116</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Autopersist</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="push_magReset">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>116</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton#push_magReset{
+color: rgb(168,168,168);
+background-color:rgb(0,0,0);
+border: 1px solid rgb(168,168,168);
+border-radius: 5px
+}
+
+QPushButton:pressed#push_magReset{
+color: rgb(168,168,168);
+background-color:rgb(95,107,166);
+border: 1px solid rgb(168,168,168);
+border-radius: 5px
+}</string>
+    </property>
+    <property name="text">
+     <string>Reset Magnet</string>
     </property>
    </widget>
   </widget>

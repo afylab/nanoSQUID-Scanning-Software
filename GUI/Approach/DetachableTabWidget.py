@@ -150,16 +150,16 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
 
     ##
     #  The TabBar class re-implements some of the functionality of the QTabBar widget
-    class TabBar(QtGui.QTabBar):
+    class TabBar(QtWidgets.QTabBar):
         onDetachTabSignal = pyqtSignal(int, QtCore.QPoint)
         onMoveTabSignal = pyqtSignal(int, int)
 
         def __init__(self, parent=None):
-            QtGui.QTabBar.__init__(self, parent)
+            QtWidgets.QTabBar.__init__(self, parent)
 
             self.setAcceptDrops(True)
             self.setElideMode(QtCore.Qt.ElideRight)
-            self.setSelectionBehaviorOnRemove(QtGui.QTabBar.SelectLeftTab)
+            self.setSelectionBehaviorOnRemove(QtWidgets.QTabBar.SelectLeftTab)
 
             self.dragStartPos = QtCore.QPoint()
             self.dragDropedPos = QtCore.QPoint()

@@ -743,6 +743,9 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
     @inlineCallbacks
     def initSweep(self):
         try:
+            # Tell the controller that you are sweeping, for autopersist mode.
+            yield self.magnet.startSweeping()
+            
             #Lock GUI elements that should not be changed mid scan
             self.lockSweepParameters()
 
@@ -763,7 +766,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             print('DataVault setup complete')
 
             print(self.sweepParamDict)
-
+            
             #For the data of the speed, determine the position of the plot and the scale factors
             self.plt_pos = [b_min, v_min] #Position of the bottom left corner of the plot
             self.plt_scale = [(b_max-b_min) / b_pnts, (v_max-v_min) / v_pnts] #Scale factor for the size of each pixel
@@ -801,6 +804,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 print('Ramping field to ' + str(b_vals[i])+'.')
                 if i == 0:
                     #For the first field point, assume we were at zero field to begin with
+                    # It doesn't actually matter - Trevor 2022
                     yield self.setMagneticField(0, b_vals[0], b_rate)
                 else:
                     yield self.setMagneticField(b_vals[i-1], b_vals[i], b_rate)
@@ -860,6 +864,9 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             #Wait until all plots are appropriately updated before saving screenshot
             yield self.sleep(0.25)
             saveDataToSessionFolder(self, self.sessionFolder, self.dvFileName)
+            
+            # Tell the controller that you are sweeping, for autopersist mode.
+            yield self.magnet.doneSweeping()
         except:
             printErrorInfo()
 

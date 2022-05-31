@@ -148,12 +148,6 @@ class LakeShore350Server(DeviceServer):
     @inlineCallbacks
     def loadConfigInfo(self):
         """Load configuration information from the registry."""
-        # reg = self.client.registry
-        # p = reg.packet()
-        # p.cd(['', 'Servers', 'Heat Switch'], True)
-        # p.get('Serial Links', '*(ss)', key='links')
-        # ans = yield p.send()
-        # self.serialLinks = ans['links']
         reg = self.reg
         yield reg.cd(['', 'Servers', 'LakeShore350', 'Links'], True)
         dirs, keys = yield reg.dir()
@@ -173,16 +167,6 @@ class LakeShore350Server(DeviceServer):
     def findDevices(self):
         """Find available devices from list stored in the registry."""
         devs = []
-        # for name, port in self.serialLinks:
-        # if name not in self.client.servers:
-        # continue
-        # server = self.client[name]
-        # ports = yield server.list_serial_ports()
-        # if port not in ports:
-        # continue
-        # devName = '%s - %s' % (name, port)
-        # devs += [(devName, (server, port))]
-        # returnValue(devs)
         for name, (serServer, port) in list(self.serialLinks.items()):
             if serServer not in self.client.servers:
                 continue
@@ -285,6 +269,8 @@ class LakeShore350Server(DeviceServer):
         """
         dev=self.selectedDevice(c)
         ans = yield dev.range_read(output)
+        if ans == '': # Sometimes it returns an empty string after being set
+            ans = yield dev.range_read(output)
         returnValue(int(ans))
 
     @setting(118, output = 'i', setp = 'v[]')
