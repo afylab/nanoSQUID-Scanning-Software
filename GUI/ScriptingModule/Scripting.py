@@ -43,7 +43,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.cxnr = None
 
         self.runningScript = False
-        
+
         self.looptimer = LoopTimer(self.label_timing)
 
         self.push_abort.setEnabled(False)
@@ -91,7 +91,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             code_to_run = self.formatCode()
         except:
             printErrorInfo()
-
         try:
             self.current_line = 0
             exec(code_to_run, globals()) # Generates function f
@@ -156,7 +155,12 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             if len(line) == 0 and prev_spaces != '': # Handels blank lines in a loop, otherwise inserted linear would throw indentation errors.
                 spaces = prev_spaces
             #inlineCallbacks header is special and needs to be right before the next line in the code,
-            if '@inlineCallbacks' not in prev_line:
+            #next_line_safe prevents the if aborted statement from tiggering a random else statements
+            if not ("else" in line or "elif" in line or line.isspace() or line == ""):
+                next_line_safe = True
+            else:
+                next_line_safe = False
+            if ('@inlineCallbacks' not in prev_line) and next_line_safe:
                 #Add code that updates which line of code is being run
                 code_to_run = code_to_run + spaces + "self.current_line = " + str(i) + "\n "
                 #Eventually add line of code that throws signal to update status
