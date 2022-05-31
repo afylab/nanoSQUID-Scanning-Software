@@ -90,14 +90,17 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
                 svr, labrad_name, device_info, cnt, config = equip.servers["Blink Device"]
 
                 #Create a connection to the proper device for blinking
-                if labrad_name.startswith('ad5764_dcbox'):
+                if device_info.startswith('ad5764_dcbox'):
                     self.blink_server = yield self.cxn_nsot.ad5764_dcbox
                     yield self.blink_server.select_device(device_info)
                     # print('DC BOX Blink Device')
-                elif labrad_name.startswith('DA'):
-                    self.blink_server = yield self.cxn_nsot.dac_adc
+                elif device_info.startswith('DA'):
+                    self.cxn_blink = yield connectAsync(host = '127.0.0.1', password = 'pass')
+                    self.blink_server = yield self.cxn_blink.dac_adc
                     yield self.blink_server.select_device(device_info)
                     # print('DAC ADC Blink Device')
+                else:
+                    print("WARNING goToSetpoint: Could not connect to blink device.")
 
                 self.blinkChan = config['blink channel']
             else:

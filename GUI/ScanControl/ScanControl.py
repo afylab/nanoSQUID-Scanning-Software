@@ -265,6 +265,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             #time
             from labrad.wrappers import connectAsync
             self.cxn_scan = yield connectAsync(host = '127.0.0.1', password = 'pass')
+            self.cxn_blink = yield connectAsync(host = '127.0.0.1', password = 'pass')
             self.dv = self.cxn_scan.data_vault
             curr_folder = yield self.gen_dv.cd()
             yield self.dv.cd(curr_folder)
@@ -287,11 +288,11 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 svr, labrad_name, device_info, cnt, config = equip.servers["Blink Device"]
 
                 #Create a connection to the proper device for blinking
-                if labrad_name.startswith('ad5764_dcbox'):
-                    self.blink_server = yield self.cxn_scan.ad5764_dcbox
+                if device_info.startswith('ad5764_dcbox'):
+                    self.blink_server = yield self.cxn_blink.ad5764_dcbox
                     yield self.blink_server.select_device(device_info)
-                elif labrad_name.startswith('DA'):
-                    self.blink_server = yield self.cxn_scan.dac_adc
+                elif device_info.startswith('DA'):
+                    self.blink_server = yield self.cxn_blink.dac_adc
                     yield self.blink_server.select_device(device_info)
 
                 self.outputs['blink out'] = config['blink channel']
