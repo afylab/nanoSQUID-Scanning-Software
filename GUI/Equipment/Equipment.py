@@ -8,6 +8,8 @@ from twisted.internet.defer import inlineCallbacks
 #from traceback import format_exc
 from nSOTScannerFormat import printErrorInfo
 
+import time
+
 class EquipmentController():
     '''
     Generic base class for Controllers for equipment through labrad servers.
@@ -105,6 +107,11 @@ class EquipmentHandler():
         self.remote_frame = remote_frame
         self.widget_frames_ix = dict() # Allows you to keep track of widgets in multiple frames
         self.widget_frames_ix[self.default_frame] = 0
+        
+        # For the purposes of synchronizing timing between modules running different monitoring loops
+        # A call to time.time() that instantiates the timer and acts as a "Zero" for time that can be
+        # accessed by all modules.
+        self.sync_time = time.time()
     #
 
     def add_server(self, name, labrad_name, device_info=None, controller=None, config=None, display_frame=None):

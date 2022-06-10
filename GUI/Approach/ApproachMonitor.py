@@ -37,7 +37,9 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
         self.aux2Data = np.array([])
 
         self.zTimeData = np.array([])
+        self.zCoarseTimeData = np.array([])
         self.zData = np.array([])
+        self.zCoarseData = np.array([])
 
         #Time range to plot
         self.plotTimeRange = 30
@@ -77,20 +79,16 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
         self.deltaFPlot.showAxis('right', show = True)
         self.deltaFPlot.showAxis('top', show = True)
         self.deltaFPlot.setTitle('PLL Delta F vs. Time (s)')
-
         self.phaseErrorPlot = pg.PlotWidget(parent = self)
         self.phaseErrorPlot.setLabel('left', 'Phase Error', units = '\N{DEGREE SIGN}')
         self.phaseErrorPlot.setLabel('bottom', 'Time', units = 's')
         self.phaseErrorPlot.showAxis('right', show = True)
         self.phaseErrorPlot.showAxis('top', show = True)
         self.phaseErrorPlot.setTitle('PLL Error vs. Time (s)')
-
         tab1 = QtWidgets.QWidget()
-
         tab1_layout = QtWidgets.QVBoxLayout()
         tab1_layout.addWidget(self.deltaFPlot)
         tab1_layout.addWidget(self.phaseErrorPlot)
-
         tab1.setLayout(tab1_layout)
         self.dTabWidget.addTab(tab1, 'PLL Monitor')
 
@@ -100,12 +98,9 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
         self.zPlot.showAxis('right', show = True)
         self.zPlot.showAxis('top', show = True)
         self.zPlot.setTitle('Atto. Z Extension (m) vs. Time (s)')
-
         tab2 = QtWidgets.QWidget()
-
         tab2_layout = QtWidgets.QVBoxLayout()
         tab2_layout.addWidget(self.zPlot)
-
         tab2.setLayout(tab2_layout)
         self.dTabWidget.addTab(tab2, 'Z Monitor')
 
@@ -115,19 +110,29 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
         self.aux2Plot.showAxis('right', show = True)
         self.aux2Plot.showAxis('top', show = True)
         self.aux2Plot.setTitle('Aux 2 Input vs. Time (s)')
-
         tab3 = QtWidgets.QWidget()
-
         tab3_layout = QtWidgets.QVBoxLayout()
         tab3_layout.addWidget(self.aux2Plot)
-
         tab3.setLayout(tab3_layout)
         self.dTabWidget.addTab(tab3, 'Aux Input Monitor')
+        
+        self.ZCoarsePlot = pg.PlotWidget(parent = self)
+        self.ZCoarsePlot.setLabel('left', 'Z Coarse Positioner', units = 'm')
+        self.ZCoarsePlot.setLabel('bottom', 'Time', units = 's')
+        self.ZCoarsePlot.showAxis('right', show = True)
+        self.ZCoarsePlot.showAxis('top', show = True)
+        self.ZCoarsePlot.setTitle('Z Coarse Positioner (m) vs. Time (s)')
+        tab4 = QtWidgets.QWidget()
+        tab4_layout = QtWidgets.QVBoxLayout()
+        tab4_layout.addWidget(self.ZCoarsePlot)
+        tab4.setLayout(tab4_layout)
+        self.dTabWidget.addTab(tab4, 'Z Coarse Positioner Monitor')
 
         self.zPlaceholder.close()
         self.aux2Placeholder.close()
         self.deltaFPlaceholder.close()
         self.phasePlaceholder.close()
+        self.ZcoarsePlaceholder.close()
         self.tabWidget.close()
 
     def updatePLLPlots(self, deltaF, phaseError):
@@ -188,12 +193,32 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
             self.zData = self.zData[a:]
 
         self.plotZ()
+    
+    def updateZCoarsePlot(self,z_meters):
+        # Updates the z extension plots with datapoints received from the approach module
+        if self.first_data_point:
+            self.time_offset = time.time()
+            self.first_data_point = False
+
+        timepoint = time.time() - self.time_offset
+
+        self.zCoarseTimeData = np.append(self.zCoarseTimeData, timepoint)
+        self.zCoarseData = np.append(self.zCoarseData, z_meters)
+
+        #The module plots at most 3 hours worth of data. If more than that is stored, shorten the data list
+        if self.zCoarseTimeData[-1] - self.zCoarseTimeData[0] > 10800:
+            a = np.argmin(np.abs(self.zCoarseTimeData - (self.zCoarseTimeData[-1] - 10800)))
+            self.zCoarseTimeData = self.zCoarseTimeData[a:]
+            self.zCoarseData = self.zCoarseData[a:]
+
+        self.plotZCoarse()
 
     def plotPlots(self):
         #Refresh all the plots
         self.plotPLL()
         self.plotAux2()
         self.plotZ()
+        self.plotZCoarse()
 
     def plotPLL(self):
         #Refresh the PLL plots
@@ -240,6 +265,18 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
                 a = np.argmin(np.abs(self.zTimeData - (self.zTimeData[-1] - self.plotTimeRange)))
                 self.zPlot.clear()
                 self.zPlot.plot(self.zTimeData[a:], self.zData[a:])
+    
+    def plotZCoarse(self):
+        #Refresh the z extension plot
+        length = len(self.zCoarseTimeData)
+        if length > 1: #Plot all datapoints if they occured in less time than the specified plotTimeRange
+            if (self.zCoarseTimeData[-1] - self.zCoarseTimeData[0]) <= self.plotTimeRange:
+                self.ZCoarsePlot.clear()
+                self.ZCoarsePlot.plot(self.zCoarseTimeData, self.zCoarseData)
+            else: #Otherwise only plot those that occurred in the specified plotTimeRange
+                a = np.argmin(np.abs(self.zCoarseTimeData - (self.zCoarseTimeData[-1] - self.plotTimeRange)))
+                self.ZCoarsePlot.clear()
+                self.ZCoarsePlot.plot(self.zCoarseTimeData[a:], self.zCoarseData[a:])
 
     def zeroTime(self):
         #Get the time relative to the offset when the function is run
@@ -260,6 +297,8 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
             self.aux2TimeData = self.aux2TimeData - timepoint
         if len(self.zTimeData) > 0:
             self.zTimeData = self.zTimeData - timepoint
+        if len(self.zCoarseTimeData) > 0:
+            self.zCoarseTimeData = self.zCoarseTimeData - timepoint
 
         #Set the current time to be the new offset
         self.time_offset = time.time()

@@ -1,8 +1,9 @@
 import sys
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, QtCore, uic
 from twisted.internet.defer import inlineCallbacks, Deferred
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 from PyQt5.QtCore import QTimer
+import time
 path = sys.path[0] + r"\CoarseAttocubeControl"
 sys.path.append(path + r'\Status')
 sys.path.append(path + r'\Debug Panel')
@@ -14,6 +15,7 @@ import Status
 import DebugPy
 
 class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
+    newZCoarseData = QtCore.pyqtSignal(float)
     def __init__(self, reactor, parent=None):
         super(Window, self).__init__(parent)
 
@@ -172,6 +174,13 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             self.serversConnected = True
+            
+            # Save coarse positioner data for approach debugging
+            self.t0 = equip.sync_time
+            self.dv_coarse = yield equip.get_datavault()
+            yield self.dv_coarse.new("Coarse Positioner data versus time", ["Time (s)"], ["X Coarse", "Y Coarse", "Z Coarse"])
+            dset = yield self.dv_coarse.current_identifier()
+            print("Coarse Positioner Data Saving To:", dset)
 
             if self.anc350 != None:
                 yield self.loadParameters()
@@ -278,6 +287,9 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 #Change the Pushbutton
                 stylesheet = '#pushButton_Status_Axis' + str(i+1) + '{\nimage:url(' + self.IconPath[self.Status[i]] + ');\nbackground: black;\nborder: 0px solid rgb(95,107,166);\n}\n'
                 self.pushButton_Status[i].setStyleSheet(stylesheet)
+            if self.CurrentPosition[2] >= 0: # They read negative values when grounded
+                self.newZCoarseData.emit(self.CurrentPosition[2])
+                self.dv_coarse.add(time.time()-self.t0, self.CurrentPosition[0], self.CurrentPosition[1], self.CurrentPosition[2])
         except Exception as inst:
             self.anc_err_count += 1
             #printErrorInfo()
@@ -362,9 +374,12 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         self.lineEdit_Absolute[AxisNo].setText(formatNum(self.AbsolutePosition[AxisNo],6))
 
     @inlineCallbacks
-    def UpdateAmplitude(self, AxisNo):
+    def UpdateAmplitude(self, AxisNo, val=None):
         try:
-            val = readNum(str(self.lineEdit_Amplitude[AxisNo].text()))
+            if val is None:
+                val = readNum(str(self.lineEdit_Amplitude[AxisNo].text()))
+            else:
+                val = float(val) # handel integers
             if isinstance(val, float):
                 if val >= 0 and val <= 60:
                     self.manual_Amplitude[AxisNo] = val
@@ -380,9 +395,12 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             #printErrorInfo()
 
     @inlineCallbacks
-    def UpdateFrequency(self, AxisNo):
+    def UpdateFrequency(self, AxisNo, val=None):
         try:
-            val = readNum(str(self.lineEdit_Frequency[AxisNo].text()))
+            if val is None:
+                val = readNum(str(self.lineEdit_Frequency[AxisNo].text()))
+            else:
+                val = float(val) # handel integers
             if isinstance(val, float):
                 if val >= 1 and val <= 2000:
                     self.manual_Frequency[AxisNo]= int(val)

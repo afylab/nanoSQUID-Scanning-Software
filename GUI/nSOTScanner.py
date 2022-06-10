@@ -147,7 +147,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         #That are desired to be scriptable be input
         self.Simulate = Simulation.ScriptSimulator(self.reactor, self, None)
         self.Scripting = Scripting.Window(self.reactor, None, self.ScanControl, self.Approach, self.nSOTChar, self.FieldControl, self.TempControl,
-            self.SampleCharacterizer, self.GoToSetpoint, self.Simulate, default_script_dir=self.default_script_dir)
+            self.SampleCharacterizer, self.GoToSetpoint, self.Simulate, self.AttocubeCoarseControl, default_script_dir=self.default_script_dir)
 
         self.windows.append(self.Scripting)
         self.windows.append(self.Simulate)
@@ -167,6 +167,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.Approach.newPLLData.connect(self.ApproachMonitor.updatePLLPlots)
         self.Approach.newAux2Data.connect(self.ApproachMonitor.updateAux2Plot)
         self.Approach.newZData.connect(self.ApproachMonitor.updateZPlot)
+        self.AttocubeCoarseControl.newZCoarseData.connect(self.ApproachMonitor.updateZCoarsePlot)
         self.Approach.updateFeedbackStatus.connect(self.ScanControl.updateFeedbackStatus)
         self.Approach.updateConstantHeightStatus.connect(self.ScanControl.updateConstantHeightStatus)
         self.PosCalibration.newTemperatureCalibration.connect(self.setVoltageCalibration)

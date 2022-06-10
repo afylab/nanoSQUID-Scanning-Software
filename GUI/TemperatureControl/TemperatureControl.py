@@ -334,6 +334,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             
             self.ls = svr
             self.dv = yield equip.get_datavault()
+            self.time_offset = equip.sync_time # Sync the temperature time to other loops
 
             for widget in self.loopWidgets:
                 widget.connectLabRAD(svr)
@@ -434,7 +435,6 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             errcount = 0
             self.monitoring = True
             if self.first_data_point:
-                self.time_offset = time.time()
                 self.first_data_point = False
                 date = datetime.now()
                 self.datestamp = date.strftime("%Y-%m-%d %H:%M:%S")

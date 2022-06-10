@@ -153,7 +153,7 @@ QTabBar::tab:selected {background: rgb(50,50,50);}</string>
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -271,6 +271,32 @@ background: grey
          </widget>
         </item>
        </layout>
+      </widget>
+      <widget class="QWidget" name="tab_4">
+       <attribute name="title">
+        <string>Z Coarse Positioner Monitor</string>
+       </attribute>
+       <widget class="QFrame" name="ZcoarsePlaceholder">
+        <property name="geometry">
+         <rect>
+          <x>2</x>
+          <y>2</y>
+          <width>578</width>
+          <height>426</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">#zPlaceholder{
+background: grey
+}</string>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+       </widget>
       </widget>
      </widget>
     </item>

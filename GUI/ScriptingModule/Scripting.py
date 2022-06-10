@@ -24,6 +24,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.SampleChar = args[5]
         self.nSOTBias = args[6]
         self.simulate = args[7]
+        self.CoarseControl = args[8]
 
         if "default_script_dir" in kwargs:
             self.default_script_dir = kwargs["default_script_dir"]

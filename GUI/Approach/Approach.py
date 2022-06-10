@@ -14,6 +14,7 @@ from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 from collections import deque
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
+import time
 
 path = sys.path[0] + r"\Approach"
 ApproachUI, QtBaseClass = uic.loadUiType(path + r"\Approach.ui")
@@ -261,6 +262,17 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             else:
                 print("'Scan DAC' not found, LabRAD connection to Approach Module Failed.")
                 return
+            
+            # Setup to save the data for approach debugging.
+            self.t0 = equip.sync_time
+            self.dv_PLL = yield equip.get_datavault()
+            yield self.dv_PLL.new("PLL data versus time", ["Time (s)"], ["delta f", "Phase Error"])
+            dset = yield self.dv_PLL.current_identifier()
+            print("PLL Data Saving To:", dset)
+            self.dv_Zext = yield equip.get_datavault()
+            yield self.dv_Zext.new("Z extension data versus time", ["Time (s)"], ["Z Extension"])
+            dset = yield self.dv_Zext.current_identifier()
+            print("Z Extension Data Saving To:", dset)
 
             '''
             DC Box used to be used in some cases in conjunction with a summing amplifier.
@@ -810,6 +822,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                 #Emit PLL data point (to the Approach Monitor module)
                 self.newPLLData.emit(deltaf, phaseError)
+                self.dv_PLL.add(time.time()-self.t0, deltaf, phaseError)
 
                 #Add frequency data to deltaf list only if not stepping with the coarse positioners\
                 #The steps are rough enough that they cause spikes in the PLL that should not be used
@@ -863,6 +876,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 self.lineEdit_FineZ.setText(formatNum(z_meters, 3))
                 #Emit a new Z datapoint for the approach monitoring module
                 self.newZData.emit(z_meters)
+                self.dv_Zext.add(time.time()-self.t0, z_meters)
 
                 #Keep track of the zData for surface contact determination
                 self.zData.appendleft(z_meters)
@@ -1207,6 +1221,36 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             if pos_curr < 50e-6:
                 yield self.abortApproachSequence()
                 break
+            delta = pos_curr - pos_start
+            num_steps += 1
+        print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
+
+        #Once done, set coarse positioners stepping to be false
+        self.CPStepping = False
+    
+    @inlineCallbacks
+    def stepANC350_by_steps(self, nsteps, retract):
+        '''
+        nsteps is the number of steps to advance
+        retract is a boolean, if true retracts the Z positioner, if false advances it. 
+        '''
+        #Set module to coarse positioners are stepping
+        self.CPStepping = True
+        self.label_pidApproachStatus.setText('Stepping with ANC350')
+
+        #Assume axis 3 is the z axis. Set the output to be on, and to turn off automatically when end of travel is reached
+        yield self.anc.set_axis_output(2, True, True)
+
+        #Get the starting position in z before stepping
+        pos_start = yield self.anc.get_position(2)
+        num_steps = 0
+        delta = 0
+        while num_steps < nsteps and self.approaching:
+            #Give axis number and direction (False forward, True is backwards)
+            yield self.anc.start_single_step(2, retract)
+            #Wait for the positioners to settle before reading their position
+            yield self.sleep(self.generalSettings['atto_delay'])
+            pos_curr = yield self.anc.get_position(2)
             delta = pos_curr - pos_start
             num_steps += 1
         print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
