@@ -262,7 +262,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             else:
                 print("'Scan DAC' not found, LabRAD connection to Approach Module Failed.")
                 return
-            
+
             # Setup to save the data for approach debugging.
             self.t0 = equip.sync_time
             self.dv_PLL = yield equip.get_datavault()
@@ -273,6 +273,11 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             yield self.dv_Zext.new("Z extension data versus time", ["Time (s)"], ["Z Extension"])
             dset = yield self.dv_Zext.current_identifier()
             print("Z Extension Data Saving To:", dset)
+
+            self.dv_Steps = yield equip.get_datavault()
+            yield self.dv_Steps.new("Z extension data versus time", ["Time (s)"], ["Num Steps", "Nominal Displacement"])
+            dset = yield self.dv_Steps.current_identifier()
+            print("Approach Step Data Saving To:", dset)
 
             '''
             DC Box used to be used in some cases in conjunction with a summing amplifier.
@@ -1224,15 +1229,16 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             delta = pos_curr - pos_start
             num_steps += 1
         print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
+        self.dv_Steps.add(time.time()-self.t0, num_steps, delta)
 
         #Once done, set coarse positioners stepping to be false
         self.CPStepping = False
-    
+
     @inlineCallbacks
     def stepANC350_by_steps(self, nsteps, retract):
         '''
         nsteps is the number of steps to advance
-        retract is a boolean, if true retracts the Z positioner, if false advances it. 
+        retract is a boolean, if true retracts the Z positioner, if false advances it.
         '''
         #Set module to coarse positioners are stepping
         self.CPStepping = True
@@ -1254,6 +1260,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             delta = pos_curr - pos_start
             num_steps += 1
         print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
+        self.dv_Steps.add(time.time()-self.t0, num_steps, delta)
 
         #Once done, set coarse positioners stepping to be false
         self.CPStepping = False
@@ -1389,7 +1396,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
     @inlineCallbacks
     def LimitedApproachSequence(self, max_extension_volts):
         '''
-        Starts a PID approach sequence to advance a limited distance given by max_extension_volts. 
+        Starts a PID approach sequence to advance a limited distance given by max_extension_volts.
         If surface contact has been made function returns 0.
         If the function reaches max_extension it returns 1.
         If the function reaches the maximum possible extension and does not find the surface, it retracts
@@ -1409,7 +1416,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                 #Set the output range to be 0 to the max z voltage, which is specified by the temperature of operation from the PositionCalibration module
                 yield self.setPIDOutputRange(self.z_volts_max)
-                
+
                 z_volts_max_extend = min([max_extension_volts, self.z_volts_max]) # Don't extend past the maximum.
 
                 #Reset the zData and deltaFdata arrays. This prevents the software from thinking it hit the surface because of
@@ -1422,7 +1429,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 self.disableSetThreshold(30)
 
                 if not self.approaching: # For safety
-                    return -1 
+                    return -1
 
                 #Turn on PID to start the approach
                 yield self.hf.set_pid_on(self.PID_Index, True)
@@ -1451,7 +1458,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                         retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
                         yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
 
-                        
+
                         #Reset the zData and deltaFdata arrays. This prevents the software from thinking it hit the surface because of
                         #the approach prior to retraction
                         self.zData = deque([-50e-9]*self.z_track_length)
@@ -1462,7 +1469,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                         #the approach prior to retraction
                         self.zData = deque([-50e-9]*self.z_track_length)
                         self.deltafData = deque([-200]*self.deltaf_track_length)
-                        
+
                         return 1
             else: #If not measuring the PLL, throw a warning
                 msgBox = QtWidgets.QMessageBox(self)
@@ -1482,12 +1489,12 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
     def startZigZagApproach(self, advance_dist, pullback_dist):
         '''
         Move towards the surface using a "zig-zag" pattern where you advance a short amount, then retract
-        in series with a positive trend, until you hit the surface. 
-        
+        in series with a positive trend, until you hit the surface.
+
         Once surface contact is made the tip will pull back 100nm quickly as a safety measure. It will
         then reverse the Zig Zag pattern, pulling back by advance_dist then approaching by pullback_dist
         until the desired height is reached.
-        
+
         pullback_dist should be less than advance_dist, won't exxecute otherwise.
         '''
         try:
@@ -1502,7 +1509,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
             #Makes sure we're not in a divded voltage mode
             yield self.resetVoltageMultiplier()
-            
+
             #Bring us to the surface
             self.approaching = True
             while self.approaching:
@@ -1523,7 +1530,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                         zzretract_done = True
                     else:
                         end_voltage = z_voltage - self.PIDApproachSettings['zigzag safety'] * self.z_volts_to_meters
-                    
+
                     #Find desired retract speed in volts per second
                     retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
                     #Go to the position. The PID will be turned off by calling the set integrator command
@@ -1538,10 +1545,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                             end_voltage = final_voltage
                             zzretract_done = True
                             print("Zig Zag Finished, retracting to desired height")
-                        
+
                         #Go to the position. The PID will be turned off by calling the set integrator command
                         yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
-                        
+
                         # Move foreward by pullback_dist
                         if not zzretract_done:
                             z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])

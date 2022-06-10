@@ -54,7 +54,11 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         # conf = {'max_field':6, 'gauss_to_amps':870.827, "max_ramp":0.5, "channel":1}
         # self.equip.add_server("Magnet Z", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::21::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
 
-        conf = {'Input 2':'D4', 'Input 2 Label':'Sample'}
+        conf = {
+        'Input 1':'D5', 'Input 1 Label':'Sample',
+        'Input 2':'D4', 'Input 2 Label':'1.5K Pot',
+        'Input 3':'B', 'Input 3 Label':'Magnet'
+        }
         self.equip.add_server("LS 350", "lakeshore_350", config=conf)
 
         # # Remote Servers
