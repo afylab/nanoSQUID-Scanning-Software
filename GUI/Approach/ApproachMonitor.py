@@ -5,6 +5,7 @@ import time
 import pyqtgraph as pg
 import numpy as np
 from .DetachableTabWidget import DetachableTabWidget
+from queue import Queue
 
 path = sys.path[0] + r"\Approach"
 ApproachMonitorUI, QtBaseClass = uic.loadUiType(path + r"\ApproachMonitor.ui")
@@ -40,6 +41,10 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
         self.zCoarseTimeData = np.array([])
         self.zData = np.array([])
         self.zCoarseData = np.array([])
+        
+        self.PLL_Queue = Queue(10000)
+        self.Zext_Queue = Queue(10000)
+        self.Coarse_Queue = Queue(10000)
 
         #Time range to plot
         self.plotTimeRange = 30
@@ -135,8 +140,82 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
         self.ZcoarsePlaceholder.close()
         self.tabWidget.close()
 
+    @inlineCallbacks
+    def connectLabRAD(self, equip):
+        '''
+        Receives a dictionary from the DeviceSelect module instructing which hardware to use for what and which outputs to use on
+        the specified hardware.
+        '''
+        try:
+            self.t0 = equip.sync_time
+            
+            # Setup a data vasult to save incoming data
+            self.dv_PLL = yield equip.get_datavault()
+            yield self.dv_PLL.new("Approach Monitor - PLL", ["Time (s)"], ["delta f", "Phase Error"])
+            dset = yield self.dv_PLL.current_identifier()
+            print("PLL Data Saving To:", dset)
+            with self.PLL_Queue.mutex: # Clear out any old data
+                self.PLL_Queue.queue.clear()
+            
+            self.dv_Zext = yield equip.get_datavault()
+            yield self.dv_Zext.new("Approach Monitor - Z Extension", ["Time (s)"], ["Z Extension"])
+            dset = yield self.dv_Zext.current_identifier()
+            print("Z Extension Data Saving To:", dset)
+            with self.Zext_Queue.mutex: # Clear out any old data
+                self.Zext_Queue.queue.clear()
+            
+            self.dv_coarse = yield equip.get_datavault()
+            yield self.dv_coarse.new("Approach Monitor - Z Coarse", ["Time (s)"], ["Z Coarse"])
+            dset = yield self.dv_coarse.current_identifier()
+            print("Coarse Positioner Data Saving To:", dset)
+            with self.Coarse_Queue.mutex: # Clear out any old data
+                self.Coarse_Queue.queue.clear()
+            
+            self.push_Servers.setStyleSheet("#push_Servers{" +
+            "background: rgb(0, 170, 0);border-radius: 4px;}")
+
+            #Start monitoring the Z voltage
+            self.monitoring = True
+            self.recordValues()
+        except:
+            #Set the connected square to be red indicating that we failed to connect to LabRAD
+            self.push_Servers.setStyleSheet("#push_Servers{" +
+            "background: rgb(161, 0, 0);border-radius: 4px;}")
+            printErrorInfo()
+
+    def disconnectLabRAD(self):
+        self.monitoring = False
+        self.dv_PLL = False
+        self.dv_Zext = False
+        self.dv_coarse = False
+        self.push_Servers.setStyleSheet("#push_Servers{" +
+            "background: rgb(144, 140, 9);border-radius: 4px;}")
+    #
+
+
+    @inlineCallbacks
+    def recordValues(self):
+        #Sleep 2 seconds before starting monitoring to allow everything else to start up properly
+        yield self.sleep(2)
+        while self.monitoring:
+            if self.dv_PLL and not self.PLL_Queue.empty():
+                while not self.PLL_Queue.empty():
+                    t, deltaf, phErr = self.PLL_Queue.get()
+                    self.dv_PLL.add(t, deltaf, phErr)
+            if self.dv_Zext and not self.Zext_Queue.empty():
+                while not self.Zext_Queue.empty():
+                    t, z = self.Zext_Queue.get()
+                    self.dv_Zext.add(t, z)
+            if self.dv_coarse and not self.Coarse_Queue.empty():
+                while not self.Coarse_Queue.empty():
+                    t, z = self.Coarse_Queue.get()
+                    self.dv_coarse.add(t, z)
+            yield self.sleep(5)
+    #
+
     def updatePLLPlots(self, deltaF, phaseError):
         # Updates the PLL plots with new deltaF and phaseError datapoints received from the approach module
+        self.PLL_Queue.put([time.time()-self.t0, deltaF, phaseError])
         if self.first_data_point:
             self.time_offset = time.time()
             self.first_data_point = False
@@ -177,6 +256,7 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
 
     def updateZPlot(self,z_meters):
         # Updates the z extension plots with datapoints received from the approach module
+        self.Zext_Queue.put([time.time()-self.t0, z_meters])
         if self.first_data_point:
             self.time_offset = time.time()
             self.first_data_point = False
@@ -196,6 +276,7 @@ class Window(QtWidgets.QMainWindow, ApproachMonitorUI):
     
     def updateZCoarsePlot(self,z_meters):
         # Updates the z extension plots with datapoints received from the approach module
+        self.Coarse_Queue.put([time.time()-self.t0, z_meters])
         if self.first_data_point:
             self.time_offset = time.time()
             self.first_data_point = False

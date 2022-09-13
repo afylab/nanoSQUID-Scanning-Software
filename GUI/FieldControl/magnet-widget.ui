@@ -194,6 +194,9 @@ color:rgb(168,168,168)
       <height>20</height>
      </rect>
     </property>
+    <property name="text">
+     <string>0.1</string>
+    </property>
    </widget>
    <widget class="QLabel" name="label_persist_fieldval">
     <property name="geometry">
@@ -371,6 +374,9 @@ background: rgb(0, 170, 0);
       <width>90</width>
       <height>20</height>
      </rect>
+    </property>
+    <property name="text">
+     <string>0</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_setpoint_static">

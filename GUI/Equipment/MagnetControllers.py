@@ -127,7 +127,7 @@ class MagnetControl(EquipmentController):
                 self.setSetpoint(self.persist_B)
                 self.setRampRate(self.max_ramp)
                 yield self.goToSetpoint()
-                yield self.sleep_still_poll(10)
+                yield self.sleep_still_poll(15)
             print("Autopersist:, toggling persistent switch")
             yield self.togglePersist() # Turn switch on, enter charging mode
             print("Autopersist: Done, ready to sweep magnet")
@@ -136,7 +136,9 @@ class MagnetControl(EquipmentController):
                 print("Warning, system is sweeping, autopersist failed.")
                 return
             print("Autopersist: persisting magnet")
+            yield self.sleep_still_poll(5)
             yield self.togglePersist() # Turn switch off, enter persistent mode
+            yield self.sleep_still_poll(5)
             if self.B != 0:
                 print("Autopersist: ramping down magnet supply")
                 self.setRampRate(self.max_ramp)
@@ -443,6 +445,103 @@ class IPS120_MagnetController(MagnetControl):
     #
 #
 
+'''
+An alternate version of the IPS controller that works on setting the current setpoint.
+'''
+class IPS120_MagnetController_ALT(IPS120_MagnetController):
+    def __init__(self, widget, device_info, config, reactor):
+        self.gauss_to_amps = config['gauss_to_amps']
+        super().__init__(widget, device_info, config, reactor)
+    #
+    
+    @inlineCallbacks
+    def poll(self):
+        '''
+        Read out the current status. If it is persistent will read out the magnet
+        field, current and voltage if not the output voltage
+        '''
+
+        yield self.queryPersist()
+
+        try:
+            if self.persist: # Persistent field and current
+                # val = yield self.server.read_parameter(18)
+                # self.persist_B = float(val[1:])
+
+                val = yield self.server.read_parameter(16)
+                self.persist_current = float(val[1:])
+                # Back convert the current to get field
+                self.persist_B = self.persist_current*self.gauss_to_amps*1e-4
+            else:
+                self.persist_B = 0
+                self.persist_current = 0
+
+            # The "Demand Field" during charging
+            # val = yield self.server.read_parameter(7)
+            # self.B = float(val[1:])
+
+            # The demand "Output" current
+            val = yield self.server.read_parameter(0)
+            self.current = float(val[1:])
+            # Back convert the current to get field
+            self.B = self.current*self.gauss_to_amps*1e-4
+
+            # The charging voltage
+            val = yield self.server.read_parameter(1)
+            self.output_voltage = float(val[1:])
+        except Exception as inst:
+            print(inst)
+            printErrorInfo()
+    #
+    
+    @inlineCallbacks
+    def readInitialValues(self):
+        '''
+        Read the starting configuration of a magnet power supply. Override for a specific supply.
+        '''
+        yield self.server.set_comm_protocol(4)
+        setpoint = yield self.server.read_parameter(8)
+        ramprate = yield self.server.read_parameter(9)
+        self.setpoint_B = float(setpoint[1:])
+        self.ramprate = float(ramprate[1:])
+
+        yield self.queryPersist()
+    #
+    @inlineCallbacks
+    def goToSetpoint(self, wait=True):
+        '''
+        Ramps the supply to the setpoint. setSetpoint and setRampRate should be called first
+        to configure this ramp.
+
+        Args:
+            wait (bool) : Will wait for the controller to reach the setpoint
+        '''
+        yield self.server.set_control(3) #Set IPS to remote communication (prevents user from using the front panel)
+        
+        # Use the target current instead of the target field
+        #yield self.server.set_fieldsweep_rate(self.ramprate)
+        #yield self.server.set_targetfield(self.setpoint_B) #Set targetfield to desired field
+        current = self.setpoint_B*1e4/self.gauss_to_amps
+        ramprate = self.ramprate*1e4/self.gauss_to_amps
+        yield self.server.set_currentsweep_rate(ramprate)
+        yield self.server.set_targetcurrent(current)
+        yield self.server.set_activity(1) #Set IPS mode to ramping instead of hold
+        yield self.server.set_control(2) #Set IPS to local control (allows user to edit IPS from the front panel)
+
+        if wait:
+            #Only finish running the gotoField function when the field is reached
+            while True:
+                yield self.poll()
+                if self.B <= self.setpoint_B+0.00001 and self.B >= self.setpoint_B-0.00001:
+                    break
+                elif self.abort_wait:
+                    self.abort_wait = False
+                    break
+                yield self.sleep(0.25)
+            yield self.sleep(0.25)
+    #
+#
+
 class Toeller_Power_Supply(MagnetControl):
     def __init__(self, widget, device_info, config, reactor):
         super().__init__(widget, device_info, config, reactor)
@@ -711,13 +810,13 @@ class Cryomag4G_Power_Supply(MagnetControl):
             self.persist = yield self.server.get_persist(self.channel)
             if self.persist:
                 yield self.server.set_persist(self.channel, False)
-                yield self.sleep_still_poll(15)
+                yield self.sleep_still_poll(25)
                 self.persist = yield self.server.get_persist(self.channel)
                 if self.persist:
                     print("Warning: persistent switch didn't toggle. Probably output doesn't match persistent field.")
             else:
                 yield self.server.set_persist(self.channel, True)
-                yield self.sleep_still_poll(15)
+                yield self.sleep_still_poll(25)
                 self.persist =  yield self.server.get_persist(self.channel)
                 if not self.persist:
                     print("Warning: persistent switch didn't toggle. Probably output doesn't match persistent field.")

@@ -15,6 +15,7 @@ import numpy as np
 from collections import deque
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 import time
+from traceback import format_exc
 
 path = sys.path[0] + r"\Approach"
 ApproachUI, QtBaseClass = uic.loadUiType(path + r"\Approach.ui")
@@ -33,7 +34,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
     updateFeedbackStatus = QtCore.pyqtSignal(bool)
     updateConstantHeightStatus = QtCore.pyqtSignal(bool)
 
-    def __init__(self, reactor, parent=None):
+    def __init__(self, reactor, parent=None, coarse_output=None):
         super(Window, self).__init__(parent)
 
         self.reactor = reactor
@@ -45,6 +46,13 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.moveDefault()
 
         #Connect GUI elements to appropriate methods
+        
+        #Referece to the coarse positioner ouput dictionary, check if an axis is enabled.
+        if coarse_output is None:
+            self.coarse_output_enabled = [True, True, True]
+        else:
+            self.coarse_output_enabled = coarse_output
+        self.approach_type = "Advance" # or "Steps" for single steps (stepANC350)
 
         #Connect show servers list pop up
         self.push_Servers.clicked.connect(self.showServersList)
@@ -108,7 +116,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.voltageMultiplier = 0.1   #Stores the Zurich voltage multiplier for scanning in feedback
         self.CPStepping = False        #Are coarse positioners are steppping
         self.withdrawing = False       #Is the tip in the process of being withdraw
-        self.autoThresholding = False  #Is the software calculating the frequency threshold for the PID
+        self.autoThresholding = True  #Is the software calculating the frequency threshold for the PID
         self.monitorZ = False          #Should the module monitor the Z voltage
 
         #intial withdraw distance
@@ -182,6 +190,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 'auto_retract_points'          : 3,   #points above frequency threshold before auto retraction is trigged
                 'atto_distance'              : 6e-6,  #distance in meters to step forward with the coarse positioners. Determined by the resistive encoders
                 'atto_delay'                 : 0.1,   #delay between steps.
+                'atto_max_steps'             : 500, # The maximum number of steps to take per coarse positioner firing
+                'atto_sample_after'          : 0, # each firing measure the caorse positioner after this many steps (letting it equilibrate)
+                'atto_equilb_time'           : 30, # Wait this many seconds for the positioners to equilibrate before sampling the coarse positioner location
+                'atto_nominal'               : 8e-6, # The nominal displacement to tell the ANC 350 to move curing approach.
         }
 
         '''
@@ -263,21 +275,15 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 print("'Scan DAC' not found, LabRAD connection to Approach Module Failed.")
                 return
 
-            # Setup to save the data for approach debugging.
             self.t0 = equip.sync_time
-            self.dv_PLL = yield equip.get_datavault()
-            yield self.dv_PLL.new("PLL data versus time", ["Time (s)"], ["delta f", "Phase Error"])
-            dset = yield self.dv_PLL.current_identifier()
-            print("PLL Data Saving To:", dset)
-            self.dv_Zext = yield equip.get_datavault()
-            yield self.dv_Zext.new("Z extension data versus time", ["Time (s)"], ["Z Extension"])
-            dset = yield self.dv_Zext.current_identifier()
-            print("Z Extension Data Saving To:", dset)
-
-            self.dv_Steps = yield equip.get_datavault()
-            yield self.dv_Steps.new("Z extension data versus time", ["Time (s)"], ["Num Steps", "Nominal Displacement"])
-            dset = yield self.dv_Steps.current_identifier()
+            # Setup to save the data for approach debugging.
+            self.dv = yield equip.get_datavault()
+            file_info = yield self.dv.new("Approach log", ["Start Time (s)"], ["start Z", "end Z", "delta", "num steps"])
+            dset = yield self.dv.current_identifier()
             print("Approach Step Data Saving To:", dset)
+            
+            self.dvFileName = file_info[1]
+            self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
 
             '''
             DC Box used to be used in some cases in conjunction with a summing amplifier.
@@ -474,7 +480,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         If changes are accepted, then the general settings dictionary is updated with the
         new values.
         '''
-        GenSet = generalApproachSettings(self.reactor, self.generalSettings, parent = self)
+        GenSet = generalApproachSettings(self.reactor, self.generalSettings, parent = self, type=self.approach_type)
         if GenSet.exec_():
             self.generalSettings = GenSet.getValues()
 
@@ -805,29 +811,34 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
             while self.measuring:
                 #Each loop while measuring reads the deltaf, phaseError, and lock status of the PLL
-                deltaf = yield self.hf.get_pll_freqdelta(self.measurementSettings['pll_output'])
-                phaseError = yield self.hf.get_pll_error(self.measurementSettings['pll_output'])
-                locked = yield self.hf.get_pll_lock(self.measurementSettings['pll_output'])
+                try:
+                    deltaf = yield self.hf.get_pll_freqdelta(self.measurementSettings['pll_output'])
+                    phaseError = yield self.hf.get_pll_error(self.measurementSettings['pll_output'])
+                    locked = yield self.hf.get_pll_lock(self.measurementSettings['pll_output'])
 
-                #Update the lineedits
-                self.lineEdit_freqCurr.setText(formatNum(deltaf))
-                self.lineEdit_phaseError.setText(formatNum(phaseError))
+                    #Update the lineedits
+                    self.lineEdit_freqCurr.setText(formatNum(deltaf))
+                    self.lineEdit_phaseError.setText(formatNum(phaseError))
 
-                #Update the PLL locked graphic
-                if locked == 0:
-                    self.push_Locked.setStyleSheet("""#push_Locked{
-                                    background: rgb(161, 0, 0);
-                                    border-radius: 5px;
-                                    }""")
-                else:
-                    self.push_Locked.setStyleSheet("""#push_Locked{
-                                    background: rgb(0, 170, 0);
-                                    border-radius: 5px;
-                                    }""")
+                    #Update the PLL locked graphic
+                    if locked == 0:
+                        self.push_Locked.setStyleSheet("""#push_Locked{
+                                        background: rgb(161, 0, 0);
+                                        border-radius: 5px;
+                                        }""")
+                    else:
+                        self.push_Locked.setStyleSheet("""#push_Locked{
+                                        background: rgb(0, 170, 0);
+                                        border-radius: 5px;
+                                        }""")
 
-                #Emit PLL data point (to the Approach Monitor module)
-                self.newPLLData.emit(deltaf, phaseError)
-                self.dv_PLL.add(time.time()-self.t0, deltaf, phaseError)
+                    #Emit PLL data point (to the Approach Monitor module)
+                    self.newPLLData.emit(deltaf, phaseError)
+                except labrad.RuntimeError: # Error communicating with the Zurich, register as a bad point in deltaf
+                    deltaf = -20
+                    phaseError = 0
+                    print("Error communicating with Zurich")
+                    print(format_exc())
 
                 #Add frequency data to deltaf list only if not stepping with the coarse positioners\
                 #The steps are rough enough that they cause spikes in the PLL that should not be used
@@ -881,7 +892,6 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 self.lineEdit_FineZ.setText(formatNum(z_meters, 3))
                 #Emit a new Z datapoint for the approach monitoring module
                 self.newZData.emit(z_meters)
-                self.dv_Zext.add(time.time()-self.t0, z_meters)
 
                 #Keep track of the zData for surface contact determination
                 self.zData.appendleft(z_meters)
@@ -978,7 +988,13 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                         if self.approaching and self.autoThresholding:
                             self.label_pidApproachStatus.setText('Collecting data for threshold.')
                             #Wait for 30 seconds for  self.zData and self.deltaFdata to get new values
-                            yield self.sleep(30)
+                            # Can incorporate the time the coarse positioner was equilibrating if applicable
+                            if self.generalSettings['atto_equilb_time'] > 0:
+                                dt = 30 - self.generalSettings['atto_equilb_time']
+                                if dt > 0:
+                                    yield self.sleep(dt)
+                            else:
+                                yield self.sleep(30)
                             yield self.setPLLThreshold()
                         else:
                             #Reset the zData and deltaFdata arrays. This prevents the software from thinking it hit the surface because of
@@ -1150,7 +1166,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 #Following can be added back in if necessary
                 # ['/%s/pids/%d/output' % (dev_ID, self.PID_Index-1), '3'],
                 # ['/%s/pids/%d/outputchannel' % (dev_ID, self.PID_Index-1), str(self.generalSettings['pid_z_output']-1)]
-
+                # print(settings)
                 yield self.hf.set_settings(settings)
 
                 #Turn on PID
@@ -1184,35 +1200,109 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
     def stepCoarsePositioners(self):
         #Programmed with this structure back when we have multiple coarse positioner options.
         if self.generalSettings['coarse_positioner'] == 'Attocube ANC350':
-            yield self.stepANC350()
+            if self.coarse_output_enabled[2]:
+                if self.approach_type == "Steps":
+                    yield self.stepANC350()
+                else:
+                    yield self.advanceANC350() #self.stepANC350()
+            else:
+                print("Z Coarse Positioner Disabled, Ending Approach Sequence")
+                self.approaching = False
+
+
+    @inlineCallbacks
+    def advanceANC350(self):
+        '''
+        A modified version of stepANC350 that uses the ANC 350 internal closed loop instead of 
+        calling a number of single steps. This ensures that pulses are actually being fired at the nominal
+        frequency.
+        '''
+        #Set module to coarse positioners are stepping
+        self.CPStepping = True
+        self.label_pidApproachStatus.setText('Stepping with ANC350')
+
+        start_time = time.time()-self.t0
+
+        #Assume axis 3 is the z axis. Set the output to be on, and to turn off automatically when end of travel is reached
+        yield self.anc.set_axis_output(2, True, True)
+
+        #Get the starting position in z before stepping
+        sum = 0
+        for i in range(10): # Encoders can be noisy, Average over 1s
+            z = yield self.anc.get_position(2)
+            sum += z
+            yield self.sleep(0.1)
+        pos_start = sum/10
+        if pos_start < 0e-6:
+            yield self.abortApproachSequence()
+            return
+        
+        freq =  yield self.anc.get_frequency(2)
+        # Time to wait for a given number of pulses to fire, in seconds
+        wait_time = self.generalSettings['atto_sample_after']/freq
+        
+        num_steps = 0
+        delta = 0
+        while delta < self.generalSettings['atto_distance'] and self.approaching:
+            if num_steps >= self.generalSettings['atto_max_steps']:
+                print("Reached Maximum number of steps")
+                break
+            
+            #Give axis number and direction (False forward, True is backwards)
+            try:
+                self.label_pidApproachStatus.setText('Firing Positioners')
+                yield self.anc.set_target_position(2, self.generalSettings['atto_nominal'])
+                yield self.anc.start_auto_move(2, True, True) # Start auto movement
+                # Wait a certain amount of time for all the pulses to fire, then check
+                t0 = time.time()
+                t1 = t0
+                while t1-t0 < wait_time:
+                    yield self.sleep(self.generalSettings['atto_delay'])
+                    if not self.approaching: # Check for aborts
+                        break
+                    t1 = time.time()
+                yield self.anc.start_auto_move(2, False, True) # Stop auto move
+                num_steps += (t1-t0)*freq
+            except:
+                print("Error could not move with ANC 350, turning off output")
+                yield self.anc.start_auto_move(2, False, True) # Stop auto move
+                printErrorInfo()
+            # Equilibrate then measure
+            self.label_pidApproachStatus.setText('Equilibrating Encoders')
+            for i in range(int(self.generalSettings['atto_equilb_time'])):
+                if not self.approaching:
+                    break
+                yield self.sleep(1)
+            sum = 0
+            for i in range(10): # Encoders can be noisy, Average over 1s
+                z = yield self.anc.get_position(2)
+                sum += z
+                yield self.sleep(0.1)
+            pos_curr = sum/10
+            
+            delta = pos_curr - pos_start
+            # print(pos_start, pos_curr, num_steps, delta) # For debugging
+            if pos_curr < 50e-6:
+                yield self.abortApproachSequence()
+                break
+            self.label_pidApproachStatus.setText('Stepping with ANC350')
+        
+        print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
+        self.dv.add(start_time, pos_start, pos_curr, num_steps, delta)
+
+        #Once done, set coarse positioners stepping to be false
+        self.CPStepping = False
+
 
     @inlineCallbacks
     def stepANC350(self):
         #Set module to coarse positioners are stepping
         self.CPStepping = True
         self.label_pidApproachStatus.setText('Stepping with ANC350')
-
+    
         #Assume axis 3 is the z axis. Set the output to be on, and to turn off automatically when end of travel is reached
         yield self.anc.set_axis_output(2, True, True)
-
-        '''
-        The following code is for closed loop operation. However, the encoders do not seem reliable
-        enough to make this a good solution, so instead we are using open loop operation
-
-        #Set target position for axis 3 to be 6 microns
-        yield self.anc.set_target_position(2, 6e-6)
-        #Axis 2, True (start automatic motion), True (relative to current position)
-        yield self.anc.start_auto_move(2, True, True)
-
-        target_reached = False
-        while target_reached:
-            #Get status information of the axis
-            connected, enabled, moving, target, eotFwd, eotBwd, error = yield self.anc.get_axis_status(2)
-            #If the target has been reached, then this should all be done
-            target_reached = bool(target)
-            yield self.sleep(0.25)
-        '''
-
+    
         #Get the starting position in z before stepping
         pos_start = yield self.anc.get_position(2)
         num_steps = 0
@@ -1229,42 +1319,75 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             delta = pos_curr - pos_start
             num_steps += 1
         print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
-        self.dv_Steps.add(time.time()-self.t0, num_steps, delta)
-
+        self.dv.add(time.time()-self.t0, pos_start, pos_curr, num_steps, delta)
+    
         #Once done, set coarse positioners stepping to be false
         self.CPStepping = False
-
+    
     @inlineCallbacks
-    def stepANC350_by_steps(self, nsteps, retract):
+    def stepANC350_Alternate(self):
         '''
-        nsteps is the number of steps to advance
-        retract is a boolean, if true retracts the Z positioner, if false advances it.
+        An alternate version of stepANC350 that works more like advanceANC350 but uses single steps
         '''
         #Set module to coarse positioners are stepping
         self.CPStepping = True
         self.label_pidApproachStatus.setText('Stepping with ANC350')
-
+    
+        start_time = time.time()-self.t0
+    
         #Assume axis 3 is the z axis. Set the output to be on, and to turn off automatically when end of travel is reached
         yield self.anc.set_axis_output(2, True, True)
-
+    
         #Get the starting position in z before stepping
         pos_start = yield self.anc.get_position(2)
+        if pos_start < 0e-6:
+            yield self.abortApproachSequence()
+            return
+    
         num_steps = 0
+        sub_steps = 0
         delta = 0
-        while num_steps < nsteps and self.approaching:
+        while delta < self.generalSettings['atto_distance'] and self.approaching:
+            if num_steps >= self.generalSettings['atto_max_steps']:
+                print("Reached Maximum number of steps")
+                break
             #Give axis number and direction (False forward, True is backwards)
-            yield self.anc.start_single_step(2, retract)
+            yield self.anc.start_single_step(2, False)
             #Wait for the positioners to settle before reading their position
             yield self.sleep(self.generalSettings['atto_delay'])
             pos_curr = yield self.anc.get_position(2)
+            if pos_curr < 50e-6:
+                yield self.abortApproachSequence()
+                break
+    
+            # After a certain number of steps, equilibrate then sample to make sure you aren't overshot
+            sub_steps += 1
+            if self.generalSettings['atto_sample_after'] > 0 and sub_steps >= self.generalSettings['atto_sample_after']:
+                for i in range(int(self.generalSettings['atto_equilb_time'])):
+                    if not self.approaching:
+                        break
+                    yield self.sleep(1)
+                pos_curr = yield self.anc.get_position(2)
+                sub_steps = 0
+    
             delta = pos_curr - pos_start
             num_steps += 1
+    
+        # After done let positioners equilibrate and measure how far you went
+        # Don't measure if you just equilibrated/measured last iteration
+        if self.generalSettings['atto_equilb_time'] > 0 and sub_steps != 0:
+            for i in range(int(self.generalSettings['atto_equilb_time'])):
+                if not self.approaching:
+                    break
+                yield self.sleep(1)
+            pos_curr = yield self.anc.get_position(2)
+            delta = pos_curr - pos_start
         print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
-        self.dv_Steps.add(time.time()-self.t0, num_steps, delta)
-
+        self.dv.add(start_time, pos_start, pos_curr, num_steps, delta)
+    
         #Once done, set coarse positioners stepping to be false
         self.CPStepping = False
-
+    
     @inlineCallbacks
     def setPLLThreshold(self):
         #Find the mean and standard deviation of the data that exists
@@ -1371,6 +1494,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 #returns false otherwise, meaning that we made contact with the sample
                 #too close to be able to set the range properly
                 result = yield self.setPIDOutputRange(end_voltage)
+                
+                current_time = time.time()-self.t0
+                # Print out the current surface hight, round to nearest second and nm for easy computation
+                print('time, surface height:', round(current_time), round(self.contactHeight/1e-9))
 
                 if result:
                     #Turn PID back on so that if there's drift or the sample is taller than expected,
@@ -2093,6 +2220,21 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions intended for use when running scripts from the scripting module."""
 
+    def setApproachSettings(distance=None, stepdelay=None, maxsteps=None, sampleafter=None, equilbtime=None):
+        '''
+        Change the general approach settings
+        '''
+        if isinstance(distance,float):
+            self.generalApproachSettings['atto_distance'] = distance
+        if isinstance(stepdelay,float):
+            self.generalApproachSettings['atto_delay'] = stepdelay
+        if isinstance(maxsteps,float):
+            self.generalApproachSettings['atto_max_steps'] = maxsteps
+        if isinstance(sampleafter,float):
+            self.generalApproachSettings['atto_sample_after'] = sampleafter
+        if isinstance(equilbtime,float):
+            self.generalApproachSettings['atto_equilb_time'] = equilbtime
+
     def setHeight(self, height):
         #Set the height to be withdrawn after surface contact with a constant height PID approach
         self.set_pid_const_height(height)
@@ -2268,7 +2410,7 @@ class serversList(QtWidgets.QDialog, Ui_ServerList):
         self.move(pos)
 
 class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
-    def __init__(self, reactor, settings, parent = None):
+    def __init__(self, reactor, settings, parent = None, type=None):
         super(generalApproachSettings, self).__init__(parent)
         self.setupUi(self)
 
@@ -2288,6 +2430,17 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
 
         self.lineEdit_Atto_Distance.editingFinished.connect(self.setAttoDist)
         self.lineEdit_Atto_Delay.editingFinished.connect(self.setAttoDelay)
+        
+        if type == "Steps":
+            self.lineEdit_Atto_MaxSteps.setHidden(True)
+            self.lineEdit_Atto_SampleSteps.setHidden(True)
+            self.lineEdit_Atto_Equilib.setHidden(True)
+            self.lineEdit_Atto_Nominal.setHidden(True)
+        else:
+            self.lineEdit_Atto_MaxSteps.editingFinished.connect(self.setAttoMaxSteps)
+            self.lineEdit_Atto_SampleSteps.editingFinished.connect(self.setAttoSampleAfter)
+            self.lineEdit_Atto_Equilib.editingFinished.connect(self.setAttoEquilib)
+            self.lineEdit_Atto_Nominal.editingFinished.connect(self.setAttoNominal)
 
         #Display the loaded input settings into the GUI
         self.loadValues()
@@ -2304,6 +2457,29 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
 
         self.lineEdit_Atto_Distance.setText(formatNum(self.generalApproachSettings['atto_distance']))
         self.lineEdit_Atto_Delay.setText(formatNum(self.generalApproachSettings['atto_delay']))
+        self.lineEdit_Atto_Nominal.setText(formatNum(self.generalApproachSettings['atto_nominal']))
+        
+        self.lineEdit_Atto_MaxSteps.setText(formatNum(self.generalApproachSettings['atto_max_steps']))
+        self.lineEdit_Atto_SampleSteps.setText(formatNum(self.generalApproachSettings['atto_sample_after']))
+        self.lineEdit_Atto_Equilib.setText(formatNum(self.generalApproachSettings['atto_equilb_time']))
+
+    def setAttoMaxSteps(self):
+        val = readNum(str(self.lineEdit_Atto_MaxSteps.text()))
+        if isinstance(val,float):
+            self.generalApproachSettings['atto_max_steps'] = val
+        self.lineEdit_Atto_MaxSteps.setText(formatNum(self.generalApproachSettings['atto_max_steps']))
+
+    def setAttoSampleAfter(self):
+        val = readNum(str(self.lineEdit_Atto_SampleSteps.text()))
+        if isinstance(val,float):
+            self.generalApproachSettings['atto_sample_after'] = val
+        self.lineEdit_Atto_SampleSteps.setText(formatNum(self.generalApproachSettings['atto_sample_after']))
+    
+    def setAttoEquilib(self):
+        val = readNum(str(self.lineEdit_Atto_Equilib.text()))
+        if isinstance(val,float):
+            self.generalApproachSettings['atto_equilb_time'] = val
+        self.lineEdit_Atto_Equilib.setText(formatNum(self.generalApproachSettings['atto_equilb_time']))
 
     def setStep_Retract_Speed(self):
         #Set the retracting speed in m/s when withdrawing with the DAC-ADC
@@ -2368,6 +2544,13 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
         if isinstance(val,float):
             self.generalApproachSettings['atto_delay'] = val
         self.lineEdit_Atto_Delay.setText(formatNum(self.generalApproachSettings['atto_delay']))
+    
+    def setAttoNominal(self):
+        #Set the noninal ANC 350 Displacement
+        val = readNum(str(self.lineEdit_Atto_Nominal.text()))
+        if isinstance(val,float):
+            self.generalApproachSettings['atto_nominal'] = val
+        self.lineEdit_Atto_Nominal.setText(formatNum(self.generalApproachSettings['atto_nominal']))
 
     def acceptNewValues(self):
         self.accept()

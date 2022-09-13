@@ -762,7 +762,8 @@ void bufferRamp(std::vector<String> DB)
       {
         float v;
         v = vi[i] + (vf[i] - vi[i]) * j / (nSteps - 1);
-        writeDAC_buffer(channelsDAC[i] - '0', v);
+        v = writeDAC_buffer(channelsDAC[i] - '0', v);
+        DAC_Voltage[channelsDAC[i] - '0'] = v;
       }
       digitalWrite(ldac, LOW);
       digitalWrite(ldac, HIGH);
@@ -840,7 +841,8 @@ int bufferRampDis(std::vector<String> DB)
       {
         float v;
         v = vi[i] + (vf[i] - vi[i]) * j / (nSteps - 1);
-        writeDAC_buffer(channelsDAC[i] - '0', v);
+        v = writeDAC_buffer(channelsDAC[i] - '0', v);
+        DAC_Voltage[channelsDAC[i] - '0'] = v;
       }
       digitalWrite(ldac, LOW);
       digitalWrite(ldac, HIGH);
@@ -883,6 +885,7 @@ void autoRamp1(std::vector<String> DB)
 {
   float v1 = DB[2].toFloat();
   float v2 = DB[3].toFloat();
+  float v;
   int nSteps = DB[4].toInt();
   int dacChannel = DB[1].toInt();
   if (v1 < LB[dacChannel] || v1 > UB[dacChannel] || v2 < LB[dacChannel] || v2 > UB[dacChannel]){
@@ -891,7 +894,8 @@ void autoRamp1(std::vector<String> DB)
     for (int j = 0; j < nSteps; j++)
     {
       int timer = micros();
-      writeDAC(dacChannel, v1 + (v2 - v1)*j / (nSteps - 1));
+      v = writeDAC(dacChannel, v1 + (v2 - v1)*j / (nSteps - 1));
+      DAC_Voltage[dacChannel] = v;
       while (micros() <= timer + DB[5].toInt());
     }
   }
@@ -903,6 +907,8 @@ void autoRamp2(std::vector<String> DB)
   float vi2 = DB[4].toFloat();
   float vf1 = DB[5].toFloat();
   float vf2 = DB[6].toFloat();
+  float v1;
+  float v2;
   int nSteps = DB[7].toInt();
   byte b1;
   byte b2;
@@ -914,8 +920,10 @@ void autoRamp2(std::vector<String> DB)
     for (int j = 0; j < nSteps; j++)
     {
       int timer = micros();
-      writeDAC(dacChannel1, vi1 + (vf1 - vi1)*j / (nSteps - 1));
-      writeDAC(dacChannel2, vi2 + (vf2 - vi2)*j / (nSteps - 1));
+      v1 = writeDAC(dacChannel1, vi1 + (vf1 - vi1)*j / (nSteps - 1));
+      v2 = writeDAC(dacChannel2, vi2 + (vf2 - vi2)*j / (nSteps - 1));
+      DAC_Voltage[dacChannel1] = v1;
+      DAC_Voltage[dacChannel2] = v2;
       while (micros() <= timer + DB[8].toInt());
     }
   }
@@ -924,9 +932,9 @@ void autoRamp2(std::vector<String> DB)
 
 void readDAC(int DACChannel) // Does not work; always reads 0 from register
 {
-  int o1;
-  int o2;
-  int o3;
+  byte o1;
+  byte o2;
+  byte o3;
   float voltage;
 
   SPI.beginTransaction(dacSettings);
@@ -937,9 +945,9 @@ void readDAC(int DACChannel) // Does not work; always reads 0 from register
   digitalWrite(dac[DACChannel], HIGH);
   delayMicroseconds(2);
   digitalWrite(dac[DACChannel], LOW);
-  o1 = SPI.transfer(0);
-  o2 = SPI.transfer(0);
-  o3 = SPI.transfer(0);
+  o1 = SPI.transfer(0x00);
+  o2 = SPI.transfer(0x00);
+  o3 = SPI.transfer(0x00);
   digitalWrite(dac[DACChannel], HIGH);
   SPI.endTransaction();
   
@@ -1275,9 +1283,9 @@ void router(std::vector<String> DB)
         Serial.println("INVALID DAC CHANNEL.");
       }
       else {
-        digitalWrite(data, HIGH);
+        //digitalWrite(data, HIGH);
         Serial.println(DAC_Voltage[channel], 6);
-        digitalWrite(data, LOW);
+        //digitalWrite(data, LOW);
       }
       break;
 

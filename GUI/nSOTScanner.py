@@ -128,7 +128,8 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor, None)
         self.PlottingModule = PlottingModule.CommandCenter(self.reactor, None)
         self.TFChar = TFCharacterizer.Window(self.reactor, None)
-        self.Approach = Approach.Window(self.reactor, None)
+        self.AttocubeCoarseControl = CoarseAttocubeControl.Window(self.reactor,None)
+        self.Approach = Approach.Window(self.reactor, None, self.AttocubeCoarseControl.OutputEnabled)
         self.ApproachMonitor = ApproachMonitor.Window(self.reactor, None)
         self.PosCalibration = PositionCalibration.Window(self.reactor, None)
         self.FieldControl = FieldControl.Window(self.reactor, None)
@@ -136,7 +137,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.QRreader = QRreader.Window(self.reactor,None)
         self.GoToSetpoint = gotoSetpoint.Window(self.reactor, None)
         self.SampleCharacterizer = SampleCharacterizer.Window(self.reactor,None)
-        self.AttocubeCoarseControl = CoarseAttocubeControl.Window(self.reactor,None)
+        
 
         # self.windows = [self.LabRAD, self.DeviceSelect, self.ScanControl, self.nSOTChar, self.PlottingModule, self.TFChar, self.Approach, self.ApproachMonitor,
         #     self.PosCalibration, self.FieldControl, self.TempControl, self.QRreader, self.GoToSetpoint, self.SampleCharacterizer, self.AttocubeCoarseControl]

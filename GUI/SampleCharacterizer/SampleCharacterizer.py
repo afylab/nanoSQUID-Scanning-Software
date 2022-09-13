@@ -184,6 +184,9 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.pushButton_AbortLandauFan.clicked.connect(self.abortMagneticFieldSweep)
         self.pushButton_Abort1DFieldSweep.clicked.connect(self.abortMagneticFieldSweep)
 
+        self.comboBox_magnetPower.currentIndexChanged.connect(self.updateMagnetSupply)
+
+
         #Initialize name of datavault file
         self.dvFileName = ""
 
@@ -218,16 +221,30 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 print("'Sample DAC' not found, LabRAD connection to Sample Characterizer Failed.")
                 return
 
-            #Select the appropriate magnet power supply
+            #By default empty the magnet power supply comboBox
+            self.comboBox_magnetPower.clear()
+            self.magnets = {}
+            if 'Magnet X' in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers['Magnet X']
+                if svr:
+                    self.magnets['Magnet X'] = cnt
+                    self.comboBox_magnetPower.addItem('Magnet X')
+            if 'Magnet Y' in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers['Magnet Y']
+                if svr:
+                    self.magnets['Magnet Y'] = cnt
+                    self.comboBox_magnetPower.addItem('Magnet Y')
             if 'Magnet Z' in equip.servers:
                 svr, ln, device_info, cnt, config = equip.servers['Magnet Z']
                 if svr:
-                    self.magnet = cnt
+                    
+                    self.magnets['Magnet Z'] = cnt
+                    self.comboBox_magnetPower.addItem('Magnet Z')
                     self.warning_label.setStyleSheet("#warning_label{color:rgb(0, 0, 0)}")
-                else:
-                    print("'Magnet Z' connection not found, in Sample Characterizer")
-                    self.magnet = False
-                    self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
+                    
+                    # By default select magnet Z
+                    self.comboBox_magnetPower.setCurrentText('Magnet Z')
+                    self.magnet = self.magnets['Magnet Z']
             else:
                 print("'Magnet Z' connection not found, in Sample Characterizer")
                 self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
@@ -268,6 +285,10 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
     def updateDeviceName(self):
         self.Device_Name = str(self.lineEdit_Device_Name.text())
+    
+    def updateMagnetSupply(self):
+        key = self.comboBox_magnetPower.currentText()
+        self.magnet = self.magnets[key]
 
     def moveDefault(self):
         self.move(550,10) #Move module to the specified position
@@ -1365,6 +1386,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_FourTerminal_Numberofstep.setEnabled(False)
         self.lineEdit_FourTerminal_Delay.setEnabled(False)
         self.pushButton_FourTerminalStepSwitch.setEnabled(False)
+        self.comboBox_magnetPower.setEnabled(False)
 
         self.lineEdit_landauFan_MinField.setEnabled(False)
         self.lineEdit_landauFan_MaxField.setEnabled(False)
@@ -1415,6 +1437,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_FourTerminal_Numberofstep.setEnabled(True)
         self.lineEdit_FourTerminal_Delay.setEnabled(True)
         self.pushButton_FourTerminalStepSwitch.setEnabled(True)
+        self.comboBox_magnetPower.setEnabled(True)
 
         self.lineEdit_landauFan_MinField.setEnabled(True)
         self.lineEdit_landauFan_MaxField.setEnabled(True)

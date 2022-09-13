@@ -44,6 +44,8 @@ import zhinst
 import zhinst.utils
 import sys
 
+from traceback import format_exc
+
 
 class HF2LIServer(LabradServer):
     name = "HF2LI Server"    # Will be labrad name of server
@@ -703,21 +705,35 @@ class HF2LIServer(LabradServer):
     def get_PLL_lock(self, c, PLL):
         """Returns 0 if the PLL is NOT locked, and returns 1 if the PLL is locked."""
         setting = '/%s/plls/%d/locked' % (self.dev_ID, PLL-1)
-        lock = yield self.daq.getInt(setting)
+        try:
+            lock = yield self.daq.getInt(setting)
+        except:
+            print(format_exc())
+            lock = 0 #
         returnValue(lock)
 
     @setting(1521,PLL_index = 'i', returns = 'v[]')
     def get_pll_freqdelta(self, c, PLL_index):
         """Gets the PLL (1 or 2) latest output freq delta."""
         setting = '/%s/plls/%d/freqdelta' % (self.dev_ID, PLL_index-1)
-        val = yield self.daq.getDouble(setting)
+        # For debugging a timeout exception that keeps occuring on this readout, seems to be
+        # on the Zurich API side of things
+        try:
+            val = yield self.daq.getDouble(setting)
+        except:
+            print(format_exc())
+            val = -20 # Register as bad value, so if this occurs more than a few times it will autoretract
         returnValue(val)
 
     @setting(1522,PLL_index = 'i', returns = 'v[]')
     def get_pll_error(self, c, PLL_index):
         """Gets the Auxilary Output (1 through 4) latest output error."""
         setting = '/%s/plls/%d/error' % (self.dev_ID, PLL_index-1)
-        val = yield self.daq.getDouble(setting)
+        try:
+            val = yield self.daq.getDouble(setting)
+        except:
+            print(format_exc())
+            val = 180 # register as a bad value
         returnValue(val)
 
 #------------------------------------------------------------------------------------------------------------------------------------------#

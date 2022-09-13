@@ -106,16 +106,12 @@ background: rgb(144, 140, 9);
            <item>
             <widget class="QLabel" name="label_2">
              <property name="text">
-              <string/>
+              <string>Magnet Supply:</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_3">
-             <property name="text">
-              <string/>
-             </property>
-            </widget>
+            <widget class="QComboBox" name="comboBox_magnetPower"/>
            </item>
            <item>
             <widget class="QLabel" name="label_ImageNum">
@@ -678,7 +674,7 @@ color: rgb(168,168,168);
 QTabBar::tab:selected {background: rgb(50,50,50);}</string>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="usesScrollButtons">
        <bool>false</bool>

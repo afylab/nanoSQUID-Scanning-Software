@@ -342,6 +342,11 @@ class Lakeshore350Server(GPIBManagedServer):
 		ans = yield dev.name_read(input)
 		returnValue(ans)
 	
+	@setting(124)
+    def write(self,c,phrase):
+        dev=self.selectedDevice(c)
+        yield dev.write(phrase)
+	
 __server__ = Lakeshore350Server()
 
 if __name__ == '__main__':

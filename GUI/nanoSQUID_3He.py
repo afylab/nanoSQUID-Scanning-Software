@@ -13,6 +13,8 @@ class nanoSQUID_3He(nanoSQUIDSystem):
 
     def configureEquipment(self):
         super().configureEquipment()
+        
+        self.Approach.approach_type = "Advance"
 
         conf = {'pll input':1, 'pll output':1, 'pid z out':1, 'z monitor':1, 'sum board toggle':1}
         self.equip.add_server("HF2LI Lockin", "hf2li_server", controller=CoreEquipment.HF2LI_Controller, config=conf)
@@ -37,8 +39,8 @@ class nanoSQUID_3He(nanoSQUIDSystem):
 
         self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_06 (COM7)")
 
-        conf = {'blink channel':4}
-        self.equip.add_server("Blink Device", "dac_adc", "DA20_16_05 (COM3)", config=conf)
+        conf = {'blink channel':3}
+        self.equip.add_server("Blink Device", "dac_adc", "DA20_16_04 (COM6)", config=conf)
 
         conf = {
             'Input 1':'A', 'Input 1 Label':'Charcoal',
@@ -48,8 +50,10 @@ class nanoSQUID_3He(nanoSQUIDSystem):
             }
         self.equip.add_server("LS 336", "lakeshore_336", config=conf)
 
-        conf = {'max_field':6, 'gauss_to_amps':870.827, "max_ramp":0.5, "channel":1}
-        self.equip.add_server("Magnet Z", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::21::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
+        # conf = {'max_field':6, 'gauss_to_amps':870.827, "max_ramp":0.5, "channel":1}
+        # self.equip.add_server("Magnet Z", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::21::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
+        conf = {'max_field':6, 'gauss_to_amps':870.827, "max_ramp":0.5} # MAX OF 5T for 1 T/min ramp rate, from 5-6T need 0.5 T/min
+        self.equip.add_server("Magnet Z", "ips120_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::25::INSTR", controller=MagnetControllers.IPS120_MagnetController_ALT, config=conf)
 
         conf = {'max_field':1, 'gauss_to_amps':160.539, "max_ramp":0.15, "channel":1}
         self.equip.add_server("Magnet X", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)

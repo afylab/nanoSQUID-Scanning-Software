@@ -84,7 +84,7 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
         self.persistCurrent = 0
         self.currVoltage = 0
         self.setpoint = 0
-        self.ramprate = 0
+        self.ramprate = 0.1
 
         self.setting_value = False
         #By default, the switch is off, which corresponds to being in persist mode

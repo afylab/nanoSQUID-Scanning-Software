@@ -46,6 +46,7 @@ import sys
 if sys.version_info > (3,):
     long = int
 
+from traceback import format_exc
 
 class NoPortSelectedError(Error):
     """Please open a port first."""
@@ -122,7 +123,6 @@ class SerialServer(LabradServer):
             try:
                 c['PortObject'] = Serial(port, timeout=0) # Do not set dsrdtr=True, it will mess up the port
             except SerialException as e:
-                from traceback import format_exc
                 print("--------------")
                 print("Cannot open port, Error:")
                 print(format_exc())
@@ -311,7 +311,10 @@ class SerialServer(LabradServer):
             try:
                 recd = recd.decode("utf-8")
             except UnicodeDecodeError:
-                print("Error: Unicode decoding error: ",recd)
+                print("Error read: Unicode decoding error: ",recd)
+                print("-------------------------")
+                print(format_exc())
+                print("-------------------------")
                 print("Byte ignored to not crash the process.")
                 recd = recd.decode("utf-8","ignore")
         return recd
@@ -354,7 +357,10 @@ class SerialServer(LabradServer):
             try:
                 recd = recd.decode("utf-8")
             except UnicodeDecodeError:
-                print("Error: Unicode decoding error: ",recd)
+                print("read_line Error: Unicode decoding error: ",recd)
+                print("-------------------------")
+                print(format_exc())
+                print("-------------------------")
                 print("Byte ignored to not crash the process.")
                 recd = recd.decode("utf-8","ignore")
         returnValue(recd)

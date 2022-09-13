@@ -130,6 +130,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         #Updates the bias and blink modes
         self.comboBox_biasSweepMode.currentIndexChanged.connect(self.updateBiasSweepMode)
         self.comboBox_blinkMode.currentIndexChanged.connect(self.updateBlinkMode)
+        self.comboBox_magnetPower.currentIndexChanged.connect(self.updateMagnetSupply)
 
         #Checks that the min/max field/bias values are in a sensible range and in the correct format
         self.lineEdit_fieldMax.editingFinished.connect(self.updateFieldMax)
@@ -353,13 +354,31 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 print("'nSOT DAC' not found, LabRAD connection to nSOT Characterizer Failed.")
                 return
 
-
+            #By default empty the magnet power supply comboBox
+            self.comboBox_magnetPower.clear()
+            self.magnets = {}
+            
+            if 'Magnet X' in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers['Magnet X']
+                if svr:
+                    self.magnets['Magnet X'] = cnt
+                    self.comboBox_magnetPower.addItem('Magnet X')
+            if 'Magnet Y' in equip.servers:
+                svr, ln, device_info, cnt, config = equip.servers['Magnet Y']
+                if svr:
+                    self.magnets['Magnet Y'] = cnt
+                    self.comboBox_magnetPower.addItem('Magnet Y')
             if 'Magnet Z' in equip.servers:
                 svr, ln, device_info, cnt, config = equip.servers['Magnet Z']
                 if svr:
-                    self.magnet = cnt
-                    self.comboBox_magnetPower.addItem(device_info)
+                    
+                    self.magnets['Magnet Z'] = cnt
+                    self.comboBox_magnetPower.addItem('Magnet Z')
                     self.warning_label.setStyleSheet("#warning_label{color:rgb(0, 0, 0)}")
+                    
+                    # By default select magnet Z
+                    self.comboBox_magnetPower.setCurrentText('Magnet Z')
+                    self.magnet = self.magnets['Magnet Z']
                 else:
                     print("'Magnet Z' not found in  nSOT Characterizer.")
                     self.magnet = False
@@ -368,7 +387,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 print("'Magnet Z' not found in  nSOT Characterizer.")
                 self.magnet = False
                 self.warning_label.setStyleSheet("#warning_label{color:rgb(255, 0, 0)}")
-
+            
             if "Blink Device" in equip.servers:
                 svr, labrad_name, device_info, cnt, config = equip.servers["Blink Device"]
                 #Create a connection to the proper device for blinking
@@ -402,10 +421,6 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             printErrorInfo()
 
     def disconnectLabRAD(self):
-        try:
-            self.comboBox_magnetPower.removeItem(0)
-        except:
-            pass
         self.cxn = False
         self.gen_dv = False
         self.dv = False
@@ -576,6 +591,10 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def updateBlinkMode(self):
         self.sweepParamDict['blink mode'] = self.comboBox_blinkMode.currentIndex()
+    
+    def updateMagnetSupply(self):
+        key = self.comboBox_magnetPower.currentText()
+        self.magnet = self.magnets[key]
 
     def updateSweepTime(self):
         #Define local variables just to make equation not ridiculously long
@@ -681,7 +700,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         self.abortFlag = True
 
     @inlineCallbacks
-    def startSweep(self):
+    def startSweep(self, prompt=True):
         if self.magnet == False:
             print("nSOT Characterizer: No Magnet aborting sweep")
             return
@@ -695,7 +714,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         yield self.updateSweepTime()
 
         #Have user review the sweep parameters before starting
-        if not self.abortFlag:
+        if not self.abortFlag and prompt:
             #checkSweepParams = DialogBox(self.settingsDict['Magnet device'], self.sweepParamDict, self)
             checkSweepParams = DialogBox('Magnet Z', self.sweepParamDict, self)
             #If the user does not like the sweep parameters, abort the sweep
@@ -1410,9 +1429,10 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         val = yield self.dac.read_voltage(fdbk_input)
         returnValue(val)
 
-    # @inlineCallbacks
-    # def runSweep(self):
-    #     yield self.initSweep() #Starts the sweep.
+    @inlineCallbacks
+    def runSweep(self):
+        yield self.startSweep(self, prompt=False) # Start the sweep without bringing up Dialog box
+        #yield self.initSweep() #Starts the sweep.
 
 #----------------------------------------------------------------------------------------------#
     """ The following section has generally useful functions."""
@@ -1584,7 +1604,7 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
         self.dataPlotItem = pg.PlotCurveItem()
 
         self.push_startSweep.clicked.connect(lambda: self.sweep())
-        self.push_showFitBtn.clicked.connect(self.showFitFunc)
+        #self.push_showFitBtn.clicked.connect(self.showFitFunc)
         self.btnAction = 'sweep'
 
         self.flag_IcLineShowing = False

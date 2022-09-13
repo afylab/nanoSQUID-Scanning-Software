@@ -175,13 +175,6 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             self.serversConnected = True
             
-            # Save coarse positioner data for approach debugging
-            self.t0 = equip.sync_time
-            self.dv_coarse = yield equip.get_datavault()
-            yield self.dv_coarse.new("Coarse Positioner data versus time", ["Time (s)"], ["X Coarse", "Y Coarse", "Z Coarse"])
-            dset = yield self.dv_coarse.current_identifier()
-            print("Coarse Positioner Data Saving To:", dset)
-
             if self.anc350 != None:
                 yield self.loadParameters()
                 self.MonitorStatus()
@@ -289,7 +282,6 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 self.pushButton_Status[i].setStyleSheet(stylesheet)
             if self.CurrentPosition[2] >= 0: # They read negative values when grounded
                 self.newZCoarseData.emit(self.CurrentPosition[2])
-                self.dv_coarse.add(time.time()-self.t0, self.CurrentPosition[0], self.CurrentPosition[1], self.CurrentPosition[2])
         except Exception as inst:
             self.anc_err_count += 1
             #printErrorInfo()
@@ -453,7 +445,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         else:
             self.OutputEnabled[AxisNo] = False
             yield self.anc350.set_axis_output(AxisNo, False, False)
-
+    
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
         other operations to be done elsewhere while paused."""

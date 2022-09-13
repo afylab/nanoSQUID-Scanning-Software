@@ -1253,6 +1253,9 @@ color: rgb(168,168,168);
       <property name="text">
        <string>Auto-threshhold: </string>
       </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
      </widget>
      <widget class="QPushButton" name="push_setPLLThresh">
       <property name="geometry">
@@ -1433,6 +1436,76 @@ border-radius: 5px
     </property>
     <property name="text">
      <string>General Approach Settings</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_ImageNum">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>60</y>
+      <width>81</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#label_ImageNum{
+color: rgb(168, 168, 168)
+}</string>
+    </property>
+    <property name="text">
+     <string>Approach Log:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_ImageNum">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>60</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>101</width>
+      <height>20</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>101</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="toolTip">
+     <string>Updates when scan starts</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#lineEdit_ImageNum{
+background: rgb(181, 181, 181);
+border: grey;
+}</string>
+    </property>
+    <property name="text">
+     <string>N/A</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>

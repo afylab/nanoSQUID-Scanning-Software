@@ -79,8 +79,8 @@ background: black
     <widget class="QLabel" name="label_title_15">
      <property name="geometry">
       <rect>
-       <x>90</x>
-       <y>30</y>
+       <x>100</x>
+       <y>20</y>
        <width>191</width>
        <height>20</height>
       </rect>
@@ -108,7 +108,7 @@ color:rgb(168,168,168)
      <property name="geometry">
       <rect>
        <x>90</x>
-       <y>90</y>
+       <y>60</y>
        <width>71</width>
        <height>20</height>
       </rect>
@@ -124,7 +124,7 @@ color:rgb(168,168,168)
      <property name="geometry">
       <rect>
        <x>280</x>
-       <y>90</y>
+       <y>60</y>
        <width>71</width>
        <height>20</height>
       </rect>
@@ -140,7 +140,7 @@ color:rgb(168,168,168)
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>90</y>
+       <y>60</y>
        <width>111</width>
        <height>22</height>
       </rect>
@@ -153,13 +153,129 @@ color:rgb(168,168,168)
      <property name="geometry">
       <rect>
        <x>210</x>
-       <y>90</y>
+       <y>60</y>
        <width>111</width>
        <height>22</height>
       </rect>
      </property>
      <property name="text">
       <string>Step Delay: </string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_16">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>100</y>
+       <width>111</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Max Steps:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_17">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>130</y>
+       <width>111</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Sample After:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_18">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>160</y>
+       <width>111</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Equilibration Time:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_Atto_MaxSteps">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>100</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_Atto_SampleSteps">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>130</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_Atto_Equilib">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>160</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_19">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>100</y>
+       <width>111</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>ANC Nominal Dist:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_Atto_Nominal">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>100</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
    </widget>

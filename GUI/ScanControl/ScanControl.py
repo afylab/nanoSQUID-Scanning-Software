@@ -74,6 +74,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.Atto_X_Voltage = 0.0
         self.Atto_Y_Voltage = 0.0
         self.Atto_Z_Voltage = 0.0
+        # print("init", self.Atto_Z_Voltage)
 
         #When moving in constant height mode, all movement will happen on a plane defined by tilts in the x and y
         #direction, as well as the point on the plane where we approached for constant height. In meters.
@@ -130,7 +131,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 'z out'               : 1,         # 1 indexed DAC output that goes to constant gain on Z
                 'x out'               : 2,         # 1 indexed DAC output that goes to X
                 'y out'               : 3,         # 1 indexed DAC output that goes to Y
-                'blink out'           : 1,         # 1 indexed DC Box output that goes to blinking
+                'blink out'           : 4,         # 1 indexed DC Box output that goes to blinking
         }
 
         #Random number that is not real data. This lets us know when plotting which values are real data, and which can just be ignored.
@@ -329,6 +330,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.Atto_X_Voltage = yield self.dac.read_dac_voltage(self.outputs['x out']-1)
             self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out']-1)
             self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out']-1)
+            # print("loadCurrentState", self.Atto_Z_Voltage)
 
             self.updatePosition()
         except:
@@ -1169,6 +1171,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         output voltage on the Z channel to make sure there's no mismatch.
         '''
         self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out']-1)
+        # print("updateConstantHeightStatus", self.Atto_Z_Voltage)
         self.updateScanPlaneCenter()
 
         if status:
@@ -1397,6 +1400,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 out_list = [self.outputs['z out']-1, self.outputs['x out']-1,self.outputs['y out']-1]
                 yield self.dac.buffer_ramp_dis(out_list,[0],[startz,startx, starty],[stopz, stopx, stopy], points, delay,2)
                 self.Atto_Z_Voltage = stopz
+                # print("setPosition", self.Atto_Z_Voltage)
             else:
                 out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
                 yield self.dac.buffer_ramp_dis(out_list,[0],[startx, starty],[stopx, stopy], points, delay,2)
@@ -1419,6 +1423,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         #By default ramps output 0 from the current z voltage back to 0 with 1000 points at 1 ms delay
         yield self.dac.ramp1(self.outputs['z out']-1, self.Atto_Z_Voltage, 0.0, 1000, 1000)
         self.Atto_Z_Voltage = 0.0
+        # print("zeroOffset", self.Atto_Z_Voltage)
         print('Z voltage from the scan module has been zeroed')
 
         #DAC messes up with ramp commands and doesn't get fully read. This clears the buffer

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
+    <width>789</width>
     <height>500</height>
    </rect>
   </property>
@@ -53,7 +53,35 @@ color:rgb(168,168,168)
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1,10,0,1,0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,1,10,0,1,0">
+      <item>
+       <widget class="QPushButton" name="push_Servers">
+        <property name="minimumSize">
+         <size>
+          <width>15</width>
+          <height>15</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>15</width>
+          <height>15</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Push to see server requirements. </string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">#push_Servers{
+background: rgb(144, 140, 9);
+ border-radius: 4px;
+}</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QLabel" name="label">
         <property name="text">

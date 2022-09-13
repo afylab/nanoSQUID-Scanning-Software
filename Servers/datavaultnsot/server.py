@@ -341,12 +341,17 @@ class DataVault(LabradServer):
         of the dataset.  By default, only new data that has not been seen
         in this context is returned.
         """
-        dataset = self.getDataset(c)
-        c['filepos'] = 0 if startOver else c['filepos']
-        data, c['filepos'] = dataset.getData(limit, c['filepos'], simpleOnly=True)
-        key = self.contextKey(c)
-        dataset.keepStreaming(key, c['filepos'])
-        return data
+        try:
+            dataset = self.getDataset(c)
+            c['filepos'] = 0 if startOver else c['filepos']
+            data, c['filepos'] = dataset.getData(limit, c['filepos'], simpleOnly=True)
+            key = self.contextKey(c)
+            dataset.keepStreaming(key, c['filepos'])
+            return data
+        except:
+            from traceback import format_exc
+            print(format_exc)
+            return None
 
     @setting(1021, limit='w', startOver='b', returns='?')
     def get_ex(self, c, limit=None, startOver=False):
