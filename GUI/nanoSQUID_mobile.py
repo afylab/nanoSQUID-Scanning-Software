@@ -34,8 +34,8 @@ class nanoSQUID_mobile(nanoSQUIDSystem):
             # }
         # self.equip.add_server("LS 335", "lakeshore_335", config=conf)
 
-        conf = {'max_field':1, "max_ramp":1, 'toeCurChan':2, 'toeVoltsChan':3}
-        self.equip.add_server("Magnet Z", "dac_adc", "DA16_16_02 (COM4)", controller=MagnetControllers.Toeller_Power_Supply, config=conf)
+        conf = {'max_field':12, "max_ramp":0.3}
+        self.equip.add_server("Magnet Z", "mercury_ips_server", controller=MagnetControllers.IPSMagnetControl, config=conf)
 
 #
 

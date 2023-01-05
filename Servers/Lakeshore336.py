@@ -132,8 +132,8 @@ class LakeShore336Wrapper(DeviceWrapper):
 
 
 class LakeShore336Server(DeviceServer):
-    name = 'lakeshore_336'
-    deviceName = 'Lake Shore 336 temperature controller'
+    name = 'LakeShore336'
+    deviceName = 'lakeshore335'
     deviceWrapper = LakeShore336Wrapper
 
     @inlineCallbacks

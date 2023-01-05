@@ -263,7 +263,7 @@ class MagnetUI(QtWidgets.QWidget, MagnetWidget):
                 yield self.controller.doneSweeping()
                 print("Done Sweeping to Setpoint")
             else:
-                yield self.controller.goToSetpoint(wait=False)
+                yield self.controller.goToSetpoint(False)
             self.setting_value = False
             self.updateSwitchStatus()
         except:

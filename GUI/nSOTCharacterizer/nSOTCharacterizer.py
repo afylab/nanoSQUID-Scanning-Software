@@ -877,7 +877,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         if hasattr(self.magnet, "fastToSetpoint"):
             yield self.magnet.fastToSetpoint(wait=False)
         else:
-            yield self.magnet.goToSetpoint(wait=False)
+            yield self.magnet.goToSetpoint(wait = False)
 
         print('Setting field to ' + str(B_f))
 

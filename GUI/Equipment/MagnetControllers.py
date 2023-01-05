@@ -5,6 +5,8 @@ from twisted.internet.defer import inlineCallbacks, Deferred
 from Equipment.Equipment import EquipmentController
 from nSOTScannerFormat import printErrorInfo
 import numpy as np
+from datetime import datetime
+import time
 
 class MagnetControl(EquipmentController):
     def __init__(self, widget, device_info, config, reactor):
@@ -40,7 +42,7 @@ class MagnetControl(EquipmentController):
         self.persist = False # If the supply is in persistent field mode
         self.autopersist = True # Automatically go into persistent mode when done ramping/scanning.
     #
-
+    
     def connect(self, server):
         '''
         Connect to the device for the given server by calling select_device
@@ -480,12 +482,12 @@ class Toeller_Power_Supply(MagnetControl):
     #
 
     @inlineCallbacks
-    def goToSetpoint(self):
+    def goToSetpoint(self, wait = False):
         yield self.toeSweepField(self.B, self.setpoint_B, self.ramprate)
     #
 
     @inlineCallbacks
-    def goToZero(self):
+    def goToZero(self, wait = False):
         yield self.toeSweepField(self.B, 0.0, self.ramprate)
     #
     
@@ -758,3 +760,169 @@ class Cryomag4G_Power_Supply(MagnetControl):
             yield self.sleep(1)
     #
 #
+
+class IPSMagnetControl(MagnetControl):
+    @inlineCallbacks
+    def readInitialValues(self):
+        '''
+        Read the starting configuration of a magnet power supply.
+
+        OVERRIDE for a specific magnet controller.
+        '''
+        yield self.poll()
+        yield self.queryPersist()
+    #
+
+    @inlineCallbacks
+    def poll(self):
+        '''
+        Read out the current values from the equipment: field, current and voltage. Will update the output
+        values if self.persist is False and the magnet values if self.persist is True.
+
+        OVERRIDE for a specific magnet controller.
+        '''
+        self.queryPersist()
+        try:
+            if self.persist:
+                val = yield self.server.get_persistent_field()
+                self.persist_B = float(val)
+
+                val = yield self.server.get_persistent_current()
+                self.persist_current = float(val)
+            else:
+                self.persist_B = 0
+                self.persist_current = 0
+
+            # The "Demand Field" during charging
+            val = yield self.server.get_field()
+            self.B = float(val)
+
+            # The demand "Output" current
+            val = yield self.server.get_current()
+            self.current = float(val)
+
+            # The charging voltage
+            val = yield self.server.get_volts()
+            self.output_voltage = float(val)
+        except Exception as inst:
+            print(inst)
+            printErrorInfo()
+        pass
+    #
+
+    @inlineCallbacks
+    def goToSetpoint(self, wait=True):
+        '''
+        Ramps to the setpoint. setSetpoint and setRampRate should be called first
+        to configure this ramp.
+
+        OVERRIDE for a specific magnet controller.
+        '''
+        yield self.server.set_field_ramp_rate(self.ramprate)
+        yield self.server.set_target_field(self.setpoint_B)
+        yield self.server.start_ramping()
+        if True:
+            #Only finish running the gotoField function when the field is reached
+            while True:
+                yield self.poll()
+                if self.B <= self.setpoint_B+0.00001 and self.B >= self.setpoint_B-0.00001:
+                    break
+                elif self.abort_wait:
+                    self.abort_wait = False
+                    break
+                yield self.sleep(0.25)
+            yield self.sleep(0.25)
+        self.server.stop_ramping()
+        pass
+    #
+
+    @inlineCallbacks
+    def goToZero(self, wait=True):
+        '''
+        Zero the current through the magnet.
+
+        OVERRIDE for a specific magnet controller.
+        '''
+        yield self.server.set_field_ramp_rate(self.ramprate)
+        yield self.server.set_target_field(0)
+            
+        yield self.server.start_ramping()
+        if True:
+            while True:
+                yield self.poll()
+                if self.B <= 0.00001 and self.B >= -0.00001:
+                    break
+                elif self.abort_wait:
+                    self.abort_wait = False
+                    break
+                yield self.sleep(0.25)
+            yield self.sleep(0.25)
+        self.server.stop_ramping()
+        pass
+    #
+
+    @inlineCallbacks
+    def queryPersist(self):
+        '''
+        Read from the supply is the persistent switch heater is on.
+
+        OVERRIDE for a specific magnet controller.
+        '''        
+        a = yield self.server.get_switch_heater_status()
+        if a == 'ON':
+            self.persist = False
+            self.status = "Charging"
+        else:
+            if a =='OFF':
+                self.persist = True
+                self.status = "Persist"
+            else:
+                self.persist = False
+                self.status = "Error"
+            
+    #
+    
+    @inlineCallbacks
+    def quiryPersist(self):
+        '''
+        Read from the supply is the persistent switch heater is on.
+
+        OVERRIDE for a specific magnet controller.
+        '''        
+        a = yield self.server.get_switch_heater_status()
+        if a == 'ON':
+            self.persist = False
+            self.status = "Charging"
+        else:
+            if a =='OFF':
+                self.persist = True
+                self.status = "Persist"
+            else:
+                self.persist = False
+                self.status = "Error"
+
+    @inlineCallbacks
+    def togglePersist(self):
+        '''
+        Switches into or out of persistent mode.
+
+        OVERRIDE for a specific magnet controller.
+        '''
+        try:
+            yield self.queryPersist()
+            if not self.persist:
+                yield self.server.switchheateroff()
+                yield self.sleep_still_poll(310)
+            else:
+                yield self.server.switchheateron()
+                if not self.persist:
+                    yield self.sleep_still_poll(310)
+                else:
+                    print('Warning! Persistent switch did not toggle. Probably the output did not math the persistent current')
+        except:
+            printErrorInfo()
+        
+        pass
+    #
+    def set_field_ramp_rate(self):
+        self.server.set_field_ramp_rate(self.ramprate)

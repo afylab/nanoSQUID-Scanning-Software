@@ -25,7 +25,7 @@ from ScriptingModule import Scripting, Simulation
 from TemperatureControl import TemperatureControl
 #from QRreader import QRreader
 from GoToSetpoint import gotoSetpoint
-#from DeviceSelect import DeviceSelect
+from DeviceSelect import DeviceSelect
 from SampleCharacterizer import SampleCharacterizer
 
 from nSOTScannerFormat import printErrorInfo
@@ -120,7 +120,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         '''
         #self.ScanControl = ScanControl.Window(self.reactor, None)
         self.LabRAD = LabRADConnect.Window(self.reactor, None)
-        #self.DeviceSelect = DeviceSelect.Window(self.reactor, None)
+        self.DeviceSelect = DeviceSelect.Window(self.reactor, None)
         self.nSOTChar = nSOTCharacterizer.Window(self.reactor, None)
         #self.PlottingModule = PlottingModule.CommandCenter(self.reactor, None)
         #self.TFChar = TFCharacterizer.Window(self.reactor, None)
