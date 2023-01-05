@@ -1,0 +1,10 @@
+system;magnet supply,None;specific supply,None;blink device,None;coarse positioner,None
+approach and TF;dc_box,None;hf2li,None
+scan;dac_adc,None
+nsot;dac_adc,None
+sample;dac_adc,None;dc_box,None
+
+system;toellner dac voltage,4;toellner dac current,3;blink channel,2
+approach and TF;pll input,1;pll output,1;pid z out,1;z monitor,1;sum board toggle,1
+scan;z out,1;x out,2;y out,3
+nsot;DC Readout,3;Noise Readout,2;nSOT Bias,4;Bias Reference,4;nSOT Gate,1;Gate Reference,1
