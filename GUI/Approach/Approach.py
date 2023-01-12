@@ -276,7 +276,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 return
 
             self.t0 = equip.sync_time
-            self.last_touchdown_time = self.t0
+            self.last_touchdown_time = 0
             # Setup to save the data for approach debugging.
             self.dv = yield equip.get_datavault()
             file_info = yield self.dv.new("Approach log", ["Start Time (s)"], ["start Z", "end Z", "delta", "num steps"])
