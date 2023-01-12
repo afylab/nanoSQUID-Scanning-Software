@@ -551,7 +551,7 @@ class sr860Server(GPIBManagedServer):
     def sine_out_amplitude(self, c, amp = None):
         """
         Set/get the amplitude of the sine out.
-        Accepts values between .004 and 5.0 V.
+        Accepts values between 1 nV and 2.0 V.
         """
         dev = self.selectedDevice(c)
         if amp is None:

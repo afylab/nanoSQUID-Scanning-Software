@@ -131,6 +131,7 @@ class LoopTimer():
                 self.N = total.size
             else:
                 self.N = 0
+            self.label.setText("Starting Script")
         except Exception as e:
             if self.printErr:
                 self.printErr = False

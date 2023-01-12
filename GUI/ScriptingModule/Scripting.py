@@ -5,6 +5,8 @@ from nSOTScannerFormat import readNum, formatNum, printErrorInfo
 from ScriptingModule import syntax
 from Resources.customwidgets import LoopTimer
 from traceback import format_exc
+from os import chdir
+from sys import path as syspath
 
 path = sys.path[0] + r"\ScriptingModule"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\Scripting.ui")
@@ -30,6 +32,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.default_script_dir = kwargs["default_script_dir"]
         else:
             self.default_script_dir = "C:\\Users"
+        chdir(self.default_script_dir)
+        syspath.append(self.default_script_dir)
 
         self.setupUi(self)
         self.setupAdditionalUi()

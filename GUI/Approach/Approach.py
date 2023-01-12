@@ -276,6 +276,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 return
 
             self.t0 = equip.sync_time
+            self.last_touchdown_time = self.t0
             # Setup to save the data for approach debugging.
             self.dv = yield equip.get_datavault()
             file_info = yield self.dv.new("Approach log", ["Start Time (s)"], ["start Z", "end Z", "delta", "num steps"])
@@ -898,8 +899,11 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 self.zData.pop()
 
                 #Also monitor the other aux input in case anything useful is hooked up to it
-                aux2_voltage = yield self.hf.get_aux_input_value(self.generalSettings['z_mon_input']%2+1)
-                self.newAux2Data.emit(aux2_voltage)
+                try:
+                    aux2_voltage = yield self.hf.get_aux_input_value(self.generalSettings['z_mon_input']%2+1)
+                    self.newAux2Data.emit(aux2_voltage)
+                except:
+                    print("Error reading aux2 voltage")
 
                 #Wait 100ms before going through the loop again
                 yield self.sleep(0.1)
@@ -1394,11 +1398,23 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         #This should just be the mean and std of the past 100 data points taken
         mean = np.mean(self.deltafData)
         std = np.std(self.deltafData)
-
+        
+        current_time = time.time()-self.t0
+        # If 30 seconds has not passed since the last touchdown show a warning.
+        if current_time - self.last_touchdown_time < 30:
+            msgBox = QtWidgets.QMessageBox(self)
+            msgBox.setIcon(QtWidgets.QMessageBox.Information)
+            msgBox.setWindowTitle('Warning')
+            msgBox.setText("\r\n Cannot set PLL threshold less than 30 seconds after a touchdown.")
+            msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+            msgBox.exec_()
+            return
+        
         print("Mean and standard deviation of past 100 points: ", mean, std)
-
+        
         new_thresh = mean + 4*std
-
+        
         if 0.008 < new_thresh < 200:
             self.radioButton_plus.setChecked(True)
             self.radioButton_minus.setChecked(False)
@@ -1495,9 +1511,9 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 #too close to be able to set the range properly
                 result = yield self.setPIDOutputRange(end_voltage)
                 
-                current_time = time.time()-self.t0
+                self.last_touchdown_time = time.time()-self.t0
                 # Print out the current surface hight, round to nearest second and nm for easy computation
-                print('time, surface height:', round(current_time), round(self.contactHeight/1e-9))
+                print('time, surface height:', round(self.last_touchdown_time), round(self.contactHeight/1e-9))
 
                 if result:
                     #Turn PID back on so that if there's drift or the sample is taller than expected,

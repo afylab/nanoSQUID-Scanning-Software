@@ -90,6 +90,7 @@ class EquipmentHandler():
 
         self.cxn = False
         self.dv = False
+        self.reg = False
         self.ip = '127.0.0.1'
         self.compname = computer
         self.reactor = reactor
@@ -203,6 +204,10 @@ class EquipmentHandler():
             if "LabRAD" in self.widgets:
                 self.widgets["LabRAD"].error()
             return
+            
+        # NEW, need to DEBUG
+        cxn = yield connectAsync(host=self.ip, password='pass')
+        self.reg = getattr(cxn, 'registry')
 
         # Loop through servers and connect
         for name in self.servers.keys():

@@ -1069,7 +1069,11 @@ class HF2LIServer(LabradServer):
     def get_aux_input_value(self,c,aux_in_index):
         """Gets the Auxilary Input (1 through 2) latest input value."""
         setting = '/%s/auxins/0/values/%d' % (self.dev_ID, aux_in_index-1)
-        val = yield self.daq.getDouble(setting)
+        try:
+            val = yield self.daq.getDouble(setting)
+        except:
+            print(format_exc())
+            val = 0 # register as a bad value
         returnValue(val)
 
 #------------------------------------------------------------------------------------------------------------------------------------------#
