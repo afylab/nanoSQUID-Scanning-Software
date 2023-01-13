@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>734</width>
-    <height>641</height>
+    <width>678</width>
+    <height>682</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -546,7 +546,7 @@ border:1px solid rgb(168,168,168)
       <property name="frameShadow">
        <enum>QFrame::Raised</enum>
       </property>
-      <layout class="QGridLayout" name="gridLayout_8" rowstretch="2,0,0" columnstretch="1,1">
+      <layout class="QGridLayout" name="gridLayout_8" rowstretch="2,0,0" columnstretch="1,0">
        <item row="0" column="1">
         <widget class="QPushButton" name="pushButton_Status_Axis1">
          <property name="sizePolicy">
@@ -850,75 +850,7 @@ border-radius: 5px
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
          </property>
-         <layout class="QGridLayout" name="gridLayout_6" columnstretch="3,2,1" rowminimumheight="1,1,1,3">
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_13">
-            <property name="text">
-             <string>Amplitude</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLineEdit" name="lineEdit_Amplitude_Axis1">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>Aplitude applied in one pulse, maximum 60V.</string>
-            </property>
-            <property name="text">
-             <string>default</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>V</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_14">
-            <property name="text">
-             <string>Frequency</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QLineEdit" name="lineEdit_Frequency_Axis1">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>Frequency applied in one step, maximum 5k Hz. Resolution 1 Hz</string>
-            </property>
-            <property name="text">
-             <string>default</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
+         <layout class="QGridLayout" name="gridLayout_6" columnstretch="3,0,0" rowminimumheight="0,0,0,0,0">
           <item row="2" column="2">
            <widget class="QLabel" name="label_3">
             <property name="text">
@@ -937,7 +869,7 @@ border-radius: 5px
             <property name="frameShadow">
              <enum>QFrame::Raised</enum>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="2,1,2">
+            <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0">
              <property name="topMargin">
               <number>0</number>
              </property>
@@ -992,6 +924,74 @@ border-radius: 5px
             </layout>
            </widget>
           </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>Amplitude</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="lineEdit_Amplitude_Axis1">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Aplitude applied in one pulse, maximum 60V.</string>
+            </property>
+            <property name="text">
+             <string>default</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>V</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="lineEdit_Frequency_Axis1">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Frequency applied in one step, maximum 5k Hz. Resolution 1 Hz</string>
+            </property>
+            <property name="text">
+             <string>default</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_14">
+            <property name="text">
+             <string>Frequency</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
           <item row="0" column="0" colspan="3">
            <widget class="QLabel" name="label_12">
             <property name="text">
@@ -1000,6 +1000,72 @@ border-radius: 5px
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
+           </widget>
+          </item>
+          <item row="4" column="0" colspan="3">
+           <widget class="QFrame" name="frame_10">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_16">
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="pushButton_ManualContMinus_Axis1">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Continuous-</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="autoRepeat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_13">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>6</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_ManualContPlus_Axis1">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Continuous+</string>
+               </property>
+               <property name="autoRepeat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
          </layout>
@@ -1021,43 +1087,7 @@ border:1px solid rgb(168,168,168)
       <property name="frameShadow">
        <enum>QFrame::Raised</enum>
       </property>
-      <layout class="QGridLayout" name="gridLayout_9" rowstretch="2,3,2" columnstretch="1,1" columnminimumwidth="1,1">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_10">
-         <property name="font">
-          <font>
-           <pointsize>12</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Axis 2</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QPushButton" name="pushButton_Status_Axis2">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">#pushButton_Status_Axis2{
-image:url(:/nSOTScanner/Pictures/ManOverCurrent.png);
-background: black;
-border: 0px solid rgb(95,107,166);
-}
-</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
+      <layout class="QGridLayout" name="gridLayout_9" rowstretch="2,0,0" columnstretch="1,0">
        <item row="1" column="0" colspan="2">
         <widget class="QFrame" name="frame_AutomaticPositioning_Axis1_2">
          <property name="layoutDirection">
@@ -1325,85 +1355,7 @@ border-radius: 5px
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
          </property>
-         <layout class="QGridLayout" name="gridLayout_11" columnstretch="3,2,1" rowminimumheight="1,1,1,3">
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_21">
-            <property name="text">
-             <string>Amplitude</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLineEdit" name="lineEdit_Amplitude_Axis2">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>Aplitude applied in one pulse, maximum 60V.</string>
-            </property>
-            <property name="text">
-             <string>default</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QLabel" name="label_22">
-            <property name="text">
-             <string>V</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_23">
-            <property name="text">
-             <string>Frequency</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QLineEdit" name="lineEdit_Frequency_Axis2">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>Frequency applied in one step, maximum 5k Hz. Resolution 1 Hz</string>
-            </property>
-            <property name="text">
-             <string>default</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QLabel" name="label_24">
-            <property name="text">
-             <string>Hz</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
+         <layout class="QGridLayout" name="gridLayout_11" columnstretch="3,0,0" rowminimumheight="0,0,0,0,0">
           <item row="3" column="0" colspan="3">
            <widget class="QFrame" name="frame_6">
             <property name="frameShape">
@@ -1412,7 +1364,7 @@ border-radius: 5px
             <property name="frameShadow">
              <enum>QFrame::Raised</enum>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="2,1,2">
+            <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="0,0,0">
              <property name="topMargin">
               <number>0</number>
              </property>
@@ -1467,6 +1419,84 @@ border-radius: 5px
             </layout>
            </widget>
           </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="lineEdit_Amplitude_Axis2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Aplitude applied in one pulse, maximum 60V.</string>
+            </property>
+            <property name="text">
+             <string>default</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_22">
+            <property name="text">
+             <string>V</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_21">
+            <property name="text">
+             <string>Amplitude</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="lineEdit_Frequency_Axis2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Frequency applied in one step, maximum 5k Hz. Resolution 1 Hz</string>
+            </property>
+            <property name="text">
+             <string>default</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_23">
+            <property name="text">
+             <string>Frequency</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QLabel" name="label_24">
+            <property name="text">
+             <string>Hz</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
           <item row="0" column="0" colspan="3">
            <widget class="QLabel" name="label_25">
             <property name="text">
@@ -1477,7 +1507,106 @@ border-radius: 5px
             </property>
            </widget>
           </item>
+          <item row="4" column="0" colspan="3">
+           <widget class="QFrame" name="frame_9">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_15">
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="pushButton_ManualContMinus_Axis2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Continuous-</string>
+               </property>
+               <property name="autoRepeat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_12">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>5</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_ManualContPlus_Axis2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Continuous+</string>
+               </property>
+               <property name="autoRepeat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
          </layout>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_10">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Axis 2</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="pushButton_Status_Axis2">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#pushButton_Status_Axis2{
+image:url(:/nSOTScanner/Pictures/ManOverCurrent.png);
+background: black;
+border: 0px solid rgb(95,107,166);
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
         </widget>
        </item>
       </layout>
@@ -1496,25 +1625,7 @@ border:1px solid rgb(168,168,168)
       <property name="frameShadow">
        <enum>QFrame::Raised</enum>
       </property>
-      <layout class="QGridLayout" name="gridLayout_12" rowstretch="2,3,2" columnstretch="1,1" columnminimumwidth="1,1">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_26">
-         <property name="font">
-          <font>
-           <pointsize>12</pointsize>
-          </font>
-         </property>
-         <property name="styleSheet">
-          <string notr="true"/>
-         </property>
-         <property name="text">
-          <string>Axis 3</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
+      <layout class="QGridLayout" name="gridLayout_12" rowstretch="2,0,0" columnstretch="1,0">
        <item row="0" column="1">
         <widget class="QPushButton" name="pushButton_Status_Axis3">
          <property name="sizePolicy">
@@ -1803,17 +1914,7 @@ border-radius: 5px
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
          </property>
-         <layout class="QGridLayout" name="gridLayout_14" columnstretch="3,2,1" rowminimumheight="1,1,1,3">
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_32">
-            <property name="text">
-             <string>Amplitude</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
+         <layout class="QGridLayout" name="gridLayout_14" columnstretch="3,0,0">
           <item row="1" column="1">
            <widget class="QLineEdit" name="lineEdit_Amplitude_Axis3">
             <property name="sizePolicy">
@@ -1837,6 +1938,16 @@ border-radius: 5px
            <widget class="QLabel" name="label_33">
             <property name="text">
              <string>V</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_32">
+            <property name="text">
+             <string>Amplitude</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -1882,6 +1993,16 @@ border-radius: 5px
             </property>
            </widget>
           </item>
+          <item row="0" column="0" colspan="3">
+           <widget class="QLabel" name="label_39">
+            <property name="text">
+             <string>Manual Positioning</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
           <item row="3" column="0" colspan="3">
            <widget class="QFrame" name="frame_7">
             <property name="frameShape">
@@ -1890,7 +2011,7 @@ border-radius: 5px
             <property name="frameShadow">
              <enum>QFrame::Raised</enum>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="2,1,2">
+            <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="0,0,0">
              <property name="topMargin">
               <number>0</number>
              </property>
@@ -1937,6 +2058,12 @@ border-radius: 5px
                <property name="text">
                 <string>Step+</string>
                </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
                <property name="autoRepeat">
                 <bool>true</bool>
                </property>
@@ -1945,17 +2072,97 @@ border-radius: 5px
             </layout>
            </widget>
           </item>
-          <item row="0" column="0" colspan="3">
-           <widget class="QLabel" name="label_39">
-            <property name="text">
-             <string>Manual Positioning</string>
+          <item row="4" column="0" colspan="3">
+           <widget class="QFrame" name="frame_8">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
             </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
             </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_14">
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="pushButton_ManualContMinus_Axis3">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Continuous-</string>
+               </property>
+               <property name="autoRepeat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_11">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>6</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_ManualContPlus_Axis3">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Continuous+</string>
+               </property>
+               <property name="autoRepeat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
          </layout>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_26">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>Axis 3</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
         </widget>
        </item>
       </layout>

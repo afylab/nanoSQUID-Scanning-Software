@@ -122,7 +122,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
         #Height at which the previous approach made contact
         self.contactHeight = 0
-
+        self.previous_contactHeight = 0
         #Initialize short arrays locally keeping track of the PLL frequency (deltaFdata)
         #and the z extension of the sensor (zData). These are used to determine
         #whether or not the tip is in contact with the surface.
@@ -265,19 +265,20 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
             # Setup to save the data for approach debugging.
             self.t0 = equip.sync_time
-            self.dv_PLL = yield equip.get_datavault()
-            yield self.dv_PLL.new("PLL data versus time", ["Time (s)"], ["delta f", "Phase Error"])
-            dset = yield self.dv_PLL.current_identifier()
-            print("PLL Data Saving To:", dset)
-            self.dv_Zext = yield equip.get_datavault()
-            yield self.dv_Zext.new("Z extension data versus time", ["Time (s)"], ["Z Extension"])
-            dset = yield self.dv_Zext.current_identifier()
-            print("Z Extension Data Saving To:", dset)
+            self.last_touchdown_time = 0 #self.t0
+            # self.dv_PLL = yield equip.get_datavault()
+            # yield self.dv_PLL.new("PLL data versus time", ["Time (s)"], ["delta f", "Phase Error"])
+            # dset = yield self.dv_PLL.current_identifier()
+            # print("PLL Data Saving To:", dset)
+            # self.dv_Zext = yield equip.get_datavault()
+            # yield self.dv_Zext.new("Z extension data versus time", ["Time (s)"], ["Z Extension"])
+            # dset = yield self.dv_Zext.current_identifier()
+            # print("Z Extension Data Saving To:", dset)
 
-            self.dv_Steps = yield equip.get_datavault()
-            yield self.dv_Steps.new("Z extension data versus time", ["Time (s)"], ["Num Steps", "Nominal Displacement"])
-            dset = yield self.dv_Steps.current_identifier()
-            print("Approach Step Data Saving To:", dset)
+            # self.dv_Steps = yield equip.get_datavault()
+            # yield self.dv_Steps.new("Z step data versus time", ["Time (s)"], ["Num Steps", "Nominal Displacement"])
+            # dset = yield self.dv_Steps.current_identifier()
+            # print("Approach Step Data Saving To:", dset)
 
             '''
             DC Box used to be used in some cases in conjunction with a summing amplifier.
@@ -827,7 +828,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                 #Emit PLL data point (to the Approach Monitor module)
                 self.newPLLData.emit(deltaf, phaseError)
-                self.dv_PLL.add(time.time()-self.t0, deltaf, phaseError)
+                #self.dv_PLL.add(time.time()-self.t0, deltaf, phaseError)
 
                 #Add frequency data to deltaf list only if not stepping with the coarse positioners\
                 #The steps are rough enough that they cause spikes in the PLL that should not be used
@@ -881,7 +882,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 self.lineEdit_FineZ.setText(formatNum(z_meters, 3))
                 #Emit a new Z datapoint for the approach monitoring module
                 self.newZData.emit(z_meters)
-                self.dv_Zext.add(time.time()-self.t0, z_meters)
+                # self.dv_Zext.add(time.time()-self.t0, z_meters)
 
                 #Keep track of the zData for surface contact determination
                 self.zData.appendleft(z_meters)
@@ -1229,7 +1230,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             delta = pos_curr - pos_start
             num_steps += 1
         print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
-        self.dv_Steps.add(time.time()-self.t0, num_steps, delta)
+        # self.dv_Steps.add(time.time()-self.t0, num_steps, delta)
 
         #Once done, set coarse positioners stepping to be false
         self.CPStepping = False
@@ -1260,7 +1261,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             delta = pos_curr - pos_start
             num_steps += 1
         print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
-        self.dv_Steps.add(time.time()-self.t0, num_steps, delta)
+        # self.dv_Steps.add(time.time()-self.t0, num_steps, delta)
 
         #Once done, set coarse positioners stepping to be false
         self.CPStepping = False
@@ -1271,6 +1272,19 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         #This should just be the mean and std of the past 100 data points taken
         mean = np.mean(self.deltafData)
         std = np.std(self.deltafData)
+
+        current_time = time.time()-self.t0
+        # If 30 seconds has not passed since the last touchdown show a warning.
+        #print(current_time, self.last_touchdown_time)
+        if current_time - self.last_touchdown_time < 30:
+            msgBox = QtWidgets.QMessageBox(self)
+            msgBox.setIcon(QtWidgets.QMessageBox.Information)
+            msgBox.setWindowTitle('Warning')
+            msgBox.setText("\r\n Cannot set PLL threshold less than 30 seconds after a touchdown.")
+            msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+            msgBox.exec_()
+            return
 
         print("Mean and standard deviation of past 100 points: ", mean, std)
 
@@ -1355,6 +1369,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
             if self.approaching:
                 #Read the voltage being output by the PID
+                self.previous_contactHeight = self.contactHeight
                 z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
 
                 self.contactHeight = z_voltage / self.z_volts_to_meters
@@ -1371,6 +1386,9 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 #returns false otherwise, meaning that we made contact with the sample
                 #too close to be able to set the range properly
                 result = yield self.setPIDOutputRange(end_voltage)
+                self.last_touchdown_time = time.time()-self.t0
+                # Print out the current surface hight, round to nearest second and nm for easy computation
+                print('time, surface height, creep:', round(self.last_touchdown_time), round(self.contactHeight/1e-6, 3), round((self.previous_contactHeight-self.contactHeight)/1e-6, 3))
 
                 if result:
                     #Turn PID back on so that if there's drift or the sample is taller than expected,

@@ -66,8 +66,6 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         self.pushButton_AutomaticMoveAbsolute_Axis3.clicked.connect(lambda: self.MovingAbsolute(2))
 
 
-        self.ManualPushButtonsPlus = [self.pushButton_ManualStepPlus_Axis1, self.pushButton_ManualStepPlus_Axis2, self.pushButton_ManualStepPlus_Axis3]
-        self.ManualPushButtonsMinus = [self.pushButton_ManualStepMinus_Axis1, self.pushButton_ManualStepMinus_Axis2, self.pushButton_ManualStepMinus_Axis3]
         self.pushButton_ManualStepMinus_Axis1.clicked.connect(lambda: self.StartSingleStep(0, 1))
         self.pushButton_ManualStepPlus_Axis1.clicked.connect(lambda: self.StartSingleStep(0, 0))
         self.pushButton_ManualStepMinus_Axis2.clicked.connect(lambda: self.StartSingleStep(1, 1))
@@ -75,27 +73,14 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         self.pushButton_ManualStepMinus_Axis3.clicked.connect(lambda: self.StartSingleStep(2, 1))
         self.pushButton_ManualStepPlus_Axis3.clicked.connect(lambda: self.StartSingleStep(2, 0))
 
-        # self.timer = [QTimer() for i in range(6)]
-        # self.pushButton_ManualStepMinus_Axis1.pressed.connect(lambda: self.manualstep_on_press(0))
-        # self.pushButton_ManualStepPlus_Axis1.pressed.connect(lambda: self.manualstep_on_press(1))
-        # self.pushButton_ManualStepMinus_Axis2.pressed.connect(lambda: self.manualstep_on_press(2))
-        # self.pushButton_ManualStepPlus_Axis2.pressed.connect(lambda: self.manualstep_on_press(3))
-        # self.pushButton_ManualStepMinus_Axis3.pressed.connect(lambda: self.manualstep_on_press(4))
-        # self.pushButton_ManualStepPlus_Axis3.pressed.connect(lambda: self.manualstep_on_press(5))
-        #
-        # self.pushButton_ManualStepMinus_Axis1.released.connect(lambda: self.manualstep_on_release(0))
-        # self.pushButton_ManualStepPlus_Axis1.released.connect(lambda: self.manualstep_on_release(1))
-        # self.pushButton_ManualStepMinus_Axis2.released.connect(lambda: self.manualstep_on_release(2))
-        # self.pushButton_ManualStepPlus_Axis2.released.connect(lambda: self.manualstep_on_release(3))
-        # self.pushButton_ManualStepMinus_Axis3.released.connect(lambda: self.manualstep_on_release(4))
-        # self.pushButton_ManualStepPlus_Axis3.released.connect(lambda: self.manualstep_on_release(5))
 
-        # self.timer[0].timeout.connect(lambda: self.manualstep_on_hold(0,1))
-        # self.timer[1].timeout.connect(lambda: self.manualstep_on_hold(0,0))
-        # self.timer[2].timeout.connect(lambda: self.manualstep_on_hold(1,1))
-        # self.timer[3].timeout.connect(lambda: self.manualstep_on_hold(1,0))
-        # self.timer[4].timeout.connect(lambda: self.manualstep_on_hold(2,1))
-        # self.timer[5].timeout.connect(lambda: self.manualstep_on_hold(2,0))
+        self.pushButton_ManualContMinus_Axis1.clicked.connect(lambda: self.ContinuousMove(0, 1))
+        self.pushButton_ManualContPlus_Axis1.clicked.connect(lambda: self.ContinuousMove(0, 0))
+        self.pushButton_ManualContMinus_Axis2.clicked.connect(lambda: self.ContinuousMove(1, 1))
+        self.pushButton_ManualContPlus_Axis2.clicked.connect(lambda: self.ContinuousMove(1, 0))
+        self.pushButton_ManualContMinus_Axis3.clicked.connect(lambda: self.ContinuousMove(2, 1))
+        self.pushButton_ManualContPlus_Axis3.clicked.connect(lambda: self.ContinuousMove(2, 0))
+
 
         self.IconPath = {
             'Still': ':/nSOTScanner/Pictures/ManStill.png',
@@ -131,28 +116,10 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         self.TargetGround = [True, True, True]
         self.OutputEnabled = [True, True, True]
 
-        for i in range(3):
-            self.ManualPushButtonsPlus[i].setAutoRepeatInterval(1000/self.manual_Frequency[i])
-            self.ManualPushButtonsMinus[i].setAutoRepeatInterval(1000/self.manual_Frequency[i])
-
         self.StatusWindow = Status.StatusWindow(self.reactor)
         self.pushButton_StatusMonitor.clicked.connect(self.OpenStatusWindow)
         self.DebugWindow = DebugPy.DebugWindow(self.reactor, self)
         self.pushButton_Debug.clicked.connect(self.OpenDebugWindow)
-
-    def manualstep_on_press(self, i):
-        if i ==0 or i==1:
-            self.timer[i].start(1/self.manual_Frequency[0]*1000)
-        elif i==2 or i==3:
-            self.timer[i].start(1/self.manual_Frequency[1]*1000)
-        elif i==4 or i==5:
-            self.timer[i].start(1/self.manual_Frequency[2]*1000)
-
-    def manualstep_on_hold(self, i, j):
-        self.StartSingleStep(i, j)
-
-    def manualstep_on_release(self, i):
-        self.timer[i].stop()
 
     @inlineCallbacks
     def connectLabRAD(self, equip):
@@ -174,13 +141,13 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
             self.pushButton_Servers.setStyleSheet("#pushButton_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
             self.serversConnected = True
-            
+
             # Save coarse positioner data for approach debugging
             self.t0 = equip.sync_time
-            self.dv_coarse = yield equip.get_datavault()
-            yield self.dv_coarse.new("Coarse Positioner data versus time", ["Time (s)"], ["X Coarse", "Y Coarse", "Z Coarse"])
-            dset = yield self.dv_coarse.current_identifier()
-            print("Coarse Positioner Data Saving To:", dset)
+            # self.dv_coarse = yield equip.get_datavault()
+            # yield self.dv_coarse.new("Coarse Positioner data versus time", ["Time (s)"], ["X Coarse", "Y Coarse", "Z Coarse"])
+            # dset = yield self.dv_coarse.current_identifier()
+            # print("Coarse Positioner Data Saving To:", dset)
 
             if self.anc350 != None:
                 yield self.loadParameters()
@@ -289,7 +256,7 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 self.pushButton_Status[i].setStyleSheet(stylesheet)
             if self.CurrentPosition[2] >= 0: # They read negative values when grounded
                 self.newZCoarseData.emit(self.CurrentPosition[2])
-                self.dv_coarse.add(time.time()-self.t0, self.CurrentPosition[0], self.CurrentPosition[1], self.CurrentPosition[2])
+                # self.dv_coarse.add(time.time()-self.t0, self.CurrentPosition[0], self.CurrentPosition[1], self.CurrentPosition[2])
         except Exception as inst:
             self.anc_err_count += 1
             #printErrorInfo()
@@ -351,6 +318,25 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
         except:
             printErrorInfo()
 
+    @inlineCallbacks
+    def ContinuousMove(self, AxisNo, direction): #forward is 0, backward is 1
+        try:
+            check = self.pushButton_ManualContMinus_Axis1.isChecked()
+            print('Checked? ', check)
+            if check:
+                start = True
+            else:
+                start = False
+            if direction == 0:
+                flag = False
+            else:
+                flag = True
+            yield self.anc350.start_continuous_move(AxisNo, start, flag)
+            #yield self.sleep(0.1)
+            print('Axis Moves(1)/Stops(0) in positive(1)/negative(0) direction: ', AxisNo, start, flag)
+        except:
+            printErrorInfo()
+
     def UpdateAutomaticPositioningRelativePosition(self, AxisNo):
         val = readNum(str(self.lineEdit_Relative[AxisNo].text()), self, True)
         if isinstance(val,float):
@@ -409,12 +395,10 @@ class Window(QtWidgets.QMainWindow, CoarseAttocubeControlWindowUI):
                 elif val > 2000:
                     self.manual_Frequency[AxisNo] = 2000
             self.lineEdit_Frequency[AxisNo].setText(formatNum(self.manual_Frequency[AxisNo],6))
-            self.ManualPushButtonsPlus[AxisNo].setAutoRepeatInterval(1000/self.manual_Frequency[AxisNo])
-            self.ManualPushButtonsMinus[AxisNo].setAutoRepeatInterval(1000/self.manual_Frequency[AxisNo])
             if hasattr(self, 'anc350'):
                 yield self.anc350.set_frequency(AxisNo, self.manual_Frequency[AxisNo])
         except:
-            print("Error reading Course Positioner Frequency. Warning that they may be set to default values on the GUI.")
+            print("Line 403:Error reading Course Positioner Frequency. Warning that they may be set to default values on the GUI.")
             #printErrorInfo()
 
     @inlineCallbacks
