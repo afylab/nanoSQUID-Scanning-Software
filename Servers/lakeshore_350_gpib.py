@@ -344,9 +344,9 @@ class Lakeshore350Server(GPIBManagedServer):
 		returnValue(ans)
 
 	@setting(124)
-    def write(self,c,phrase):
-        dev=self.selectedDevice(c)
-        yield dev.write(phrase)
+	def write(self,c,phrase):
+		dev=self.selectedDevice(c)
+		yield dev.write(phrase)
 
 __server__ = Lakeshore350Server()
 
