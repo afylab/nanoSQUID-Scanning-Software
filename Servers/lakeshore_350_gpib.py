@@ -1,4 +1,4 @@
-# Copyright []
+ # Copyright []
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -128,7 +128,8 @@ class Lakeshore350Wrapper(GPIBDeviceWrapper):
 	def name_read(self, input):
 		ans = yield self.query("INNAME?%s" %input)
 		returnValue(ans)
-		
+
+
 class Lakeshore350Server(GPIBManagedServer):
 	name = 'lakeshore_350'
 	deviceName = 'LSCI MODEL350'
@@ -157,7 +158,7 @@ class Lakeshore350Server(GPIBManagedServer):
 		except Exception as e:
 			print('failed:', e)
 			raise
-			
+
 
 	@setting(101, returns='?')
 	def idn(self, c):
@@ -209,7 +210,7 @@ class Lakeshore350Server(GPIBManagedServer):
 	def heater_set(self, c, output, heater_resistance, max_current, max_user_current, current_pwr):
 		"""
 		Modifies the heater settings for a specified output. The user should input the desired output, heater resistance
-		(input 1 = 25Ohm, 2 = 50Ohm), maximum current output (0 = user specified [channel 1 only], 1 =0.707A, 2 = 1A, 3 = 1.14A, 
+		(input 1 = 25Ohm, 2 = 50Ohm), maximum current output (0 = user specified [channel 1 only], 1 =0.707A, 2 = 1A, 3 = 1.14A,
 		4 = 2A), maximum current output if user specified current maximum is in effect (channel 1 only), and whether the heater
 		heater output displays current or power (1 = current, 2 = power).
 		"""
@@ -218,7 +219,7 @@ class Lakeshore350Server(GPIBManagedServer):
 	@setting(108, output = 'i', returns='s')
 	def heater_read(self, c, output):
 		"""
-		Reads the heater output setting for a specified output (the meaning of the returned list is documented in heater_set). 
+		Reads the heater output setting for a specified output (the meaning of the returned list is documented in heater_set).
 		"""
 		dev=self.selectedDevice(c)
 		ans = yield dev.heater_read(output)
@@ -226,8 +227,8 @@ class Lakeshore350Server(GPIBManagedServer):
 	@setting(109, output = 'i', mode = 'i', input = 'i', powerup_enable = 'i')
 	def out_mode_set(self, c, output, mode, input, powerup_enable):
 		"""
-		Sets the output mode for a specified channel. User inputs which output to configure, the desired control mode (0 = Off, 
-		1 = PID Control, 2 = Zone, 3 = Open Loop, 4 = Monitor Out, 5 = Warmup Supply), which input to use for the control (1 = A, 
+		Sets the output mode for a specified channel. User inputs which output to configure, the desired control mode (0 = Off,
+		1 = PID Control, 2 = Zone, 3 = Open Loop, 4 = Monitor Out, 5 = Warmup Supply), which input to use for the control (1 = A,
 		2 = B, 3 = C, 4 = D), and whether the output stays on or shuts off after a power cycle (0 = shuts off, 1 = remians on).
 		"""
 		dev=self.selectedDevice(c)
@@ -235,7 +236,7 @@ class Lakeshore350Server(GPIBManagedServer):
 	@setting(110, output = 'i', returns='s')
 	def out_mode_read(self, c, output):
 		"""
-		Reads the output mode settings for a specified output (the meaning of the returned list is documented in out_mode_set). 
+		Reads the output mode settings for a specified output (the meaning of the returned list is documented in out_mode_set).
 		"""
 		dev=self.selectedDevice(c)
 		ans = yield dev.out_mode_read(output)
@@ -286,7 +287,7 @@ class Lakeshore350Server(GPIBManagedServer):
 		"""
 		dev=self.selectedDevice(c)
 		yield dev.range_set(output, range)
-		
+
 	@setting(117, output = 'i', returns='i')
 	def range_read(self, c, output):
 		"""
@@ -295,18 +296,18 @@ class Lakeshore350Server(GPIBManagedServer):
 		dev=self.selectedDevice(c)
 		ans = yield dev.range_read(output)
 		returnValue(int(ans))
-		
+
 	@setting(118, output = 'i', setp = 'v[]')
 	def setpoint(self, c, output, setp):
 		"""
-		Sets the temperature setpoint for a specified output. 
+		Sets the temperature setpoint for a specified output.
 		"""
 		dev=self.selectedDevice(c)
 		yield dev.setpoint(output, setp)
 	@setting(119, output = 'i', returns='s')
 	def setpoint_read(self, c, output):
 		"""
-		Reads the temperature setpoint for a specified output. 
+		Reads the temperature setpoint for a specified output.
 		"""
 		dev=self.selectedDevice(c)
 		ans = yield dev.setpoint_read(output)
@@ -314,7 +315,7 @@ class Lakeshore350Server(GPIBManagedServer):
 	@setting(120, returns='s')
 	def jtemp(self, c):
 		"""
-		Reads the temperature of the room-temperature ceramic block used in the device's thermocouple, in degrees Kelvin, in case you're curious. 
+		Reads the temperature of the room-temperature ceramic block used in the device's thermocouple, in degrees Kelvin, in case you're curious.
 		"""
 		dev=self.selectedDevice(c)
 		ans = yield dev.jtemp()
@@ -322,7 +323,7 @@ class Lakeshore350Server(GPIBManagedServer):
 	@setting(121, output = 'i', mode = 'i')
 	def autotune(self, c, output, mode):
 		"""
-		Autotunes the PID parameters for a specified output. The user also inputs a mode: 0 = tunes only P, 1 = tunes P and I, 2 = tunes P, I, and D. 
+		Autotunes the PID parameters for a specified output. The user also inputs a mode: 0 = tunes only P, 1 = tunes P and I, 2 = tunes P, I, and D.
 		"""
 		dev=self.selectedDevice(c)
 		yield dev.autotune(output, mode)
@@ -341,12 +342,12 @@ class Lakeshore350Server(GPIBManagedServer):
 		dev=self.selectedDevice(c)
 		ans = yield dev.name_read(input)
 		returnValue(ans)
-	
+
 	@setting(124)
     def write(self,c,phrase):
         dev=self.selectedDevice(c)
         yield dev.write(phrase)
-	
+
 __server__ = Lakeshore350Server()
 
 if __name__ == '__main__':

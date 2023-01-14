@@ -23,7 +23,7 @@ class ThermometerWidget(QtWidgets.QWidget, Ui_ThermoWidget):
         self.setupUi(self)
         self.reference = reference
         self.reactor = reactor
-        
+
 class LoopWidget(QtWidgets.QWidget, Ui_LoopWidget):
     def __init__(self, reactor, index, parent=None):
         super(LoopWidget, self).__init__(parent)
@@ -41,35 +41,38 @@ class LoopWidget(QtWidgets.QWidget, Ui_LoopWidget):
             'feedback thermometer' : 1,     #Which thermometer should be used for closed loop heating
             'heater range'     : 1,         #Range for the heater
             'heater mode'      : 0,         #0 is closed loop, ie using PID. 1 is open loop, using manual setting mode.
+            'heater rng offset' : 2,
         }
-        
+
         # self.push_Settings.clicked.connect(lambda: self.updateSettings())
         self.push_heater.clicked.connect(lambda: self.toggleHeater())
         self.lineEdit_setpoint.editingFinished.connect(self.setSetpoint)
-        
+
         self.lineEdit_P.editingFinished.connect(self.updatePID)
         self.lineEdit_I.editingFinished.connect(self.updatePID)
         self.lineEdit_D.editingFinished.connect(self.updatePID)
-        
+
         self.range_combo.currentTextChanged.connect(self.setRange)
         self.thermo_comboBox.currentTextChanged.connect(self.setFeedbackThermometer)
         self.comboBox_heaterMode.currentTextChanged.connect(self.setHeaterMode)
-    
+
     @inlineCallbacks
-    def connectLabRAD(self, ls):
+    def connectLabRAD(self, ls, loopoffset):
         self.ls = ls
+        self.loopSettings['heater rng offset'] = loopoffset
+        self.loopSettings['heater range'] = 1 + self.loopSettings['heater rng offset']
         yield self.readCurrentSettings()
-    
+
     def disconnectLabRAD(self):
         self.ls = False
-    
+
     def setThermometers(self, thermometerDict):
         self.thermometers = thermometerDict
         for k in self.thermometers.keys():
             self.thermo_comboBox.addItem(k)
-    
+
     @inlineCallbacks
-    def readCurrentSettings(self): 
+    def readCurrentSettings(self):
         try:
             range = yield self.ls.range_read(self.index)
             if range !=0:
@@ -93,7 +96,7 @@ class LoopWidget(QtWidgets.QWidget, Ui_LoopWidget):
             self.lineEdit_D.setText(formatNum(self.loopSettings['d']))
             self.loopSettings['setpoint'] = float(setpoint)
             self.lineEdit_setpoint.setText(formatNum(self.loopSettings['setpoint']))
-            
+
             outmode = yield self.ls.out_mode_read(self.index)
             outmode = outmode.split(',')
             if outmode[0] == '3':
@@ -131,19 +134,19 @@ class LoopWidget(QtWidgets.QWidget, Ui_LoopWidget):
     @inlineCallbacks
     def setRange(self, value):
         if value == "Low":
-            self.loopSettings['heater range'] = 1
+            self.loopSettings['heater range'] = 1 + self.loopSettings['heater rng offset']
         elif value == "Medium":
-            self.loopSettings['heater range'] = 2
+            self.loopSettings['heater range'] = 2 + self.loopSettings['heater rng offset']
         elif value == "High":
-            self.loopSettings['heater range'] = 3
+            self.loopSettings['heater range'] = 3 + self.loopSettings['heater rng offset']
         else:
             print("setRange Invalid entry")
             return
-        
+
         if self.status_label.text() == "Active":
             yield self.ls.range_set(self.index, self.loopSettings['heater range'])
             yield self.sleep(0.5) # There's a short delay when setting the heater
-    
+
     @inlineCallbacks
     def setHeaterMode(self, value):
         outmode = yield self.ls.out_mode_read(self.index)
@@ -159,7 +162,7 @@ class LoopWidget(QtWidgets.QWidget, Ui_LoopWidget):
             self.label_setpoint.setText("Setpoint (K):")
             self.lineEdit_setpoint.setText(formatNum(self.loopSettings['setpoint']))
             yield self.ls.write('MOUT%i,%f'%(self.index,0.0))
-    
+
     @inlineCallbacks
     def setFeedbackThermometer(self, value):
         if self.ls == False:
@@ -191,7 +194,7 @@ class LoopWidget(QtWidgets.QWidget, Ui_LoopWidget):
                 yield self.ls.out_mode_set(self.index, 3, thermo, 0)
         else:
             print("setFeedbackThermometer Invalid entry")
-    
+
     @inlineCallbacks
     def updatePID(self):
         P = readNum(str(self.lineEdit_P.text()))
@@ -206,16 +209,16 @@ class LoopWidget(QtWidgets.QWidget, Ui_LoopWidget):
         if isinstance(D,float):
             self.loopSettings['d'] = D
         self.lineEdit_D.setText(formatNum(self.loopSettings['d']))
-        
+
         yield self.ls.pid_set(self.index,self.loopSettings['p'],self.loopSettings['i'],self.loopSettings['d'])
-    
+
     @inlineCallbacks
     def toggleHeater(self):
         if str(self.push_heater.text()) == 'Heater On':
             yield self.heaterOn()
         else:
             yield self.heaterOff()
-    
+
     @inlineCallbacks
     def heaterOn(self):
         #If closed loop operation, turn off the manual heater contribution
@@ -224,7 +227,7 @@ class LoopWidget(QtWidgets.QWidget, Ui_LoopWidget):
         elif self.loopSettings['heater mode'] == 1:
             yield self.ls.write('MOUT%i,%f'%(self.index,self.loopSettings['out percent']))
         yield self.sleep(1) # There's a short delay when setting the heater
-        
+
         yield self.ls.range_set(self.index, self.loopSettings['heater range'])
         yield self.sleep(1) # There's a short delay when setting the heater
 
@@ -233,7 +236,7 @@ class LoopWidget(QtWidgets.QWidget, Ui_LoopWidget):
         self.status_label.setStyleSheet("#status_label{color: rgb(13, 192, 13);}")
         self.thermo_comboBox.setEnabled(False)
         self.comboBox_heaterMode.setEnabled(False)
-    
+
     @inlineCallbacks
     def heaterOff(self):
         if self.loopSettings['heater mode'] == 1:
@@ -241,7 +244,7 @@ class LoopWidget(QtWidgets.QWidget, Ui_LoopWidget):
             yield self.sleep(1) # There's a short delay when setting the heater
         yield self.ls.range_set(self.index, 0)
         yield self.sleep(1) # There's a short delay when setting the heater
-        
+
         self.push_heater.setText('Heater On')
         self.status_label.setText('Off')
         self.status_label.setStyleSheet("#status_label{color: rgb(144, 140, 9);}")
@@ -263,7 +266,7 @@ class LoopWidget(QtWidgets.QWidget, Ui_LoopWidget):
             self.lineEdit_setpoint.setText(formatNum(self.loopSettings['setpoint']))
         elif self.loopSettings['heater mode'] == 1:
             self.lineEdit_setpoint.setText(formatNum(self.loopSettings['out percent']))
-    
+
     def lockInterface(self):
         self.push_heater.setEnabled(False)
         self.lineEdit_setpoint.setEnabled(False)
@@ -326,18 +329,20 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             # The Lakeshore 350 and 336 are functionally equivalent for our purposes
             if "LS 350" in equip.servers:
                 svr, ln, device_info, cnt, config = equip.servers['LS 350']
+                loopoffset = 2
             elif "LS 336" in equip.servers:
                 svr, ln, device_info, cnt, config = equip.servers['LS 336']
+                loopoffset = 0
             else:
                 print("Lakeshore not found, no LabRAD connections made.")
                 return
-            
+
             self.ls = svr
             self.dv = yield equip.get_datavault()
             self.time_offset = equip.sync_time # Sync the temperature time to other loops
 
             for widget in self.loopWidgets:
-                widget.connectLabRAD(svr)
+                widget.connectLabRAD(svr, loopoffset)
 
             if not self.ls:
                 self.push_Servers.setStyleSheet("#push_Servers{" +
@@ -365,7 +370,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.loopWidgets = []
         self.loopWidgets.append(LoopWidget(self.reactor, 1, self.loop_1_frame))
         self.loopWidgets.append(LoopWidget(self.reactor, 2, self.loop_2_frame))
-        
+
         # Here for easy access in scripting module
         self.loop1 = self.loopWidgets[0]
         self.loop2 = self.loopWidgets[1]
@@ -380,7 +385,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         else:
             print("Lakeshore not found, TemperatureControl GUI not configured.")
             return
-        
+
         n = 0
         ix = 0
         self.TempWidgets = []
@@ -398,11 +403,11 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.input_data_labels.append(label)
                 thermometerDict[label] = config[lbl]
                 self.sampleData.append(np.array([]))
-                
+
                 self.TempWidgets.append(ThermometerWidget(self.reactor, lbl, self.temperature_frame))
                 self.TempWidgets[ix].move((n-1)*350,0)
                 self.TempWidgets[ix].title_label.setText(label)
-            
+
                 self.TempPlots.append(pg.PlotWidget(parent=self.TempWidgets[ix].display_frame))
                 self.TempPlots[ix].setLabel('left', 'Temperature', units = 'K')
                 self.TempPlots[ix].setLabel('bottom', 'Time', units = 'h')
@@ -413,7 +418,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 ix += 1
         self.temperature_frame.setGeometry(QRect(260, 0, n*350+10, 500))
         self.setGeometry(QRect(0, 0, n*350+270, 515))
-        
+
         for widget in self.loopWidgets:
             widget.setThermometers(thermometerDict)
 
@@ -438,12 +443,12 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.first_data_point = False
                 date = datetime.now()
                 self.datestamp = date.strftime("%Y-%m-%d %H:%M:%S")
-            
-            
-            file_info = yield self.dv.new("Temperature Log", ['time (hours)'], self.input_data_labels)
-            self.dvFileName = file_info[1]
-            self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
-            yield self.dv.add_parameter('Start date and time', self.datestamp)
+
+
+            # file_info = yield self.dv.new("Temperature Log", ['time (hours)'], self.input_data_labels)
+            # self.dvFileName = file_info[1]
+            # self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
+            # yield self.dv.add_parameter('Start date and time', self.datestamp)
 
             while self.monitoring:
                 t = time.time() - self.time_offset
@@ -457,7 +462,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                         if self.ls == False:
                             break
                         Temp = yield self.ls.read_temp(self.inputSettings[ix])
-                        
+
                         # Sometimes after setting commands there is an odd semicolon is returned
                         # Handle that case and other strings being returned.
                         if Temp == ';' or Temp == '': # If it's just a semicolon or empty, try again
@@ -469,7 +474,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                         except:
                             print("Reading", self.input_data_labels[ix], "Failed with:", Temp)
                             Temp = self.sampleData[ix][-1]
-                        
+
                         self.sampleData[ix] = np.append(self.sampleData[ix], float(Temp))
                         self.TempWidgets[ix].lcdNumber_Temp.display(float(Temp))
                         dat[ix+1] = float(Temp)
@@ -478,7 +483,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                             self.sampleData[ix] = np.append(self.sampleData[ix], 0)
                         printErrorInfo()
                         errcount += 1
-                self.dv.add(dat)
+                # self.dv.add(dat)
                 if errcount > 25:
                     print("=========================")
                     print("startTempMonitoring in Temperature Control: More than 25 errors, stopping polling")
@@ -551,11 +556,11 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         print("Error readTherm: could not find " + str(label))
         returnValue(None)
     '''
-    Legacy Scripting Module functions when this implemented only one loop. 
+    Legacy Scripting Module functions when this implemented only one loop.
     If needed they can be reimplemented. But most functionlity
     could be replicated by calling functions on the loop widgets. For example to turn on loop 1 with
     a given setpoint in the scripting module:
-    
+
     yield TempControl.loop1.setSetpoint(self, 1.5)
     yield TempControl.loop1.setRange("Low")
     yield TempControl.loop1.heaterOn()
@@ -566,11 +571,11 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     # def setFeedbackThermometer(self, ind):
     #     self.measurementSettings['feedback thermometer'] = ind
     #     yield self.setOutputSettings()
-    # 
+    #
     # @inlineCallbacks
     # def setHeaterMode(self, mode):
     #     self.measurementSettings['heater mode'] = mode
-    # 
+    #
     #     if self.measurementSettings['heater mode'] == 0:
     #         self.label_setpoint.setText('Setpoint (K):')
     #         self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['setpoint']))
@@ -579,41 +584,41 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     #         self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['out percent']))
     #     else:
     #         self.label_setpoint.setText('WTF?!?!')
-    # 
+    #
     #     yield self.setOutputSettings()
-    # 
+    #
     # @inlineCallbacks
     # def setHeaterPID(self, loop, p, i , d):
     #     self.measurementSettings['p'] = p
     #     self.measurementSettings['i'] = i
     #     self.measurementSettings['d'] = d
     #     yield self.ls.pid_set(self.index,self.measurementSettings['p'],self.measurementSettings['i'],self.measurementSettings['d'])
-    # 
+    #
     # @inlineCallbacks
     # def setHeaterRange(self, rang):
     #     self.measurementSettings['heater range'] = rang
     #     if str(self.push_heater.text()) == 'Heater On':
     #         yield self.ls.range_set(self.index, self.measurementSettings['heater range'])
-    # 
+    #
     # @inlineCallbacks
     # def setHeaterSetpoint(self, setpoint):
     #     self.measurementSettings['setpoint'] = setpoint
     #     if self.measurementSettings['heater mode'] == 0:
     #         self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['setpoint']))
     #     yield self.ls.setpoint(self.index, self.measurementSettings['setpoint'])
-    # 
+    #
     # @inlineCallbacks
     # def setHeaterPercentage(self, percent):
     #     self.measurementSettings['out percent'] = percent
     #     if self.measurementSettings['heater mode'] == 1:
     #         self.lineEdit_setpoint.setText(formatNum(self.measurementSettings['out percent']))
     #     yield self.ls.write('MOUT%i,%f'%(self.index,self.measurementSettings['out percent']))
-    # 
+    #
     # @inlineCallbacks
     # def setHeaterOn(self):
     #     if str(self.push_heater.text()) == 'Heater Off':
     #         yield self.toggleHeater()
-    # 
+    #
     # @inlineCallbacks
     # def setHeaterOff(self):
     #     if str(self.push_heater.text()) == 'Heater On':
