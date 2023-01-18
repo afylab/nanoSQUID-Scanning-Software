@@ -1,3 +1,4 @@
 *.pyc
 lastcampaign.txt
 errorlog.txt
+.idea/

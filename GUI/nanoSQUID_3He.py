@@ -53,17 +53,17 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         # conf = {'max_field':6, 'gauss_to_amps':870.827, "max_ramp":0.5, "channel":1}
         # self.equip.add_server("Magnet Z", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::21::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
         conf = {'max_field':6, 'gauss_to_amps':870.827, "max_ramp":0.5} # MAX OF 5T for 1 T/min ramp rate, from 5-6T need 0.5 T/min
-        self.equip.add_server("Magnet Z", "ips120_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::25::INSTR", controller=MagnetControllers.IPS120_MagnetController_ALT, config=conf)
+        self.equip.add_server("Magnet Z", "ips120_power_supply", "phys-leviathan GPIB Bus - GPIB0::25::INSTR", controller=MagnetControllers.IPS120_MagnetController_ALT, config=conf)
 
         conf = {'max_field':1, 'gauss_to_amps':160.539, "max_ramp":0.15, "channel":1}
-        self.equip.add_server("Magnet X", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
+        self.equip.add_server("Magnet X", "cryo_4g_power_supply", "phys-leviathan GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
         
         conf = {'max_field':1, 'gauss_to_amps':159.591, "max_ramp":0.15, "channel":2}
-        self.equip.add_server("Magnet Y", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
+        self.equip.add_server("Magnet Y", "cryo_4g_power_supply", "phys-leviathan GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
         
         # Ohter Servers
-        self.equip.add_server("SR 830", "sr830", "desktop-abpkrkg GPIB Bus - GPIB0::15::INSTR")
-        self.equip.add_server("SR 860", "sr860", "desktop-abpkrkg GPIB Bus - GPIB0::4::INSTR")
+        self.equip.add_server("SR 830", "sr830", "phys-leviathan GPIB Bus - GPIB0::15::INSTR")
+        self.equip.add_server("SR 860", "sr860", "phys-leviathan GPIB Bus - GPIB0::4::INSTR")
         self.equip.add_server("AC Box", "ad5764_acbox")
         self.equip.add_server("GND Switchbox", "ground_switch_actuator")
         #self.equip.add_server("LM 510", "lm_510")
@@ -77,7 +77,7 @@ if __name__=="__main__":
     qt5reactor.install()
     from twisted.internet import reactor
     try:
-        window = nanoSQUID_3He(reactor, computer='desktop_abpkrkg', folderName='NanoSQUID 300 mK')
+        window = nanoSQUID_3He(reactor, computer='phys_leviathan', folderName='NanoSQUID 300 mK')
         window.show()
     except:
         from traceback import format_exc
