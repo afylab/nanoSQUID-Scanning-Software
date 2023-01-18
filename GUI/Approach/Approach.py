@@ -46,7 +46,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.moveDefault()
 
         #Connect GUI elements to appropriate methods
-        
+
         #Referece to the coarse positioner ouput dictionary, check if an axis is enabled.
         if coarse_output is None:
             self.coarse_output_enabled = [True, True, True]
@@ -130,7 +130,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
         #Height at which the previous approach made contact
         self.contactHeight = 0
-
+        self.previous_contactHeight = 0
         #Initialize short arrays locally keeping track of the PLL frequency (deltaFdata)
         #and the z extension of the sensor (zData). These are used to determine
         #whether or not the tip is in contact with the surface.
@@ -282,7 +282,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             file_info = yield self.dv.new("Approach log", ["Start Time (s)"], ["start Z", "end Z", "delta", "num steps"])
             dset = yield self.dv.current_identifier()
             print("Approach Step Data Saving To:", dset)
-            
+
             self.dvFileName = file_info[1]
             self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
 
@@ -1217,7 +1217,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
     @inlineCallbacks
     def advanceANC350(self):
         '''
-        A modified version of stepANC350 that uses the ANC 350 internal closed loop instead of 
+        A modified version of stepANC350 that uses the ANC 350 internal closed loop instead of
         calling a number of single steps. This ensures that pulses are actually being fired at the nominal
         frequency.
         '''
@@ -1240,18 +1240,18 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         if pos_start < 0e-6:
             yield self.abortApproachSequence()
             return
-        
+
         freq =  yield self.anc.get_frequency(2)
         # Time to wait for a given number of pulses to fire, in seconds
         wait_time = self.generalSettings['atto_sample_after']/freq
-        
+
         num_steps = 0
         delta = 0
         while delta < self.generalSettings['atto_distance'] and self.approaching:
             if num_steps >= self.generalSettings['atto_max_steps']:
                 print("Reached Maximum number of steps")
                 break
-            
+
             #Give axis number and direction (False forward, True is backwards)
             try:
                 self.label_pidApproachStatus.setText('Firing Positioners')
@@ -1283,14 +1283,14 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 sum += z
                 yield self.sleep(0.1)
             pos_curr = sum/10
-            
+
             delta = pos_curr - pos_start
             # print(pos_start, pos_curr, num_steps, delta) # For debugging
             if pos_curr < 50e-6:
                 yield self.abortApproachSequence()
                 break
             self.label_pidApproachStatus.setText('Stepping with ANC350')
-        
+
         print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
         self.dv.add(start_time, pos_start, pos_curr, num_steps, delta)
 
@@ -1303,10 +1303,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         #Set module to coarse positioners are stepping
         self.CPStepping = True
         self.label_pidApproachStatus.setText('Stepping with ANC350')
-    
+
         #Assume axis 3 is the z axis. Set the output to be on, and to turn off automatically when end of travel is reached
         yield self.anc.set_axis_output(2, True, True)
-    
+
         #Get the starting position in z before stepping
         pos_start = yield self.anc.get_position(2)
         num_steps = 0
@@ -1324,10 +1324,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             num_steps += 1
         print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
         self.dv.add(time.time()-self.t0, pos_start, pos_curr, num_steps, delta)
-    
+
         #Once done, set coarse positioners stepping to be false
         self.CPStepping = False
-    
+
     @inlineCallbacks
     def stepANC350_Alternate(self):
         '''
@@ -1336,18 +1336,18 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         #Set module to coarse positioners are stepping
         self.CPStepping = True
         self.label_pidApproachStatus.setText('Stepping with ANC350')
-    
+
         start_time = time.time()-self.t0
-    
+
         #Assume axis 3 is the z axis. Set the output to be on, and to turn off automatically when end of travel is reached
         yield self.anc.set_axis_output(2, True, True)
-    
+
         #Get the starting position in z before stepping
         pos_start = yield self.anc.get_position(2)
         if pos_start < 0e-6:
             yield self.abortApproachSequence()
             return
-    
+
         num_steps = 0
         sub_steps = 0
         delta = 0
@@ -1363,7 +1363,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             if pos_curr < 50e-6:
                 yield self.abortApproachSequence()
                 break
-    
+
             # After a certain number of steps, equilibrate then sample to make sure you aren't overshot
             sub_steps += 1
             if self.generalSettings['atto_sample_after'] > 0 and sub_steps >= self.generalSettings['atto_sample_after']:
@@ -1373,10 +1373,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                     yield self.sleep(1)
                 pos_curr = yield self.anc.get_position(2)
                 sub_steps = 0
-    
+
             delta = pos_curr - pos_start
             num_steps += 1
-    
+
         # After done let positioners equilibrate and measure how far you went
         # Don't measure if you just equilibrated/measured last iteration
         if self.generalSettings['atto_equilb_time'] > 0 and sub_steps != 0:
@@ -1388,17 +1388,17 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             delta = pos_curr - pos_start
         print("Moving a distance of " + str(delta) + " took " + str(num_steps) + " steps.")
         self.dv.add(start_time, pos_start, pos_curr, num_steps, delta)
-    
+
         #Once done, set coarse positioners stepping to be false
         self.CPStepping = False
-    
+
     @inlineCallbacks
     def setPLLThreshold(self):
         #Find the mean and standard deviation of the data that exists
         #This should just be the mean and std of the past 100 data points taken
         mean = np.mean(self.deltafData)
         std = np.std(self.deltafData)
-        
+
         current_time = time.time()-self.t0
         # If 30 seconds has not passed since the last touchdown show a warning.
         if current_time - self.last_touchdown_time < 30:
@@ -1410,11 +1410,11 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
             msgBox.exec_()
             return
-        
+
         print("Mean and standard deviation of past 100 points: ", mean, std)
-        
+
         new_thresh = mean + 4*std
-        
+
         if 0.008 < new_thresh < 200:
             self.radioButton_plus.setChecked(True)
             self.radioButton_minus.setChecked(False)
@@ -1494,6 +1494,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
             if self.approaching:
                 #Read the voltage being output by the PID
+                self.previous_contactHeight = self.contactHeight
                 z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
 
                 self.contactHeight = z_voltage / self.z_volts_to_meters
@@ -1510,10 +1511,9 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 #returns false otherwise, meaning that we made contact with the sample
                 #too close to be able to set the range properly
                 result = yield self.setPIDOutputRange(end_voltage)
-                
                 self.last_touchdown_time = time.time()-self.t0
                 # Print out the current surface hight, round to nearest second and nm for easy computation
-                print('time, surface height:', round(self.last_touchdown_time), round(self.contactHeight/1e-9))
+                print('time, surface height, creep:', round(self.last_touchdown_time), round(self.contactHeight/1e-6, 3), round((self.previous_contactHeight-self.contactHeight)/1e-6, 3))
 
                 if result:
                     #Turn PID back on so that if there's drift or the sample is taller than expected,
@@ -2446,7 +2446,7 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
 
         self.lineEdit_Atto_Distance.editingFinished.connect(self.setAttoDist)
         self.lineEdit_Atto_Delay.editingFinished.connect(self.setAttoDelay)
-        
+
         if type == "Steps":
             self.lineEdit_Atto_MaxSteps.setHidden(True)
             self.lineEdit_Atto_SampleSteps.setHidden(True)
@@ -2474,7 +2474,7 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
         self.lineEdit_Atto_Distance.setText(formatNum(self.generalApproachSettings['atto_distance']))
         self.lineEdit_Atto_Delay.setText(formatNum(self.generalApproachSettings['atto_delay']))
         self.lineEdit_Atto_Nominal.setText(formatNum(self.generalApproachSettings['atto_nominal']))
-        
+
         self.lineEdit_Atto_MaxSteps.setText(formatNum(self.generalApproachSettings['atto_max_steps']))
         self.lineEdit_Atto_SampleSteps.setText(formatNum(self.generalApproachSettings['atto_sample_after']))
         self.lineEdit_Atto_Equilib.setText(formatNum(self.generalApproachSettings['atto_equilb_time']))
@@ -2490,7 +2490,7 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
         if isinstance(val,float):
             self.generalApproachSettings['atto_sample_after'] = val
         self.lineEdit_Atto_SampleSteps.setText(formatNum(self.generalApproachSettings['atto_sample_after']))
-    
+
     def setAttoEquilib(self):
         val = readNum(str(self.lineEdit_Atto_Equilib.text()))
         if isinstance(val,float):
@@ -2560,7 +2560,7 @@ class generalApproachSettings(QtWidgets.QDialog, Ui_generalApproachSettings):
         if isinstance(val,float):
             self.generalApproachSettings['atto_delay'] = val
         self.lineEdit_Atto_Delay.setText(formatNum(self.generalApproachSettings['atto_delay']))
-    
+
     def setAttoNominal(self):
         #Set the noninal ANC 350 Displacement
         val = readNum(str(self.lineEdit_Atto_Nominal.text()))

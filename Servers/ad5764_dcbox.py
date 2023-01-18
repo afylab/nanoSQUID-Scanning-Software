@@ -24,7 +24,7 @@ cmdline = %PYTHON% %FILE%
 timeout = 20
 [shutdown]
 message = 987654321
-timeout = 20    
+timeout = 20
 ### END NODE INFO
 """
 
@@ -102,7 +102,7 @@ class arduinoDCBoxServer(DeviceServer):
     name          = info.serverName
     deviceName    = info.deviceName
     deviceWrapper = arduinoDCBoxWrapper
-    
+
     # Signals (server prefix 701000)
     sPrefix=701000
     sigChannelVoltageChanged  = Signal(sPrefix + 10,'signal__channel_voltage_changed', '*s')

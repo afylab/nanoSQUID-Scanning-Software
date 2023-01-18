@@ -18,7 +18,7 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         self.equip.add_server("Data Vault", "data_vault", display_frame=self.genericFrame)
         self.equip.add_server("Serial Server", 'serial_server', display_frame=self.genericFrame)
 
-        self.Approach.approach_type = "Steps"
+        self.Approach.approach_type = "Steps" #Step the coarse positioners the old way
 
         # Local Servers
         conf = {'pll input':1, 'pll output':1, 'pid z out':1, 'z monitor':1, 'sum board toggle':1}
