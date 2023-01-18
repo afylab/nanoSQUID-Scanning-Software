@@ -445,10 +445,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.datestamp = date.strftime("%Y-%m-%d %H:%M:%S")
 
 
-            # file_info = yield self.dv.new("Temperature Log", ['time (hours)'], self.input_data_labels)
-            # self.dvFileName = file_info[1]
-            # self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
-            # yield self.dv.add_parameter('Start date and time', self.datestamp)
+            file_info = yield self.dv.new("Temperature Log", ['time (hours)'], self.input_data_labels)
+            self.dvFileName = file_info[1]
+            self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
+            yield self.dv.add_parameter('Start date and time', self.datestamp)
 
             while self.monitoring:
                 t = time.time() - self.time_offset
@@ -483,7 +483,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                             self.sampleData[ix] = np.append(self.sampleData[ix], 0)
                         printErrorInfo()
                         errcount += 1
-                # self.dv.add(dat)
+                self.dv.add(dat)
                 if errcount > 25:
                     print("=========================")
                     print("startTempMonitoring in Temperature Control: More than 25 errors, stopping polling")
