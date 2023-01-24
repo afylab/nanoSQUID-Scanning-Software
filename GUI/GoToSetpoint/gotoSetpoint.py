@@ -57,7 +57,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
         self.zeroGateBtn.clicked.connect(lambda: self.zeroGateFunc())
         self.gotoGateBtn.clicked.connect(lambda: self.gotoGateFunc())
-        self.runTransFunc.clicked.connect(lambda: self.runTransFunc())
+        self.runTransFuncBtn.clicked.connect(lambda: self.runTransFunc())
 
         self.blinkBtn.clicked.connect(lambda: self.blink())
         self.push_FdbkOn.clicked.connect(lambda: self.setFeedback(True))
@@ -403,7 +403,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.push_readBias.setEnabled(False)
 
         self.blinkBtn.setEnabled(False)
-        self.runTransFunc.setEnabled(False)
+        self.runTransFuncBtn.setEnabled(False)
 
         self.push_FdbkOn.setEnabled(False)
         self.push_FdbkOff.setEnabled(False)
@@ -426,7 +426,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.push_readBias.setEnabled(True)
 
         self.blinkBtn.setEnabled(True)
-        self.runTransFunc.setEnabled(True)
+        self.runTransFuncBtn.setEnabled(True)
 
         self.push_FdbkOn.setEnabled(True)
         self.push_FdbkOff.setEnabled(True)

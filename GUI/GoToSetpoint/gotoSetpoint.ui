@@ -1262,7 +1262,7 @@ Gate</string>
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600; color:#a8a8a8;&quot;&gt;nT/rtHz&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="runTransFunc">
+   <widget class="QPushButton" name="runTransFuncBtn">
     <property name="geometry">
      <rect>
       <x>419</x>
