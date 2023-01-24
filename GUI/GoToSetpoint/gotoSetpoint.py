@@ -3,6 +3,7 @@ from PyQt5 import QtWidgets, uic
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import numpy as np
 from nSOTScannerFormat import readNum, formatNum, printErrorInfo
+import time
 
 path = sys.path[0] + r"\GoToSetpoint"
 GoToSetpointUI, QtBaseClass = uic.loadUiType(path + r"\gotoSetpoint.ui")
@@ -32,7 +33,12 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
                 'gate setpoint':    0.0,
                 'gate steps':       500,
                 'gate delay':       0.001,
+                'avg time':         10, # s
+                'set time':         10, # s
+                'noise':            1, # uV/rtHz
         }
+        self.transFunc = 0.0
+        self.sensitivity = 0.0
 
         self.lineEdit_biasSetpoint.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'bias setpoint', [-10.0, 10.0]))
         self.lineEdit_biasSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSteps, 'bias steps'))
@@ -42,11 +48,16 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.lineEdit_gateSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_gateSteps, 'gate steps'))
         self.lineEdit_gateDelay.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_gateDelay, 'gate delay'))
 
+        self.lineEdit_avgTime.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_avgTime, 'avg time'))
+        self.lineEdit_settleTime.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_settleTime, 'set time'))
+        self.lineEdit_noise.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_noise, 'noise'))
+
         self.zeroBiasBtn.clicked.connect(lambda: self.zeroBiasFunc())
         self.gotoBiasBtn.clicked.connect(lambda: self.gotoBiasFunc())
 
         self.zeroGateBtn.clicked.connect(lambda: self.zeroGateFunc())
         self.gotoGateBtn.clicked.connect(lambda: self.gotoGateFunc())
+        self.runTransFunc.clicked.connect(lambda: self.runTransFunc())
 
         self.blinkBtn.clicked.connect(lambda: self.blink())
         self.push_FdbkOn.clicked.connect(lambda: self.setFeedback(True))
@@ -106,6 +117,11 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             else:
                 print("'Blink Device' not found, LabRAD connection of goToSetpoint Failed.")
                 return
+
+            if "Magnet Z" in equip.servers:
+                self.magnet = self.equip.get("Magnet Z")
+            else:
+                print("Magnet Z not found")
 
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
@@ -271,6 +287,56 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         yield self.blink_server.set_voltage(self.blinkChan - 1, 0) #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         self.feedbackButtonColors(True)
 
+    @inlineCallbacks
+    def runTransFunc(self):
+        meas_time = self.settingsDict['avg time'] # Time to average per point in seconds
+        set_time = self.settingsDict['set time']  # Time to wait before measuring
+        noise = self.settingsDict['noise'] # uV/rtHz
+
+        # If the magnet is auto-persisted, ramp up the supply to the setpoint
+        yield self.magnet.startSweeping()
+
+        start_field = self.magnet.B  # in Tesla
+        end_field = start_field + 0.001  # in Tesla
+
+        yield self.magnet.setSetpoint(start_field)
+        yield self.magnet.goToSetpoint(wait=True)
+        yield self.sleep(set_time) # Allow values to converge
+
+        startfield_volts = []
+        tzero = time.process_time()
+        t = tzero
+        while t - tzero <= meas_time:
+            volts = yield self.dac.read_voltage(self.feedbackChan)
+            startfield_volts.append(volts)
+            t = time.process_time()
+
+        yield self.magnet.setSetpoint(end_field)
+        yield self.magnet.goToSetpoint(wait=True)
+        yield self.sleep(set_time) # Allow values to converge
+
+        endfield_volts = []
+        tzero = time.time()
+        t = tzero
+        while t - tzero <= meas_time:
+            volts = yield self.dac.read_voltage(self.feedbackChan)
+            endfield_volts.append(volts)
+            t = time.time()
+
+        yield self.magnet.setSetpoint(start_field)
+        yield self.magnet.goToSetpoint(wait=True)
+
+        v1 = np.average(startfield_volts)
+        v2 = np.average(endfield_volts)
+        self.transFunc = (v2 - v1) / (end_field - start_field)
+        self.sensitivity = 1e3*noise/self.transFunc
+        print('Slope in volts per tesla is: ' + str(self.transFunc))
+        self.lineEdit_transferFunc.setText(str(round(self.transFunc,5)))
+        self.lineEdit_sensitivity.setText(str(round(self.sensitivity, 2)))
+
+        # If the magnet is auto-persisted, ramp down the supply to the setpoint
+        yield self.magnet.doneSweeping()
+
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions intended for use when running scripts from the scripting module."""
 
@@ -306,7 +372,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
     @inlineCallbacks
     def readFeedback(self):
-        feedback = False;
+        feedback = False
         try:
             curr_fdbk = yield self.blink_server.get_voltage(self.blinkChan-1) #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
             if curr_fdbk < 0.2:
@@ -337,6 +403,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.push_readBias.setEnabled(False)
 
         self.blinkBtn.setEnabled(False)
+        self.runTransFunc.setEnabled(False)
 
         self.push_FdbkOn.setEnabled(False)
         self.push_FdbkOff.setEnabled(False)
@@ -359,6 +426,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.push_readBias.setEnabled(True)
 
         self.blinkBtn.setEnabled(True)
+        self.runTransFunc.setEnabled(True)
 
         self.push_FdbkOn.setEnabled(True)
         self.push_FdbkOff.setEnabled(True)
