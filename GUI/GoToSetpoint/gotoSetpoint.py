@@ -119,7 +119,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
                 return
 
             if "Magnet Z" in equip.servers:
-                self.magnet = self.equip.get("Magnet Z")
+                self.magnet = equip.get("Magnet Z")
             else:
                 print("Magnet Z not found")
 
@@ -304,12 +304,12 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         yield self.sleep(set_time) # Allow values to converge
 
         startfield_volts = []
-        tzero = time.process_time()
+        tzero = time.time()
         t = tzero
         while t - tzero <= meas_time:
             volts = yield self.dac.read_voltage(self.feedbackChan)
             startfield_volts.append(volts)
-            t = time.process_time()
+            t = time.time()
 
         yield self.magnet.setSetpoint(end_field)
         yield self.magnet.goToSetpoint(wait=True)

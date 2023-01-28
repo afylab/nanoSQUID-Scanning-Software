@@ -281,7 +281,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.dv = yield equip.get_datavault()
             file_info = yield self.dv.new("Approach log", ["Start Time (s)"], ["start Z", "end Z", "delta", "num steps"])
             dset = yield self.dv.current_identifier()
-            print("Approach Step Data Saving To:", dset)
+            # print("Approach Step Data Saving To:", dset)
 
             self.dvFileName = file_info[1]
             self.lineEdit_ImageNum.setText(file_info[1].split(" - ")[1]) # second string is unique identifier
@@ -993,7 +993,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                             self.label_pidApproachStatus.setText('Collecting data for threshold.')
                             #Wait for 30 seconds for  self.zData and self.deltaFdata to get new values
                             # Can incorporate the time the coarse positioner was equilibrating if applicable
-                            if self.generalSettings['atto_equilb_time'] > 0:
+                            if self.generalSettings['atto_equilb_time'] > 0 and self.approach_type != "Steps" :
                                 dt = 30 - self.generalSettings['atto_equilb_time']
                                 if dt > 0:
                                     yield self.sleep(dt)
