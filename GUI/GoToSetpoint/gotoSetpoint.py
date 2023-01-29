@@ -36,6 +36,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
                 'avg time':         10, # s
                 'set time':         10, # s
                 'noise':            1, # uV/rtHz
+                'delta field':      1, # mT
         }
         self.transFunc = 0.0
         self.sensitivity = 0.0
@@ -51,6 +52,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.lineEdit_avgTime.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_avgTime, 'avg time'))
         self.lineEdit_settleTime.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_settleTime, 'set time'))
         self.lineEdit_noise.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_noise, 'noise'))
+        self.lineEdit_deltaField.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_deltaField, 'delta field'))
 
         self.zeroBiasBtn.clicked.connect(lambda: self.zeroBiasFunc())
         self.gotoBiasBtn.clicked.connect(lambda: self.gotoBiasFunc())
@@ -292,12 +294,13 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         meas_time = self.settingsDict['avg time'] # Time to average per point in seconds
         set_time = self.settingsDict['set time']  # Time to wait before measuring
         noise = self.settingsDict['noise'] # uV/rtHz
-
+        dField = self.settingsDict['delta field']*1e-3  # mT
+        print("Running transfer function")
         # If the magnet is auto-persisted, ramp up the supply to the setpoint
         yield self.magnet.startSweeping()
 
         start_field = self.magnet.B  # in Tesla
-        end_field = start_field + 0.001  # in Tesla
+        end_field = start_field + dField  # in Tesla
 
         yield self.magnet.setSetpoint(start_field)
         yield self.magnet.goToSetpoint(wait=True)
@@ -329,7 +332,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         v1 = np.average(startfield_volts)
         v2 = np.average(endfield_volts)
         self.transFunc = (v2 - v1) / (end_field - start_field)
-        self.sensitivity = 1e3*noise/self.transFunc
+        self.sensitivity = np.abs(1e3*noise/self.transFunc)
         print('Slope in volts per tesla is: ' + str(self.transFunc))
         self.lineEdit_transferFunc.setText(str(round(self.transFunc,5)))
         self.lineEdit_sensitivity.setText(str(round(self.sensitivity, 2)))

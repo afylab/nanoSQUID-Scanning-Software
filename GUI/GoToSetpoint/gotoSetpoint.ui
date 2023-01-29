@@ -1265,10 +1265,10 @@ Gate</string>
    <widget class="QPushButton" name="runTransFuncBtn">
     <property name="geometry">
      <rect>
-      <x>419</x>
-      <y>119</y>
-      <width>71</width>
-      <height>51</height>
+      <x>390</x>
+      <y>139</y>
+      <width>101</width>
+      <height>31</height>
      </rect>
     </property>
     <property name="font">
@@ -1277,14 +1277,14 @@ Gate</string>
      </font>
     </property>
     <property name="styleSheet">
-     <string notr="true">QPushButton:pressed#runTransFunc{
+     <string notr="true">QPushButton:pressed#runTransFuncBtn{
 color: rgb(95,107,166);
 background-color:rgb(168,168,168);
 border: 1px solid rgb(95,107,166);
 border-radius: 5px
 }
 
-QPushButton#runTransFunc{
+QPushButton#runTransFuncBtn{
 color: rgb(95,107,166);
 background-color:rgb(0,0,0);
 border: 2px solid  rgb(95,107,166);
@@ -1341,6 +1341,54 @@ border-radius: 5px
     </property>
     <property name="text">
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;s&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="BiasInc_6">
+    <property name="geometry">
+     <rect>
+      <x>360</x>
+      <y>110</y>
+      <width>61</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#a8a8a8;&quot;&gt;Delta Field:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_deltaField">
+    <property name="geometry">
+     <rect>
+      <x>420</x>
+      <y>110</y>
+      <width>45</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+    <property name="placeholderText">
+     <string>0.0</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_22">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>110</y>
+      <width>31</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; color:#a8a8a8;&quot;&gt;mT&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
   </widget>
