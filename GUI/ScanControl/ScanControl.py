@@ -159,7 +159,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.push_setView.clicked.connect(self.setView)
         self.push_Scan.clicked.connect(lambda: self.startScan())
         self.push_Abort.clicked.connect(lambda: self.abortScan())
-        self.push_ZeroXY.clicked.connect(lambda: self.setPosition(-self.x_meters_max/2, -self.y_meters_max/2))
+        self.push_ZeroXY.clicked.connect(lambda: self.zeroXYPosition())
         self.push_Set.clicked.connect(lambda: self.setPosition(self.Xset, self.Yset))
         self.push_ZeroZ.clicked.connect(lambda: self.zeroZOffset())
         self.push_toggleSmooth.clicked.connect(self.toggleSmoothScan)
@@ -1416,10 +1416,34 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         except:
             printErrorInfo()
 
+
+    @inlineCallbacks
+    def zeroXYPosition(self):
+        msgBox = QtWidgets.QMessageBox(self)
+        msgBox.setIcon(QtWidgets.QMessageBox.Information)
+        msgBox.setWindowTitle('Confirm Zero Fine Positioner')
+        msgBox.setText("Zero X,Y fine positioners.")
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+        retValue = msgBox.exec_()
+        if retValue != QtWidgets.QMessageBox.Ok:
+            return
+        yield self.setPosition(-self.x_meters_max / 2, -self.y_meters_max / 2)
+
     @inlineCallbacks
     def zeroZOffset(self):
+        msgBox = QtWidgets.QMessageBox(self)
+        msgBox.setIcon(QtWidgets.QMessageBox.Information)
+        msgBox.setWindowTitle('Confirm Zero Fine Positioner')
+        msgBox.setText("Zero Z fine positioner.")
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok  | QtWidgets.QMessageBox.Cancel)
+        msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+        retValue = msgBox.exec_()
+        if retValue != QtWidgets.QMessageBox.Ok:
+            return
+
         #So that, no matter what, after a scan back at 0 height relative to the Offset point. FIX THIS SOON
-        print('Moving by: ' + str(self.Atto_Z_Voltage) + ' in the z direction to return to zero z offset.')
+        print('Moving by: ' + str(self.Atto_Z_Voltage) + 'V in the z direction to return to zero z offset.')
         #By default ramps output 0 from the current z voltage back to 0 with 1000 points at 1 ms delay
         yield self.dac.ramp1(self.outputs['z out']-1, self.Atto_Z_Voltage, 0.0, 1000, 1000)
         self.Atto_Z_Voltage = 0.0
