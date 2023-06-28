@@ -253,10 +253,10 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             yield sr830.sine_out_amplitude(0.0)
 
         # Zero the voltage on the Tip
-        self.readBias()
-        self.readGate()
-        self.zeroBiasFunc()
-        self.zeroGateFunc()
+        yield self.readBias()
+        yield self.readGate()
+        yield self.zeroBiasFunc()
+        yield self.zeroGateFunc()
 
         # Turn the switchbox to ground position
         yield self.switch.ground()
