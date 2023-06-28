@@ -1370,6 +1370,11 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.updateScanningStatus.emit(False)
 
     @inlineCallbacks
+    def autoWidthdrawAbort(self):
+        if self.scanning:
+            yield self.abortScan()
+
+    @inlineCallbacks
     def setPosition(self, x, y):
         try:
             if not self.scanning:

@@ -22,23 +22,23 @@ class nanoSQUID_3He(nanoSQUIDSystem):
 
         self.equip.add_server("ANC350", "anc350_server", controller=CoreEquipment.ANC350_Controller)
 
-        conf = {'DC Readout':3, 
+        conf = {'DC Readout':7,#3,
             'nSOT Bias':4, 
             'Noise Readout':2, 
             'nSOT Gate':1, 
             'Gate Reference':1, 
             'Bias Reference':4,
             'Bias Res':20.5, # Bias resistance, in units of kOhms. Includes series resistance of filters 2x 5.1 kOhms
-            'Feedback Res':5.81, # Feedback resistance, in units of kOhms
+            'Feedback Res':1.11, # Feedback resistance, in units of kOhms
             'Shunt Res':2.9, # Shunt resistance, in units of Ohms
             'Winding Ratio':14 # Turns ratio fo the array, for amplification.
             }
         self.equip.add_server("nSOT DAC", "dac_adc", "DA20_16_05 (COM3)", config=conf)
 
         conf = {'x out':2, 'y out':3, 'z out':1}
-        self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_04 (COM6)", config=conf)
+        self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_04 (COM4)", config=conf)
 
-        self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_06 (COM7)")
+        self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_06 (COM6)")
 
         conf = {'blink channel':3}
         self.equip.add_server("Blink Device", "dac_adc", "DA20_16_05 (COM3)", config=conf)

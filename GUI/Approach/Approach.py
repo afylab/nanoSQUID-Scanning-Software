@@ -33,6 +33,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
     #feedback scanning mode
     updateFeedbackStatus = QtCore.pyqtSignal(bool)
     updateConstantHeightStatus = QtCore.pyqtSignal(bool)
+    autowithdrawStatus = QtCore.pyqtSignal()
 
     def __init__(self, reactor, parent=None, coarse_output=None):
         super(Window, self).__init__(parent)
@@ -862,6 +863,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                     if points_above_freq_thresh >= self.generalSettings['auto_retract_points']:
                         print('auto withdrew')
                         yield self.withdraw(self.generalSettings['auto_retract_dist']) #withdrawing takes the module out of constantHeight mode
+                        self.autowithdrawStatus.emit()
 
             #When done measuring, turn off the PLL and the output
             yield self.hf.set_pll_off(self.measurementSettings['pll_output'])

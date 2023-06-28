@@ -10,7 +10,7 @@ GoToSetpointUI, QtBaseClass = uic.loadUiType(path + r"\gotoSetpoint.ui")
 
 #Window for going to a particular nSOT bias or magnetic field
 class Window(QtWidgets.QMainWindow, GoToSetpointUI):
-    def __init__(self, reactor, parent = None):
+    def __init__(self, reactor, parent = None, approach=None):
         super(Window, self).__init__(parent)
 
         self.setupUi(self)
@@ -20,8 +20,12 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.moveDefault()
 
         self.cxn = False
+        self.equip = False
+        self.switch = False
         self.dac = False
         self.blink_server = False
+
+        self.Approach = approach
 
         #Dictionaries of the setpoint settings with some default values
         self.settingsDict = {
@@ -68,11 +72,15 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.push_readGate.clicked.connect(lambda: self.readGate())
         self.push_readBias.clicked.connect(lambda: self.readBias())
 
+        self.switchstatusBtn.clicked.connect(lambda: self.toggleSwitchStatus())
+        self.autotouchdownBtn.clicked.connect(lambda: self.autotouchdown())
+
         self.lockInterface()
 
     @inlineCallbacks
     def connectLabRAD(self, equip):
         try:
+            self.equip = equip
             self.cxn = equip.cxn
 
             '''
@@ -125,6 +133,12 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             else:
                 print("Magnet Z not found")
 
+            if "GND Switchbox" in equip.servers:
+                self.switch = equip.get("GND Switchbox")
+                self.switchstatusBtn.setEnabled(True)
+                self.autotouchdownBtn.setEnabled(True)
+                yield self.switchboxStatus()
+
             self.push_Servers.setStyleSheet("#push_Servers{" +
             "background: rgb(0, 170, 0);border-radius: 4px;}")
 
@@ -137,6 +151,8 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             printErrorInfo()
 
     def disconnectLabRAD(self):
+        self.equip = False
+        self.switch = False
         self.lockInterface()
 
     @inlineCallbacks
@@ -147,6 +163,136 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             yield self.readFeedback()
         except:
             printErrorInfo()
+
+    @inlineCallbacks
+    def switchboxStatus(self):
+        try:
+            isgnd = yield self.switch.is_grounded()
+            if not isgnd:
+                style = '''QPushButton:pressed#switchstatusBtn{
+                            color: rgb(0,170,0);
+                            background-color:rgb(168,168,168);
+                            border: 1px solid rgb(0,170,0);
+                            border-radius: 5px
+                            }
+    
+                            QPushButton#switchstatusBtn{
+                            color: rgb(0,170,0);
+                            background-color:rgb(0,0,0);
+                            border: 2px solid  rgb(0,170,0);
+                            border-radius: 5px
+                            }
+                            '''
+                self.switchstatusBtn.setText("Switchbox\nFloated")
+            else:
+                style = '''QPushButton:pressed#switchstatusBtn{
+                            color: rgb(95,107,166);
+                            background-color:rgb(168,168,168);
+                            border: 1px solid rgb(95,107,166);
+                            border-radius: 5px
+                            }
+    
+                            QPushButton#switchstatusBtn{
+                            color: rgb(95,107,166);
+                            background-color:rgb(0,0,0);
+                            border: 2px solid  rgb(95,107,166);
+                            border-radius: 5px
+                            }
+                            '''
+                self.switchstatusBtn.setText("Switchbox\nGrounded")
+        except:
+            style = '''QPushButton:pressed#switchstatusBtn{
+                        color: rgb(170,0,0);
+                        background-color:rgb(168,168,168);
+                        border: 1px solid rgb(170,0,0);
+                        border-radius: 5px
+                        }
+
+                        QPushButton#switchstatusBtn{
+                        color: rgb(170,0,0);
+                        background-color:rgb(0,0,0);
+                        border: 2px solid  rgb(170,0,0);
+                        border-radius: 5px
+                        }
+                        '''
+            self.switchstatusBtn.setText("Switchbox\nError")
+            isgnd = False
+        self.switchstatusBtn.setStyleSheet(style)
+        return isgnd
+    @inlineCallbacks
+    def toggleSwitchStatus(self):
+        try:
+            isgnd = yield self.switch.is_grounded()
+            if isgnd: # If grounded float it
+                ans = yield self.switch.float()
+                print("Switchbox", ans)
+            else: # If floated, ground it
+                ans = yield self.switch.ground()
+                print("Switchbox", ans)
+            self.switchboxStatus()
+        except:
+            printErrorInfo()
+
+    @inlineCallbacks
+    def autotouchdown(self):
+        # GATES SHOULD ALREADY BE RAMPED DOWN, Will ramp down remaining voltage sources below
+
+        if self.Approach is None:
+            print("Error, no appraoch module, can't autotouchdown")
+            return
+
+        # Ramp down the lock-in excitation.
+        if "SR 860" in self.equip.servers:
+            sr860 = self.equip.get("SR 860")
+            excite_sr860 = yield sr860.sine_out_amplitude()
+            yield sr860.sine_out_amplitude(0.0)
+
+        if "SR 830" in self.equip.servers:
+            sr830 = self.equip.get("SR 830")
+            excite_sr830 = yield sr830.sine_out_amplitude()
+            yield sr830.sine_out_amplitude(0.0)
+
+        # Zero the voltage on the Tip
+        self.readBias()
+        self.readGate()
+        self.zeroBiasFunc()
+        self.zeroGateFunc()
+
+        # Turn the switchbox to ground position
+        yield self.switch.ground()
+        isgnd = yield self.switchboxStatus()
+        if not isgnd:
+            print("Switchbox failed to ground. Aborting Autotouchdown")
+            return
+
+        # Touchdown
+        print("Starting Automatic Touchdown")
+        yield self.sleep(30)
+        yield self.Approach.setPLLThreshold()
+        yield self.Approach.startPIDConstantHeightApproachSequence()
+        yield self.sleep(2)  # Wait a little just in case
+        print("Automatic Touchdown Finished")
+
+        # Touchdown is done, reset everything
+
+        # Turn the switchbox to floating position
+        yield self.switch.float()
+        isgnd = yield self.switchboxStatus()
+        if isgnd:
+            print("WARNING Switchbox failed to float")
+            return
+
+        # Un-Zero the voltage on the Tip
+        yield self.gotoBiasFunc()
+        yield self.gotoGateFunc()
+        yield self.readBias()
+        yield self.readGate()
+
+        # Turn the lock-in excitation back on
+        if "SR 860" in self.equip.servers:
+            yield sr860.sine_out_amplitude(excite_sr860)
+        if "SR 830" in self.equip.servers:
+            yield sr830.sine_out_amplitude(excite_sr830)
 
     def feedbackButtonColors(self, on):
         if on:
@@ -414,6 +560,9 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.gotoGateBtn.setEnabled(False)
         self.zeroGateBtn.setEnabled(False)
         self.push_readGate.setEnabled(False)
+
+        self.switchstatusBtn.setEnabled(False)
+        self.autotouchdownBtn.setEnabled(False)
 
     def unlockInterface(self):
         self.lineEdit_biasSetpoint.setEnabled(True)

@@ -23,11 +23,12 @@ timeout = 10 ms
 from labrad.server import setting, Signal
 from labrad.devices import DeviceServer, DeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet import reactor, defer
 import labrad.units as units
 from labrad.types import Value
 
 # Define timeout and BAUD RATE (section 1.3 on lab wiki)
-TIMEOUT = Value(50, 'ms')
+TIMEOUT = Value(500, 'ms')
 BAUD = 115200  # change if not 9600
 
 
@@ -72,6 +73,15 @@ class GSAWrapper(DeviceWrapper):
         p.read_line()
         ans = yield p.send()
         returnValue(ans.read_line)
+
+    @inlineCallbacks
+    def flush(self):
+        """
+        Flush the output buffer, it sometimes gets stuff stuck in i
+        """
+        p = self.packet()
+        p.flushoutput()
+        yield p.send()
 
 
 class GroundSwitchActuator(DeviceServer):
@@ -129,16 +139,18 @@ class GroundSwitchActuator(DeviceServer):
         '''Switch actuates to ground.'''
         dev=self.selectedDevice(c)
         yield dev.write("ground")
-        ans = yield dev.read()
-        return ans
+        yield self.sleep(0.1)
+        print("Grounded")
+        return "Grounded"
 
     @setting(12, returns = 's')
     def float(self,c):
         '''Switch actuates to float.'''
         dev=self.selectedDevice(c)
         yield dev.write("float")
-        ans = yield dev.read()
-        return ans
+        yield self.sleep(0.1)
+        print("Floated")
+        return "Floated"
 
     @setting(13, returns = 'b')
     def is_grounded(self,c):
@@ -146,21 +158,27 @@ class GroundSwitchActuator(DeviceServer):
         dev=self.selectedDevice(c)
         yield dev.write("is_grounded")
         ans = yield dev.read()
-        print("---"+ans+'---') # For Debugging
         if ans == '1':
             return True
         elif ans == '0':
             return False
         else: # Try again, there is sometimes something in the serial buffer
+            dev.flush() # Flush the serial output buffer
             yield dev.write("is_grounded")
             ans = yield dev.read()
-            print("+++"+ans+'+++') # For Debugging
             if ans == '1':
                 return True
             elif ans == '0':
                 return False
             else:
                 raise Exception('is_grounded not responding to GND query')
+
+    def sleep(self,secs):
+        """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
+        other operations to be done elsewhere while paused."""
+        d = defer.Deferred()
+        reactor.callLater(secs,d.callback,'Sleeping')
+        return d
 
 __server__ = GroundSwitchActuator()
 

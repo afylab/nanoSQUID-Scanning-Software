@@ -135,7 +135,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.FieldControl = FieldControl.Window(self.reactor, None)
         self.TempControl = TemperatureControl.Window(self.reactor,None)
         self.QRreader = QRreader.Window(self.reactor,None)
-        self.GoToSetpoint = gotoSetpoint.Window(self.reactor, None)
+        self.GoToSetpoint = gotoSetpoint.Window(self.reactor, None, self.Approach)
         self.SampleCharacterizer = SampleCharacterizer.Window(self.reactor,None)
         
 
@@ -171,6 +171,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.AttocubeCoarseControl.newZCoarseData.connect(self.ApproachMonitor.updateZCoarsePlot)
         self.Approach.updateFeedbackStatus.connect(self.ScanControl.updateFeedbackStatus)
         self.Approach.updateConstantHeightStatus.connect(self.ScanControl.updateConstantHeightStatus)
+        self.Approach.autowithdrawStatus.connect(self.ScanControl.autoWidthdrawAbort)
         self.PosCalibration.newTemperatureCalibration.connect(self.setVoltageCalibration)
         self.ScanControl.updateScanningStatus.connect(self.Approach.updateScanningStatus)
 
