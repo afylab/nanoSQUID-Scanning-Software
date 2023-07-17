@@ -141,7 +141,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.deltafData = deque([-200]*self.deltaf_track_length)
 
         self.z_track_length = 20
-        self.zData = deque([-50e-9]*self.deltaf_track_length)
+        self.zData = deque([-50e-9]*self.z_track_length)
         self.zTime = np.linspace(self.z_track_length, 1, self.z_track_length)
 
         '''
@@ -1114,7 +1114,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         #The second algorith fits a line to the past 20 z positions. If the slope of the line is less than 0
         #then presume we made contact.
         slope, offset = np.polyfit(self.zTime, self.zData, 1)
-        if slope < -1e-10:
+        # Sometimes a small negative value on ADC when fully retracted will cause it to detect contact even when fully retracted
+        # stalling out an approach sequency. Require that there be at leat 50 nm extension before this algorithm triggerens
+        mn = np.mean(self.zData)
+        if slope < -1e-10 and mn > 50e-9:
             print('Surface contact made with negative z slope algorithm with slope: ', slope)
             return True
 

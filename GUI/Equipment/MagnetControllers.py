@@ -325,6 +325,7 @@ class IPS120_MagnetController(MagnetControl):
         '''
         Read the starting configuration of a magnet power supply. Override for a specific supply.
         '''
+        yield self.server.set_comm_protocol(4) # Turn it into high-resolution mode
         setpoint = yield self.server.read_parameter(8)
         ramprate = yield self.server.read_parameter(9)
         self.setpoint_B = float(setpoint[1:])
@@ -499,7 +500,7 @@ class IPS120_MagnetController_ALT(IPS120_MagnetController):
         '''
         Read the starting configuration of a magnet power supply. Override for a specific supply.
         '''
-        yield self.server.set_comm_protocol(4)
+        yield self.server.set_comm_protocol(4) # Turn it into high-resolution mode
         setpoint = yield self.server.read_parameter(8)
         ramprate = yield self.server.read_parameter(9)
         self.setpoint_B = float(setpoint[1:])
