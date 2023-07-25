@@ -1517,7 +1517,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 #too close to be able to set the range properly
                 result = yield self.setPIDOutputRange(end_voltage)
                 self.last_touchdown_time = time.time()-self.t0
-                # Print out the current surface hight, round to nearest second and nm for easy computation
+                # Print out the current surface height, round to the nearest second and nm for easy computation
                 print('time, surface height, creep:', round(self.last_touchdown_time), round(self.contactHeight/1e-6, 3), round((self.previous_contactHeight-self.contactHeight)/1e-6, 3))
 
                 if result:

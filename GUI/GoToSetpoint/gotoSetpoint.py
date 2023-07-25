@@ -451,6 +451,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         yield self.magnet.setSetpoint(start_field)
         yield self.magnet.goToSetpoint(wait=True)
         yield self.sleep(set_time) # Allow values to converge
+        B1 = self.magnet.B
 
         startfield_volts = []
         tzero = time.time()
@@ -463,6 +464,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         yield self.magnet.setSetpoint(end_field)
         yield self.magnet.goToSetpoint(wait=True)
         yield self.sleep(set_time) # Allow values to converge
+        B2 = self.magnet.B
 
         endfield_volts = []
         tzero = time.time()
@@ -477,7 +479,8 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
         v1 = np.average(startfield_volts)
         v2 = np.average(endfield_volts)
-        self.transFunc = (v2 - v1) / (end_field - start_field)
+        print(v1, v2, B1, B2) # For debugging
+        self.transFunc = (v2 - v1) / (B2 - B1)
         self.sensitivity = np.abs(1e3*noise/self.transFunc)
         print('Slope in volts per tesla is: ' + str(self.transFunc))
         self.lineEdit_transferFunc.setText(str(round(self.transFunc,5)))
