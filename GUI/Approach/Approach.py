@@ -195,8 +195,9 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 'atto_sample_after'          : 0, # each firing measure the caorse positioner after this many steps (letting it equilibrate)
                 'atto_equilb_time'           : 30, # Wait this many seconds for the positioners to equilibrate before sampling the coarse positioner location
                 'atto_nominal'               : 8e-6, # The nominal displacement to tell the ANC 350 to move curing approach.
-                'zurich_divider'             : 1, # The factor that the Zurich output is divided by. Actual V = zurich_divider*(Zurich Output)
-                'zurich_max_output'          : 10, # The maximum output of the Zurich
+                # 'zurich_divider'             : 1, # The factor that the Zurich output is divided by. Actual V = zurich_divider*(Zurich Output)
+                # 'zurich_max_output'          : 10, # The maximum output of the Zurich
+                'DAC_step_speed'             : 1e-6 # Speed to move the DAC ouput, m/s
         }
 
         '''
@@ -1050,14 +1051,13 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 # Get the current voltage applied to positioners
                 self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.generalSettings['step_z_output'] - 1) # DAC-ADC output
                 z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
-                total = self.Atto_Z_Voltage + self.generalSettings['zurich_divider']*z_voltage # Total output voltage in real voltage
 
                 # Set the output range to reach either the max of the Zurich or the appropriate value such that the total
                 # doesn't exceed z_volts_max
-                if total + self.generalSettings['zurich_divider']*self.generalSettings['zurich_max_output'] < self.z_volts_max:
-                    max_out = self.generalSettings['zurich_max_output']
+                if self.Atto_Z_Voltage + self.voltageMultiplier*10 < self.z_volts_max:
+                    max_out = 10
                 else:
-                    max_out = (self.z_volts_max - self.Atto_Z_Voltage)/self.generalSettings['zurich_divider']
+                    max_out = (self.z_volts_max - self.Atto_Z_Voltage)/self.voltageMultiplier
                 yield self.setPIDOutputRange(max_out) # This is divided now, it could go to a different value, provided the total is less that z_volts_max
 
                 # Reset the zData and deltaFdata arrays. This prevents the software from thinking it hit the surface because of
@@ -1084,12 +1084,12 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                     # If the voltage is at the maximum (or within a milliVolt)
                     if z_voltage >= (max_out - 0.001) and self.approaching:
+                        print("End of range") # DEBUG
                         # Stop the PID
                         yield self.hf.set_pid_on(self.PID_Index, False)
 
                         # Test if we can extend further with the DAC voltage
                         self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.generalSettings['step_z_output'] - 1)  # DAC-ADC output
-                        total = self.Atto_Z_Voltage + self.generalSettings['zurich_divider'] * z_voltage  # Current output voltage in real voltage
 
                         # Retract the Tip by setting the value of the PID's integrator to 0
                         self.label_pidApproachStatus.setText('Retracting Attocubes')
@@ -1097,26 +1097,31 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                         yield self.setHF2LI_PID_Integrator(val=0, speed=retract_speed) # Find desired retract speed in volts per second
 
                         # If we didn't reach maximum total extension of attocubes last time, extend the DAC-ADC
-                        if max_out < self.generalSettings['zurich_max_output']:
+                        print(self.Atto_Z_Voltage + self.voltageMultiplier*max_out < self.z_volts_max and max_out == 10, max_out)  # DEBUG
+                        if self.Atto_Z_Voltage + self.voltageMultiplier*max_out < self.z_volts_max and max_out == 10:
 
                             # Take a step forward as specified by the stepwise approach advanced settings
-                            speed = self.PIDApproachSettings['step_speed'] * self.z_volts_to_meters
-                            end_voltage = 0.95*total # As a safety measure go to less than it just extended to.
+                            speed = self.generalSettings['DAC_step_speed'] * self.z_volts_to_meters
+                            end_voltage = self.Atto_Z_Voltage + 0.9*max_out*self.voltageMultiplier # As a safety measure go to less than it just extended to.
+                            end_voltage = min([end_voltage, 0.95*self.z_volts_max]) # Ensure that the Zurich still has some range to work with
+                            print("Setting z DAC-ADC to", end_voltage)  # DEBUG
                             yield self.setDAC_Voltage(self.Atto_Z_Voltage, end_voltage, speed)
+                            yield self.sleep(5)
 
                             # Recompute Zurich extension
-                            if self.Atto_Z_Voltage + self.generalSettings['zurich_divider'] * self.generalSettings['zurich_max_output'] < self.z_volts_max:
-                                max_out = self.generalSettings['zurich_max_output']
+                            if self.Atto_Z_Voltage + self.voltageMultiplier * 10 < self.z_volts_max:
+                                max_out = 10
                             else:
-                                max_out = (self.z_volts_max - self.Atto_Z_Voltage) / self.generalSettings['zurich_divider']
-                            yield self.setPIDOutputRange(max_out)  # This is divided now, it could go to a different value, provided the total is less that z_volts_max
+                                max_out = (self.z_volts_max - self.Atto_Z_Voltage) / self.voltageMultiplier
+                            yield self.setPIDOutputRange(max_out)
 
                             if self.approaching:
                                 # Turn PID back on and continue approaching
                                 yield self.hf.set_pid_on(self.PID_Index, True)
                                 self.label_pidApproachStatus.setText('Approaching with Zurich')
-
+                                print("Approaching again")
                         else: # Withdraw the DAC-ADC and proceed as normal
+                            print("Full withdrawing")  # DEBUG
                             speed = self.generalSettings['step_retract_speed'] * self.z_volts_to_meters
                             yield self.setDAC_Voltage(self.Atto_Z_Voltage, 0, speed) # Withdraw the DAC ADC
 
@@ -1242,14 +1247,14 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 points_above_freq_thresh = points_above_freq_thresh + (f > (-1.0*self.freqThreshold))
 
         if points_above_freq_thresh > 5:
-            print('Surface contact made with points above frequency threshhold algorithm.')
+            print('Surface contact made with points above frequency threshold algorithm.')
             return True
 
         #The second algorith fits a line to the past 20 z positions. If the slope of the line is less than 0
         #then presume we made contact.
         slope, offset = np.polyfit(self.zTime, self.zData, 1)
         # Sometimes a small negative value on ADC when fully retracted will cause it to detect contact even when fully retracted
-        # stalling out an approach sequency. Require that there be at leat 50 nm extension before this algorithm triggerens
+        # stalling out an approach sequence. Require that there be at least 50 nm extension before this algorithm triggers
         mn = np.mean(self.zData)
         if slope < -1e-10 and mn > 50e-9:
             print('Surface contact made with negative z slope algorithm with slope: ', slope)
@@ -1896,8 +1901,9 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.constantHeight = False
             self.updateFeedbackStatus.emit(False)
 
-            # Makes sure we don't have a multiplier on
-            yield self.resetVoltageMultiplier()
+            # Makes sure the multiplier is accounted for
+            self.voltageMultiplied = True
+            self.voltageMultiplier = 0.1
 
             # Bring us to the surface, modified from the original approach sequence.
             yield self.startDividedPIDApproachSequence()
@@ -2123,20 +2129,24 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             #delay in microseconds between each point to get the right speed
             delay = int(300 / speed)
 
-            yield self.dac.ramp1(self.generalSettings['step_z_output'] - 1, float(start), float(end), points, delay)
-            #This sleep step is necessary because the ramp1 command on the DAC-ADCs is bad. It returns a value signaling
-            #that the ramp is done. But, if the ramp takes longer than the serial communuication timeout of ~1s, then
-            #it times out before finishing. In an asynchronous environment, this risks other commands being sent to the
-            #DAC while it is rampiing unless we deliberate call the following sleep command.
-            yield self.sleep(points * delay / 1e6)
+            # Switch to buffer_ramp instead of ramp
+            trash_can = yield self.dac.buffer_ramp_dis([self.generalSettings['step_z_output'] - 1], [0], [float(start)], [float(end)], points, delay, 2)
             self.Atto_Z_Voltage = float(end)
 
-            #If ramp1 times out, then the buffer doesn't get cleared properly and it needs to be done here
-            #This occurs if the ramp time is ~1s or greater.
-            if points * delay / 1e6 > 0.9:
-                a = yield self.dac.read()
-                while a != '':
-                    a = yield self.dac.read()
+            # yield self.dac.ramp1(self.generalSettings['step_z_output'] - 1, float(start), float(end), points, delay)
+            # #This sleep step is necessary because the ramp1 command on the DAC-ADCs is bad. It returns a value signaling
+            # #that the ramp is done. But, if the ramp takes longer than the serial communuication timeout of ~1s, then
+            # #it times out before finishing. In an asynchronous environment, this risks other commands being sent to the
+            # #DAC while it is rampiing unless we deliberate call the following sleep command.
+            # yield self.sleep(points * delay / 1e6)
+            # self.Atto_Z_Voltage = float(end)
+            #
+            # #If ramp1 times out, then the buffer doesn't get cleared properly and it needs to be done here
+            # #This occurs if the ramp time is ~1s or greater.
+            # if points * delay / 1e6 > 0.9:
+            #     a = yield self.dac.read()
+            #     while a != '':
+            #         a = yield self.dac.read()
 
     @inlineCallbacks
     def withdraw(self, dist):
