@@ -134,7 +134,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.previous_contactHeight = 0
         #Initialize short arrays locally keeping track of the PLL frequency (deltaFdata)
         #and the z extension of the sensor (zData). These are used to determine
-        #whether or not the tip is in contact with the surface.
+        #whether the tip is in contact with the surface.
         #deltafData is set to -200 (as opposed to zeros) because it's the smallest deltaF threshold that can be set.
         #This prevents accidental surface detections from happening
         self.deltaf_track_length = 100
@@ -195,6 +195,8 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 'atto_sample_after'          : 0, # each firing measure the caorse positioner after this many steps (letting it equilibrate)
                 'atto_equilb_time'           : 30, # Wait this many seconds for the positioners to equilibrate before sampling the coarse positioner location
                 'atto_nominal'               : 8e-6, # The nominal displacement to tell the ANC 350 to move curing approach.
+                'zurich_divider'             : 1, # The factor that the Zurich output is divided by. Actual V = zurich_divider*(Zurich Output)
+                'zurich_max_output'          : 10, # The maximum output of the Zurich
         }
 
         '''
@@ -1026,6 +1028,138 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             printErrorInfo()
 
     @inlineCallbacks
+    def startDividedPIDApproachSequence(self):
+        '''
+        PID Approach sequence where the output of the Zurich is divided and cannot output the full range on its own, requiring
+        the DAC-ADC to apply the rest of the voltage
+        '''
+        try:
+            if self.measuring:  # If measuring the PLL
+                self.approaching = True
+
+                # Set PID off for initialization
+                yield self.hf.set_pid_on(self.PID_Index, False)
+
+                # Update status label
+                self.label_pidApproachStatus.setText('Approaching with Zurich/DAC')
+
+                # Initializes all the PID settings
+                yield self.setHF2LI_PID_Settings()
+
+                # Find the next zurich voltage setpoint
+                # Get the current voltage applied to positioners
+                self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.generalSettings['step_z_output'] - 1) # DAC-ADC output
+                z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+                total = self.Atto_Z_Voltage + self.generalSettings['zurich_divider']*z_voltage # Total output voltage in real voltage
+
+                # Set the output range to reach either the max of the Zurich or the appropriate value such that the total
+                # doesn't exceed z_volts_max
+                if total + self.generalSettings['zurich_divider']*self.generalSettings['zurich_max_output'] < self.z_volts_max:
+                    max_out = self.generalSettings['zurich_max_output']
+                else:
+                    max_out = (self.z_volts_max - self.Atto_Z_Voltage)/self.generalSettings['zurich_divider']
+                yield self.setPIDOutputRange(max_out) # This is divided now, it could go to a different value, provided the total is less that z_volts_max
+
+                # Reset the zData and deltaFdata arrays. This prevents the software from thinking it hit the surface because of
+                # the approach prior to the coarse positioners setpping
+                self.zData = deque([-50e-9] * self.z_track_length)
+                self.deltafData = deque([-200] * self.deltaf_track_length)
+
+                # Disable to setPLL threshold button until the queue of deltafdata has been replenished. Spamming the set threshhold
+                # button after starting an approach will yield spurradic results until the initalized values are gone
+                self.disableSetThreshold(30)
+
+                # Turn on PID to start the approach
+                yield self.hf.set_pid_on(self.PID_Index, True)
+
+                while self.approaching:
+                    # Check if the surface has been contacted.
+                    if self.madeSurfaceContact():
+                        # If so, update the status and break from the loop
+                        self.label_pidApproachStatus.setText('Surface contacted')
+                        break
+
+                    # Get the output voltage of the HF2LI (this is JUST the HF2LI voltage output not, not the sum with the DAC-ADC z voltage contribution)
+                    z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+
+                    # If the voltage is at the maximum (or within a milliVolt)
+                    if z_voltage >= (max_out - 0.001) and self.approaching:
+                        # Stop the PID
+                        yield self.hf.set_pid_on(self.PID_Index, False)
+
+                        # Test if we can extend further with the DAC voltage
+                        self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.generalSettings['step_z_output'] - 1)  # DAC-ADC output
+                        total = self.Atto_Z_Voltage + self.generalSettings['zurich_divider'] * z_voltage  # Current output voltage in real voltage
+
+                        # Retract the Tip by setting the value of the PID's integrator to 0
+                        self.label_pidApproachStatus.setText('Retracting Attocubes')
+                        retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                        yield self.setHF2LI_PID_Integrator(val=0, speed=retract_speed) # Find desired retract speed in volts per second
+
+                        # If we didn't reach maximum total extension of attocubes last time, extend the DAC-ADC
+                        if max_out < self.generalSettings['zurich_max_output']:
+
+                            # Take a step forward as specified by the stepwise approach advanced settings
+                            speed = self.PIDApproachSettings['step_speed'] * self.z_volts_to_meters
+                            end_voltage = 0.95*total # As a safety measure go to less than it just extended to.
+                            yield self.setDAC_Voltage(self.Atto_Z_Voltage, end_voltage, speed)
+
+                            # Recompute Zurich extension
+                            if self.Atto_Z_Voltage + self.generalSettings['zurich_divider'] * self.generalSettings['zurich_max_output'] < self.z_volts_max:
+                                max_out = self.generalSettings['zurich_max_output']
+                            else:
+                                max_out = (self.z_volts_max - self.Atto_Z_Voltage) / self.generalSettings['zurich_divider']
+                            yield self.setPIDOutputRange(max_out)  # This is divided now, it could go to a different value, provided the total is less that z_volts_max
+
+                            if self.approaching:
+                                # Turn PID back on and continue approaching
+                                yield self.hf.set_pid_on(self.PID_Index, True)
+                                self.label_pidApproachStatus.setText('Approaching with Zurich')
+
+                        else: # Withdraw the DAC-ADC and proceed as normal
+                            speed = self.generalSettings['step_retract_speed'] * self.z_volts_to_meters
+                            yield self.setDAC_Voltage(self.Atto_Z_Voltage, 0, speed) # Withdraw the DAC ADC
+
+                            # If still approaching step forward with the coarse positioners
+                            if self.approaching:
+                                yield self.stepCoarsePositioners()
+
+                            # If approaching and autoThresholding, then wait for 30 seconds before resetting the PLL threshold
+                            if self.approaching and self.autoThresholding:
+                                self.label_pidApproachStatus.setText('Collecting data for threshold.')
+                                # Wait for 30 seconds for  self.zData and self.deltaFdata to get new values
+                                # Can incorporate the time the coarse positioner was equilibrating if applicable
+                                if self.generalSettings['atto_equilb_time'] > 0 and self.approach_type != "Steps":
+                                    dt = 30 - self.generalSettings['atto_equilb_time']
+                                    if dt > 0:
+                                        yield self.sleep(dt)
+                                else:
+                                    yield self.sleep(30)
+                                yield self.setPLLThreshold()
+                            else:
+                                # Reset the zData and deltaFdata arrays. This prevents the software from thinking it hit the surface because of
+                                # the approach prior to the coarse positioners setpping
+                                self.zData = deque([-50e-9] * self.z_track_length)
+                                self.deltafData = deque([-200] * self.deltaf_track_length)
+
+                            if self.approaching:
+                                # Turn PID back on and continue approaching
+                                yield self.hf.set_pid_on(self.PID_Index, True)
+                                self.label_pidApproachStatus.setText('Approaching with Zurich')
+
+            else:  # If not measuring the PLL, throw a warning
+                msgBox = QtWidgets.QMessageBox(self)
+                msgBox.setIcon(QtWidgets.QMessageBox.Information)
+                msgBox.setWindowTitle('Start PLL to Approach')
+                msgBox.setText("\r\n You cannot approach until the PLL has been started.")
+                msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+                msgBox.exec_()
+        except:
+            print("Gen PID Approach Error:")
+            printErrorInfo()
+
+    @inlineCallbacks
     def setHF2LI_PID_Settings(self):
         try:
             #PID Approach module all happens on PID #1. Easily changed if necessary in the future (or toggleable). But for now it's
@@ -1749,6 +1883,74 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             printErrorInfo()
 
     @inlineCallbacks
+    def startDividedPIDConstantHeightApproachSequence(self):
+        # A constant height approach sequence where the Zurich output is divided down and cannot advance the full scanner
+        # range on its own, instead the software used the scan DAC-ADC (normally applies tilt correction)
+        #
+        # To start with I'm going to copy the constant height sequence:
+
+        try:
+            # First emit signal saying we are no longer in contact with the surface, either at constant height
+            # for feedback
+            self.updateConstantHeightStatus.emit(False)
+            self.constantHeight = False
+            self.updateFeedbackStatus.emit(False)
+
+            # Makes sure we don't have a multiplier on
+            yield self.resetVoltageMultiplier()
+
+            # Bring us to the surface, modified from the original approach sequence.
+            yield self.startDividedPIDApproachSequence()
+
+            # BELOW IS THE SAME AS THE NORMAL CONSTANT HEIGHT SEQUENCE
+            # DO WE NEED TO ACCOUNT FOR THE DAC-ADC VALUE HERE?
+            if self.approaching:
+                # Read the voltage being output by the PID
+                self.previous_contactHeight = self.contactHeight
+                z_voltage = yield self.hf.get_aux_output_value(self.generalSettings['pid_z_output'])
+
+                self.contactHeight = z_voltage / self.z_volts_to_meters
+
+                # Determine voltage to which we want to retract to be at the provided constant height
+                end_voltage = z_voltage - self.PIDApproachSettings['height'] * self.z_volts_to_meters
+                # Find desired retract speed in volts per second
+                retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
+                # Go to the position. The PID will be turned off by calling the set integrator command
+                yield self.setHF2LI_PID_Integrator(val=end_voltage, speed=retract_speed)
+
+                # Set range such that maximally extended is at the proper distance from the surface.
+                # result is true if we successfully set the range.
+                # returns false otherwise, meaning that we made contact with the sample
+                # too close to be able to set the range properly
+                result = yield self.setPIDOutputRange(end_voltage)
+                self.last_touchdown_time = time.time() - self.t0
+                # Print out the current surface height, round to the nearest second and nm for easy computation
+                print('time, surface height, creep:', round(self.last_touchdown_time),
+                      round(self.contactHeight / 1e-6, 3),
+                      round((self.previous_contactHeight - self.contactHeight) / 1e-6, 3))
+
+                if result:
+                    # Turn PID back on so that if there's drift or the sample is taller than expected,
+                    # the PID will retract the tip
+                    yield self.hf.set_pid_on(self.PID_Index, True)
+
+                    # Reset the deltaFdata arrays. This prevents the software from interpreting the surface contact from approach
+                    # as an accidental contact resulting in autowithdrawl in the zmonitoring loop.
+                    self.deltafData = deque([-200] * self.deltaf_track_length)
+
+                    # Emit that we can now scan in constant height mode
+                    self.updateConstantHeightStatus.emit(True)
+                    self.constantHeight = True
+                    self.label_pidApproachStatus.setText('Constant Height')
+                    self.approaching = False
+                else:
+                    self.label_pidApproachStatus.setText('Could not extend to desired height')
+                    self.approaching = False
+        except:
+            printErrorInfo()
+
+
+    @inlineCallbacks
     def resetVoltageMultiplier(self):
         #Function makes sure that the voltage multiplier is set to 1
         if self.voltageMultiplied == True:
@@ -2241,7 +2443,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 #----------------------------------------------------------------------------------------------#
     """ The following section has functions intended for use when running scripts from the scripting module."""
 
-    def setApproachSettings(distance=None, stepdelay=None, maxsteps=None, sampleafter=None, equilbtime=None):
+    def setApproachSettings(self, distance=None, stepdelay=None, maxsteps=None, sampleafter=None, equilbtime=None):
         '''
         Change the general approach settings
         '''
