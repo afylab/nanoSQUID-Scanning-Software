@@ -495,6 +495,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
     @inlineCallbacks
     def setBias(self, bias):
         self.lineEdit_biasSetpoint.setText(formatNum(bias))
+        self.settingsDict['bias setpoint'] = bias
         yield self.gotoBiasFunc()
 
     @inlineCallbacks

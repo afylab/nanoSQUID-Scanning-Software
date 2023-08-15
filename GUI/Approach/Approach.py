@@ -128,6 +128,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
         #Frequency threshold
         self.freqThreshold = 0.4
+        self.std = 0.0
 
         #Height at which the previous approach made contact
         self.contactHeight = 0
@@ -1536,7 +1537,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         #Find the mean and standard deviation of the data that exists
         #This should just be the mean and std of the past 100 data points taken
         mean = np.mean(self.deltafData)
-        std = np.std(self.deltafData)
+        self.std = np.std(self.deltafData)
 
         current_time = time.time()-self.t0
         # If 30 seconds has not passed since the last touchdown show a warning.
@@ -1550,9 +1551,9 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             msgBox.exec_()
             return
 
-        print("Mean and standard deviation of past 100 points: ", mean, std)
+        print("Mean and standard deviation of past 100 points: ", mean, self.std)
 
-        new_thresh = mean + 4*std
+        new_thresh = mean + 4*self.std
 
         if 0.008 < new_thresh < 200:
             self.radioButton_plus.setChecked(True)
