@@ -316,8 +316,9 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
             if block.isVisible() and (bottom >= event.rect().top()):
                 number = str(blockNumber + 1)
                 mypainter.setPen(QtCore.Qt.black)
-                mypainter.drawText(0, top, self.lineNumberArea.width(), height,
-                 QtCore.Qt.AlignRight, number)
+                # mypainter.drawText(0, top, self.lineNumberArea.width(), height, QtCore.Qt.AlignRight, number) # Original
+                # convert floats to int becuase PyQt5 has a bug with versions of python >3.10
+                mypainter.drawText(0, int(top), int(self.lineNumberArea.width()), int(height), QtCore.Qt.AlignRight, number)
 
             block = block.next()
             top = bottom
