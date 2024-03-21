@@ -123,7 +123,7 @@ color:rgb(168,168,168)
            </widget>
           </item>
           <item row="0" column="0">
-           <widget class="QPushButton" name="push_simulate">
+           <widget class="QPushButton" name="push_exit">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -131,7 +131,7 @@ color:rgb(168,168,168)
              </sizepolicy>
             </property>
             <property name="text">
-             <string>Simulate</string>
+             <string>Exit</string>
             </property>
            </widget>
           </item>
@@ -245,7 +245,7 @@ p, li { white-space: pre-wrap; }
            </size>
           </property>
           <property name="text">
-           <string>    </string>
+           <string/>
           </property>
          </widget>
         </item>

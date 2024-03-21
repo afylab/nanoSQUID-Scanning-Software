@@ -132,6 +132,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 'x out'               : 2,         # 1 indexed DAC output that goes to X
                 'y out'               : 3,         # 1 indexed DAC output that goes to Y
                 'blink out'           : 4,         # 1 indexed DC Box output that goes to blinking
+                'x read'              : 7,         # The indexed ADC to read the initial X output
+                'y read'              : 8,         # The indexed ADC to read the initial Y output
         }
 
         #Random number that is not real data. This lets us know when plotting which values are real data, and which can just be ignored.
@@ -281,6 +283,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.outputs['z out'] = config['z out']
                 self.outputs['x out'] = config['x out']
                 self.outputs['y out'] = config['y out']
+                if 'read x' in config:
+                    self.outputs['read x'] = config['read x']
+                if 'read y' in config:
+                    self.outputs['read y'] = config['read y']
             else:
                 print("'Scan DAC' not found, LabRAD connection to Scan Control Failed.")
                 return
@@ -327,9 +333,18 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def loadCurrentState(self):
         try:
-            self.Atto_X_Voltage = yield self.dac.read_dac_voltage(self.outputs['x out']-1)
-            self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out']-1)
-            self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out']-1)
+            # self.Atto_X_Voltage = yield self.dac.read_dac_voltage(self.outputs['x out'] - 1)
+            # self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out'] - 1)
+            # self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
+            '''
+            Update 2024, the read_dac_voltage function doesn't work on the 20 bit DACs but the X and Y values are
+            being measured with two ADCs
+            '''
+            self.Atto_X_Voltage = yield self.dac.read_voltage(self.outputs['read x'] - 1)
+            self.Atto_Y_Voltage = yield self.dac.read_voltage(self.outputs['read y'] - 1)
+
+            # Keeping the Z read_dac for backwards compatibility
+            self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
             # print("loadCurrentState", self.Atto_Z_Voltage)
 
             self.updatePosition()
@@ -1421,6 +1436,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         except:
             printErrorInfo()
 
+    def getPosition(self):
+        xpos = (self.Atto_X_Voltage - self.x_volts_max/2) / self.x_volts_to_meters
+        ypos = (self.Atto_Y_Voltage - self.y_volts_max/2) / self.y_volts_to_meters
+        return xpos, ypos
 
     @inlineCallbacks
     def zeroXYPosition(self):

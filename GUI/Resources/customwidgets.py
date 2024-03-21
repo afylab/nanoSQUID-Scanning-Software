@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QFrame
 from time import time
+from traceback import format_exc
+import numpy as np
 
 class ServerStatusWidget(QFrame):
     '''

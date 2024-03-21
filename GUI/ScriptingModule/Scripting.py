@@ -44,7 +44,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.push_abort.clicked.connect(self.abortScript)
         self.push_load.clicked.connect(self.loadFile)
         self.push_save.clicked.connect(self.saveFile)
-        self.push_simulate.clicked.connect(lambda *args : self.runScript(True, *args))
+        self.push_exit.clicked.connect(self.exit_callback) # raises exit flag
 
         #Have Ctrl+S
         QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+S"), self.codeEditor, self.saveFile, context=QtCore.Qt.WidgetShortcut)
@@ -54,10 +54,13 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.cxnr = None
 
         self.runningScript = False
+        self.exitflag = False
+
 
         self.looptimer = LoopTimer(self.label_timing)
 
         self.push_abort.setEnabled(False)
+        self.push_exit.setEnabled(False)
 
     def moveDefault(self):
         self.move(550,10)
@@ -97,6 +100,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         #Define variables that can be used in the script.
         self.lockInterface()
         self.runningScript = True
+        self.exitflag = False
         self.label_status.setText('Script is compiling')
         try:
             code_to_run = self.formatCode()
@@ -148,6 +152,9 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
     def abortScript(self):
         self.runningScript = False
+
+    def exit_callback(self):
+        self.exitflag = True
 
     def formatCode(self):
         '''Format the code, inputting statements to be able to interrupt the script
@@ -221,12 +228,14 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.push_save.setEnabled(False)
         self.push_load.setEnabled(False)
         self.push_abort.setEnabled(True)
+        self.push_exit.setEnabled(True)
 
     def unlockInterface(self):
         self.push_run.setEnabled(True)
         self.push_save.setEnabled(True)
         self.push_load.setEnabled(True)
         self.push_abort.setEnabled(False)
+        self.push_exit.setEnabled(False)
 
 class LineNumberArea(QtWidgets.QWidget):
 

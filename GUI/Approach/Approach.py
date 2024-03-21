@@ -190,10 +190,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 'total_retract_dist'         : 24e-6, #Maximum z extension of the z scanning attocubes in meters. Updated by the PositionCalibration module.
                 'auto_retract_dist'          : 2e-6,  #distance in meters retracted in meters when a surface event is triggered in constant height mode
                 'auto_retract_points'          : 3,   #points above frequency threshold before auto retraction is trigged
-                'atto_distance'              : 6e-6,  #distance in meters to step forward with the coarse positioners. Determined by the resistive encoders
+                'atto_distance'              : 8e-6,  #distance in meters to step forward with the coarse positioners. Determined by the resistive encoders
                 'atto_delay'                 : 0.1,   #delay between steps.
-                'atto_max_steps'             : 500, # The maximum number of steps to take per coarse positioner firing
-                'atto_sample_after'          : 0, # each firing measure the caorse positioner after this many steps (letting it equilibrate)
+                'atto_max_steps'             : 200, # The maximum number of steps to take per coarse positioner firing
+                'atto_sample_after'          : 50, # each firing measure the caorse positioner after this many steps (letting it equilibrate)
                 'atto_equilb_time'           : 30, # Wait this many seconds for the positioners to equilibrate before sampling the coarse positioner location
                 'atto_nominal'               : 8e-6, # The nominal displacement to tell the ANC 350 to move curing approach.
                 'zurich_divider'             : 1, # The factor that the Zurich output is divided by. Actual V = zurich_divider*(Zurich Output)
