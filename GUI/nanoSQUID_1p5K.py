@@ -10,7 +10,7 @@ from Equipment import MagnetControllers
 
 class nanoSQUID_1p5K(nanoSQUIDSystem):
     system_name = '1p5K'
-    default_script_dir = "C:\\Users\\Cthulhu\\Software\\Scanning Scripts"
+    default_script_dir = "C:\\Users\\Lagrange\\Software\\Scanning Scripts"
     def configureEquipment(self):
         # super().configureEquipment() # Not using superclass configuration because 1.5K
         # system has GPIB equipment on remote server
@@ -32,27 +32,27 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
             'nSOT Gate':1,
             'Gate Reference':1,
             'Bias Reference':4,
-            'Bias Res':10.13, # Bias resistance, in units of kOhms
+            'Bias Res':13.63, # Bias resistance, in units of kOhms
             'Feedback Res':1.018, # Feedback resistance, in units of kOhms
-            'Shunt Res':2.9, # Shunt resistance, in units of Ohms
+            'Shunt Res':5.1, # Shunt resistance, in units of Ohms
             'Winding Ratio':13.78 # Turns ratio fo the array, for amplification.
             }
-        self.equip.add_server("nSOT DAC", "dac_adc", "DA16_16_03 (COM6)", config=conf)
+        self.equip.add_server("nSOT DAC", "dac_adc", "DA16_16_03 (COM9)", config=conf)
 
         conf = {'x out':2, 'y out':3, 'z out':1}
-        self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_03 (COM11)", config=conf)
+        self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_03 (COM6)", config=conf)
 
-        self.equip.add_server("Sample DAC", "dac_adc", "DA16_16_06 (COM3)")
+        self.equip.add_server("Sample DAC", "dac_adc", "DA16_16_06 (COM12)")
 
-        self.equip.add_server("DC Box", "ad5764_dcbox", "ad5764_dcbox (COM5)")
+        self.equip.add_server("DC Box", "ad5764_dcbox", "ad5764_dcbox (COM10)")
 
         conf = {'blink channel':3} #Output of DC box that corresponds on the frontpanel to Blink
-        self.equip.add_server("Blink Device", "ad5764_dcbox", "ad5764_dcbox (COM5)", config=conf)
+        self.equip.add_server("Blink Device", "ad5764_dcbox", "ad5764_dcbox (COM10)", config=conf)
 
         # conf = {'max_field':5, "max_ramp":1}
         # self.equip.add_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=conf)
         conf = {'max_field':5, "max_ramp":1}
-        self.equip.add_server("Magnet Z", "ips120_power_supply", 'cthulu GPIB Bus - GPIB0::23::INSTR', controller=MagnetControllers.IPS120_MagnetController, config=conf)
+        self.equip.add_server("Magnet Z", "ips120_power_supply", 'lagrange GPIB Bus - GPIB0::23::INSTR', controller=MagnetControllers.IPS120_MagnetController, config=conf)
         # conf = {'max_field':6, 'gauss_to_amps':870.827, "max_ramp":0.5, "channel":1}
         # self.equip.add_server("Magnet Z", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::21::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
 
@@ -62,7 +62,9 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         'Input 3':'B', 'Input 3 Label':'Magnet'
         }
         self.equip.add_server("LS 350", "lakeshore_350", config=conf)
-
+        
+        self.equip.add_server("GND Switchbox", "ground_switch_actuator", 'lagrange_serial_server - COM13')
+        self.equip.add_server("SR860", "sr860", 'lagrange GPIB Bus - GPIB0::4::INSTR')
         # # Remote Servers
         # self.equip.configure_remote_host('4KMonitor', 'minint_o9n40pb')
         #
@@ -82,7 +84,7 @@ if __name__=="__main__":
     qt5reactor.install()
     from twisted.internet import reactor
     try:
-        window = nanoSQUID_1p5K(reactor, computer='cthulu', folderName='NanoSQUID 1p5K')
+        window = nanoSQUID_1p5K(reactor, computer='lagrange', folderName='NanoSQUID 1p5K')
         window.show()
     except:
         from traceback import format_exc

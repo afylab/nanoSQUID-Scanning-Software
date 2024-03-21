@@ -1,4 +1,5 @@
 from PyQt5 import QtGui, QtWidgets, QtCore
+from PyQt5.QtWidgets import QTabBar
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 ##
@@ -189,7 +190,8 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
 
             self.dragInitiated = False
 
-            QtGui.QTabBar.mousePressEvent(self, event)
+            QTabBar.mousePressEvent(self, event)
+            QTabBar.mousePressEvent(self, event)
 
 
         ##
@@ -209,7 +211,7 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
 
                 # Stop the move event
                 finishMoveEvent = QtGui.QMouseEvent(QtCore.QEvent.MouseMove, event.pos(), QtCore.Qt.NoButton, QtCore.Qt.NoButton, QtCore.Qt.NoModifier)
-                QtGui.QTabBar.mouseMoveEvent(self, finishMoveEvent)
+                QTabBar.mouseMoveEvent(self, finishMoveEvent)
 
                 # Convert the move event into a drag
                 drag = QtGui.QDrag(self)
@@ -245,7 +247,7 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
                         event.accept()
                         self.onMoveTabSignal.emit(self.tabAt(self.dragStartPos), self.tabAt(self.dragDropedPos))
             else:
-                QtGui.QTabBar.mouseMoveEvent(self, event)
+                QTabBar.mouseMoveEvent(self, event)
 
 
         ##
@@ -259,7 +261,7 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
             if 'action' in formats and mimeData.data('action') == 'application/tab-detach':
                 event.acceptProposedAction()
 
-            QtGui.QTabBar.dragMoveEvent(self, event)
+            QTabBar.dragMoveEvent(self, event)
 
 
         ##
@@ -268,7 +270,7 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
         #  @param    event    a drop event
         def dropEvent(self, event):
             self.dragDropedPos = event.pos()
-            QtGui.QTabBar.dropEvent(self, event)
+            QTabBar.dropEvent(self, event)
 
 if __name__ == '__main__':
     import sys

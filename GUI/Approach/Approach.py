@@ -3146,7 +3146,8 @@ class MySlider(QtWidgets.QSlider):
                 #text = '{0:2}'.format(val)
                 text = formatNum(val)
                 x_offset = float(len(text)*font.pointSize()/(3))
-                qp.drawText(x_val - x_offset, y + 58 + font_y_offset,text)
+                #qp.drawText(x_val - x_offset, y + 58 + font_y_offset,text) # Original
+                qp.drawText(int(x_val - x_offset), int(y + 58 + font_y_offset),text) # convert floats to int becuase PyQt5 has a bug with versions of python >3.10
             else:
                 qp.drawLine(x_val , y + 45,  x_val, y+50)
 
