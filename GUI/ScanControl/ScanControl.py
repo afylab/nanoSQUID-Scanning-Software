@@ -132,8 +132,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 'x out'               : 2,         # 1 indexed DAC output that goes to X
                 'y out'               : 3,         # 1 indexed DAC output that goes to Y
                 'blink out'           : 4,         # 1 indexed DC Box output that goes to blinking
-                'x read'              : 7,         # The indexed ADC to read the initial X output
-                'y read'              : 8,         # The indexed ADC to read the initial Y output
+                'read x'              : 7,         # The indexed ADC to read the initial X output
+                'read y'              : 8,         # The indexed ADC to read the initial Y output
         }
 
         #Random number that is not real data. This lets us know when plotting which values are real data, and which can just be ignored.
@@ -343,6 +343,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.Atto_X_Voltage = yield self.dac.read_voltage(self.outputs['read x'] - 1)
             self.Atto_Y_Voltage = yield self.dac.read_voltage(self.outputs['read y'] - 1)
 
+            # Handel the corner case of an ADC rest, which sometimes causes the first reading to be -10V
+            if self.Atto_X_Voltage == -10.0 or self.Atto_Y_Voltage == -10.0:
+                self.Atto_X_Voltage = yield self.dac.read_voltage(self.outputs['read x'] - 1)
+                self.Atto_Y_Voltage = yield self.dac.read_voltage(self.outputs['read y'] - 1)
             # Keeping the Z read_dac for backwards compatibility
             self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
             # print("loadCurrentState", self.Atto_Z_Voltage)
@@ -1401,34 +1405,55 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             startz, startx, starty = self.Atto_Z_Voltage, self.Atto_X_Voltage, self.Atto_Y_Voltage
             stopz, stopx, stopy = self.getPlaneVoltages(x, y)
 
-            #Takes the number of points required for this to be a smooth (300 uV step size)
-            points = int(np.maximum(np.absolute((stopx-startx) / (self.voltageStepSize)), np.absolute((stopy-starty) / (self.voltageStepSize))))
-            #Make sure minimum of 2 point to avoid errors
-            if points < 2:
-                points = 2
-
-            #Find time to travel from current position to zero position at specified linear speed
-            delta_x_pos = (startx - stopx)/self.x_volts_to_meters
-            delta_y_pos = (starty - stopy)/self.y_volts_to_meters
-            time = np.sqrt(delta_x_pos**2 + delta_y_pos**2) / self.linearSpeed
-
-            #Get delay in microseconds to ensure going at the module specified line speed
-            delay = int(1e6 * time / points)
-
-            #Only change the z value when moving around if we're in constant height mode
-            if self.scanMode == 'Constant Height' and self.ConstantHeightReady:
-                out_list = [self.outputs['z out']-1, self.outputs['x out']-1,self.outputs['y out']-1]
-                yield self.dac.buffer_ramp_dis(out_list,[0],[startz,startx, starty],[stopz, stopx, stopy], points, delay,2)
-                self.Atto_Z_Voltage = stopz
-                # print("setPosition", self.Atto_Z_Voltage)
+            # Software interlock to prevent applying negative voltage to the scanners above the damage threshold
+            # # (-15% of max, set to -10% to be conservative)
+            # Voltage maximums are usually equal, select minimum ot deal with corner case
+            threshold = -0.1*np.min([self.x_volts_max, self.y_volts_max, self.z_volts_max])
+            if any(val < threshold for val in [startz, startx, starty, stopz, stopx, stopy]):
+                print("This action would apply a negative voltage to the scanners above the damage threshold")
+                print("Starting Voltages:")
+                print("X", startx, "Y", starty, "Z", startz)
+                print("Ending Voltages:")
+                print("X", stopx, "Y", stopy, "Z", stopz)
+                print("Damage Threshold:")
+                print(threshold)
+                msgBox = QtWidgets.QMessageBox(self)
+                msgBox.setIcon(QtWidgets.QMessageBox.Information)
+                msgBox.setWindowTitle('Piezo Warning')
+                txt = "\r\n This action will apply a negative voltage to a scanner piezo above the damage threshold. Action cancelled. Check settings before proceeding."
+                msgBox.setText(txt)
+                msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+                msgBox.exec_()
             else:
-                out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
-                yield self.dac.buffer_ramp_dis(out_list,[0],[startx, starty],[stopx, stopy], points, delay,2)
+                #Takes the number of points required for this to be a smooth (300 uV step size)
+                points = int(np.maximum(np.absolute((stopx-startx) / (self.voltageStepSize)), np.absolute((stopy-starty) / (self.voltageStepSize))))
+                #Make sure minimum of 2 point to avoid errors
+                if points < 2:
+                    points = 2
 
-            self.Atto_X_Voltage = stopx
-            self.Atto_Y_Voltage = stopy
+                #Find time to travel from current position to zero position at specified linear speed
+                delta_x_pos = (startx - stopx)/self.x_volts_to_meters
+                delta_y_pos = (starty - stopy)/self.y_volts_to_meters
+                time = np.sqrt(delta_x_pos**2 + delta_y_pos**2) / self.linearSpeed
 
-            self.updatePosition()
+                #Get delay in microseconds to ensure going at the module specified line speed
+                delay = int(1e6 * time / points)
+
+                #Only change the z value when moving around if we're in constant height mode
+                if self.scanMode == 'Constant Height' and self.ConstantHeightReady:
+                    out_list = [self.outputs['z out']-1, self.outputs['x out']-1,self.outputs['y out']-1]
+                    yield self.dac.buffer_ramp_dis(out_list,[0],[startz,startx, starty],[stopz, stopx, stopy], points, delay,2)
+                    self.Atto_Z_Voltage = stopz
+                    # print("setPosition", self.Atto_Z_Voltage)
+                else:
+                    out_list = [self.outputs['x out']-1,self.outputs['y out']-1]
+                    yield self.dac.buffer_ramp_dis(out_list,[0],[startx, starty],[stopx, stopy], points, delay,2)
+
+                self.Atto_X_Voltage = stopx
+                self.Atto_Y_Voltage = stopy
+
+                self.updatePosition()
 
             if not self.scanning:
                 self.push_ZeroXY.setEnabled(True)
@@ -1465,6 +1490,27 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         retValue = msgBox.exec_()
         if retValue != QtWidgets.QMessageBox.Ok:
             return
+
+        # Software interlock to prevent applying negative voltage to the scanners above the damage threshold
+        # this is a corner case when self.Atto_Z_Voltage is set to a negative value on restart
+        # Voltage maximums are usually equal, select minimum ot deal with corner case
+        threshold = -0.1 * self.z_volts_max
+        if self.Atto_Z_Voltage < threshold:
+            print("This action would apply a negative voltage to the scanners above the damage threshold")
+            print("Starting Voltages:")
+            print("Z", self.Atto_Z_Voltage)
+            print("Ending Voltages:")
+            print("Z", 0.0)
+            print("Damage Threshold:")
+            print(threshold)
+            msgBox = QtWidgets.QMessageBox(self)
+            msgBox.setIcon(QtWidgets.QMessageBox.Information)
+            msgBox.setWindowTitle('Piezo Warning')
+            txt = "\r\n This action will apply a negative voltage to a scanner piezo above the damage threshold. Action cancelled. Check settings before proceeding."
+            msgBox.setText(txt)
+            msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msgBox.setStyleSheet("background-color:black; color:rgb(168,168,168)")
+            msgBox.exec_()
 
         #So that, no matter what, after a scan back at 0 height relative to the Offset point. FIX THIS SOON
         print('Moving by: ' + str(self.Atto_Z_Voltage) + 'V in the z direction to return to zero z offset.')

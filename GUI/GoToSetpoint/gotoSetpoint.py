@@ -158,8 +158,14 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
     @inlineCallbacks
     def readInitVals(self):
         try:
-            yield self.readBias()
-            yield self.readGate()
+            bias = yield self.readBias()
+            gate = yield self.readGate()
+
+            # Handel the corner case of an ADC rest, which sometimes causes the first reading to be -10V
+            if bias == -10.0 or gate == -10.0:
+                yield self.readBias()
+                yield self.readGate()
+
             yield self.readFeedback()
         except:
             printErrorInfo()
@@ -389,6 +395,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             self.settingsDict['bias current'] = 0.0
             new_bias = yield self.dac.read_voltage(self.biasRefChan)
             self.currBiasLbl.setText('Current Bias: ' + str(new_bias) + 'V')
+            yield self.blink()
         except:
             printErrorInfo()
 
