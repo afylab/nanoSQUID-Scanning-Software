@@ -26,6 +26,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.blink_server = False
 
         self.Approach = approach
+        self.autoBlinkOnZero = False
 
         #Dictionaries of the setpoint settings with some default values
         self.settingsDict = {
@@ -395,7 +396,8 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
             self.settingsDict['bias current'] = 0.0
             new_bias = yield self.dac.read_voltage(self.biasRefChan)
             self.currBiasLbl.setText('Current Bias: ' + str(new_bias) + 'V')
-            yield self.blink()
+            if self.autoBlinkOnZero:
+                yield self.blink()
         except:
             printErrorInfo()
 

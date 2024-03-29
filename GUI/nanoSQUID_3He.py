@@ -16,6 +16,7 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         
         self.Approach.approach_type = "Advance"
         # self.ApproachMonitor.save_logs = True # Save the full output of Approach monitor for debugging
+        self.GoToSetpoint.autoBlinkOnZero = True  # Do not automatically Blink when zeroing
 
         conf = {'pll input':1, 'pll output':1, 'pid z out':1, 'z monitor':1, 'sum board toggle':1}
         self.equip.add_server("HF2LI Lockin", "hf2li_server", controller=CoreEquipment.HF2LI_Controller, config=conf)

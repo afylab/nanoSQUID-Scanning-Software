@@ -1630,7 +1630,7 @@ class preliminarySweep(QtWidgets.QDialog, Ui_prelimSweep):
                 self.showFitBtn.setText('Show Fit')
 
     def setupPlot(self):
-        self.win = pg.GraphicsWindow(parent = self.plotSweepFrame)
+        self.win = pg.GraphicsLayoutWidget(parent = self.plotSweepFrame)
         self.sweepPlot = self.win.addPlot()
         self.win.setGeometry(QtCore.QRect(0, 0, 435, 290))
         self.sweepPlot.setLabel('left', 'DC Feedback Voltage', units = 'V')

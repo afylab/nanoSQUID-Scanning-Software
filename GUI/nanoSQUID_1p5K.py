@@ -19,6 +19,7 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         self.equip.add_server("Serial Server", 'serial_server', display_frame=self.genericFrame)
 
         self.Approach.approach_type = "Steps" #Step the coarse positioners the old way
+        self.GoToSetpoint.autoBlinkOnZero = False # Do not automatically Blink when zeroing
 
         # Local Servers
         conf = {'pll input':1, 'pll output':1, 'pid z out':1, 'z monitor':1, 'sum board toggle':1}
@@ -32,19 +33,21 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
             'nSOT Gate':1,
             'Gate Reference':1,
             'Bias Reference':4,
-            'Bias Res':13.63, # Bias resistance, in units of kOhms
-            'Feedback Res':1.018, # Feedback resistance, in units of kOhms
-            'Shunt Res':5.1, # Shunt resistance, in units of Ohms
+            'Bias Res':13.47, # Bias resistance, in units of kOhms
+            'Feedback Res':1.003, # Feedback resistance, in units of kOhms
+            'Shunt Res':7.8, # Shunt resistance, in units of Ohms
             'Winding Ratio':13.78 # Turns ratio fo the array, for amplification.
             }
         self.equip.add_server("nSOT DAC", "dac_adc", "DA16_16_03 (COM9)", config=conf)
 
-        conf = {'x out':2, 'y out':3, 'z out':1}
+        conf = {'x out':2, 'y out':3, 'z out':1, 'read x':8, 'read y':7 }
         self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_03 (COM6)", config=conf)
 
-        self.equip.add_server("Sample DAC", "dac_adc", "DA16_16_06 (COM12)")
+        self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_05 (COM14)")
 
         self.equip.add_server("DC Box", "ad5764_dcbox", "ad5764_dcbox (COM10)")
+        
+        self.equip.add_server("AC Box", "ad5764_acbox", "ad5764_acbox (COM7)")
 
         conf = {'blink channel':3} #Output of DC box that corresponds on the frontpanel to Blink
         self.equip.add_server("Blink Device", "ad5764_dcbox", "ad5764_dcbox (COM10)", config=conf)
