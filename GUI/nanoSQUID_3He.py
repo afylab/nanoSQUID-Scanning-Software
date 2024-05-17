@@ -36,9 +36,11 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         self.equip.add_server("nSOT DAC", "dac_adc", "DA20_16_05 (COM3)", config=conf)
 
         conf = {'x out':2, 'y out':3, 'z out':1}
-        self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_04 (COM4)", config=conf)
+        self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_06 (COM6)", config=conf)
+        # self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_04 (COM14)", config=conf)
 
-        self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_06 (COM6)")
+        self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_04 (COM14)")
+        #self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_06 (COM6)") # Swapped with scan
 
         conf = {'blink channel':3}
         self.equip.add_server("Blink Device", "dac_adc", "DA20_16_05 (COM3)", config=conf)

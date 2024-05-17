@@ -333,23 +333,26 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def loadCurrentState(self):
         try:
-            # self.Atto_X_Voltage = yield self.dac.read_dac_voltage(self.outputs['x out'] - 1)
-            # self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out'] - 1)
-            # self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
+            self.Atto_X_Voltage = yield self.dac.read_dac_voltage(self.outputs['x out'] - 1)
+            self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out'] - 1)
+            self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
+
             '''
+            ROLLED BACK, IT"S A PIEZO KILLER
+            
             Update 2024, the read_dac_voltage function doesn't work on the 20 bit DACs but the X and Y values are
             being measured with two ADCs
             '''
-            self.Atto_X_Voltage = yield self.dac.read_voltage(self.outputs['read x'] - 1)
-            self.Atto_Y_Voltage = yield self.dac.read_voltage(self.outputs['read y'] - 1)
-
-            # Handel the corner case of an ADC rest, which sometimes causes the first reading to be -10V
-            if self.Atto_X_Voltage == -10.0 or self.Atto_Y_Voltage == -10.0:
-                self.Atto_X_Voltage = yield self.dac.read_voltage(self.outputs['read x'] - 1)
-                self.Atto_Y_Voltage = yield self.dac.read_voltage(self.outputs['read y'] - 1)
-            # Keeping the Z read_dac for backwards compatibility
-            self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
-            # print("loadCurrentState", self.Atto_Z_Voltage)
+            # self.Atto_X_Voltage = yield self.dac.read_voltage(self.outputs['read x'] - 1)
+            # self.Atto_Y_Voltage = yield self.dac.read_voltage(self.outputs['read y'] - 1)
+            #
+            # # Handel the corner case of an ADC rest, which sometimes causes the first reading to be -10V
+            # if self.Atto_X_Voltage == -10.0 or self.Atto_Y_Voltage == -10.0:
+            #     self.Atto_X_Voltage = yield self.dac.read_voltage(self.outputs['read x'] - 1)
+            #     self.Atto_Y_Voltage = yield self.dac.read_voltage(self.outputs['read y'] - 1)
+            # # Keeping the Z read_dac for backwards compatibility
+            # self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
+            # # print("loadCurrentState", self.Atto_Z_Voltage)
 
             self.updatePosition()
         except:
