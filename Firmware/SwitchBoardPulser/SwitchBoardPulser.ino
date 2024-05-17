@@ -10,16 +10,16 @@ void setup() {
 
 Serial.begin(115200);
 Serial.setTimeout(50);
-pinMode(en, OUTPUT);
+pinMode(en, OUTPUT); 
 pinMode(sel, OUTPUT);
 
 // Set output to float on startup
 digitalWrite(en, HIGH);
-digitalWrite(sel, HIGH);
+digitalWrite(sel, LOW);
 delay(onTime);
 digitalWrite(sel, LOW);
 digitalWrite(en, LOW);
-is_grounded = false;
+is_grounded = true;
 
 }
 
