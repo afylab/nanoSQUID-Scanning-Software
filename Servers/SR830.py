@@ -616,10 +616,16 @@ class SR830(GPIBManagedServer):
         '''Read values in the buffer specified by the channel index. Returns values from the start_bin
         until the number of points desired. Throws an error if too many points are attempted to be collected.'''
         dev = self.selectedDevice(c)
-        data = yield dev.query('TRCB? ' + str(chnl_ind) +', '  + str(start_bin) +', '  + str(num_points))
+        data = yield dev.query('TRCA? ' + str(chnl_ind) +', '  + str(start_bin) +', '  + str(num_points))
         length = len(data)
-        data = [unpack('f',data[i:i+4])[0] for i in range(0,length,4)]
+        print(data)
+        data = [unpack('f',bytes(data[i:i+4]))[0] for i in range(0,length,4)]
         returnValue(data)
+
+    @setting(108, 'Trigger')
+    def trigger(self, c):
+        dev = self.selectedDevice(c)
+        yield dev.write("TRIG")
 
 __server__ = SR830()
 

@@ -16,7 +16,7 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         
         self.Approach.approach_type = "Advance"
         # self.ApproachMonitor.save_logs = True # Save the full output of Approach monitor for debugging
-        self.GoToSetpoint.autoBlinkOnZero = True  # Do not automatically Blink when zeroing
+        self.GoToSetpoint.autoBlinkOnZero = True
 
         conf = {'pll input':1, 'pll output':1, 'pid z out':1, 'z monitor':1, 'sum board toggle':1}
         self.equip.add_server("HF2LI Lockin", "hf2li_server", controller=CoreEquipment.HF2LI_Controller, config=conf)
@@ -29,7 +29,7 @@ class nanoSQUID_3He(nanoSQUIDSystem):
             'nSOT Gate':1, 
             'Gate Reference':1, 
             'Bias Reference':4,
-            'Bias Res':20.5, # Bias resistance, in units of kOhms. Includes series resistance of filters 2x 5.1 kOhms
+            'Bias Res':15.5, # Bias resistance, in units of kOhms. Includes series resistance of filters 2x 5.1 kOhms
             'Feedback Res':1.11, # Feedback resistance, in units of kOhms
             'Shunt Res':2.9, # Shunt resistance, in units of Ohms
             'Winding Ratio':14 # Turns ratio fo the array, for amplification.
@@ -40,7 +40,7 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_06 (COM6)", config=conf)
         # self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_04 (COM14)", config=conf)
 
-        self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_04 (COM14)")
+        self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_04 (COM7)")
         #self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_06 (COM6)") # Swapped with scan
 
         conf = {'blink channel':3}
@@ -65,11 +65,12 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         conf = {'max_field':1, 'gauss_to_amps':159.591, "max_ramp":0.15, "channel":2}
         self.equip.add_server("Magnet Y", "cryo_4g_power_supply", "phys-leviathan GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
         
-        # Ohter Servers
+        # Other Servers
         self.equip.add_server("SR 830", "sr830", "phys-leviathan GPIB Bus - GPIB0::15::INSTR")
         self.equip.add_server("SR 860", "sr860", "phys-leviathan GPIB Bus - GPIB0::4::INSTR")
-        self.equip.add_server("AC Box", "ad5764_acbox")
+        #self.equip.add_server("AC Box", "ad5764_acbox")
         self.equip.add_server("GND Switchbox", "ground_switch_actuator")
+        self.equip.add_server("Sorb Valve", "he_valve")
         #self.equip.add_server("LM 510", "lm_510")
 #
 

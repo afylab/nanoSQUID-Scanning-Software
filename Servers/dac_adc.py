@@ -430,6 +430,96 @@ class DAC_ADCServer(DeviceServer):
 
         returnValue(channels)
 
+    # @setting(307, dacPorts='*i', adcPorts='*i', ivoltages='*v[]', fvoltages='*v[]', steps='i', delay='v[]',
+    #          nReadings='i', returns='**v[]')  # (*v[],*v[])')
+    # def buffer_ramp_chop(self, c, dacPorts, adcPorts, ivoltages, fvoltages, steps, delay, nReadings=1):
+    #     """
+    #     This is a variation of buffer ramp that Chops the signal according to the value of ADC 7 (8 on front panel)
+    #     Proceed with caution, only use if you know how it works.
+    #     """
+    #     dacN = len(dacPorts)
+    #     adcN = len(adcPorts)
+    #     sdacPorts = ""
+    #     sadcPorts = ""
+    #     sivoltages = ""
+    #     sfvoltages = ""
+    #
+    #     # if 7 not in adcPorts:
+    #     #     print("Warning, need to read ADC 7 (8 on front panel), otherwise this is just a normal buffer ramp")
+    #
+    #     for x in range(dacN):
+    #         sdacPorts = sdacPorts + str(dacPorts[x])
+    #         sivoltages = sivoltages + str(ivoltages[x]) + ","
+    #         sfvoltages = sfvoltages + str(fvoltages[x]) + ","
+    #
+    #     sivoltages = sivoltages[:-1]
+    #     sfvoltages = sfvoltages[:-1]
+    #
+    #     for x in range(adcN):
+    #         sadcPorts = sadcPorts + str(adcPorts[x])
+    #
+    #     dev = self.selectedDevice(c)
+    #     yield dev.write("BUFFER_RAMP_CHOP,%s,%s,%s,%s,%i,%i,%i\r" % (
+    #     sdacPorts, sadcPorts, sivoltages, sfvoltages, steps, delay, nReadings))
+    #     self.sigBufferRampStarted([dacPorts, adcPorts, ivoltages, fvoltages, str(steps), str(delay), str(nReadings)])
+    #
+    #     voltages = []
+    #     channels = []
+    #     data = b''
+    #
+    #     dev.setramping(True)
+    #     try:
+    #         nbytes = 0
+    #         totalbytes = steps * adcN * 2
+    #         print("Buffer Ramp Total Bytes:", totalbytes)  # DEBUG
+    #         while dev.isramping() and (nbytes < totalbytes):
+    #             bytestoread = yield dev.in_waiting()
+    #             if bytestoread > 0:
+    #                 if nbytes + bytestoread > totalbytes:
+    #                     tmp = yield dev.readByte(totalbytes - nbytes)
+    #                     data = data + tmp
+    #                     nbytes = totalbytes
+    #                 else:
+    #                     tmp = yield dev.readByte(bytestoread)
+    #                     data = data + tmp
+    #                     nbytes = nbytes + bytestoread
+    #         print("Bytes Received", nbytes)
+    #         print("Last Readout Number Bytes", bytestoread)  # DEBUG
+    #         print("Last Readout Bytes", tmp)  # DEBUG
+    #
+    #         dev.setramping(False)
+    #         print("Done Ramping")  # DEBUG
+    #         data = list(data)
+    #
+    #         for x in range(adcN):
+    #             channels.append([])
+    #
+    #         for x in range(0, len(data), 2):
+    #             # The python 2 way
+    #             # b1 = int(data[x].encode('hex'), 16)
+    #             # b2 = int(data[x + 1].encode('hex'), 16)
+    #             # decimal = twoByteToInt(b1, b2)
+    #             decimal = twoByteToInt(data[x], data[x + 1])
+    #             voltage = map2(decimal, 0, 65536, -10.0, 10.0)
+    #             voltages.append(voltage)
+    #
+    #         for x in range(0, steps * adcN, adcN):
+    #             for y in range(adcN):
+    #                 try:
+    #                     channels[y].append(voltages[x + y])
+    #                 except IndexError:
+    #                     channels[y].append(0)
+    #
+    #     except KeyboardInterrupt:
+    #         print('Stopped')
+    #
+    #     try:
+    #         yield dev.read()
+    #     except:
+    #         print("Error clearing the serial buffer after buffer_ramp")
+    #
+    #     returnValue(channels)
+
     @setting(109,channel='i',time='v[]',returns='v[]')
     def set_conversionTime(self,c,channel,time):
         """
