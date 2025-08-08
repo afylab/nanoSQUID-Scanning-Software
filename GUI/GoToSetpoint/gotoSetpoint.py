@@ -10,7 +10,7 @@ GoToSetpointUI, QtBaseClass = uic.loadUiType(path + r"\gotoSetpoint.ui")
 
 #Window for going to a particular nSOT bias or magnetic field
 class Window(QtWidgets.QMainWindow, GoToSetpointUI):
-    def __init__(self, reactor, parent = None, approach=None):
+    def __init__(self, reactor, parent = None, approach=None, scancontrol=None):
         super(Window, self).__init__(parent)
 
         self.setupUi(self)
@@ -26,25 +26,28 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.blink_server = False
 
         self.Approach = approach
+        self.ScanControl = scancontrol
         self.autoBlinkOnZero = False
 
         #Dictionaries of the setpoint settings with some default values
         self.settingsDict = {
                 'bias current':     0.0,
                 'bias setpoint':    0.0,
-                'bias steps':       500,
+                'bias steps':       1000,
                 'bias delay':       0.001,
                 'gate current':     0.0,
                 'gate setpoint':    0.0,
                 'gate steps':       500,
                 'gate delay':       0.001,
-                'avg time':         10, # s
-                'set time':         10, # s
+                'avg time':         5, # s
+                'set time':         5, # s
                 'noise':            1, # uV/rtHz
-                'delta field':      1, # mT
+                'delta field':      0.050, # mT
+                'field steps':      5, # number of steps to take in field
         }
         self.transFunc = 0.0
         self.sensitivity = 0.0
+        self.sweeping = False
 
         self.lineEdit_biasSetpoint.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSetpoint, 'bias setpoint', [-10.0, 10.0]))
         self.lineEdit_biasSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_biasSteps, 'bias steps'))
@@ -58,6 +61,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         self.lineEdit_settleTime.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_settleTime, 'set time'))
         self.lineEdit_noise.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_noise, 'noise'))
         self.lineEdit_deltaField.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_deltaField, 'delta field'))
+        self.lineEdit_FieldSteps.editingFinished.connect(lambda: self.updateSweepParameter(self.lineEdit_FieldSteps, 'field steps'))
 
         self.zeroBiasBtn.clicked.connect(lambda: self.zeroBiasFunc())
         self.gotoBiasBtn.clicked.connect(lambda: self.gotoBiasFunc())
@@ -243,6 +247,8 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
     @inlineCallbacks
     def autotouchdown(self):
         # GATES SHOULD ALREADY BE RAMPED DOWN, Will ramp down remaining voltage sources below
+        if self.sweeping:
+            return
 
         if self.Approach is None:
             print("Error, no appraoch module, can't autotouchdown")
@@ -369,6 +375,8 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
     @inlineCallbacks
     def setFeedback(self, on):
+        if self.sweeping:
+            return
         if on:
             yield self.blink_server.set_voltage(self.blinkChan-1, 0) #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         else:
@@ -387,15 +395,18 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
     @inlineCallbacks
     def zeroBiasFunc(self):
+        if self.sweeping:
+            return
         try:
             curr_bias = self.settingsDict['bias current']
-            steps = int(np.absolute(curr_bias) * 1000 + 5)
+            steps = int(np.absolute(curr_bias) * 250 + 5)
             delay = 2000
-
+            self.sweeping = True
             yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [0.0], steps, delay)
             self.settingsDict['bias current'] = 0.0
             new_bias = yield self.dac.read_voltage(self.biasRefChan)
             self.currBiasLbl.setText('Current Bias: ' + str(new_bias) + 'V')
+            self.sweeping = False
             if self.autoBlinkOnZero:
                 yield self.blink()
         except:
@@ -403,97 +414,109 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
 
     @inlineCallbacks
     def gotoBiasFunc(self):
+        if self.sweeping:
+            return
         new_bias = self.settingsDict['bias setpoint']
         curr_bias = self.settingsDict['bias current']
         steps = int(self.settingsDict['bias steps'])
         delay = int(1e6*self.settingsDict['bias delay'])
-
+        self.sweeping = True
         yield self.dac.buffer_ramp([self.biasChan], [self.biasChan], [curr_bias], [new_bias], steps, delay)
         self.settingsDict['bias current'] = new_bias
         self.currBiasLbl.setText('Current Bias: '+ str(new_bias) + 'V')
         self.currBiasLbl.setStyleSheet("QLabel#currBiasLbl{color: rgb(168,168,168); font:bold 10pt;}")
+        self.sweeping = False
 
     @inlineCallbacks
     def zeroGateFunc(self):
+        if self.sweeping:
+            return
         curr_gate = self.settingsDict['gate current']
-        steps = int(np.absolute(curr_gate) * 1000 + 5)
+        steps = int(np.absolute(curr_gate) * 250 + 5)
         delay = 2000
-
+        self.sweeping = True
         yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [curr_gate], [0.0], steps, delay)
         self.settingsDict['gate curent'] = 0.0
         new_gate = yield self.dac.read_voltage(self.gateRefChan)
         self.currGateLbl.setText('Current Gate: ' + str(new_gate) + 'V')
+        self.sweeping = False
 
     @inlineCallbacks
     def gotoGateFunc(self):
+        if self.sweeping:
+            return
         new_gate = self.settingsDict['gate setpoint']
         curr_gate = self.settingsDict['gate current']
         steps = int(self.settingsDict['gate steps'])
         delay = int(1e6*self.settingsDict['gate delay'])
-
+        self.sweeping = True
         yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [curr_gate], [new_gate], steps, delay)
         self.settingsDict['gate current'] = new_gate
         self.currGateLbl.setText('Current Gate: '+ str(new_gate) + 'V')
         self.currGateLbl.setStyleSheet("QLabel#currGateLbl{color: rgb(168,168,168); font:bold 10pt;}")
+        self.sweeping = False
 
     @inlineCallbacks
     def blink(self):
+        if self.sweeping:
+            return
+        self.sweeping = True
         yield self.blink_server.set_voltage(self.blinkChan - 1, 5) #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         self.feedbackButtonColors(False)
         yield self.sleep(0.25)
         yield self.blink_server.set_voltage(self.blinkChan - 1, 0) #The -1 is necessary to get from the 1-indexed front panel numbers to the 0-indexed firmware
         self.feedbackButtonColors(True)
+        self.sweeping = False
 
     @inlineCallbacks
     def runTransFunc(self):
+        if self.sweeping:
+            return
         meas_time = self.settingsDict['avg time'] # Time to average per point in seconds
         set_time = self.settingsDict['set time']  # Time to wait before measuring
         noise = self.settingsDict['noise'] # uV/rtHz
         dField = self.settingsDict['delta field']*1e-3  # mT
+        fieldSteps = int(self.settingsDict['field steps'])
         print("Running transfer function")
         # If the magnet is auto-persisted, ramp up the supply to the setpoint
         yield self.magnet.startSweeping()
 
         start_field = self.magnet.B  # in Tesla
         end_field = start_field + dField  # in Tesla
+        fields = np.linspace(start_field, end_field, 1+fieldSteps)
 
-        yield self.magnet.setSetpoint(start_field)
-        yield self.magnet.goToSetpoint(wait=True)
-        yield self.sleep(set_time) # Allow values to converge
-        B1 = self.magnet.B
+        Bvals = []
+        Fvals = []
+        for i in range(len(fields)):
+            yield self.magnet.setSetpoint(fields[i])
+            yield self.magnet.goToSetpoint(wait=True)
+            yield self.sleep(set_time)  # Allow values to converge
+            Bvals.append(self.magnet.B)
 
-        startfield_volts = []
-        tzero = time.time()
-        t = tzero
-        while t - tzero <= meas_time:
-            volts = yield self.dac.read_voltage(self.feedbackChan)
-            startfield_volts.append(volts)
-            t = time.time()
+            feedback_volts = []
+            tzero = time.time()
+            t = tzero
+            while t - tzero <= meas_time:
+                volts = yield self.dac.read_voltage(self.feedbackChan)
+                feedback_volts.append(volts)
+                t = time.time()
+            Fvals.append(np.average(feedback_volts))
 
-        yield self.magnet.setSetpoint(end_field)
-        yield self.magnet.goToSetpoint(wait=True)
-        yield self.sleep(set_time) # Allow values to converge
-        B2 = self.magnet.B
-
-        endfield_volts = []
-        tzero = time.time()
-        t = tzero
-        while t - tzero <= meas_time:
-            volts = yield self.dac.read_voltage(self.feedbackChan)
-            endfield_volts.append(volts)
-            t = time.time()
 
         yield self.magnet.setSetpoint(start_field)
         yield self.magnet.goToSetpoint(wait=True)
 
-        v1 = np.average(startfield_volts)
-        v2 = np.average(endfield_volts)
-        print(v1, v2, B1, B2) # For debugging
-        self.transFunc = (v2 - v1) / (B2 - B1)
+        # Calculate the transfer function
+        fit = np.polyfit(Bvals, Fvals, 1)
+        self.transFunc = fit[0]
+
         self.sensitivity = np.abs(1e3*noise/self.transFunc)
         print('Slope in volts per tesla is: ' + str(self.transFunc))
         self.lineEdit_transferFunc.setText(str(round(self.transFunc,5)))
         self.lineEdit_sensitivity.setText(str(round(self.sensitivity, 2)))
+
+        if self.ScanControl is not None:
+            self.ScanControl.transFunc = self.transFunc
 
         # If the magnet is auto-persisted, ramp down the supply to the setpoint
         yield self.magnet.doneSweeping()
@@ -520,6 +543,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
     @inlineCallbacks
     def setGate(self, gate):
         self.lineEdit_gateSetpoint.setText(formatNum(gate))
+        self.settingsDict['gate setpoint'] = float(gate)
         yield self.gotoGateFunc()
 
     @inlineCallbacks

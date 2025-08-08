@@ -489,6 +489,13 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     print("startTempMonitoring in Temperature Control: More than 25 errors, stopping polling")
                     print("=========================")
                     break
+
+                # The module plots at most 48 hours worth of data. If more than that is stored, shorten the data list
+                if self.timeData[-1] - self.timeData[0] > 48:
+                    a = np.argmin(np.abs(self.timeData - (self.timeData[-1] - 48)))
+                    self.timeData = self.timeData[a:]
+                    for ix in range(len(self.sampleData)):
+                        self.sampleData[ix] = self.sampleData[ix][a:]
                 self.updatePlots()
 
                 yield self.sleep(self.measurementSettings['sample delay'])

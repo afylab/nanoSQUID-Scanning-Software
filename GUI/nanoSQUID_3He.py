@@ -68,7 +68,7 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         # Other Servers
         self.equip.add_server("SR 830", "sr830", "phys-leviathan GPIB Bus - GPIB0::15::INSTR")
         self.equip.add_server("SR 860", "sr860", "phys-leviathan GPIB Bus - GPIB0::4::INSTR")
-        #self.equip.add_server("AC Box", "ad5764_acbox")
+        self.equip.add_server("AC Box", "ad5764_acbox")
         self.equip.add_server("GND Switchbox", "ground_switch_actuator")
         self.equip.add_server("Sorb Valve", "he_valve")
         #self.equip.add_server("LM 510", "lm_510")
