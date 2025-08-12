@@ -271,7 +271,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 svr, ln, device_info, cnt, config = equip.servers["Scan DAC"]
 
                 #Similarly uses that extra connection so that we can talk to the scan dac at the same time as other dacs
-                self.dac = yield cxn.dac_adc
+                self.dac = yield cxn.dac_adc_scan
                 yield self.dac.select_device(device_info)
 
                 self.generalSettings['step_z_output'] = config['z out']
