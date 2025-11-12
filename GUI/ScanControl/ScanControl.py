@@ -94,6 +94,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
         #Flag to indicate whether or not we're scanning
         self.scanning = False
+        self.transFunc = 1.0
 
         #Name of the file to be saved
         self.fileName = 'unnamed'
@@ -143,7 +144,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.randomFill = -0.987654321
 
         #Specify the voltage step size for smooth scans.
-        self.voltageStepSize = 300e-6
+        # self.voltageStepSize = 300e-6 # 16-bit
+        self.voltageStepSize = 19e-6  # 20-bit
 
         #Set up rest of UI (must be done after initializing default values)
         self.setupAdditionalUi()
@@ -277,7 +279,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 svr, ln, device_info, cnt, config = equip.servers["Scan DAC"]
 
                 #Similarly uses that extra connection so that we can talk to the scan dac at the same time as other dacs
-                self.dac = yield self.cxn_scan.dac_adc
+                self.dac = yield self.cxn_scan.dac_adc_scan
                 yield self.dac.select_device(device_info)
 
                 self.outputs['z out'] = config['z out']
@@ -339,6 +341,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out'] - 1)
             self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
             '''
+            ROLLED BACK, IT"S A PIEZO KILLER
+            
             Update 2024, the read_dac_voltage function doesn't work on the 20 bit DACs but the X and Y values are
             being measured with two ADCs
             '''
@@ -1625,7 +1629,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
             params = (('X Center', self.currXc), ('Y Center', self.currYc), ('Width', self.currW),
                      ('Height',self.currH), ('Angle',self.currAngle), ('Speed',self.linearSpeed), ('Blink', self.blinkMode),
-                     ('Pixels',self.pixels), ('Lines', self.lines))
+                     ('Pixels',self.pixels), ('Lines', self.lines), ('Transfer Function', self.transFunc))
 
             num = 1
             for a in self.inputScanOrder:
@@ -1645,7 +1649,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             trace_data = []
             retrace_data = []
             for i in range(0,self.lines):
-                print('Starting sweep for line ' + str(i) + '.')
+                # print('Starting sweep for line ' + str(i) + '.')
 
                 if not self.scanning:
                     break
@@ -1665,16 +1669,16 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 tzero = time.time()
                 #Do buffer ramp. If in feedback mode,
                 if self.scanMode == 'Feedback':
-                    print("X and Y outputs: ", out_list)
-                    print("Input in use in order: ", in_list)
+                    # print("X and Y outputs: ", out_list)
+                    # print("Input in use in order: ", in_list)
                     if self.scanSmooth:
                         newData = yield self.dac.buffer_ramp_dis(out_list,in_list,[startx, starty],[stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     else:
                         newData = yield self.dac.buffer_ramp(out_list,in_list,[startx, starty],[stopx, stopy], self.pixels, self.delayTime*1e6)
 
                 elif self.scanMode == 'Constant Height':
-                    print("Z, X and Y outputs: ", out_list)
-                    print("Input in use in order: ", in_list)
+                    # print("Z, X and Y outputs: ", out_list)
+                    # print("Input in use in order: ", in_list)
                     if self.scanSmooth:
                         newData = yield self.dac.buffer_ramp_dis(out_list, in_list, [startz, startx, starty], [stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     else:
@@ -1686,7 +1690,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.updatePosition()
 
                 #bin newData to appropriate number of pixels
-                print('Time taken for trace buffer ramp: ' + str(time.time()-tzero))
+                # print('Time taken for trace buffer ramp: ' + str(time.time()-tzero))
                 tzero = time.time()
                 #Add the binned Z data to the dataset. Note that right now, newData is the same length as self.pixels,
                 #and the binning does nothing except flip the order of the data for retraces. The function is kept to
@@ -1694,10 +1698,10 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 for k in range(0,num_datasets):
                     self.data[k][:,i] = self.bin_data(newData[k]/self.inputs[self.inputScanOrder[k]-1]['Conversion'], self.pixels, 'trace')
 
-                print('Time taken to bin data: ' + str(time.time()-tzero))
+                # print('Time taken to bin data: ' + str(time.time()-tzero))
                 tzero = time.time()
                 self.plotData[:,i] = processLineData(np.copy(self.data[self.channel][:,i]), self.dataProcessing)
-                print('Time taken to process the line data: ' + str(time.time()-tzero))
+                # print('Time taken to process the line data: ' + str(time.time()-tzero))
                 tzero = time.time()
 
                 #Reformat data and add to data vault
@@ -1711,7 +1715,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     formatted_data.append(data_point)
                     trace_data.append(data_point)
                 yield self.dv.add(formatted_data)
-                print('Time taken to add data to data vault: ' + str(time.time()-tzero))
+                # print('Time taken to add data to data vault: ' + str(time.time()-tzero))
 
                 #------------------------------------#
 
@@ -1731,15 +1735,15 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
                 tzero = time.time()
                 if self.scanMode == 'Feedback':
-                    print("X and Y outputs: ", out_list)
-                    print("Input in use in order: ", in_list)
+                    # print("X and Y outputs: ", out_list)
+                    # print("Input in use in order: ", in_list)
                     if self.scanSmooth:
                         newData = yield self.dac.buffer_ramp_dis(out_list,in_list,[startx, starty],[stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     else:
                         newData = yield self.dac.buffer_ramp(out_list,in_list,[startx, starty],[stopx, stopy], self.pixels, self.delayTime*1e6)
                 elif self.scanMode == 'Constant Height':
-                    print("Z, X and Y outputs: ", out_list)
-                    print("Input in use in order: ", in_list)
+                    # print("Z, X and Y outputs: ", out_list)
+                    # print("Input in use in order: ", in_list)
                     if self.scanSmooth:
                         newData = yield self.dac.buffer_ramp_dis(out_list,in_list,[startz,startx, starty],[stopz, stopx, stopy], self.scanParameters['line_points'], self.scanParameters['line_delay'], self.pixels)
                     else:
@@ -1750,7 +1754,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                 self.Atto_Y_Voltage = stopy
                 self.updatePosition()
 
-                print('Time taken for retrace buffer ramp: ' + str(time.time()-tzero))
+                # print('Time taken for retrace buffer ramp: ' + str(time.time()-tzero))
                 tzero = time.time()
 
                 #Add the binned Z data to the dataset. Note that right now, newData is the same length as self.pixels,
@@ -1785,7 +1789,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
 
                 #if we are not on the last line
                 if i < self.lines - 1:
-                    print('Bout to move to the next line')
+                    # print('Bout to move to the next line')
                     #Move to position for next line
                     startx, starty, startz = self.Atto_X_Voltage, self.Atto_Y_Voltage, self.Atto_Z_Voltage
                     stopx, stopy, stopz = self.Atto_X_Voltage + self.scanParameters['pixel_x'], self.Atto_Y_Voltage + self.scanParameters['pixel_y'], self.Atto_Z_Voltage + self.scanParameters['pixel_z']
@@ -1805,7 +1809,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     self.Atto_Y_Voltage = stopy
                     self.updatePosition()
                     #ramp to next y point
-                    print('Time taken to move to next line: ' + str(time.time()-tzero))
+                    # print('Time taken to move to next line: ' + str(time.time()-tzero))
                     tzero = time.time()
 
         except:

@@ -127,7 +127,7 @@ class MagnetControl(EquipmentController):
                 self.setSetpoint(self.persist_B)
                 self.setRampRate(self.max_ramp)
                 yield self.goToSetpoint()
-                yield self.sleep_still_poll(15)
+                yield self.sleep_still_poll(30)
             print("Autopersist:, toggling persistent switch")
             yield self.togglePersist() # Turn switch on, enter charging mode
             print("Autopersist: Done, ready to sweep magnet")
@@ -136,7 +136,7 @@ class MagnetControl(EquipmentController):
                 print("Warning, system is sweeping, autopersist failed.")
                 return
             print("Autopersist: persisting magnet")
-            yield self.sleep_still_poll(5)
+            yield self.sleep_still_poll(30)
             yield self.togglePersist() # Turn switch off, enter persistent mode
             yield self.sleep_still_poll(5)
             if self.B != 0:
@@ -759,64 +759,64 @@ class Cryomag4G_Power_Supply(MagnetControl):
             yield self.sleep(0.1)
     #
 
-    @inlineCallbacks
-    def fastToSetpoint(self, overshoot=0.015, ramprate=0.2, cutback=0.030, wait=False, wait_tolerance=0.0002):
-        '''
-        Ramps to the setpoint in a manner to make the ramping faster by avoiding the
-        PID stabalization. First it sets the server to sweep to a value that slightly overshoots the setpoint,
-        then when approaching the setpoint switching to the original setpoint.
-
-        OVERRIDES the default ramprate, since the overshoot algorithm is very sensitive to ramprate.
-
-        setSetpoint and setRampRate should be called first to configure this ramp.
-
-        Args:
-            overshoot (float) : The theoretical overshoot used to fool the 4G PID loop. Using this mode
-                there is a risk of overshooting the setpoint by this amount.
-            ramprate (float): The sweep rate of the magnetic field, overrides the normal ramprate set
-                by the user.
-            cutback (float) : How close (in units of A) the power supply gets to the setpoint before
-                turning off the overshooting. If this is too small it will result in overshooting due
-                to latency, and if it is too large it will result in undershooting.
-            wait (bool) : Will wait for the controller to reach the setpoint.
-            wait_tolerance (float) : If waiting, the tolerance of the field around the setpoint.
-        '''
-
-        # to prevent potential overshooting don't use near the maximum field, just
-        # do a normal goToSetpoint
-        if np.abs(self.setpoint_B) + overshoot >= self.max_field:
-            yield self.goToSetpoint(wait=wait)
-
-        try:
-            # The Cryomag 4G has weired unit issues for field, so we set the current
-            # Convert the setpoint (in T) and ramp rate (in T/min) to A and A/s
-            current = self.setpoint_B*1e4/self.gauss_to_amps
-
-            if self.setpoint_B > self.B:
-                Iover = (self.setpoint_B+overshoot)*1e4/self.gauss_to_amps
-            else:
-                Iover = (self.setpoint_B-overshoot)*1e4/self.gauss_to_amps
-
-            ramprate = ramprate*166.666667/self.gauss_to_amps # Convert ramprate to correct units
-
-            if wait: # Only finish running the goToSetpoint function when the field is reached
-                yield self.server.fast_sweep_magnet(self.channel, current, ramprate, Iover, cutback)
-                while True:
-                    yield self.poll(outputonly=True)
-                    if self.B <= self.setpoint_B+wait_tolerance and self.B >= self.setpoint_B-wait_tolerance:
-                        break
-                    elif self.abort_wait:
-                        self.abort_wait = False
-                        break
-                    yield self.sleep(0.25)
-                yield self.sleep(0.1)
-            else: # don't wait for it to finish, just send the command.
-                self.server.fast_sweep_magnet(self.channel, current, ramprate, Iover, cutback)
-        except:
-            from traceback import format_exc
-            print("Error encounter in fastToSetpoint")
-            print(format_exc())
+    # @inlineCallbacks
+    # def fastToSetpoint(self, overshoot=0.015, ramprate=0.2, cutback=0.030, wait=False, wait_tolerance=0.0002):
+    #     '''
+    #     Ramps to the setpoint in a manner to make the ramping faster by avoiding the
+    #     PID stabalization. First it sets the server to sweep to a value that slightly overshoots the setpoint,
+    #     then when approaching the setpoint switching to the original setpoint.
     #
+    #     OVERRIDES the default ramprate, since the overshoot algorithm is very sensitive to ramprate.
+    #
+    #     setSetpoint and setRampRate should be called first to configure this ramp.
+    #
+    #     Args:
+    #         overshoot (float) : The theoretical overshoot used to fool the 4G PID loop. Using this mode
+    #             there is a risk of overshooting the setpoint by this amount.
+    #         ramprate (float): The sweep rate of the magnetic field, overrides the normal ramprate set
+    #             by the user.
+    #         cutback (float) : How close (in units of A) the power supply gets to the setpoint before
+    #             turning off the overshooting. If this is too small it will result in overshooting due
+    #             to latency, and if it is too large it will result in undershooting.
+    #         wait (bool) : Will wait for the controller to reach the setpoint.
+    #         wait_tolerance (float) : If waiting, the tolerance of the field around the setpoint.
+    #     '''
+    #
+    #     # to prevent potential overshooting don't use near the maximum field, just
+    #     # do a normal goToSetpoint
+    #     if np.abs(self.setpoint_B) + overshoot >= self.max_field:
+    #         yield self.goToSetpoint(wait=wait)
+    #
+    #     try:
+    #         # The Cryomag 4G has weired unit issues for field, so we set the current
+    #         # Convert the setpoint (in T) and ramp rate (in T/min) to A and A/s
+    #         current = self.setpoint_B*1e4/self.gauss_to_amps
+    #
+    #         if self.setpoint_B > self.B:
+    #             Iover = (self.setpoint_B+overshoot)*1e4/self.gauss_to_amps
+    #         else:
+    #             Iover = (self.setpoint_B-overshoot)*1e4/self.gauss_to_amps
+    #
+    #         ramprate = ramprate*166.666667/self.gauss_to_amps # Convert ramprate to correct units
+    #
+    #         if wait: # Only finish running the goToSetpoint function when the field is reached
+    #             yield self.server.fast_sweep_magnet(self.channel, current, ramprate, Iover, cutback)
+    #             while True:
+    #                 yield self.poll(outputonly=True)
+    #                 if self.B <= self.setpoint_B+wait_tolerance and self.B >= self.setpoint_B-wait_tolerance:
+    #                     break
+    #                 elif self.abort_wait:
+    #                     self.abort_wait = False
+    #                     break
+    #                 yield self.sleep(0.25)
+    #             yield self.sleep(0.1)
+    #         else: # don't wait for it to finish, just send the command.
+    #             self.server.fast_sweep_magnet(self.channel, current, ramprate, Iover, cutback)
+    #     except:
+    #         from traceback import format_exc
+    #         print("Error encounter in fastToSetpoint")
+    #         print(format_exc())
+    # #
 
     @inlineCallbacks
     def togglePersist(self):

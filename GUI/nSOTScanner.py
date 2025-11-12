@@ -135,7 +135,7 @@ class nanoSQUIDSystem(QtWidgets.QMainWindow, MainWindowUI):
         self.FieldControl = FieldControl.Window(self.reactor, None)
         self.TempControl = TemperatureControl.Window(self.reactor,None)
         self.QRreader = QRreader.Window(self.reactor,None)
-        self.GoToSetpoint = gotoSetpoint.Window(self.reactor, None, self.Approach)
+        self.GoToSetpoint = gotoSetpoint.Window(self.reactor, None, self.Approach, self.ScanControl)
         self.SampleCharacterizer = SampleCharacterizer.Window(self.reactor,None)
         
 
