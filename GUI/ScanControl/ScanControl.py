@@ -10,8 +10,6 @@ path = sys.path[0] + r"\ScanControl"
 ScanControlWindowUI, QtBaseClass = uic.loadUiType(path + r"\ScanControlWindow.ui")
 Ui_ServerList, QtBaseClass = uic.loadUiType(path + r"\requiredServers.ui")
 
-
-
 '''
 TODO:
 Check whether or not scanning works with different x and y calibration
@@ -275,6 +273,9 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             curr_folder = yield self.gen_dv.cd()
             yield self.dv.cd(curr_folder)
 
+            self.reg = self.cxn_blink.registry
+            self.reg.cd(["Measurements", "Scanning"], True)
+
             if "Scan DAC" in equip.servers:
                 svr, ln, device_info, cnt, config = equip.servers["Scan DAC"]
 
@@ -328,6 +329,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
         self.gen_dv = False
         self.dv = False
         self.blink_server = False
+        self.reg = False
 
         self.lockInterface()
 
@@ -370,9 +372,23 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     print("Y voltage:", self.Atto_Y_Voltage)
                     print("Z voltage:", self.Atto_Z_Voltage)
 
+            '''
+            Load the previous x and y tilt from the registry
+            '''
+            try:
+                tilt = yield self.reg.get("Scan Tilt")
+                self.x_tilt = tilt[0]
+                self.y_tilt = tilt[1]
+                self.lineEdit_XTilt.setText(formatNum(self.x_tilt * 180 / np.pi))
+                self.lineEdit_YTilt.setText(formatNum(self.y_tilt * 180 / np.pi))
+            except:
+                self.reg.set("Scan Tilt", (0,0))
+                print("Could not load previous tilt, set to (0,0)")
+
             self.updatePosition()
         except:
             printErrorInfo()
+            print("WARNING: previous state not recovered, proceed with caution.")
 
     def updateDataVaultDirectory(self):
         curr_folder = yield self.gen_dv.cd()
@@ -1138,6 +1154,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.x_tilt = val*np.pi / 180
             self.updateScanPlaneCenter()
         self.lineEdit_XTilt.setText(formatNum(self.x_tilt*180 / np.pi))
+        self.reg.set("Scan Tilt", (self.x_tilt, self.y_tilt))
 
     def updateYTilt(self, val = None):
         if val is None:
@@ -1146,6 +1163,7 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
             self.y_tilt = val*np.pi / 180
             self.updateScanPlaneCenter()
         self.lineEdit_YTilt.setText(formatNum(self.y_tilt*180 / np.pi))
+        self.reg.set("Scan Tilt", (self.x_tilt, self.y_tilt))
 
     def updateScanMode(self, string):
         if string == 'Constant Height':

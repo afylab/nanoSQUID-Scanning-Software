@@ -41,18 +41,30 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         self.equip.add_server("Scan DAC", "dac_adc_scan", "DA20_16_06 (COM6)", config=conf)
 
         self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_04 (COM7)")
+        self.equip.add_server("Giga DAC", "dac_adc_giga", "DA_2025_005 (COM9)")
         #self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_06 (COM6)") # Swapped with scan
 
         conf = {'blink channel':3}
         self.equip.add_server("Blink Device", "dac_adc", "DA20_16_05 (COM3)", config=conf)
 
+        # Lakeshore 336
+        # conf = {
+        #     'Input 1':'A', 'Input 1 Label':'Charcoal',
+        #     'Input 2':'B', 'Input 2 Label':'1K POT',
+        #     'Input 3':'C', 'Input 3 Label':'He3 POT',
+        #     'Input 4':'D', 'Input 4 Label':'Sample',
+        #     }
+        # self.equip.add_server("LS 336", "lakeshore_336", config=conf)
+
+        # Lakeshore 350
         conf = {
-            'Input 1':'A', 'Input 1 Label':'Charcoal',
+            'Input 1':'D2', 'Input 1 Label':'Charcoal',
             'Input 2':'B', 'Input 2 Label':'1K POT',
             'Input 3':'C', 'Input 3 Label':'He3 POT',
-            'Input 4':'D', 'Input 4 Label':'Sample',
+            #'Input 4':'D1', 'Input 4 Label':'Sample',
             }
-        self.equip.add_server("LS 336", "lakeshore_336", config=conf)
+        self.equip.add_server("LS 350", "lakeshore_350", config=conf)
+
 
         # conf = {'max_field':6, 'gauss_to_amps':870.827, "max_ramp":0.5, "channel":1}
         # self.equip.add_server("Magnet Z", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::21::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
@@ -61,10 +73,10 @@ class nanoSQUID_3He(nanoSQUIDSystem):
 
         conf = {'max_field':1, 'gauss_to_amps':160.539, "max_ramp":0.15, "channel":1}
         self.equip.add_server("Magnet X", "cryo_4g_power_supply", "phys-leviathan GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
-        
+
         conf = {'max_field':1, 'gauss_to_amps':159.591, "max_ramp":0.15, "channel":2}
         self.equip.add_server("Magnet Y", "cryo_4g_power_supply", "phys-leviathan GPIB Bus - GPIB0::22::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
-        
+
         # Other Servers
         self.equip.add_server("SR 830", "sr830", "phys-leviathan GPIB Bus - GPIB0::15::INSTR")
         self.equip.add_server("SR 860", "sr860", "phys-leviathan GPIB Bus - GPIB0::4::INSTR")
