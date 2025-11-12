@@ -1,18 +1,15 @@
-int en = 9;
-int sel = 10;
+int en = 6;
+int sel = 7;
 int onTime = 5;
 bool is_grounded;
 int t0;
 int tf;
 int latency;
-
 void setup() {
-
 Serial.begin(115200);
 Serial.setTimeout(50);
 pinMode(en, OUTPUT); 
 pinMode(sel, OUTPUT);
-
 // Set output to float on startup
 digitalWrite(en, HIGH);
 digitalWrite(sel, LOW);
@@ -20,16 +17,13 @@ delay(onTime);
 digitalWrite(sel, LOW);
 digitalWrite(en, LOW);
 is_grounded = true;
-
 }
-
 void loop() {
  String command = Serial.readString();
  if (command != ""){
   command.trim(); //remove whitespace
   //Serial.println(command); // for debugging
  }
-
  if (command == "ground"){
     if(!is_grounded){
       digitalWrite(en, HIGH);

@@ -260,12 +260,47 @@ class DAC_ADCServer(DeviceServer):
 
     @setting(131,dacPorts='*i', adcPorts='*i', ivoltages='*v[]', fvoltages='*v[]', steps='i',delay='v[]',nReadings='i',returns='**v[]')#(*v[],*v[])')
     def buffer_ramp(self,c,dacPorts,adcPorts,ivoltages,fvoltages,steps,delay,nReadings=1):
-       out = yield self.dac_led_buffer_ramp(c, dacPorts, adcPorts, ivoltages, fvoltages, steps, delay, int(delay*0.8 + 0.5), nReadings=nReadings)
-       returnValue(out)
+        
+        
+        # first, see if settlingTime is allowed
+        # check to see if buffer ramp is compatible with the current ADC configuration
+        convTimeSum = [0.0, 0.0, 0.0, 0.0]
+        numAdcChannels = len(adcPorts)
+        numAdcAverages = nReadings if nReadings is not None else 1
+
+        for i in range(numAdcChannels):
+            chNum = adcPorts[i]
+            board_num = chNum // 4
+            conv_time = yield self.get_conversion_time(c, chNum)
+            convTimeSum[board_num] += conv_time
+
+        maxConvTime = max(convTimeSum)
+        maxConvTimeTotal = maxConvTime * numAdcAverages
+        
+        
+
+        dac_settling_time_us = int(delay*0.8 + 0.5) # default settling time
+        dac_interval_us = delay
+        
+        
+        if maxConvTimeTotal + dac_settling_time_us + 180 >= dac_interval_us:
+            dac_settling_time_us = dac_interval_us - maxConvTimeTotal - 181
+            dac_settling_time_us = max(dac_settling_time_us, 100)
+            # print(f"DAC settling time is too long for specified ADC conversion time, minimized settling time to {dac_settling_time_us}us")
+        
+        
+        if maxConvTimeTotal + dac_settling_time_us + 180 >= dac_interval_us:
+            dac_interval_us = maxConvTimeTotal + dac_settling_time_us + 181
+            print(f"DAC interval is too short for specified ADC conversion time, made delay {dac_interval_us}us")
+        
+        
+        
+        out = yield self.dac_led_buffer_ramp(c, dacPorts, adcPorts, ivoltages, fvoltages, steps, dac_interval_us, dac_settling_time_us, nReadings=nReadings)
+        returnValue(out)
 
     @setting(132,dacPorts='*i', adcPorts='*i', ivoltages='*v[]', fvoltages='*v[]', steps='i',delay='v[]',nReadings='i',adcSteps='i',returns='**v[]')#(*v[],*v[])')
     def buffer_ramp_dis(self,c,dacPorts,adcPorts,ivoltages,fvoltages,steps,delay,adcSteps,nReadings=1):
-       out = yield self.time_series_buffer_ramp(c, dacPorts, adcPorts, ivoltages, fvoltages, steps, steps, steps*delay/adcSteps )
+       out = yield self.time_series_buffer_ramp(c, dacPorts, adcPorts, ivoltages, fvoltages, steps, delay, steps*delay/adcSteps )
        returnValue(out)
 
 
@@ -313,6 +348,125 @@ class DAC_ADCServer(DeviceServer):
         try:
             nbytes = 0
             totalbytes = steps * adcN * 4
+            while dev.isramping() and (nbytes < totalbytes):
+                bytestoread = yield dev.in_waiting()
+                if bytestoread > 0:
+                    if nbytes + bytestoread > totalbytes:
+                        tmp = yield dev.readByte(totalbytes - nbytes)
+                        data = data + tmp
+                        nbytes = totalbytes
+                    else:
+                        tmp = yield dev.readByte(bytestoread)
+                        data = data + tmp
+                        nbytes = nbytes + bytestoread
+
+                if data.startswith(b'FAILURE'):
+                    while not data.endswith(b'\r\n'):
+                        bytestoread = yield dev.in_waiting()
+                        if bytestoread > 0:
+                            tmp = yield dev.readByte(bytestoread)
+                            data += tmp
+
+                    raise ValueError(data.decode('utf-8').strip())
+
+            dev.setramping(False)
+
+
+            for x in range(adcN):
+                channels.append([])
+            
+            for i in range(len(data) // 4):
+                voltage = np.frombuffer(data[i * 4:(i + 1) * 4], dtype=np.float32)[0]
+
+                channel_index = i % adcN
+                channels[channel_index].append(float(voltage))
+            
+            # voltages = frombuffer(data, dtype=float32).tolist()
+
+            # for x in range(0, steps * adcN, adcN):
+            #     for y in range(adcN):
+            #         try:
+            #             channels[y].append(voltages[x + y])
+            #         except IndexError:
+            #             channels[y].append(0)
+        
+        except KeyboardInterrupt:
+            print('Stopped')
+
+        extraBytes = b''
+        bytestoread = yield dev.in_waiting()
+
+        if bytestoread > 0:
+            while not extraBytes.endswith(b'\r\n'):
+                bytestoread = yield dev.in_waiting()
+                if bytestoread > 0:
+                    tmp = yield dev.readByte(bytestoread)
+                    extraBytes += tmp
+
+        try:
+            decoded = extraBytes.decode('utf-8').strip()
+            if decoded.startswith('FAILURE'):
+                print(decoded)
+        except UnicodeDecodeError as e:
+            print(f"Decode error at byte {e.start}: {e.reason}")
+            print(f"Raw data: {extraBytes}")
+
+        
+        try:
+            yield dev.reset_input_buffer()
+        except:
+            print("Error clearing the serial buffer after buffer_ramp")
+        returnValue(channels)
+
+    # @setting(107,dacPorts='*i', adcPorts='*i', ivoltages='*v[]', fvoltages='*v[]', steps='i',dacInterval='v[]',dacSettlingTime='v[]',nReadings='i',returns='**v[]')#(*v[],*v[])')
+    @setting(221,dacPorts='*i', adcPorts='*i', voltageLists='**v[]', numLoops='i',dacInterval='i',nReadings='i',returns='**v[]')
+    def awg_buffer_ramp(self,c,dacPorts,adcPorts,voltageLists,numLoops,dacInterval,nReadings=1):
+        """
+        BUFFER_RAMP ramps the specified output channels from the initial voltages to the final voltages and reads the specified input channels in a synchronized manner.
+        It does it within an specified number steps and a delay (dacInterval, microseconds) between the update of the last output channel and the reading of the first input channel.
+        """
+        dacN = len(dacPorts)
+        adcN = len(adcPorts)
+        sivoltages = ""
+        sfvoltages = ""
+        
+        sdacconfig = ""
+        sadcconfig = ""
+        
+        svoltageLists = ""
+
+
+        for x in range(dacN):
+            sdacconfig = f"{sdacconfig}{dacPorts[x]},"
+        
+        for x in range(adcN):
+            sadcconfig = f"{sadcconfig}{adcPorts[x]},"
+        
+        for i in voltageLists:
+            for j in i:
+                svoltageLists = f"{svoltageLists}{j},"
+        
+        svoltageLists = svoltageLists[:-1]
+
+        sivoltages = sivoltages[:-1]
+        sfvoltages = sfvoltages[:-1]
+        sdacconfig = sdacconfig[:-1]
+        sadcconfig = sadcconfig[:-1]
+
+        numDacStepsPerLoop = len(voltageLists[0]) if voltageLists else 0
+
+        dev = self.selectedDevice(c)
+        # print(f"AWG_BUFFER_RAMP,{dacN},{adcN},{numLoops},{numDacStepsPerLoop},{nReadings},{dacInterval},{sdacconfig},{sadcconfig},{svoltageLists}")
+        yield dev.write(f"AWG_BUFFER_RAMP,{dacN},{adcN},{numLoops},{numDacStepsPerLoop},{nReadings},{dacInterval},{sdacconfig},{sadcconfig},{svoltageLists}\r\n")
+        self.sigBufferRampStarted([dacPorts, adcPorts, voltageLists, str(numLoops), str(numDacStepsPerLoop), str(dacInterval), str(dacSettlingTime), str(nReadings)])
+
+        channels = []
+        data = b''
+        
+        dev.setramping(True)
+        try:
+            nbytes = 0
+            totalbytes = numLoops * adcN * 4
             while dev.isramping() and (nbytes < totalbytes):
                 bytestoread = yield dev.in_waiting()
                 if bytestoread > 0:
