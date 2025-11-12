@@ -287,6 +287,8 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
                     self.outputs['read x'] = config['read x']
                 if 'read y' in config:
                     self.outputs['read y'] = config['read y']
+                if 'read z' in config:
+                    self.outputs['read z'] = config['read z']
             else:
                 print("'Scan DAC' not found, LabRAD connection to Scan Control Failed.")
                 return
@@ -333,23 +335,36 @@ class Window(QtWidgets.QMainWindow, ScanControlWindowUI):
     @inlineCallbacks
     def loadCurrentState(self):
         try:
-            # self.Atto_X_Voltage = yield self.dac.read_dac_voltage(self.outputs['x out'] - 1)
-            # self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out'] - 1)
-            # self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
+            self.Atto_X_Voltage = yield self.dac.read_dac_voltage(self.outputs['x out'] - 1)
+            self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out'] - 1)
+            self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
             '''
             Update 2024, the read_dac_voltage function doesn't work on the 20 bit DACs but the X and Y values are
             being measured with two ADCs
             '''
-            self.Atto_X_Voltage = yield self.dac.read_voltage(self.outputs['read x'] - 1)
-            self.Atto_Y_Voltage = yield self.dac.read_voltage(self.outputs['read y'] - 1)
+            # self.Atto_X_Voltage = yield self.dac.read_voltage(self.outputs['read x'] - 1)
+            # self.Atto_Y_Voltage = yield self.dac.read_voltage(self.outputs['read y'] - 1)
+            # self.Atto_Z_Voltage = yield self.dac.read_voltage(self.outputs['read z'] - 1)
 
             # Handel the corner case of an ADC rest, which sometimes causes the first reading to be -10V
-            if self.Atto_X_Voltage == -10.0 or self.Atto_Y_Voltage == -10.0:
-                self.Atto_X_Voltage = yield self.dac.read_voltage(self.outputs['read x'] - 1)
-                self.Atto_Y_Voltage = yield self.dac.read_voltage(self.outputs['read y'] - 1)
+            # if self.Atto_X_Voltage == -10.0 or self.Atto_Y_Voltage == -10.0 or self.Atto_Z_Voltage == -10.0:
+                # self.Atto_X_Voltage = yield self.dac.read_voltage(self.outputs['read x'] - 1)
+                # self.Atto_Y_Voltage = yield self.dac.read_voltage(self.outputs['read y'] - 1)
+                # self.Atto_Z_Voltage = yield self.dac.read_voltage(self.outputs['read z'] - 1)
             # Keeping the Z read_dac for backwards compatibility
-            self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
+            # self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
             # print("loadCurrentState", self.Atto_Z_Voltage)
+            
+            # Handel the corner case of getting negative voltage for X and Y
+            if self.Atto_X_Voltage < -1.0 or self.Atto_Y_Voltage < -1.0 or self.Atto_Z_Voltage < -1.0:
+                self.Atto_X_Voltage = yield self.dac.read_dac_voltage(self.outputs['x out'] - 1)
+                self.Atto_Y_Voltage = yield self.dac.read_dac_voltage(self.outputs['y out'] - 1)
+                self.Atto_Z_Voltage = yield self.dac.read_dac_voltage(self.outputs['z out'] - 1)
+                if self.Atto_X_Voltage < -1.0 or self.Atto_Y_Voltage < -1.0 or self.Atto_Z_Voltage < -1.0:
+                    print("Danger: Negative Attocube voltage detected!")
+                    print("X voltage:", self.Atto_X_Voltage)
+                    print("Y voltage:", self.Atto_Y_Voltage)
+                    print("Z voltage:", self.Atto_Z_Voltage)
 
             self.updatePosition()
         except:

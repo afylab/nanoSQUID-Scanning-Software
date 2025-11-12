@@ -197,7 +197,16 @@ class GPIBBusServer(LabradServer):
         instr.write(data)
         ans = instr.read_raw()
         if isinstance(ans, bytes):
-            ans = ans.decode('utf-8') # convert from bytes without adding extra characters to string
+            #ans = ans.decode('utf-8') # convert from bytes without adding extra characters to string
+
+            try:
+                ans = ans.decode('utf-8') # convert from bytes without adding extra characters to string
+            except UnicodeDecodeError:
+                print("read_line Error: Unicode decoding error: ", ans)
+                print("-----")
+                print("Byte ignored to note crash the process")
+                ans = ans.decode('utf-8','ignore')
+        
         return str(ans).strip()
 
     @setting(7, n_bytes='w', returns='y')

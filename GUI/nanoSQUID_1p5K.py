@@ -33,21 +33,22 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
             'nSOT Gate':1,
             'Gate Reference':1,
             'Bias Reference':4,
-            'Bias Res':13.47, # Bias resistance, in units of kOhms
+            'Bias Res':12.51, # Bias resistance, in units of kOhms
             'Feedback Res':1.003, # Feedback resistance, in units of kOhms
-            'Shunt Res':7.8, # Shunt resistance, in units of Ohms
-            'Winding Ratio':13.78 # Turns ratio fo the array, for amplification.
+            'Shunt Res':7.5, # Shunt resistance, in units of Ohms
+            'Winding Ratio':13.6 # Turns ratio fo the array, for amplification.
             }
-        self.equip.add_server("nSOT DAC", "dac_adc", "DA16_16_03 (COM9)", config=conf)
+        self.equip.add_server("nSOT DAC", "dac_adc", "DA20_16_07 (COM5)", config=conf)
 
-        conf = {'x out':2, 'y out':3, 'z out':1, 'read x':8, 'read y':7 }
+        # conf = {'x out':2, 'y out':3, 'z out':1, 'read x':8, 'read y':7, 'read z':6 }
+        conf = {'x out':2, 'y out':3, 'z out':1}
         self.equip.add_server("Scan DAC", "dac_adc", "DA20_16_03 (COM6)", config=conf)
 
-        self.equip.add_server("Sample DAC", "dac_adc", "DA20_16_05 (COM14)")
+        self.equip.add_server("Sample DAC", "dac_adc_giga", "DA_2025_002 (COM8)")
 
         self.equip.add_server("DC Box", "ad5764_dcbox", "ad5764_dcbox (COM10)")
         
-        self.equip.add_server("AC Box", "ad5764_acbox", "ad5764_acbox (COM7)")
+        # self.equip.add_server("AC Box", "ad5764_acbox", "ad5764_acbox (COM9)")
 
         conf = {'blink channel':3} #Output of DC box that corresponds on the frontpanel to Blink
         self.equip.add_server("Blink Device", "ad5764_dcbox", "ad5764_dcbox (COM10)", config=conf)
@@ -55,7 +56,7 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         # conf = {'max_field':5, "max_ramp":1}
         # self.equip.add_server("Magnet Supply", "ips120_power_supply", "IPS 120", controller=MagnetControllers.IPS120_MagnetController, config=conf)
         conf = {'max_field':5, "max_ramp":1}
-        self.equip.add_server("Magnet Z", "ips120_power_supply", 'lagrange GPIB Bus - GPIB0::23::INSTR', controller=MagnetControllers.IPS120_MagnetController, config=conf)
+        self.equip.add_server("Magnet Z", "ips120_power_supply", 'lagrange GPIB Bus - GPIB0::25::INSTR', controller=MagnetControllers.IPS120_MagnetController, config=conf)
         # conf = {'max_field':6, 'gauss_to_amps':870.827, "max_ramp":0.5, "channel":1}
         # self.equip.add_server("Magnet Z", "cryo_4g_power_supply", "desktop-abpkrkg GPIB Bus - GPIB0::21::INSTR", controller=MagnetControllers.Cryomag4G_Power_Supply, config=conf)
 
@@ -64,10 +65,11 @@ class nanoSQUID_1p5K(nanoSQUIDSystem):
         'Input 2':'D4', 'Input 2 Label':'1.5K Pot',
         'Input 3':'B', 'Input 3 Label':'Magnet'
         }
-        self.equip.add_server("LS 350", "lakeshore_350", config=conf)
+        self.equip.add_server("LS 350", "lakeshore_350", "lagrange_serial_server - COM7", config=conf)
         
         self.equip.add_server("GND Switchbox", "ground_switch_actuator", 'lagrange_serial_server - COM13')
         self.equip.add_server("SR860", "sr860", 'lagrange GPIB Bus - GPIB0::4::INSTR')
+        self.equip.add_server("SR1", "sr1", 'lagrange GPIB Bus - GPIB0::12::INSTR')
         # # Remote Servers
         # self.equip.configure_remote_host('4KMonitor', 'minint_o9n40pb')
         #

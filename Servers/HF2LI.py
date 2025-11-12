@@ -249,7 +249,7 @@ class HF2LIServer(LabradServer):
     @setting(113,demod_index= 'i', phase = 'v[]', returns = '')
     def set_demod_phase(self,c, demod_index, phase):
         """Sets the provided demodulator phase."""
-        setting = ['/%s/demods/%d/phaseshift' % (self.dev_ID, demod_index-1), phaseshift],
+        setting = ['/%s/demods/%d/phaseshift' % (self.dev_ID, demod_index-1), phase],
         yield self.daq.set(setting)
 
     @setting(114,demod_index= 'i', input_channel = 'i', returns = '')
@@ -1160,8 +1160,8 @@ class HF2LIServer(LabradServer):
     def set_pid_output_signal(self, c, pid_index, signal_index):
         """Set the PID Output Signal (1 through 4).
         Signal index: Corresponding Signal
-         0          : Output 1 Amplitude (This requires output channel to be set to 7)
-         1          : Output 2 Amplitude (This requires output channel to be set to 8)
+         0          : Output 1 Amplitude (This requires output channel to be set to 6)
+         1          : Output 2 Amplitude (This requires output channel to be set to 7)
          2          : Oscillator Frequency
          3          : Aux Output Offset
          4          : DIO (int16)"""

@@ -316,6 +316,10 @@ class IPS120_MagnetController(MagnetControl):
             val = yield self.server.read_parameter(1)
             self.output_voltage = float(val[1:])
         except Exception as inst:
+            try:
+                read_junk = yield self.server.gpib_read()
+            except:
+                pass
             print(inst)
             printErrorInfo()
     #
@@ -339,19 +343,28 @@ class IPS120_MagnetController(MagnetControl):
         '''
         Read from the supply is the persistent switch heater is on.
         '''
-        status = yield self.server.examine()
-        #The 9th (index 8) character of the status string encodes whether or not
-        #the persistent switch is currently on
-        if int(status[8]) == 0 or int(status[8]) == 2:
-            self.status = "Persist"
-            self.persist = True
-        elif int(status[8]) == 1:
-            self.status = "Charging"
-            self.persist = False
-        else:
-            self.status = "Error"
-            self.persist = False
-    #
+        # status = yield self.server.examine()
+
+        try:
+            status = yield self.server.examine()
+            #The 9th (index 8) character of the status string encodes whether or not
+            #the persistent switch is currently on
+            if int(status[8]) == 0 or int(status[8]) == 2:
+                self.status = "Persist"
+                self.persist = True
+            elif int(status[8]) == 1:
+                self.status = "Charging"
+                self.persist = False
+            else:
+                self.status = "Error"
+                self.persist = False
+        except Exception as inst:
+            print(status)
+            status = yield self.server.examine()
+            print(status)
+            print(inst)
+            printErrorInfo()
+
 
     @inlineCallbacks
     def goToZero(self, wait=True):
@@ -390,7 +403,7 @@ class IPS120_MagnetController(MagnetControl):
         yield self.server.set_control(3) #Set IPS to remote communication (prevents user from using the front panel)
         yield self.server.set_fieldsweep_rate(self.ramprate)
         yield self.server.set_targetfield(self.setpoint_B) #Set targetfield to desired field
-        yield self.server.set_activity(1) #Set IPS mode to ramping instead of hold
+        yield self.server.set_activity(1) #Set IPS mode toramping  instead of hold
         yield self.server.set_control(2) #Set IPS to local control (allows user to edit IPS from the front panel)
 
         if wait:

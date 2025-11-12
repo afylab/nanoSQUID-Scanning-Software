@@ -34,7 +34,7 @@ global serial_server_name
 serial_server_name = platform.node() + '_serial_server'
 
 from labrad.server import setting
-from labrad.gpib import GPIBManagedServer, GPIBDeviceWrapper
+from labrad.devices import DeviceServer, DeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 import labrad.units as units
 from labrad.types import Value
@@ -42,7 +42,54 @@ from labrad.types import Value
 TIMEOUT = Value(5,'s')
 BAUD    = 9600
 
-class IPS120Wrapper(GPIBDeviceWrapper):
+class IPS120Wrapper(DeviceWrapper):
+    @inlineCallbacks
+    def connect(self, server, port):
+        """Connect to a device."""
+        print('connecting to "%s" on port "%s"...' % (server.name, port), end=' ')
+        self.server = server
+        self.ctx = server.context()
+        self.port = port
+        p = self.packet()
+        p.open(port)
+        print('opened on port "%s"' %self.port)
+        p.baudrate(BAUD)
+        # p.parity(PARITY)
+        # p.stopbits(STOP_BITS)
+        # p.bytesize(BYTESIZE)
+        p.read()  # clear out the read buffer
+        p.timeout(TIMEOUT)
+        print(" CONNECTED ")
+        yield p.send()
+
+    def packet(self):
+        """Create a packet in our private context."""
+        return self.server.packet(context=self.ctx)
+
+    def shutdown(self):
+        """Disconnect from the serial port when we shut down."""
+        return self.packet().close().send()
+
+    @inlineCallbacks
+    def write(self, code):
+        """Write a data value to the temperature controller."""
+        yield self.packet().write(code).send()
+
+    @inlineCallbacks
+    def read(self):
+        p=self.packet()
+        p.read_line()
+        ans=yield p.send()
+        returnValue(ans.read_line)
+
+    @inlineCallbacks
+    def query(self, code):
+        """ Write, then read. """
+        p = self.packet()
+        p.write_line(code)
+        p.read_line()
+        ans = yield p.send()
+        returnValue(ans.read_line)
 
     @inlineCallbacks
     def set_control(self,mode):
@@ -136,9 +183,6 @@ class IPS120Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def examine(self):
         ans = yield self.query('X')
-        if len(ans) != 15:
-            print('examine error')
-            ans = yield self.query('X')
         returnValue(ans)
 
     @inlineCallbacks
@@ -150,40 +194,62 @@ class IPS120Wrapper(GPIBDeviceWrapper):
             resp = resp + ans
         returnValue(resp)
 
-class IPS120Server(GPIBManagedServer):
+class IPS120Server(DeviceServer):
     name = 'ips120_power_supply'
-    deviceName = 'IPS120 Power Supply'
-    deviceIdentFunc = 'identify_device'
+    deviceName = 'IPS120-10  Version 3.07  (c) OXFORD 1996'
     deviceWrapper = IPS120Wrapper
 
-    @setting(9988, server='s', address='s')
-    def identify_device(self, c, server, address):
-        print("IPS Server Identify Command")
-        print('identifying:', server, address)
-        try:
-            s = self.client[server]
-            p = s.packet()
-            p.address(address)
-            p.write_termination('\r')
-            p.read_termination('\r')
-            p.write('V')
-            p.read()
-            p.write('V')
-            p.read()
-            ans = yield p.send()
-            resp = ans.read[1]
-            print(resp)
-            if resp.startswith("b'"):
-                resp = resp.replace("b'","")
-                resp = resp[:len(resp)-3]
-                resp = resp.rstrip()
-            print(resp)
-            print('got ident response:', resp)
-            if resp == 'IPS120-10  Version 3.03  (c) OXFORD 1994':
-                returnValue(self.deviceName)
-        except Exception as e:
-            print('failed:', e)
-            raise
+    @inlineCallbacks
+    def initServer(self):
+        print('loading config info...', end=' ')
+        self.reg = self.client.registry()
+        yield self.loadConfigInfo()
+        print('done.')
+        print(self.serialLinks)
+        yield DeviceServer.initServer(self)
+
+    @inlineCallbacks
+    def loadConfigInfo(self):
+        """Load configuration information from the registry."""
+        reg = self.reg
+        yield reg.cd(['', 'Servers', 'ips120_power_supply', 'Links'], True)
+        dirs, keys = yield reg.dir()
+        p = reg.packet()
+        print(" created packet")
+        print("printing all the keys",keys)
+        for k in keys:
+            print("k=",k)
+            p.get(k, key=k)
+
+        ans = yield p.send()
+        print("ans=",ans)
+        self.serialLinks = dict((k, ans[k]) for k in keys)
+
+
+    @inlineCallbacks
+    def findDevices(self):
+        """Find available devices from list stored in the registry."""
+        devs = []
+        for name, (serServer, port) in list(self.serialLinks.items()):
+            if serServer not in self.client.servers:
+                continue
+            server = self.client[serServer]
+            print(server)
+            print(port)
+            ports = yield server.list_serial_ports()
+            print(ports)
+            if port not in ports:
+                continue
+            devName = '%s - %s' % (serServer, port)
+            devs += [(devName, (server, port))]
+
+       # devs += [(0,(3,4))]
+        returnValue(devs)
+
+    @setting(100)
+    def connect(self,c,server,port):
+        dev=self.selectedDevice(c)
+        yield dev.connect(server,port)
 
     @setting(101, mode='i',returns='s')
     def set_control(self,c,mode):
@@ -310,6 +376,23 @@ class IPS120Server(GPIBManagedServer):
     @setting(9001,v='v')
     def do_nothing(self, c, v):
         pass
+
+    @setting(9002)
+    def read(self,c):
+        dev=self.selectedDevice(c)
+        ret=yield dev.read()
+        returnValue(ret)
+
+    @setting(9003)
+    def write(self,c,phrase):
+        dev=self.selectedDevice(c)
+        yield dev.write(phrase)
+    @setting(9004)
+    def query(self,c,phrase):
+        dev=self.selectedDevice(c)
+        yield dev.write(phrase)
+        ret = yield dev.read()
+        returnValue(ret)
 
 __server__ = IPS120Server()
 

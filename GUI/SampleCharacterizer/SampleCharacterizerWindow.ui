@@ -75,7 +75,7 @@ border:1px solid rgb(168,168,168)
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,3,6,5">
+        <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,2,3,8">
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_Main_Basic1">
            <item>
@@ -158,7 +158,6 @@ color: rgb(168, 168, 168)
              <property name="font">
               <font>
                <pointsize>16</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -292,93 +291,16 @@ border:1px solid rgb(168,168,168)
            <property name="frameShadow">
             <enum>QFrame::Raised</enum>
            </property>
-           <layout class="QGridLayout" name="gridLayout_MainBasic_DACOUTPUT" rowstretch="1,0,0,0" columnstretch="3,2,1,1,4,1">
-            <item row="3" column="3">
-             <widget class="QPushButton" name="pushButton_DACOut4">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>Test</string>
-              </property>
-              <property name="text">
-               <string>Set DAC4</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QLineEdit" name="lineEdit_DACOut4">
-              <property name="minimumSize">
-               <size>
-                <width>50</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>80</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>0.0</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="3">
-             <widget class="QPushButton" name="pushButton_DACOut3">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>Test</string>
-              </property>
-              <property name="text">
-               <string>Set DAC3</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="3">
-             <widget class="QPushButton" name="pushButton_DACOut1">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>Test</string>
-              </property>
-              <property name="text">
-               <string>Set DAC1</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_DAC3">
-              <property name="minimumSize">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>DAC3</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
+           <layout class="QGridLayout" name="gridLayout_MainBasic_DACOUTPUT" rowstretch="1,0,0,0" columnstretch="2,3,1,3,3,1,2,3,1,3,3,1">
+            <property name="rightMargin">
+             <number>9</number>
+            </property>
+            <property name="horizontalSpacing">
+             <number>10</number>
+            </property>
+            <property name="verticalSpacing">
+             <number>6</number>
+            </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_DAC1">
               <property name="minimumSize">
@@ -389,38 +311,6 @@ border:1px solid rgb(168,168,168)
               </property>
               <property name="text">
                <string>DAC1</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_DAC4">
-              <property name="minimumSize">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>DAC4</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_DAC2">
-              <property name="minimumSize">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>DAC2</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -449,8 +339,76 @@ border:1px solid rgb(168,168,168)
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
-             <widget class="QLineEdit" name="lineEdit_DACOut3">
+            <item row="0" column="2">
+             <widget class="QLabel" name="label_EditVoltage_Unit_1">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QPushButton" name="pushButton_DACOut1">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Set DAC1</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4">
+             <widget class="QLabel" name="label_DACOut1">
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="5">
+             <widget class="QLabel" name="label_OutVoltage_Unit_1">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="6">
+             <widget class="QLabel" name="label_DAC5">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DAC5</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="7">
+             <widget class="QLineEdit" name="lineEdit_DACOut5">
               <property name="minimumSize">
                <size>
                 <width>50</width>
@@ -471,8 +429,21 @@ border:1px solid rgb(168,168,168)
               </property>
              </widget>
             </item>
-            <item row="1" column="3">
-             <widget class="QPushButton" name="pushButton_DACOut2">
+            <item row="0" column="8">
+             <widget class="QLabel" name="label_EditVoltage_Unit_5">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="9">
+             <widget class="QPushButton" name="pushButton_DACOut5">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -483,7 +454,46 @@ border:1px solid rgb(168,168,168)
                <string>Test</string>
               </property>
               <property name="text">
-               <string>Set DAC2</string>
+               <string>Set DAC5</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="10">
+             <widget class="QLabel" name="label_DACOut5">
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="11">
+             <widget class="QLabel" name="label_OutVoltage_Unit_5">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_DAC2">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DAC2</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -509,13 +519,32 @@ border:1px solid rgb(168,168,168)
               </property>
              </widget>
             </item>
-            <item row="0" column="4">
-             <widget class="QLabel" name="label_DACOut1">
-              <property name="text">
-               <string>0.0</string>
+            <item row="1" column="2">
+             <widget class="QLabel" name="label_EditVoltage_Unit_2">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
               </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QPushButton" name="pushButton_DACOut2">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Set DAC2</string>
               </property>
              </widget>
             </item>
@@ -529,8 +558,8 @@ border:1px solid rgb(168,168,168)
               </property>
              </widget>
             </item>
-            <item row="3" column="2">
-             <widget class="QLabel" name="label_MinVoltage_Unit_5">
+            <item row="1" column="5">
+             <widget class="QLabel" name="label_OutVoltage_Unit_2">
               <property name="minimumSize">
                <size>
                 <width>20</width>
@@ -542,8 +571,46 @@ border:1px solid rgb(168,168,168)
               </property>
              </widget>
             </item>
-            <item row="0" column="2">
-             <widget class="QLabel" name="label_MinVoltage_Unit_2">
+            <item row="1" column="6">
+             <widget class="QLabel" name="label_DAC6">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DAC6</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="7">
+             <widget class="QLineEdit" name="lineEdit_DACOut6">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="8">
+             <widget class="QLabel" name="label_EditVoltage_Unit_6">
               <property name="minimumSize">
                <size>
                 <width>20</width>
@@ -555,8 +622,34 @@ border:1px solid rgb(168,168,168)
               </property>
              </widget>
             </item>
-            <item row="1" column="2">
-             <widget class="QLabel" name="label_MinVoltage_Unit_3">
+            <item row="1" column="9">
+             <widget class="QPushButton" name="pushButton_DACOut6">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Set DAC6</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="10">
+             <widget class="QLabel" name="label_DACOut6">
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="11">
+             <widget class="QLabel" name="label_OutVoltage_Unit_6">
               <property name="minimumSize">
                <size>
                 <width>20</width>
@@ -568,8 +661,36 @@ border:1px solid rgb(168,168,168)
               </property>
              </widget>
             </item>
-            <item row="3" column="4">
-             <widget class="QLabel" name="label_DACOut4">
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_DAC3">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DAC3</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="lineEdit_DACOut3">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>16777215</height>
+               </size>
+              </property>
               <property name="text">
                <string>0.0</string>
               </property>
@@ -579,7 +700,7 @@ border:1px solid rgb(168,168,168)
              </widget>
             </item>
             <item row="2" column="2">
-             <widget class="QLabel" name="label_MinVoltage_Unit_4">
+             <widget class="QLabel" name="label_EditVoltage_Unit_3">
               <property name="minimumSize">
                <size>
                 <width>20</width>
@@ -588,6 +709,22 @@ border:1px solid rgb(168,168,168)
               </property>
               <property name="text">
                <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QPushButton" name="pushButton_DACOut3">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Set DAC3</string>
               </property>
              </widget>
             </item>
@@ -601,34 +738,8 @@ border:1px solid rgb(168,168,168)
               </property>
              </widget>
             </item>
-            <item row="0" column="5">
-             <widget class="QLabel" name="label_MinVoltage_Unit_6">
-              <property name="minimumSize">
-               <size>
-                <width>20</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>(V)</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="5">
-             <widget class="QLabel" name="label_MinVoltage_Unit_7">
-              <property name="minimumSize">
-               <size>
-                <width>20</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>(V)</string>
-              </property>
-             </widget>
-            </item>
             <item row="2" column="5">
-             <widget class="QLabel" name="label_MinVoltage_Unit_8">
+             <widget class="QLabel" name="label_OutVoltage_Unit_3">
               <property name="minimumSize">
                <size>
                 <width>20</width>
@@ -637,11 +748,268 @@ border:1px solid rgb(168,168,168)
               </property>
               <property name="text">
                <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="6">
+             <widget class="QLabel" name="label_DAC7">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DAC7</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="7">
+             <widget class="QLineEdit" name="lineEdit_DACOut7">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="8">
+             <widget class="QLabel" name="label_EditVoltage_Unit_7">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="9">
+             <widget class="QPushButton" name="pushButton_DACOut7">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Set DAC7</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="10">
+             <widget class="QLabel" name="label_DACOut7">
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="11">
+             <widget class="QLabel" name="label_OutVoltage_Unit_7">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_DAC4">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DAC4</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="lineEdit_DACOut4">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="2">
+             <widget class="QLabel" name="label_EditVoltage_Unit_4">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="3">
+             <widget class="QPushButton" name="pushButton_DACOut4">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Set DAC4</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="4">
+             <widget class="QLabel" name="label_DACOut4">
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
             <item row="3" column="5">
-             <widget class="QLabel" name="label_MinVoltage_Unit_9">
+             <widget class="QLabel" name="label_OutVoltage_Unit_4">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="6">
+             <widget class="QLabel" name="label_DAC8">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DAC8</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="7">
+             <widget class="QLineEdit" name="lineEdit_DACOut8">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="8">
+             <widget class="QLabel" name="label_EditVoltage_Unit_8">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>(V)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="9">
+             <widget class="QPushButton" name="pushButton_DACOut8">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Test</string>
+              </property>
+              <property name="text">
+               <string>Set DAC8</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="10">
+             <widget class="QLabel" name="label_DACOut8">
+              <property name="text">
+               <string>0.0</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="11">
+             <widget class="QLabel" name="label_OutVoltage_Unit_8">
               <property name="minimumSize">
                <size>
                 <width>20</width>
@@ -733,7 +1101,7 @@ background-color: rgb(3, 3, 3);</string>
             <item>
              <spacer name="horizontalSpacer_2">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Orientation::Horizontal</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -777,7 +1145,7 @@ border-radius: 5px
             <item>
              <spacer name="horizontalSpacer_3">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Orientation::Horizontal</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -1461,7 +1829,6 @@ border:1px solid rgb(168,168,168)
                <property name="font">
                 <font>
                  <pointsize>10</pointsize>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -1539,7 +1906,6 @@ color: rgb(168, 168, 168)
                <property name="font">
                 <font>
                  <pointsize>10</pointsize>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -1602,6 +1968,26 @@ color: rgb(168, 168, 168)
                  <string>DAC 4</string>
                 </property>
                </item>
+               <item>
+                <property name="text">
+                 <string>DAC 5</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>DAC 6</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>DAC 7</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>DAC 8</string>
+                </property>
+               </item>
               </widget>
              </item>
              <item row="2" column="0">
@@ -1627,7 +2013,6 @@ color: rgb(168, 168, 168)
                <property name="font">
                 <font>
                  <pointsize>10</pointsize>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -1702,6 +2087,26 @@ color: rgb(168, 168, 168)
                </item>
                <item>
                 <property name="text">
+                 <string>ADC 5</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 6</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 7</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 8</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
                  <string>None</string>
                 </property>
                </item>
@@ -1739,6 +2144,26 @@ color: rgb(168, 168, 168)
                <item>
                 <property name="text">
                  <string>ADC 4</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 5</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 6</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 7</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ADC 8</string>
                 </property>
                </item>
                <item>
@@ -2070,7 +2495,7 @@ background-color: rgb(0, 0, 0);
               <item>
                <spacer name="verticalSpacer">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeType">
                  <enum>QSizePolicy::Minimum</enum>
@@ -2117,7 +2542,7 @@ background-color: rgb(0, 0, 0);
               <item>
                <spacer name="horizontalSpacer">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeType">
                  <enum>QSizePolicy::Fixed</enum>
@@ -2156,7 +2581,7 @@ background-color: rgb(0, 0, 0);
               <item>
                <spacer name="verticalSpacer_4">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeType">
                  <enum>QSizePolicy::Minimum</enum>
@@ -2203,7 +2628,7 @@ background-color: rgb(0, 0, 0);
               <item>
                <spacer name="horizontalSpacer_6">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeType">
                  <enum>QSizePolicy::Fixed</enum>
@@ -2242,7 +2667,7 @@ background-color: rgb(0, 0, 0);
               <item>
                <spacer name="verticalSpacer_2">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeType">
                  <enum>QSizePolicy::Minimum</enum>
@@ -2285,7 +2710,7 @@ background-color: rgb(0, 0, 0);
               <item>
                <spacer name="horizontalSpacer_4">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeType">
                  <enum>QSizePolicy::Fixed</enum>
@@ -2324,7 +2749,7 @@ background-color: rgb(0, 0, 0);
               <item>
                <spacer name="verticalSpacer_3">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeType">
                  <enum>QSizePolicy::Minimum</enum>
@@ -2364,7 +2789,7 @@ background-color: rgb(0, 0, 0);
               <item>
                <spacer name="horizontalSpacer_5">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeType">
                  <enum>QSizePolicy::Fixed</enum>

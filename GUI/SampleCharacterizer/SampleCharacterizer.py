@@ -63,12 +63,12 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_Device_Name.editingFinished.connect(self.updateDeviceName)
 
         #Initialize lists to track current and desired DAC outputs
-        self.DAC_output = [0.0,0.0,0.0,0.0] #ith entry is current DAC output of the ith channel
-        self.DAC_setpoint = [0.0,0.0,0.0,0.0] #ith entry is the desired DAC output of the ith channel
+        self.DAC_output = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0] #ith entry is current DAC output of the ith channel
+        self.DAC_setpoint = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0] #ith entry is the desired DAC output of the ith channel
 
         #Create a python list of QUI labels for the DAC outputs and initalize them to zero
-        self.label_DACOout_list = [self.label_DACOut1, self.label_DACOut2, self.label_DACOut3, self.label_DACOut4]
-        for i in range(0,4):
+        self.label_DACOout_list = [self.label_DACOut1, self.label_DACOut2, self.label_DACOut3, self.label_DACOut4, self.label_DACOut5, self.label_DACOut6, self.label_DACOut7, self.label_DACOut8]
+        for i in range(0,8):
             self.label_DACOout_list[i].setText(formatNum(self.DAC_output[i],6))
 
         #Connect GUI elements for manually setting the DAC ADC setpoint and output voltages
@@ -76,11 +76,19 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_DACOut2.editingFinished.connect(lambda:self.setDACSetpoint(1, self.lineEdit_DACOut2))
         self.lineEdit_DACOut3.editingFinished.connect(lambda:self.setDACSetpoint(2, self.lineEdit_DACOut3))
         self.lineEdit_DACOut4.editingFinished.connect(lambda:self.setDACSetpoint(3, self.lineEdit_DACOut4))
+        self.lineEdit_DACOut5.editingFinished.connect(lambda:self.setDACSetpoint(4, self.lineEdit_DACOut5))
+        self.lineEdit_DACOut6.editingFinished.connect(lambda:self.setDACSetpoint(5, self.lineEdit_DACOut6))
+        self.lineEdit_DACOut7.editingFinished.connect(lambda:self.setDACSetpoint(6, self.lineEdit_DACOut7))
+        self.lineEdit_DACOut8.editingFinished.connect(lambda:self.setDACSetpoint(7, self.lineEdit_DACOut8))
 
         self.pushButton_DACOut1.clicked.connect(lambda:self.setDACOutput(0))
         self.pushButton_DACOut2.clicked.connect(lambda:self.setDACOutput(1))
         self.pushButton_DACOut3.clicked.connect(lambda:self.setDACOutput(2))
         self.pushButton_DACOut4.clicked.connect(lambda:self.setDACOutput(3))
+        self.pushButton_DACOut5.clicked.connect(lambda:self.setDACOutput(4))
+        self.pushButton_DACOut6.clicked.connect(lambda:self.setDACOutput(5))
+        self.pushButton_DACOut7.clicked.connect(lambda:self.setDACOutput(6))
+        self.pushButton_DACOut8.clicked.connect(lambda:self.setDACOutput(7))
 
         #Initializel lists of input channels to measure and output channel to sweep.
         self.FourTerminal_ChannelInput = [1, 0]
@@ -215,7 +223,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
             if "Sample DAC" in equip.servers:
                 svr, ln, device_info, cnt, config = equip.servers["Sample DAC"]
-                self.dac = yield self.cxn_sample.dac_adc
+                self.dac = yield self.cxn_sample.dac_adc_giga
                 yield self.dac.select_device(device_info)
             else:
                 print("'Sample DAC' not found, LabRAD connection to Sample Characterizer Failed.")
@@ -550,7 +558,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
     def plotFourTerminalData(self, plot_data, color = 0.5):
         self.fourTerminalPlot1.plot(plot_data[0], plot_data[1], pen = color)
-        if np.size(self.FourTerminal_ChannelInput)!=4:
+        if np.size(self.FourTerminal_ChannelInput) == 2:
             self.fourTerminalPlot2.plot(plot_data[0], plot_data[2], pen = color)
             self.fourTerminalPlot3.plot(plot_data[0], plot_data[3], pen = color)
             self.fourTerminalPlot4.plot(plot_data[0], plot_data[4], pen = color)
@@ -563,7 +571,7 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
 
     def plotFieldSweep1DData(self, plot_data, color):
         self.fieldSweep1DPlot1.plot(plot_data[0], plot_data[1], pen = color)
-        if np.size(self.FourTerminal_ChannelInput)!=4:
+        if np.size(self.FourTerminal_ChannelInput) == 2:
             self.fieldSweep1DPlot2.plot(plot_data[0], plot_data[2], pen = color)
             self.fieldSweep1DPlot3.plot(plot_data[0], plot_data[3], pen = color)
             self.fieldSweep1DPlot4.plot(plot_data[0], plot_data[4], pen = color)
@@ -693,18 +701,18 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         #Updates the Input channels. The syntax for commands to the DAC-ADC requires this to be a list
         #This module measures one or two inputs.
         #This function updates the second element of the inputs list.
-        #The combo box index of 4 corresponds to "No input 2" having been selected in the GUI, in which
+        #The combo box index of 8 corresponds to "No input 2" having been selected in the GUI, in which
         #case the input list should only have one element.
         ind = self.comboBox_FourTerminal_Input2.currentIndex() #The index
         len = np.size(self.FourTerminal_ChannelInput) #Length of channel list
 
-        if ind < 4 and len == 2:
+        if ind < 8 and len == 2:
             self.FourTerminal_ChannelInput[1] = ind
-        elif ind < 4 and len == 1:
+        elif ind < 8 and len == 1:
             self.FourTerminal_ChannelInput.append(ind)
-        elif ind == 4 and len == 2:
+        elif ind == 8 and len == 2:
             self.FourTerminal_ChannelInput.pop()
-        elif ind == 4 and len ==1:
+        elif ind == 8 and len ==1:
             pass
 
     def updateLockinMultipliers(self):
@@ -846,6 +854,10 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
                 yield self.dv.add_parameter('DAC Voltage 2',str(self.lineEdit_DACOut2.text()))
                 yield self.dv.add_parameter('DAC Voltage 3',str(self.lineEdit_DACOut3.text()))
                 yield self.dv.add_parameter('DAC Voltage 4',str(self.lineEdit_DACOut4.text()))
+                yield self.dv.add_parameter('DAC Voltage 5',str(self.lineEdit_DACOut5.text()))
+                yield self.dv.add_parameter('DAC Voltage 6',str(self.lineEdit_DACOut6.text()))
+                yield self.dv.add_parameter('DAC Voltage 7',str(self.lineEdit_DACOut7.text()))
+                yield self.dv.add_parameter('DAC Voltage 8',str(self.lineEdit_DACOut8.text()))
         except:
             from traceback import format_exc
             print("MY TRACEBACK:")
@@ -1423,10 +1435,18 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_DACOut2.setEnabled(False)
         self.lineEdit_DACOut3.setEnabled(False)
         self.lineEdit_DACOut4.setEnabled(False)
+        self.lineEdit_DACOut5.setEnabled(False)
+        self.lineEdit_DACOut6.setEnabled(False)
+        self.lineEdit_DACOut7.setEnabled(False)
+        self.lineEdit_DACOut8.setEnabled(False)
         self.pushButton_DACOut1.setEnabled(False)
         self.pushButton_DACOut2.setEnabled(False)
         self.pushButton_DACOut3.setEnabled(False)
         self.pushButton_DACOut4.setEnabled(False)
+        self.pushButton_DACOut5.setEnabled(False)
+        self.pushButton_DACOut6.setEnabled(False)
+        self.pushButton_DACOut7.setEnabled(False)
+        self.pushButton_DACOut8.setEnabled(False)
 
     def unlockInterface(self):
         self.lineEdit_FourTerminal_Output.setEnabled(True)
@@ -1474,10 +1494,18 @@ class Window(QtWidgets.QMainWindow, SampleCharacterizerWindowUI):
         self.lineEdit_DACOut2.setEnabled(True)
         self.lineEdit_DACOut3.setEnabled(True)
         self.lineEdit_DACOut4.setEnabled(True)
+        self.lineEdit_DACOut5.setEnabled(True)
+        self.lineEdit_DACOut6.setEnabled(True)
+        self.lineEdit_DACOut7.setEnabled(True)
+        self.lineEdit_DACOut8.setEnabled(True)
         self.pushButton_DACOut1.setEnabled(True)
         self.pushButton_DACOut2.setEnabled(True)
         self.pushButton_DACOut3.setEnabled(True)
         self.pushButton_DACOut4.setEnabled(True)
+        self.pushButton_DACOut5.setEnabled(True)
+        self.pushButton_DACOut6.setEnabled(True)
+        self.pushButton_DACOut7.setEnabled(True)
+        self.pushButton_DACOut8.setEnabled(True)
 
     def FakeDATA(self,Output,Input,Min,Max,NoS,Delay):
         #debugging function. Can be used to replace DAC buffer ramp function to test

@@ -809,7 +809,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             yield self.dac.set_voltage(self.settingsDict['nsot bias output'] - 1, 0)
 
             #If starting (minimum) bias voltage is not zero, sweep bias to minimum value, 1mV per step with a 1ms delay
-            if v_min != 0:
+            if v_min != 0 and self.sweepParamDict['sweep mode'] == 0:
                 a = yield self.dac.buffer_ramp([self.settingsDict['nsot bias output'] - 1], [0], [0], [v_min], np.absolute(int(v_min * 1000)), 1000)
 
             #Loop through the magnetic field points
@@ -868,7 +868,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                     break
 
             #If minimum bias voltage is not zero, sweep bias back to zero, 1mV per step with a reasonably short delay
-            if v_min != 0 and not self.abortFlag:
+            if v_min != 0 and self.sweepParamDict['sweep mode'] == 0 and not self.abortFlag:
                 yield self.dac.buffer_ramp([self.settingsDict['nsot bias output'] - 1], [0], [v_min], [0], np.absolute(int(v_min * 1000)), 1000)
 
             #Zero the magnetic field if the checkBox is checked
@@ -1431,7 +1431,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @inlineCallbacks
     def runSweep(self):
-        yield self.startSweep(self, prompt=False) # Start the sweep without bringing up Dialog box
+        yield self.startSweep(prompt=False) # Start the sweep without bringing up Dialog box
         #yield self.initSweep() #Starts the sweep.
 
 #----------------------------------------------------------------------------------------------#

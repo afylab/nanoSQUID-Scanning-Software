@@ -433,7 +433,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             delta_f = setpoint - self.measurementSettings['pll_centerfreq']
 
             #Set the sign of the deltaF button properly
-            if delta_f >0:
+            if delta_f > 0:
                 self.radioButton_plus.setChecked(True)
             else:
                 self.radioButton_plus.setChecked(False)

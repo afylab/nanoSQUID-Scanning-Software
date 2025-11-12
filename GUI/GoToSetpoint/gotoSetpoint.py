@@ -420,7 +420,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
         delay = 2000
 
         yield self.dac.buffer_ramp([self.gateChan], [self.gateChan], [curr_gate], [0.0], steps, delay)
-        self.settingsDict['gate curent'] = 0.0
+        self.settingsDict['gate current'] = 0.0
         new_gate = yield self.dac.read_voltage(self.gateRefChan)
         self.currGateLbl.setText('Current Gate: ' + str(new_gate) + 'V')
 
@@ -520,6 +520,7 @@ class Window(QtWidgets.QMainWindow, GoToSetpointUI):
     @inlineCallbacks
     def setGate(self, gate):
         self.lineEdit_gateSetpoint.setText(formatNum(gate))
+        self.settingsDict['gate setpoint'] = gate
         yield self.gotoGateFunc()
 
     @inlineCallbacks
