@@ -83,6 +83,12 @@ class nanoSQUID_3He(nanoSQUIDSystem):
         # self.equip.add_server("AC Box", "ad5764_acbox")
         self.equip.add_server("GND Switchbox", "ground_switch_actuator")
         self.equip.add_server("Sorb Valve", "he_valve")
+
+        #for the LED panel that will read tip status, add server
+        self.equip.add_server("LED Display", "led_field_display")
+
+        
+
         #self.equip.add_server("LM 510", "lm_510")
 #
 
