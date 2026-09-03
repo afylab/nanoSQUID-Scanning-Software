@@ -989,7 +989,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         '''
 
         self.led_field_display_state = led_state
-        self.writeLEDState(led_state, height)
+        yield self.writeLEDState(led_state, height)
 
 
 
@@ -1009,7 +1009,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
         self.label_pidApproachStatus.setText('Idle - Aborted')
         #Aborting leaves the approach loop without ever reaching 'contacted', so the display would
         #otherwise stay stuck on 'approaching' forever. Send it back to idle.
-        self.setApproachStatus('Idle - Aborted')
+        yield self.setApproachStatus('Idle - Aborted')
 
     @inlineCallbacks
     def startPIDApproachSequence(self):
@@ -1031,7 +1031,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                 #Update status label
                 self.label_pidApproachStatus.setText('Approaching with Zurich')
-                self.setApproachStatus('approaching')
+                yield self.setApproachStatus('approaching')
 
                 #Initializes all the PID settings
                 yield self.setHF2LI_PID_Settings()
@@ -1056,7 +1056,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                     if self.madeSurfaceContact():
                         #If so, update the status and break from the loop
                         self.label_pidApproachStatus.setText('Surface contacted')
-                        self.setApproachStatus('Surface Contacted')
+                        yield self.setApproachStatus('Surface Contacted')
                         break
 
                     #Check if we maxed out the output voltage
@@ -1071,7 +1071,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                         #Retract the sensor by setting the value of the PID's integrator to 0
                         self.label_pidApproachStatus.setText('Retracting Attocubes')
-                        self.setApproachStatus('Retracting Attocubes')
+                        yield self.setApproachStatus('Retracting Attocubes')
                         #Find desired retract speed in volts per second
                         retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
                         yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
@@ -1083,7 +1083,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                         #If approaching and autoThresholding, then wait for 30 seconds before resetting the PLL threshold
                         if self.approaching and self.autoThresholding:
                             self.label_pidApproachStatus.setText('Collecting data for threshold.')
-                            self.setApproachStatus('Collecting Threshold Data')
+                            yield self.setApproachStatus('Collecting Threshold Data')
                             #Wait for 30 seconds for  self.zData and self.deltaFdata to get new values
                             # Can incorporate the time the coarse positioner was equilibrating if applicable
                             if self.generalSettings['atto_equilb_time'] > 0 and self.approach_type != "Steps" :
@@ -1103,7 +1103,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                             #Turn PID back on and continue approaching
                             yield self.hf.set_pid_on(self.PID_Index, True)
                             self.label_pidApproachStatus.setText('Approaching with Zurich')
-                            self.setApproachStatus('approaching')
+                            yield self.setApproachStatus('approaching')
 
             else: #If not measuring the PLL, throw a warning
                 msgBox = QtWidgets.QMessageBox(self)
@@ -1132,7 +1132,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                 # Update status label
                 self.label_pidApproachStatus.setText('Approaching with Zurich/DAC')
-                self.setApproachStatus("approaching")
+                yield self.setApproachStatus("approaching")
 
                 # Initializes all the PID settings
                 yield self.setHF2LI_PID_Settings()
@@ -1168,7 +1168,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                     if self.madeSurfaceContact():
                         # If so, update the status and break from the loop
                         self.label_pidApproachStatus.setText('Surface contacted')
-                        self.setApproachStatus('Surface Contacted')
+                        yield self.setApproachStatus('Surface Contacted')
                         break
 
                     # Get the output voltage of the HF2LI (this is JUST the HF2LI voltage output not, not the sum with the DAC-ADC z voltage contribution)
@@ -1185,7 +1185,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                         # Retract the Tip by setting the value of the PID's integrator to 0
                         self.label_pidApproachStatus.setText('Retracting Attocubes')
-                        self.setApproachStatus('Retracting Attocubes')
+                        yield self.setApproachStatus('Retracting Attocubes')
                         retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
                         yield self.setHF2LI_PID_Integrator(val=0, speed=retract_speed) # Find desired retract speed in volts per second
 
@@ -1208,7 +1208,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                                 # Turn PID back on and continue approaching
                                 yield self.hf.set_pid_on(self.PID_Index, True)
                                 self.label_pidApproachStatus.setText('Approaching with Zurich')
-                                self.setApproachStatus("approaching")
+                                yield self.setApproachStatus("approaching")
 
                         else: # Withdraw the DAC-ADC and proceed as normal
                             speed = self.generalSettings['step_retract_speed'] * self.z_volts_to_meters
@@ -1221,7 +1221,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                             # If approaching and autoThresholding, then wait for 30 seconds before resetting the PLL threshold
                             if self.approaching and self.autoThresholding:
                                 self.label_pidApproachStatus.setText('Collecting data for threshold')
-                                self.setApproachStatus("Collecting Threshold Data")
+                                yield self.setApproachStatus("Collecting Threshold Data")
                                 # Wait for 30 seconds for  self.zData and self.deltaFdata to get new values
                                 # Can incorporate the time the coarse positioner was equilibrating if applicable
                                 if self.generalSettings['atto_equilb_time'] > 0 and self.approach_type != "Steps":
@@ -1241,7 +1241,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                                 # Turn PID back on and continue approaching
                                 yield self.hf.set_pid_on(self.PID_Index, True)
                                 self.label_pidApproachStatus.setText('Approaching with Zurich')
-                                self.setApproachStatus("approaching")
+                                yield self.setApproachStatus("approaching")
 
             else:  # If not measuring the PLL, throw a warning
                 msgBox = QtWidgets.QMessageBox(self)
@@ -1741,7 +1741,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 #Set the LED state before the retraction starts, since the yield below blocks for
                 #the whole retraction. This is a different retraction from 'Retracting Attocubes',
                 #which is the full retract mid-approach before the coarse positioners step.
-                self.setApproachStatus('moving_to_constant_height', self.PIDApproachSettings['height'])
+                yield self.setApproachStatus('moving_to_constant_height', self.PIDApproachSettings['height'])
                 yield self.setHF2LI_PID_Integrator(val = end_voltage, speed = retract_speed)
 
                 #Set range such that maximally extended is at the proper distance from the surface.
@@ -1766,11 +1766,11 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                     self.updateConstantHeightStatus.emit(True)
                     self.constantHeight = True
                     self.label_pidApproachStatus.setText('Constant Height')
-                    self.setApproachStatus('at_constant_height', self.PIDApproachSettings['height'])
+                    yield self.setApproachStatus('at_constant_height', self.PIDApproachSettings['height'])
                     self.approaching = False
                 else:
                     self.label_pidApproachStatus.setText('Could not extend to desired height')
-                    self.setApproachStatus('extension_failed')
+                    yield self.setApproachStatus('extension_failed')
                     self.approaching = False
 
         except:
@@ -1793,7 +1793,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                 #Update status label
                 self.label_pidApproachStatus.setText('Approaching with Zurich')
-                self.setApproachStatus("approaching")
+                yield self.setApproachStatus("approaching")
 
                 #Initializes all the PID settings
                 yield self.setHF2LI_PID_Settings()
@@ -1823,7 +1823,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                     if self.madeSurfaceContact():
                         #If so, update the status and break from the loop
                         self.label_pidApproachStatus.setText('Surface contacted')
-                        self.setApproachStatus("Surface Contacted")
+                        yield self.setApproachStatus("Surface Contacted")
                         return 0
 
                     #Check if we maxed out the output voltage
@@ -1839,7 +1839,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
                         #Retract the sensor by setting the value of the PID's integrator to 0
                         self.label_pidApproachStatus.setText('Retracting Attocubes')
-                        self.setApproachStatus("Retracting Attocubes")
+                        yield self.setApproachStatus("Retracting Attocubes")
                         #Find desired retract speed in volts per second
                         retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
                         yield self.setHF2LI_PID_Integrator(val = 0, speed = retract_speed)
@@ -1966,10 +1966,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                         self.updateConstantHeightStatus.emit(True)
                         self.constantHeight = True
                         self.label_pidApproachStatus.setText('Constant Height')
-                        self.setApproachStatus("at_constant_height", self.PIDApproachSettings['height'])
+                        yield self.setApproachStatus("at_constant_height", self.PIDApproachSettings['height'])
                     else:
                         self.label_pidApproachStatus.setText('Could not extend to desired height')
-                        self.setApproachStatus('extension_failed')
+                        yield self.setApproachStatus('extension_failed')
                     self.approaching = False
                 elif state == 1 and self.approaching: # Advanced, didn't hit surface. Pullback the given amount.
                     #Read the voltage being output by the PID
@@ -2022,7 +2022,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                 # Find desired retract speed in volts per second
                 retract_speed = self.generalSettings['pid_retract_speed'] * self.z_volts_to_meters
                 # Go to the position. The PID will be turned off by calling the set integrator command
-                self.setApproachStatus("moving_to_constant_height", self.PIDApproachSettings['height'])
+                yield self.setApproachStatus("moving_to_constant_height", self.PIDApproachSettings['height'])
                 yield self.setHF2LI_PID_Integrator(val=end_voltage, speed=retract_speed)
                 # Set range such that maximally extended is at the proper distance from the surface.
                 # result is true if we successfully set the range.
@@ -2048,11 +2048,11 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
                     self.updateConstantHeightStatus.emit(True)
                     self.constantHeight = True
                     self.label_pidApproachStatus.setText('Constant Height')
-                    self.setApproachStatus("at_constant_height", self.PIDApproachSettings['height'])
+                    yield self.setApproachStatus("at_constant_height", self.PIDApproachSettings['height'])
                     self.approaching = False
                 else:
                     self.label_pidApproachStatus.setText('Could not extend to desired height')
-                    self.setApproachStatus('extension_failed')
+                    yield self.setApproachStatus('extension_failed')
                     self.approaching = False
         except:
             printErrorInfo()
@@ -2279,7 +2279,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
             #update labels on the GUI
             self.label_pidApproachStatus.setText('Withdrawing')
-            self.setApproachStatus('Withdrawing')
+            yield self.setApproachStatus('Withdrawing')
 
             #Keep track of how much distance still needs to be withdrawn after each step
             withdrawDistance = dist
@@ -2346,7 +2346,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.label_pidApproachStatus.setText('Idle - Withdrawn')
             #We're off the surface now, so clear the display. Without this it would keep reading
             #'at_constant_height' after a withdraw, which is the one thing it must never do.
-            self.setApproachStatus('Idle - Withdrawn')
+            yield self.setApproachStatus('Idle - Withdrawn')
         except:
             printErrorInfo()
 
@@ -2381,7 +2381,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
 
             #update labels on the GUI
             self.label_pidApproachStatus.setText('Withdrawing')
-            self.setApproachStatus('Withdrawing')
+            yield self.setApproachStatus('Withdrawing')
 
             #Keep track of how much distance still needs to be withdrawn after each step
             withdrawDistance = dist
@@ -2447,7 +2447,7 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
             self.label_pidApproachStatus.setText('Idle - Withdrawn')
             #We're off the surface now, so clear the display. Without this it would keep reading
             #'at_constant_height' after a withdraw, which is the one thing it must never do.
-            self.setApproachStatus('Idle - Withdrawn')
+            yield self.setApproachStatus('Idle - Withdrawn')
         except:
             printErrorInfo()
 
@@ -2732,10 +2732,10 @@ class Window(QtWidgets.QMainWindow, ApproachUI):
     def updateScanningStatus(self, status):
         if status:
             self.label_pidApproachStatus.setText('Scanning')
-            self.setApproachStatus('Scanning')
+            yield self.setApproachStatus('Scanning')
         else:
             self.label_pidApproachStatus.setText('Idle - Scan Ended')
-            self.setApproachStatus('Idle - Scan Ended')
+            yield self.setApproachStatus('Idle - Scan Ended')
 
     def sleep(self,secs):
         """Asynchronous compatible sleep command. Sleeps for given time in seconds, but allows
